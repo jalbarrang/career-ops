@@ -11,6 +11,7 @@ import {
   Loader2,
   Pencil,
   Plus,
+  Sparkles,
   Trash2,
   Undo2,
   Upload,
@@ -18,6 +19,7 @@ import {
 import { cn } from "@/lib/cn";
 import {
   ENTITY_SECTIONS,
+  ENTRY_FIELDS,
   FLAT_SECTIONS,
   addEntry,
   addFact,
@@ -30,12 +32,23 @@ import {
   setFactStatus,
   totalFacts,
   unverifiedCount,
+  updateEntryField,
   updateEntryLabel,
   updateFactText,
 } from "@/lib/cv-profile.mjs";
 
 type Fact = { id: string; text: string; review_status?: string; evidence?: { source?: string; line?: number; quote?: string } };
-type Entry = { id: string; label: string; review_status?: string; evidence?: { source?: string; line?: number; quote?: string }; facts?: Fact[] };
+type Entry = {
+  id: string;
+  label: string;
+  company?: string;
+  role?: string;
+  location?: string;
+  dates?: string;
+  review_status?: string;
+  evidence?: { source?: string; line?: number; quote?: string };
+  facts?: Fact[];
+};
 type Profile = {
   schema_version: number;
   candidate: Record<string, unknown>;
@@ -327,6 +340,12 @@ export function CvProfileBuilder() {
         </div>
         <div className="flex items-center gap-2">
           <Link
+            href="/cv/generate"
+            className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-4 py-2 text-sm font-medium text-brand-text transition-colors hover:bg-brand-soft/70 max-sm:min-h-[44px]"
+          >
+            <Sparkles className="size-4" /> Generate CV
+          </Link>
+          <Link
             href="/cv/import"
             className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted transition-colors hover:text-foreground max-sm:min-h-[44px]"
           >
@@ -457,7 +476,33 @@ export function CvProfileBuilder() {
                           {entry.evidence?.source ? ` · ${entry.evidence.source}${entry.evidence.line ? `:${entry.evidence.line}` : ""}` : ""}
                           {(entry.facts?.length ?? 0) === 0 && <span className="ml-1 text-amber-600 dark:text-amber-400">empty entry</span>}
                         </p>
+
+                        {/* What the CV payload actually reads. The label above is the
+                            entry's identity; these four fields are what
+                            build-cv-html.mjs renders, and company + role are
+                            mandatory before an entry appears at all. */}
+                        {!editingEntry && (
+                          <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                            {ENTRY_FIELDS.map((field) => (
+                              <label key={field} className="text-xs text-faint">
+                                <span className="capitalize">{field}</span>
+                                <input
+                                  value={(entry[field as keyof Entry] as string | undefined) ?? ""}
+                                  onChange={(event) =>
+                                    mutate(updateEntryField(profile, { section, entryId: entry.id, field, value: event.target.value }) as Profile)
+                                  }
+                                  placeholder={field === "company" ? "Acme Inc." : field === "role" ? "Senior Engineer" : field === "dates" ? "2024 – 2026" : "Remote"}
+                                  className={cn(
+                                    "mt-0.5 w-full rounded-lg border bg-surface/60 px-2 py-1 text-xs text-foreground outline-none placeholder:text-faint focus:border-brand/40",
+                                    (field === "company" || field === "role") && !entry[field] ? "border-amber-500/40" : "border-border",
+                                  )}
+                                />
+                              </label>
+                            ))}
+                          </div>
+                        )}
                       </div>
+
                       <div className="flex shrink-0 items-center gap-1">
                         <button
                           type="button"

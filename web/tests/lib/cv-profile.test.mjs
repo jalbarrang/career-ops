@@ -5,9 +5,11 @@ import {
   addEntry,
   addFact,
   emptyProfile,
+  ENTRY_FIELDS,
   ensureShape,
   makeId,
   moveEntry,
+  moveEntryTo,
   moveFact,
   parseValidationErrors,
   profileCounts,
@@ -16,6 +18,7 @@ import {
   setFactStatus,
   totalFacts,
   unverifiedCount,
+  updateEntryField,
   updateFactText,
   userEvidence,
 } from "../../src/lib/cv-profile.mjs";
@@ -179,6 +182,48 @@ test("a profile with missing sections is rendered, not crashed on or 'migrated'"
   assert.equal(partial.summary.length, 1); // present data untouched
   assert.deepEqual(partial.candidate, { full_name: "Juan" });
   assert.equal(ensureShape(null).schema_version, 1);
+});
+
+test("structured entry fields are settable, clearable, and limited to the ones a CV renders", () => {
+  const { profile, entryId } = withEntry();
+
+  const named = updateEntryField(profile, { section: "experiences", entryId, field: "company", value: " Series Entertainment " });
+  assert.equal(named.experiences[0].company, "Series Entertainment"); // trimmed
+
+  const both = ENTRY_FIELDS.reduce(
+    (current, field) => updateEntryField(current, { section: "experiences", entryId, field, value: `${field}-value` }),
+    named,
+  );
+  for (const field of ENTRY_FIELDS) assert.equal(both.experiences[0][field], `${field}-value`);
+
+  // Clearing removes the key rather than storing "", so a payload builder can
+  // tell "not provided" from "empty" and the builder can flag the missing one.
+  const cleared = updateEntryField(both, { section: "experiences", entryId, field: "company", value: "   " });
+  assert.equal("company" in cleared.experiences[0], false);
+
+  // A field the payload never reads is refused, not stored.
+  const bogus = updateEntryField(profile, { section: "experiences", entryId, field: "favourite_colour", value: "green" });
+  assert.equal("favourite_colour" in bogus.experiences[0], false);
+});
+
+test("an entries-only section rejects entry fields, and an unknown entry is a no-op", () => {
+  const { profile, entryId } = withEntry();
+  assert.equal(updateEntryField(profile, { section: "skills", entryId, field: "company", value: "x" }), profile);
+  assert.equal(updateEntryField(profile, { section: "experiences", entryId: "nope", field: "company", value: "x" }), profile);
+});
+
+test("moveEntryTo places an entry at an explicit index, which is what newest-first needs", () => {
+  let profile = emptyProfile();
+  for (const label of ["A", "B", "C"]) profile = addEntry(profile, { section: "experiences", label, date: DATE }).profile;
+
+  const movedToTop = moveEntryTo(profile, { section: "experiences", entryId: profile.experiences[2].id, toIndex: 0 });
+  assert.deepEqual(
+    movedToTop.experiences.map((entry) => entry.label),
+    ["C", "A", "B"],
+  );
+
+  const outOfRange = moveEntryTo(profile, { section: "experiences", entryId: profile.experiences[0].id, toIndex: 9 });
+  assert.equal(outOfRange, profile);
 });
 
 test("the core's validation output is parsed without depending on its heading wording", () => {

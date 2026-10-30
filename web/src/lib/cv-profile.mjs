@@ -309,6 +309,64 @@ export function parseValidationErrors(output = "") {
 }
 
 /**
+ * Fields an entry carries beyond its human label. The html CV payload needs
+ * `company` + `role` before it will render the entry at all, and these are also
+ * what the builder's entry form edits. The importer never sets them — its
+ * conservative parser only produces a label — so a person fills them in here.
+ */
+export const ENTRY_FIELDS = ["company", "role", "location", "dates"];
+
+/**
+ * Set one structured field on an entry.
+ *
+ * `label` stays the entry's identity (what the builder lists and what evidence
+ * describes); these fields are what a rendered CV reads. An empty value clears
+ * the field rather than storing "", so a payload builder can fall back to
+ * "not provided" instead of rendering a blank line.
+ *
+ * @param {object} profile
+ * @param {{ section: string, entryId: string, field: string, value: string }} params
+ */
+export function updateEntryField(profile, { section, entryId, field, value }) {
+  if (!ENTITY_SECTIONS.includes(section) || !ENTRY_FIELDS.includes(field)) return profile;
+  const entries = sectionItems(profile, section);
+  // Return the SAME object when nothing matches, so a caller that treats a
+  // changed reference as "edited" (the builder marks the document dirty that
+  // way) does not report a change that never happened.
+  if (!entries.some((entry) => entry?.id === entryId)) return profile;
+  const clean = cleanText(value);
+  return {
+    ...profile,
+    [section]: entries.map((entry) => {
+      if (entry?.id !== entryId) return entry;
+      const next = { ...entry };
+      if (clean) next[field] = clean;
+      else delete next[field];
+      return next;
+    }),
+  };
+}
+
+/**
+ * Reorder entries in an entity section by moving one to a new index.
+ * The up/down buttons use moveEntry(); this is for an explicit position, which
+ * is what "newest first" needs when an imported profile arrives in cv.md's own
+ * order.
+ *
+ * @param {object} profile
+ * @param {{ section: string, entryId: string, toIndex: number }} params
+ */
+export function moveEntryTo(profile, { section, entryId, toIndex }) {
+  const entries = sectionItems(profile, section);
+  const from = entries.findIndex((entry) => entry?.id === entryId);
+  if (from === -1 || toIndex < 0 || toIndex >= entries.length || toIndex === from) return profile;
+  const next = [...entries];
+  const [moved] = next.splice(from, 1);
+  next.splice(toIndex, 0, moved);
+  return { ...profile, [section]: next };
+}
+
+/**
  * Per-section totals for the nav: entries for entity sections, facts for flat
  * ones, plus the fact count behind each entry, which is what tells an empty
  * entry from a populated one.
