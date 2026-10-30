@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
+import { rootScriptEnv } from "@/lib/core/root-env.mjs";
 import { summarizeCheck, summarizeDoctor, reviewHeadline } from "@/lib/cv-review.mjs";
 
 export const runtime = "nodejs";
@@ -24,7 +25,7 @@ function runRootScript(root: string, nameNoExt: string, args: string[]): Promise
     execFile(
       "node",
       [script, ...args],
-      { cwd: root, timeout: TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
+      { cwd: root, env: rootScriptEnv(root), timeout: TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
       (err, stdout, stderr) => {
         // A non-zero exit is a verdict, not a transport failure — `err` is only
         // an error when the process could not be started or was killed.

@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { AlertTriangle, Check, Loader2, Minus, RotateCcw, X } from "lucide-react";
+import { AlertTriangle, Check, Library, Loader2, Minus, RotateCcw, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 type CheckStatus = "pass" | "warn" | "fail" | "skip";
@@ -182,20 +183,28 @@ export function CvEditor() {
             {dirty && <span className="ml-1 text-amber-600 dark:text-amber-400">Unsaved changes.</span>}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving || !dirty}
-          className={cn(
-            "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors max-sm:min-h-[44px]",
-            dirty
-              ? "bg-brand text-brand-foreground hover:bg-brand-200"
-              : "border border-border bg-surface text-muted",
-          )}
-        >
-          {saving ? <Loader2 className="size-4 animate-spin" /> : saved ? <Check className="size-4" /> : null}
-          {saved ? "Saved" : "Save"}
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/cv/import"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted transition-colors hover:text-foreground max-sm:min-h-[44px]"
+          >
+            <Library className="size-4" /> Career profile
+          </Link>
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving || !dirty}
+            className={cn(
+              "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors max-sm:min-h-[44px]",
+              dirty
+                ? "bg-brand text-brand-foreground hover:bg-brand-200"
+                : "border border-border bg-surface text-muted",
+            )}
+          >
+            {saving ? <Loader2 className="size-4 animate-spin" /> : saved ? <Check className="size-4" /> : null}
+            {saved ? "Saved" : "Save"}
+          </button>
+        </div>
       </div>
 
       {error && (
