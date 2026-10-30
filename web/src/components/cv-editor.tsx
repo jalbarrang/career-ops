@@ -185,7 +185,7 @@ export function CvEditor() {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/cv/import"
+            href="/cv/profile"
             className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted transition-colors hover:text-foreground max-sm:min-h-[44px]"
           >
             <Library className="size-4" /> Career profile

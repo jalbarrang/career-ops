@@ -144,8 +144,8 @@ export function CvImportQueue() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
-      <Link href="/cv" className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground">
-        <ArrowLeft className="size-4" /> CV editor
+      <Link href="/cv/profile" className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground">
+        <ArrowLeft className="size-4" /> Career profile
       </Link>
 
       <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
