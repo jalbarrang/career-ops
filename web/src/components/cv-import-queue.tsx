@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Check, Loader2, Pencil, SkipForward, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { applyBlockDecision, groupImportBlocks, suggestEntryFields } from "@/lib/cv-import.mjs";
 
 type Candidate = {
   section: string;
@@ -11,6 +12,16 @@ type Candidate = {
   isHeading: boolean;
   text: string;
   label: string;
+};
+
+type Block = {
+  key: string;
+  kind: "entry" | "flat";
+  section: string;
+  headingIndices: number[];
+  ownerIndex: number;
+  factIndices: number[];
+  labels: string[];
 };
 
 type Preview = {
@@ -38,7 +49,12 @@ export function CvImportQueue() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
-  const [decisions, setDecisions] = useState<Record<number, Decision>>({});
+  // One entry per candidate, positionally — the importer answers prompts in
+  // order, so this array IS the answer sheet buildReviewInput consumes.
+  const [decisions, setDecisions] = useState<(Decision | undefined)[]>([]);
+  // Company / role / dates per block, pre-filled from the block's own lines and
+  // editable before the import writes them onto the entry it creates.
+  const [entryFields, setEntryFields] = useState<Record<string, { company: string; role: string; dates: string }>>({});
   const [editing, setEditing] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
@@ -55,6 +71,12 @@ export function CvImportQueue() {
         return;
       }
       setPreview(body);
+      setDecisions(new Array(body.candidates.length).fill(undefined));
+      const seeded: Record<string, { company: string; role: string; dates: string }> = {};
+      for (const block of groupImportBlocks(body.candidates) as Block[]) {
+        if (block.kind === "entry" && block.labels.length > 1) seeded[block.key] = suggestEntryFields(block.labels);
+      }
+      setEntryFields(seeded);
     } catch {
       setError("Couldn’t reach the server.");
     } finally {
@@ -68,10 +90,11 @@ export function CvImportQueue() {
 
   const candidates = preview?.candidates ?? [];
 
-  const visible = useMemo(
-    () => candidates.map((candidate, index) => ({ candidate, index })).filter(({ candidate }) => filter === "all" || candidate.section === filter),
-    [candidates, filter],
-  );
+  // Grouped into the units a person reviews: one job is one block, even when the
+  // parser split it into a company line, a role line and a date range.
+  const blocks = useMemo(() => groupImportBlocks(candidates) as Block[], [candidates]);
+
+  const visible = useMemo(() => blocks.filter((block) => filter === "all" || block.section === filter), [blocks, filter]);
 
   const counts = useMemo(() => {
     const bySection = new Map<string, number>();
@@ -79,42 +102,34 @@ export function CvImportQueue() {
     return bySection;
   }, [candidates]);
 
-  // An entry heading with no facts under it is what the conservative parser
-  // makes of a role line or a date range: approving it writes an empty entry
-  // into the profile. Worth saying out loud, since skipping it is almost always
-  // what the user wants.
-  const emptyHeadings = useMemo(() => {
-    const factsUnder = new Map<string, number>();
-    for (const candidate of candidates) {
-      if (candidate.isHeading || candidate.parent === null) continue;
-      const key = `${candidate.section}\0${candidate.parent}`;
-      factsUnder.set(key, (factsUnder.get(key) ?? 0) + 1);
-    }
-    return new Set(
-      candidates
-        .filter((candidate) => candidate.isHeading && (factsUnder.get(`${candidate.section}\0${candidate.text}`) ?? 0) === 0)
-        .map((candidate) => `${candidate.section}\0${candidate.text}`),
-    );
-  }, [candidates]);
+  /** A block is chosen when the entry it would create is approved. */
+  function blockApproved(block: Block): boolean {
+    const target = block.ownerIndex >= 0 ? block.ownerIndex : block.factIndices[0];
+    const decision = decisions[target];
+    return decision?.action === "approve" || decision?.action === "edit";
+  }
 
-  const decided = Object.values(decisions).filter((decision) => decision.action === "approve" || decision.action === "edit").length;
+  function blockChoice(block: Block, action: "approve" | "skip") {
+    setDecisions((current) => applyBlockDecision(block, action, current) as (Decision | undefined)[]);
+  }
 
   function setDecision(index: number, decision: Decision | null) {
     setDecisions((current) => {
-      const next = { ...current };
-      if (decision) next[index] = decision;
-      else delete next[index];
+      const next = [...current];
+      next[index] = decision ?? undefined;
       return next;
     });
   }
 
   function acceptVisible() {
     setDecisions((current) => {
-      const next = { ...current };
-      for (const { index } of visible) next[index] = { action: "approve" };
+      let next = current;
+      for (const block of visible) next = applyBlockDecision(block, "approve", next) as (Decision | undefined)[];
       return next;
     });
   }
+
+  const decided = decisions.filter((decision) => decision?.action === "approve" || decision?.action === "edit").length;
 
   async function save() {
     setSaving(true);
@@ -125,7 +140,20 @@ export function CvImportQueue() {
       const res = await fetch("/api/cv/profile/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decisions: payload, cvFingerprint: preview?.cvFingerprint }),
+        body: JSON.stringify({
+          decisions: payload,
+          cvFingerprint: preview?.cvFingerprint,
+          // Only for the blocks being approved, and only when the reviewer left
+          // something in them: untouched suggestions still describe the role.
+          entryFields: blocks
+            .filter((block) => block.kind === "entry" && blockApproved(block))
+            .map((block) => ({
+              section: block.section,
+              ownerLabel: block.labels[block.labels.length - 1],
+              ...(entryFields[block.key] ?? { company: "", role: "", dates: "" }),
+            }))
+            .filter((fields) => fields.company || fields.role || fields.dates),
+        }),
       });
       const body = (await res.json()) as { summary?: string; error?: string; details?: string[] };
       if (!res.ok) {
@@ -133,13 +161,98 @@ export function CvImportQueue() {
         return;
       }
       setResult(body.summary ?? "Saved.");
-      setDecisions({});
+      setDecisions(new Array(candidates.length).fill(undefined));
       await load();
     } catch {
       setError("Couldn’t reach the server.");
     } finally {
       setSaving(false);
     }
+  }
+
+  /** The text of one candidate, or the textarea while it is being rewritten. */
+  function renderBody(index: number) {
+    const candidate = candidates[index];
+    const decision = decisions[index];
+    const isEditing = editing === index;
+
+    if (isEditing) {
+      return (
+        <div className="mt-1">
+          <textarea
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            rows={3}
+            className="w-full resize-y rounded-lg border border-border bg-surface p-2 font-mono text-xs leading-relaxed outline-none focus:border-brand/40"
+          />
+          <div className="mt-1.5 flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setDecision(index, { action: "edit", text: draft });
+                setEditing(null);
+              }}
+              className="rounded-full bg-brand px-3 py-1 text-xs font-medium text-brand-foreground transition-colors hover:bg-brand-200"
+            >
+              Use this wording
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(null)}
+              className="rounded-full border border-border px-3 py-1 text-xs text-muted transition-colors hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <p className={cn("text-sm", candidate.isHeading ? "font-medium text-foreground" : "text-foreground/90")}>
+        {decision?.action === "edit" && decision.text ? decision.text : candidate.text}
+        {decision?.action === "edit" && decision.text && <span className="ml-2 text-xs text-brand-text">rewritten</span>}
+      </p>
+    );
+  }
+
+  /** Approve / rewrite / clear controls for exactly one candidate. */
+  function renderControls(index: number) {
+    const approved = decisions[index]?.action === "approve" || decisions[index]?.action === "edit";
+    return (
+      <div className="flex shrink-0 items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setDecision(index, approved ? null : { action: "approve" })}
+          aria-label={approved ? "Skip this" : "Approve this"}
+          className={cn(
+            "rounded-full border p-1.5 transition-colors",
+            approved ? "border-emerald-500/50 text-emerald-600 dark:text-emerald-400" : "border-border text-muted hover:text-foreground",
+          )}
+        >
+          {approved ? <Check className="size-3.5" /> : <SkipForward className="size-3.5" />}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setEditing(index);
+            setDraft(decisions[index]?.action === "edit" ? (decisions[index]?.text ?? candidates[index].text) : candidates[index].text);
+          }}
+          aria-label="Rewrite this"
+          className="rounded-full border border-border p-1.5 text-muted transition-colors hover:text-foreground"
+        >
+          <Pencil className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setDecision(index, null)}
+          aria-label="Clear this decision"
+          className="rounded-full border border-border p-1.5 text-muted transition-colors hover:text-foreground"
+        >
+          <X className="size-3.5" />
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -152,9 +265,8 @@ export function CvImportQueue() {
         <div>
           <h1 className="font-display text-2xl tracking-tight text-landing">Import into your career profile</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted">
-            Every fact <code className="text-foreground">career-profile.mjs</code> pulled out of <code className="text-foreground">cv.md</code>, with the line it
-            came from. Approve what is accurate, rewrite what needs wording, skip the rest. Nothing is saved until you press save — and only what you approve lands in
-            <code className="text-foreground"> data/career-profile.yml</code>.
+            Every fact <code className="text-foreground">career-profile.mjs</code> pulled out of <code className="text-foreground">cv.md</code>, with the line it came from.
+            One role is one decision: the company, title and date lines the parser split apart stay together here, and only the block you approve becomes an entry.
           </p>
         </div>
         {preview && (
@@ -212,79 +324,90 @@ export function CvImportQueue() {
               ))}
             </div>
 
-            <ul className="mt-4 max-h-[58vh] space-y-1.5 overflow-auto rounded-2xl border border-border bg-surface/30 p-2">
-              {visible.map(({ candidate, index }) => {
-                const decision = decisions[index] ?? { action: "skip" as const };
-                const approved = decision.action === "approve" || decision.action === "edit";
+            <ul className="mt-4 max-h-[58vh] space-y-2 overflow-auto rounded-2xl border border-border bg-surface/30 p-2">
+              {visible.map((block) => {
+                const approved = blockApproved(block);
+                const isEntry = block.kind === "entry";
+                const ownerIndex = block.ownerIndex >= 0 ? block.ownerIndex : block.factIndices[0];
+                const metadata = block.labels.slice(0, -1);
+
                 return (
                   <li
-                    key={index}
-                    className={cn(
-                      "rounded-xl border px-3 py-2 transition-colors",
-                      approved ? "border-emerald-500/40 bg-emerald-500/5" : "border-border bg-surface/60",
-                    )}
+                    key={block.key}
+                    className={cn("rounded-xl border px-3 py-2 transition-colors", approved ? "border-emerald-500/40 bg-emerald-500/5" : "border-border bg-surface/60")}
                   >
                     <div className="flex items-start gap-3">
                       <div className="min-w-0 flex-1">
                         <p className="text-xs text-faint">
-                          {candidate.isHeading ? (
-                            <span className="text-brand-text">{SECTION_LABEL[candidate.section] ?? candidate.section} entry</span>
-                          ) : (
-                            <>
-                              {SECTION_LABEL[candidate.section] ?? candidate.section}
-                              {candidate.parent && <span className="text-muted"> · {candidate.parent}</span>}
-                            </>
-                          )}
+                          <span className={isEntry ? "text-brand-text" : undefined}>{SECTION_LABEL[block.section] ?? block.section}</span>
+                          {isEntry && <span className="ml-1">entry · {block.factIndices.length} fact(s)</span>}
                         </p>
 
-                        {editing === index ? (
-                          <div className="mt-1.5">
-                            <textarea
-                              value={draft}
-                              onChange={(event) => setDraft(event.target.value)}
-                              rows={3}
-                              className="w-full resize-y rounded-lg border border-border bg-surface p-2 font-mono text-xs leading-relaxed outline-none focus:border-brand/40"
-                            />
-                            <div className="mt-1.5 flex items-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setDecision(index, { action: "edit", text: draft });
-                                  setEditing(null);
-                                }}
-                                className="rounded-full bg-brand px-3 py-1 text-xs font-medium text-brand-foreground transition-colors hover:bg-brand-200"
-                              >
-                                Use this wording
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setEditing(null)}
-                                className="rounded-full border border-border px-3 py-1 text-xs text-muted transition-colors hover:text-foreground"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
+                        {isEntry && metadata.length > 0 && !(entryFields[block.key]?.company && entryFields[block.key]?.role) && (
+                          <p className="mt-0.5 text-xs text-muted">
+                            {metadata.join(" · ")}
+                            <span className="ml-1 text-faint">— same role, kept out as its own entry</span>
+                          </p>
+                        )}
+
+                        {isEntry ? (
+                          // Title the block the way the entry will be named once the
+                          // fields below are applied, instead of the parser's own
+                          // heading (usually the date range).
+                          <p className="text-sm font-medium text-foreground">
+                            {entryFields[block.key]?.company && entryFields[block.key]?.role
+                              ? `${entryFields[block.key].company} — ${entryFields[block.key].role}`
+                              : candidates[ownerIndex].text}
+                            {approved && <span className="ml-2 text-xs font-normal text-emerald-600 dark:text-emerald-400">included</span>}
+                          </p>
                         ) : (
-                          <>
-                            <p className={cn("text-sm", candidate.isHeading ? "font-medium text-foreground" : "text-foreground/90")}>
-                              {decision.action === "edit" && decision.text ? decision.text : candidate.text}
-                              {decision.action === "edit" && decision.text && <span className="ml-2 text-xs text-brand-text">rewritten</span>}
-                            </p>
-                            {candidate.isHeading && emptyHeadings.has(`${candidate.section}\0${candidate.text}`) && (
-                              <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">
-                                No facts under this heading — approving it adds an empty entry.
-                              </p>
-                            )}
-                          </>
+                          renderBody(ownerIndex)
+                        )}
+
+                        {isEntry && (
+                          <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
+                            {(["company", "role", "dates"] as const).map((field) => (
+                              <label key={field} className="text-xs text-faint">
+                                <span className="capitalize">{field}</span>
+                                <input
+                                  value={entryFields[block.key]?.[field] ?? ""}
+                                  onChange={(event) =>
+                                    setEntryFields((current) => ({
+                                      ...current,
+                                      [block.key]: { ...(current[block.key] ?? { company: "", role: "", dates: "" }), [field]: event.target.value },
+                                    }))
+                                  }
+                                  placeholder={field === "company" ? "Acme Inc." : field === "role" ? "Senior Engineer" : "2024 – 2026"}
+                                  className="mt-0.5 w-full rounded-lg border border-border bg-surface/60 px-2 py-1 text-xs text-foreground outline-none placeholder:text-faint focus:border-brand/40"
+                                />
+                              </label>
+                            ))}
+                          </div>
+                        )}
+
+                        {isEntry && block.factIndices.length === 0 && (
+                          <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">No facts under this heading — approving it adds an empty entry.</p>
+                        )}
+
+                        {isEntry && block.factIndices.length > 0 && (
+                          <ul className="mt-1.5 space-y-1 border-l border-border pl-2">
+                            {block.factIndices.map((index) => (
+                              <li key={index}>
+                                <div className="flex items-start gap-2">
+                                  <div className="min-w-0 flex-1">{renderBody(index)}</div>
+                                  {renderControls(index)}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
                         )}
                       </div>
 
                       <div className="flex shrink-0 items-center gap-1">
                         <button
                           type="button"
-                          onClick={() => setDecision(index, approved ? null : { action: "approve" })}
-                          aria-label={approved ? `Skip ${candidate.text}` : `Approve ${candidate.text}`}
+                          onClick={() => blockChoice(block, approved ? "skip" : "approve")}
+                          aria-label={approved ? "Skip this role" : "Approve this role"}
                           className={cn(
                             "rounded-full border p-1.5 transition-colors",
                             approved ? "border-emerald-500/50 text-emerald-600 dark:text-emerald-400" : "border-border text-muted hover:text-foreground",
@@ -292,25 +415,7 @@ export function CvImportQueue() {
                         >
                           {approved ? <Check className="size-3.5" /> : <SkipForward className="size-3.5" />}
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditing(index);
-                            setDraft(decision.action === "edit" ? (decision.text ?? candidate.text) : candidate.text);
-                          }}
-                          aria-label={`Rewrite ${candidate.text}`}
-                          className="rounded-full border border-border p-1.5 text-muted transition-colors hover:text-foreground"
-                        >
-                          <Pencil className="size-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDecision(index, null)}
-                          aria-label={`Clear decision for ${candidate.text}`}
-                          className="rounded-full border border-border p-1.5 text-muted transition-colors hover:text-foreground"
-                        >
-                          <X className="size-3.5" />
-                        </button>
+                        {!isEntry && renderControls(ownerIndex)}
                       </div>
                     </div>
                   </li>

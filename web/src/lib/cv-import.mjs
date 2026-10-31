@@ -180,6 +180,169 @@ export function buildReviewInput(candidates = [], decisions = []) {
 }
 
 /**
+ * Group parsed candidates into the units a person actually reviews.
+ *
+ * The importer's parser is heading-based and conservative: in an entity section
+ * EVERY non-bullet line starts a new entity. A normal CV block
+ *
+ *     ### Series Entertainment
+ *     **Senior Full Stack Engineer:**
+ *     March 2025 - September 2026
+ *     - Shipped …
+ *
+ * therefore arrives as three heading candidates — company, role, dates — and all
+ * the facts hang off the last one. Reviewed candidate-by-candidate that reads as
+ * three weird entries, two of them empty, and approving all three writes exactly
+ * that into the profile.
+ *
+ * This groups consecutive headings plus the facts after them into one block with
+ * ONE owner: the last heading, which is the entity the facts were attached to.
+ * The earlier headings are metadata for the same role, so approving the block
+ * approves the owner and skips them — the profile gets one entry instead of
+ * three, and no empty ones.
+ *
+ * @typedef {object} ImportBlock
+ * @property {string} key
+ * @property {"entry" | "flat"} kind
+ * @property {string} section
+ * @property {number[]} headingIndices - every heading folded into this block
+ * @property {number} ownerIndex - the heading that owns the facts, or -1
+ * @property {number[]} factIndices
+ * @property {string[]} labels - the heading texts, in order
+ *
+ * @param {Candidate[]} [candidates]
+ * @returns {ImportBlock[]}
+ */
+export function groupImportBlocks(candidates = []) {
+  /** @type {ImportBlock[]} */
+  const blocks = [];
+  /** @type {ImportBlock | null} */
+  let current = null;
+
+  candidates.forEach((candidate, index) => {
+    if (!candidate.isHeading) {
+      // A fact that belongs to the open entry block stays with it.
+      if (current && current.kind === "entry" && candidate.parent !== null) {
+        current.factIndices.push(index);
+        return;
+      }
+      // A flat candidate closes whatever entry block was still open, so the
+      // blocks keep the order of the source instead of the pending one landing
+      // after everything that followed it.
+      if (current) {
+        blocks.push(current);
+        current = null;
+      }
+      blocks.push({
+        key: `flat-${index}`,
+        kind: "flat",
+        section: candidate.section,
+        headingIndices: [],
+        ownerIndex: -1,
+        factIndices: [index],
+        labels: [candidate.text],
+      });
+      return;
+    }
+
+    // A heading after facts starts a new block: the facts before it belong to
+    // the previous owner, never to this one.
+    if (current && current.kind === "entry" && (current.factIndices.length > 0 || current.section !== candidate.section)) {
+      blocks.push(current);
+      current = null;
+    }
+
+    if (!current) {
+      current = {
+        key: `entry-${index}`,
+        kind: "entry",
+        section: candidate.section,
+        headingIndices: [],
+        ownerIndex: -1,
+        factIndices: [],
+        labels: [],
+      };
+    }
+
+    current.headingIndices.push(index);
+    current.labels.push(candidate.text);
+    // The most recent heading owns whatever facts follow — that is exactly how
+    // the parser attached them.
+    current.ownerIndex = index;
+  });
+
+  if (current) blocks.push(current);
+  return blocks;
+}
+
+/**
+ * Which of a block's heading lines is company, role, or dates.
+ *
+ * The parser keeps every heading line, so a role's lines arrive in cv.md's order
+ * but with nothing saying which is which — and the stored entry label ends up
+ * being whichever line happened to own the facts (usually the date range, which
+ * reads as a bug in the builder). This classifies by SHAPE only, and only when
+ * the answer is unambiguous: a date range has a 4-digit year, prose is a
+ * sentence, everything else is a name. A block whose lines do not classify
+ * cleanly gets empty fields the user fills in, never a guess.
+ *
+ * @param {string[]} [labels]
+ * @returns {{ company: string, role: string, dates: string }}
+ */
+export function suggestEntryFields(labels = []) {
+  const clean = (value) => String(value ?? "").trim();
+  const isDates = (value) => /\b(?:19|20)\d{2}\b/.test(value) && !/[.;]$/.test(value) && value.length <= 40;
+  // A comma-separated list ("Clients: SoftPatagonia, Valueinnova LLC") is a
+  // sentence fragment, not a company name — treating it as one would write a
+  // junk company into the profile.
+  const isProse = (value) => value.length > 60 || /[.;]$/.test(value) || /,\s/.test(value);
+
+  const named = [];
+  let dates = "";
+  for (const label of labels.map(clean).filter(Boolean)) {
+    if (isDates(label)) {
+      if (!dates) dates = label;
+      continue;
+    }
+    if (isProse(label)) continue;
+    named.push(label);
+  }
+
+  const company = named[0] ?? "";
+  // A role line in cv.md is often bolded with a trailing colon ("Technical Lead:").
+  const role = (named[1] ?? "").replace(/:+\s*$/, "").trim();
+  return { company, role, dates };
+}
+
+/**
+ * The per-candidate decisions one block-level choice implies.
+ *
+ * Approving a block approves its owner heading and its facts, and SKIPS the
+ * metadata headings — those would otherwise become empty entries. Skipping a
+ * block skips everything it covers. Indices outside the block are untouched, so
+ * a per-fact override made earlier survives a later block click.
+ *
+ * @param {ImportBlock} block
+ * @param {"approve" | "skip"} action
+ * @param {({ action: "approve" | "skip" | "edit", text?: string } | undefined)[]} decisions
+ * @returns {({ action: "approve" | "skip" | "edit", text?: string } | undefined)[]}
+ */
+export function applyBlockDecision(block, action, decisions = []) {
+  const next = [...decisions];
+  const set = (index, decision) => {
+    next[index] = decision;
+  };
+
+  for (const index of block.headingIndices) set(index, { action: index === block.ownerIndex ? action : "skip" });
+  for (const index of block.factIndices) set(index, { action });
+
+  // A flat block is a single candidate and owns nothing else.
+  if (block.kind === "flat") for (const index of block.factIndices) set(index, { action });
+
+  return next;
+}
+
+/**
  * The importer's closing lines: what it saved, or why it changed nothing.
  * Surfaced verbatim so the result is the core's own statement, not ours.
  *

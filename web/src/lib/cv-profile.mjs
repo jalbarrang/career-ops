@@ -394,6 +394,52 @@ export function totalFacts(profile) {
 }
 
 /**
+ * Apply the company / role / dates a reviewer typed for a block the importer
+ * just created an entry for.
+ *
+ * The importer stores the entry label as whichever heading line owned the facts
+ * — usually the date range — so an imported role reads as "March 2025 -
+ * September 2026" in the builder and has no company or role for a CV payload to
+ * render. This sets those fields, and renames the entry to
+ * "company — role" so the library reads like a CV.
+ *
+ * Deliberately conservative, because it runs on a re-import too:
+ *   - only fields that are still EMPTY are set, so a value the user already
+ *     edited is never overwritten;
+ *   - the label is only recomposed when both company and role end up present;
+ *   - an entry that cannot be found is reported, not created.
+ *
+ * @param {object} profile
+ * @param {{ section: string, ownerLabel: string, company?: string, role?: string, dates?: string }} params
+ * @returns {{ profile: object, updated: boolean, reason?: string }}
+ */
+export function applyImportFields(profile, { section, ownerLabel, company = "", role = "", dates = "" }) {
+  if (!ENTITY_SECTIONS.includes(section)) return { profile, updated: false, reason: "not an entry section" };
+  const entries = sectionItems(profile, section);
+  const target = String(ownerLabel ?? "").trim();
+  const index = entries.findIndex((entry) => cleanText(entry?.label) === target);
+  if (index === -1) return { profile, updated: false, reason: "entry not found" };
+
+  const entry = entries[index];
+  const next = { ...entry };
+  for (const [field, value] of [["company", company], ["role", role], ["dates", dates]]) {
+    const clean = cleanText(value);
+    if (clean && !next[field]) next[field] = clean;
+  }
+  // Recomposition is safe because the entry was FOUND by the importer's own
+  // label: an entry the user has renamed no longer matches `ownerLabel`, so this
+  // never reaches it (see the "entry not found" path above).
+  if (next.company && next.role) next.label = `${next.company} — ${next.role}`;
+
+  const changed = ENTRY_FIELDS.some((field) => next[field] !== entry[field]) || next.label !== entry.label;
+  if (!changed) return { profile, updated: false, reason: "nothing to apply" };
+
+  const updated = [...entries];
+  updated[index] = next;
+  return { profile: { ...profile, [section]: updated }, updated: true };
+}
+
+/**
  * Facts that were imported from cv.md but never reviewed. Surfaced so a library
  * that is mostly `needs_review` is not mistaken for a reviewed one.
  */

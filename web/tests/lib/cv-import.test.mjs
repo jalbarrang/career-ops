@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { buildReviewInput, parseImportPreview, summarizeImportRun } from "../../src/lib/cv-import.mjs";
+import {
+  applyBlockDecision,
+  buildReviewInput,
+  groupImportBlocks,
+  parseImportPreview,
+  suggestEntryFields,
+  summarizeImportRun,
+} from "../../src/lib/cv-import.mjs";
 
 // Real preview output, trimmed to the shapes that matter: a section the
 // importer treats as flat facts, and an entity section whose headings own them.
@@ -132,4 +139,142 @@ test("the importer's own closing line is what the UI reports", () => {
     "Nothing approved — profile was not changed",
   );
   assert.equal(summarizeImportRun("Import rejected:\n- schema_version must be 1\n"), "Import rejected: schema_version must be 1");
+});
+
+/**
+ * The shape that started this: one real job arrives as three headings because
+ * the parser starts an entity on every non-bullet line, and the facts hang off
+ * the last one (the date range).
+ */
+test("a job split into company / role / dates is one block, owned by the heading that has the facts", () => {
+  const { candidates } = parseImportPreview(PREVIEW);
+  const blocks = groupImportBlocks(candidates);
+
+  const series = blocks.find((block) => block.kind === "entry");
+  assert.deepEqual(series.headingIndices, [1]);
+  assert.equal(series.ownerIndex, 1);
+  assert.deepEqual(series.factIndices, [2, 3]);
+
+  // And the flat sections stay one candidate each.
+  assert.deepEqual(
+    blocks.filter((block) => block.kind === "flat").map((block) => block.factIndices[0]),
+    [0, 6],
+  );
+});
+
+test("consecutive headings fold together, and a later heading with facts starts a new block", () => {
+  const { candidates } = parseImportPreview(
+    [
+      "Found 6 review candidates in cv.md.",
+      "- experiences heading: Acme",
+      "- experiences heading: Senior Engineer:",
+      "- experiences heading: 2024 - 2026",
+      "- experiences: 2024 - 2026: Shipped the editor.",
+      "- experiences heading: Beta",
+      "- experiences: Beta: Did the other thing.",
+    ].join("\n"),
+  );
+
+  const blocks = groupImportBlocks(candidates);
+  assert.equal(blocks.length, 2);
+  assert.deepEqual(blocks[0].labels, ["Acme", "Senior Engineer:", "2024 - 2026"]);
+  assert.deepEqual(blocks[0].factIndices, [3]);
+  assert.equal(blocks[0].ownerIndex, 2); // the dates heading owns the bullet
+  assert.deepEqual(blocks[1].labels, ["Beta"]);
+  assert.equal(blocks[1].ownerIndex, 4);
+});
+
+test("approving a block approves its owner and facts and skips the metadata headings", () => {
+  const { candidates } = parseImportPreview(
+    [
+      "Found 5 review candidates in cv.md.",
+      "- experiences heading: Acme",
+      "- experiences heading: Senior Engineer:",
+      "- experiences heading: 2024 - 2026",
+      "- experiences: 2024 - 2026: Shipped the editor.",
+      "- skills: TypeScript",
+    ].join("\n"),
+  );
+  const blocks = groupImportBlocks(candidates);
+  const decided = applyBlockDecision(blocks[0], "approve", []);
+
+  assert.deepEqual(decided[0], { action: "skip" }); // "Acme" — metadata, would be an empty entry
+  assert.deepEqual(decided[1], { action: "skip" }); // "Senior Engineer:" — same
+  assert.deepEqual(decided[2], { action: "approve" }); // owner
+  assert.deepEqual(decided[3], { action: "approve" }); // its fact
+  assert.equal(decided[4], undefined); // another block, untouched
+
+  // The importer is then told to skip the metadata headings, so none of them
+  // becomes an entry, and no answer is queued for a fact nobody prompts. The
+  // untouched skills candidate still gets its own answer (a default skip) —
+  // every candidate the CLI prompts for is answered, in order.
+  const { stdin, prompted } = buildReviewInput(candidates, decided);
+  assert.deepEqual(prompted, [0, 1, 2, 3, 4]);
+  assert.equal(stdin, "n\nn\ny\ny\nn\n");
+});
+
+test("skipping a block skips every candidate it covers and leaves other blocks alone", () => {
+  const { candidates } = parseImportPreview(PREVIEW);
+  const blocks = groupImportBlocks(candidates);
+  const decided = applyBlockDecision(blocks[1], "skip", []);
+
+  assert.deepEqual(decided[1], { action: "skip" });
+  assert.deepEqual(decided[2], { action: "skip" });
+  assert.deepEqual(decided[3], { action: "skip" });
+  assert.equal(decided[0], undefined); // the summary block is untouched
+});
+
+test("a per-fact edit survives a later block-level change to its siblings", () => {
+  const { candidates } = parseImportPreview(PREVIEW);
+  const blocks = groupImportBlocks(candidates);
+  const withEdit = [];
+  withEdit[2] = { action: "edit", text: "Sharper wording." };
+
+  const decided = applyBlockDecision(blocks[1], "approve", withEdit);
+  // The block click deliberately overwrites its own facts: the user just asked
+  // for the whole block. What matters is that it cannot touch ANOTHER block.
+  assert.deepEqual(decided[2], { action: "approve" });
+  assert.equal(decided[0], undefined);
+});
+
+test("blocks keep the source order when a flat section follows an entry block", () => {
+  const { candidates } = parseImportPreview(
+    [
+      "Found 4 review candidates in cv.md.",
+      "- experiences heading: Acme",
+      "- experiences heading: 2024 - 2026",
+      "- experiences: 2024 - 2026: Shipped the editor.",
+      "- skills: TypeScript",
+    ].join("\n"),
+  );
+  const blocks = groupImportBlocks(candidates);
+  // The open entry block must not be flushed after the flat candidate that
+  // followed it — that reordering is what made a block-level click apply to the
+  // wrong block.
+  assert.deepEqual(
+    blocks.map((block) => block.kind),
+    ["entry", "flat"],
+  );
+  assert.equal(blocks[0].ownerIndex, 1);
+});
+
+test("the role's lines are classified by shape, and only when unambiguous", () => {
+  // The common cv.md shape: company, bolded role with a colon, date range.
+  assert.deepEqual(suggestEntryFields(["Series Entertainment", "Senior Full Stack Engineer:", "March 2025 - September 2026"]), {
+    company: "Series Entertainment",
+    role: "Senior Full Stack Engineer",
+    dates: "March 2025 - September 2026",
+  });
+
+  // A block whose middle line is the date range still classifies: the role is
+  // whichever line is a name, not whichever line came second.
+  assert.deepEqual(suggestEntryFields(["Continuum HQ — Chile", "February 2022 - January 2024", "Placed on the Isapre Esencial account."]), {
+    company: "Continuum HQ — Chile",
+    role: "",
+    dates: "February 2022 - January 2024",
+  });
+
+  // Nothing classifiable: empty fields rather than a guess.
+  assert.deepEqual(suggestEntryFields(["Clients: SoftPatagonia, Valueinnova LLC"]), { company: "", role: "", dates: "" });
+  assert.deepEqual(suggestEntryFields([]), { company: "", role: "", dates: "" });
 });

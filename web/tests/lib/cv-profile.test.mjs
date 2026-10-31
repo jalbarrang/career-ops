@@ -4,6 +4,7 @@ import { test } from "node:test";
 import {
   addEntry,
   addFact,
+  applyImportFields,
   emptyProfile,
   ENTRY_FIELDS,
   ensureShape,
@@ -19,6 +20,7 @@ import {
   totalFacts,
   unverifiedCount,
   updateEntryField,
+  updateEntryLabel,
   updateFactText,
   userEvidence,
 } from "../../src/lib/cv-profile.mjs";
@@ -241,4 +243,55 @@ test("ids are deterministic, differ by scope, and keep the importer's shape", ()
   assert.equal(makeId("skills", ["TypeScript", "", "user-stated x"]), makeId("skills", ["TypeScript", "", "user-stated x"]));
   assert.notEqual(makeId("skills", ["TypeScript", "", "a"]), makeId("skills", ["TypeScript", "", "b"]));
   assert.match(makeId("experiences", ["x"]), /^experiences-[0-9a-f]{12}$/);
+});
+
+test("import fields name the entry and leave a value the user already set alone", () => {
+  const { profile, entryId } = withEntry();
+
+  const named = applyImportFields(profile, {
+    section: "experiences",
+    ownerLabel: "Series Entertainment — Senior Full Stack Engineer",
+    company: "Series Entertainment",
+    role: "Senior Full Stack Engineer",
+    dates: "Mar 2025 – Sep 2026",
+  });
+  assert.equal(named.updated, true);
+  const entry = named.profile.experiences[0];
+  assert.equal(entry.company, "Series Entertainment");
+  assert.equal(entry.role, "Senior Full Stack Engineer");
+  assert.equal(entry.dates, "Mar 2025 – Sep 2026");
+  assert.equal(entry.label, "Series Entertainment — Senior Full Stack Engineer");
+  assert.equal(entry.id, entryId); // the id survives, so facts and selections hold
+
+  // A re-import must not clobber an edit: only empty fields are filled, and the
+  // label follows the role because it is still the importer's own label.
+  const edited = updateEntryField(named.profile, { section: "experiences", entryId, field: "role", value: "Staff Engineer" });
+  const reimported = applyImportFields(edited, { section: "experiences", ownerLabel: entry.label, company: "Other Co", role: "Intern", dates: "2001" });
+  const after = reimported.profile.experiences[0];
+  assert.equal(after.role, "Staff Engineer");
+  assert.equal(after.company, "Series Entertainment");
+  assert.equal(after.dates, "Mar 2025 – Sep 2026");
+  assert.equal(after.label, "Series Entertainment — Staff Engineer");
+
+  // A label the user renamed themselves is theirs. The next import looks the
+  // entry up by the PARSER's label, which no longer matches — so it is left
+  // alone rather than renamed back and rewritten.
+  const renamed = updateEntryLabel(reimported.profile, { section: "experiences", entryId, label: "Series — SSE (contract)" });
+  const again = applyImportFields(renamed, {
+    section: "experiences",
+    ownerLabel: "March 2025 - September 2026",
+    company: "Other Co",
+    role: "Intern",
+  });
+  assert.equal(again.updated, false);
+  assert.equal(again.reason, "entry not found");
+  assert.equal(again.profile.experiences[0].label, "Series — SSE (contract)");
+});
+
+test("an owner label that is not in the profile is reported, not created", () => {
+  const { profile } = withEntry();
+  const result = applyImportFields(profile, { section: "experiences", ownerLabel: "Nope", company: "X" });
+  assert.equal(result.updated, false);
+  assert.equal(result.reason, "entry not found");
+  assert.equal(result.profile.experiences.length, 1);
 });
