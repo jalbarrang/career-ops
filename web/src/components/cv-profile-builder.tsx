@@ -103,6 +103,14 @@ export function CvProfileBuilder() {
   const [draft, setDraft] = useState("");
   const [editingEntry, setEditingEntry] = useState<string | null>(null);
   const [entryDraft, setEntryDraft] = useState("");
+  // Raw text of an entry field while it is being typed into.
+  //
+  // The stored value is normalized (trimmed + whitespace collapsed) on every
+  // change, which is right for the file but wrong for the keyboard: a trailing
+  // space is exactly what you type between two words, so normalizing each
+  // keystroke made "Series Entertainment" impossible to type past "Series".
+  // The draft holds what was typed; the profile holds the normalized version.
+  const [fieldDrafts, setFieldDrafts] = useState<Record<string, string>>({});
   const [newFact, setNewFact] = useState("");
   const [newEntry, setNewEntry] = useState("");
 
@@ -469,7 +477,18 @@ export function CvProfileBuilder() {
                             </div>
                           </div>
                         ) : (
-                          <h2 className="text-sm font-medium text-foreground">{entry.label}</h2>
+                          <h2 className="text-sm font-medium text-foreground">
+                            {/* The role is typed once, in the Role field. The header
+                                shows the composed name as soon as company and role
+                                are both there, so the entry is not "named" and
+                                "rolled" separately. */}
+                            {entry.company && entry.role ? `${entry.company} — ${entry.role}` : entry.label}
+                            {entry.company && entry.role && entry.label !== `${entry.company} — ${entry.role}` && (
+                              <span className="ml-2 text-xs font-normal text-faint" title={entry.label}>
+                                named “{entry.label}”
+                              </span>
+                            )}
+                          </h2>
                         )}
                         <p className="mt-0.5 text-xs text-faint">
                           {entry.facts?.length ?? 0} fact{entry.facts?.length === 1 ? "" : "s"}
@@ -483,22 +502,34 @@ export function CvProfileBuilder() {
                             mandatory before an entry appears at all. */}
                         {!editingEntry && (
                           <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
-                            {ENTRY_FIELDS.map((field) => (
-                              <label key={field} className="text-xs text-faint">
-                                <span className="capitalize">{field}</span>
-                                <input
-                                  value={(entry[field as keyof Entry] as string | undefined) ?? ""}
-                                  onChange={(event) =>
-                                    mutate(updateEntryField(profile, { section, entryId: entry.id, field, value: event.target.value }) as Profile)
-                                  }
-                                  placeholder={field === "company" ? "Acme Inc." : field === "role" ? "Senior Engineer" : field === "dates" ? "2024 – 2026" : "Remote"}
-                                  className={cn(
-                                    "mt-0.5 w-full rounded-lg border bg-surface/60 px-2 py-1 text-xs text-foreground outline-none placeholder:text-faint focus:border-brand/40",
-                                    (field === "company" || field === "role") && !entry[field] ? "border-amber-500/40" : "border-border",
-                                  )}
-                                />
-                              </label>
-                            ))}
+                            {ENTRY_FIELDS.map((field) => {
+                              const draftKey = `${entry.id}\u0000${field}`;
+                              return (
+                                <label key={field} className="text-xs text-faint">
+                                  <span className="capitalize">{field}</span>
+                                  <input
+                                    value={fieldDrafts[draftKey] ?? ((entry[field as keyof Entry] as string | undefined) ?? "")}
+                                    onChange={(event) => {
+                                      const raw = event.target.value;
+                                      setFieldDrafts((current) => ({ ...current, [draftKey]: raw }));
+                                      mutate(updateEntryField(profile, { section, entryId: entry.id, field, value: raw }) as Profile);
+                                    }}
+                                    onBlur={() =>
+                                      setFieldDrafts((current) => {
+                                        const next = { ...current };
+                                        delete next[draftKey];
+                                        return next;
+                                      })
+                                    }
+                                    placeholder={field === "company" ? "Acme Inc." : field === "role" ? "Senior Engineer" : field === "dates" ? "2024 – 2026" : "Remote"}
+                                    className={cn(
+                                      "mt-0.5 w-full rounded-lg border bg-surface/60 px-2 py-1 text-xs text-foreground outline-none placeholder:text-faint focus:border-brand/40",
+                                      (field === "company" || field === "role") && !entry[field] ? "border-amber-500/40" : "border-border",
+                                    )}
+                                  />
+                                </label>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
