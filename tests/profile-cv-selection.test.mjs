@@ -24,6 +24,14 @@ function input() {
     },
   };
 }
+/**
+ * FORK (schema v2): a profile experience is a company with nested roles, and a
+ * CV slot binds to ONE role. These helpers keep the assertions talking about a
+ * role, which is the thing selection actually resolves.
+ */
+const roles = (x) => x.profile.experiences[0].roles;
+const role = (x, i) => roles(x)[i];
+
 function check(name, run) {
   try { run(); pass(`profile selection: ${name}`); }
   catch (error) { fail(`profile selection: ${name}: ${error.stack}`); }
@@ -53,7 +61,7 @@ const invalid = [
   ['unknown schema', x => { x.selection.schema = 'v2'; }, 'selection-schema'],
   ['empty bindings', x => { x.selection.bindings = []; }, 'empty-bindings'],
   ['missing entry', x => { x.selection.bindings[0].profile_entry_id = 'missing'; }, 'missing-entry'],
-  ['unreviewed entry', x => { x.profile.experiences[0].review_status = 'needs_review'; }, 'entry-not-verified'],
+  ['unreviewed role', x => { role(x, 0).review_status = 'needs_review'; }, 'entry-not-verified'],
   ['missing fact', x => { x.selection.bindings[0].fact_ids = ['missing']; }, 'missing-or-wrongly-bound-fact'],
   ['wrong same-label entry', x => { x.selection.bindings[0].fact_ids = ['fact-earlier']; }, 'missing-or-wrongly-bound-fact'],
   ['unreviewed fact', x => { x.selection.bindings[0].fact_ids = ['fact-unreviewed']; }, 'fact-not-verified'],
@@ -63,9 +71,9 @@ const invalid = [
   ['wrong slot anchor', x => { x.selection.bindings[0].target.experience_index = 1; }, 'target-anchor-changed'],
   ['duplicate slot', x => { x.selection.bindings.push(structuredClone(x.selection.bindings[0])); }, 'duplicate-target'],
   ['changed base', x => { x.basePayload.summary = 'A changed summary'; }, 'base-payload-changed'],
-  ['ambiguous global IDs', x => { x.profile.experiences[1].id = x.profile.experiences[0].id; }, 'invalid-profile'],
-  ['ambiguous fact IDs', x => { x.profile.experiences[1].facts[0].id = 'fact-team'; }, 'invalid-profile'],
-  ['malformed evidence', x => { x.profile.experiences[0].facts[0].evidence.line = 0; }, 'invalid-profile'],
+  ['ambiguous global IDs', x => { role(x, 1).id = role(x, 0).id; }, 'invalid-profile'],
+  ['ambiguous fact IDs', x => { role(x, 1).facts[0].id = 'fact-team'; }, 'invalid-profile'],
+  ['malformed evidence', x => { role(x, 0).facts[0].evidence.line = 0; }, 'invalid-profile'],
   ['existing HTML schema errors', x => { delete x.basePayload.experience[0].company; }, 'invalid-payload'],
 ];
 for (const [name, change, code] of invalid) check(`rejects ${name}`, () => {
@@ -82,11 +90,11 @@ check('diagnostics identify the selected entry, fact and target slot', () => {
 });
 
 for (const [name, change] of [
-  ['selected text', x => { x.profile.experiences[0].facts[0].text = 'Changed wording.'; }],
-  ['selected evidence quote', x => { x.profile.experiences[0].facts[0].evidence.quote = 'Changed source quote.'; }],
-  ['selected evidence source', x => { x.profile.experiences[0].facts[0].evidence.source = 'other.md'; }],
-  ['entry identity wording', x => { x.profile.experiences[0].label = 'Changed entry'; }],
-  ['entry evidence', x => { x.profile.experiences[0].evidence.source = 'other.md'; }],
+  ['selected text', x => { role(x, 0).facts[0].text = 'Changed wording.'; }],
+  ['selected evidence quote', x => { role(x, 0).facts[0].evidence.quote = 'Changed source quote.'; }],
+  ['selected evidence source', x => { role(x, 0).facts[0].evidence.source = 'other.md'; }],
+  ['entry identity wording', x => { role(x, 0).name = 'Changed role'; }],
+  ['entry evidence', x => { role(x, 0).evidence.source = 'other.md'; }],
   ['selection order', x => { x.selection.bindings[0].fact_ids.reverse(); }],
   ['explicit rebinding', x => {
     x.selection.bindings[0].target = { experience_index: 1, entry_sha256: selectionDigest(x.basePayload.experience[1]) };
@@ -101,20 +109,20 @@ for (const [name, change] of [
 check('verification rejects a revoked review even when mapping remains unchanged', () => {
   const original = input();
   const prepared = prepareCvSelection(original);
-  original.profile.experiences[0].facts[0].review_status = 'needs_review';
+  role(original, 0).facts[0].review_status = 'needs_review';
   rejectsCode(() => verifyCvSelection(original, prepared), 'fact-not-verified');
 });
 
 check('line shifts, unrelated valid edits, and Profile reordering keep selections valid', () => {
   const original = input();
   const prepared = prepareCvSelection(original);
-  original.profile.experiences[0].evidence.line += 10;
-  original.profile.experiences[0].facts.forEach(fact => { fact.evidence.line += 10; });
-  original.profile.experiences[0].facts[2].text = 'Changed unselected fact.';
+  role(original, 0).evidence.line += 10;
+  role(original, 0).facts.forEach(fact => { fact.evidence.line += 10; });
+  role(original, 0).facts[2].text = 'Changed unselected fact.';
   original.profile.candidate.name = 'Changed unused identity';
-  original.profile.experiences[1].label = 'Unrelated entry edit';
-  original.profile.experiences.reverse();
-  original.profile.experiences.forEach(entry => entry.facts.reverse());
+  role(original, 1).name = 'Unrelated role edit';
+  roles(original).reverse();
+  roles(original).forEach(entry => entry.facts.reverse());
   assert.equal(verifyCvSelection(original, prepared), true);
 });
 
@@ -195,8 +203,8 @@ try {
       else process.env.CAREER_OPS_ROOT = previous;
     }
     assert.throws(() => loadValidatedProfile({ file: join(root, 'missing.yml') }), { code: 'ENOENT' });
-    save('invalid-reader.yml', { schema_version: 2 });
-    assert.throws(() => loadValidatedProfile({ file: join(root, 'invalid-reader.yml') }), /schema_version must be 1/);
+    save('invalid-reader.yml', { schema_version: 3 });
+    assert.throws(() => loadValidatedProfile({ file: join(root, 'invalid-reader.yml') }), /schema_version must be 2/);
   });
 
   check('real prepare/verify CLIs run offline outside the checkout', () => {
@@ -230,7 +238,7 @@ try {
     save('prepared.json', prepared);
     assert.match(cli('career-profile.mjs', ['verify-cv', ...args, '--prepared', 'prepared.json'], 1).stderr, /prepared-payload-mismatch/);
     cli('career-profile.mjs', ['prepare-cv', ...args, '--profile', 'absent.yml'], 1);
-    save('invalid.yml', { schema_version: 2 });
+    save('invalid.yml', { schema_version: 3 });
     cli('career-profile.mjs', ['prepare-cv', ...args, '--profile', 'invalid.yml'], 1);
     for (const bad of [['--payload'], ['--payload='], ['--bogus'], [...args, '--payload', 'base.json'], [...args, 'extra.json'], ['--payload', 'base.json']]) {
       cli('career-profile.mjs', ['prepare-cv', ...bad], 1);
@@ -248,7 +256,7 @@ try {
 
   check('verified Profile text still fails the real PDF fact gate when primary sources disagree', () => {
     const inflated = structuredClone(original);
-    inflated.profile.experiences[0].facts[0].text = 'Managed 999 people.';
+    role(inflated, 0).facts[0].text = 'Managed 999 people.';
     assert.deepEqual(validateProfile(inflated.profile), []);
     const prepared = prepareCvSelection(inflated);
     assert.equal(verifyCvSelection(inflated, prepared), true);

@@ -9,9 +9,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { acquirePipelineLock } from '../pipeline-lock.mjs';
 import { describeSpawn } from './helpers/describe-spawn.mjs';
 
+// FORK: schema v2. An experience is a COMPANY with nested ROLES, so the
+// assertions reach through `experiences[i].roles[j]`. Every scenario upstream
+// covers for v1 is kept — the rules did not change, only where the facts live.
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const CLI = join(ROOT, 'career-profile.mjs');
 const CV = `# Candidate\n\n## Experience\n### Acme — Analyst\n- Built dashboards with SQL.\n\n## Skills\n- SQL, Excel\n`;
+
+/** First role of the first company — the common single-role assertion. */
+const firstRole = (profile) => profile.experiences[0].roles[0];
 
 function withProfileRoot(run) {
   const root = mkdtempSync(join(tmpdir(), 'career-profile-test-'));
@@ -34,12 +40,54 @@ test('reviewed import consumes piped answers one line at a time and writes appro
     assert.equal(result.error, undefined, result.error?.message);
     assert.equal(result.status, 0, describeSpawn(result));
     const profile = yaml.load(readFileSync(join(root, 'data', 'career-profile.yml'), 'utf8'));
-    assert.equal(profile.experiences[0].facts[0].text, 'Built dashboards with SQL.');
+    assert.equal(profile.schema_version, 2);
+    assert.equal(firstRole(profile).facts[0].text, 'Built dashboards with SQL.');
     assert.equal(profile.skills.length, 2);
     assert.equal(profile.skills[0].review_status, 'verified');
     assert.equal(profile.skills[0].evidence.quote, '- SQL, Excel');
     const validation = runCli(root, ['validate']);
     assert.equal(validation.status, 0, describeSpawn(validation));
+  });
+});
+
+test('a role block is classified into company, role and period', () => {
+  withProfileRoot((root) => {
+    writeFileSync(join(root, 'cv.md'), [
+      '# Candidate', '', '## Experience',
+      '### Series Entertainment', '**Senior Full Stack Engineer:**', 'March 2025 - September 2026',
+      '- Shipped Creator Quests.', '- Built the publishing pipeline.', '',
+    ].join('\n'));
+    const result = runCli(root, ['import', 'cv.md', '--review'], 'y\ny\ny\ny\ny\n');
+    assert.equal(result.status, 0, describeSpawn(result));
+    const profile = yaml.load(readFileSync(join(root, 'data', 'career-profile.yml'), 'utf8'));
+
+    assert.equal(profile.experiences.length, 1);
+    assert.equal(profile.experiences[0].company.name, 'Series Entertainment');
+    const role = firstRole(profile);
+    assert.equal(role.name, 'Senior Full Stack Engineer'); // the trailing colon is trimmed
+    assert.equal(role.period, 'March 2025 - September 2026');
+    assert.deepEqual(role.facts.map((fact) => fact.text), ['Shipped Creator Quests.', 'Built the publishing pipeline.']);
+  });
+});
+
+test('two roles at one company become one company with two roles, in CV order', () => {
+  withProfileRoot((root) => {
+    writeFileSync(join(root, 'cv.md'), [
+      '# Candidate', '', '## Experience',
+      '### Acme', '**Senior Engineer**', '2023 - 2026', '- Led the platform.',
+      '### Acme', '**Engineer**', '2021 - 2023', '- Shipped the editor.', '', '',
+    ].join('\n'));
+    const result = runCli(root, ['import', 'cv.md', '--review'], Array(11).fill('y').join('\n'));
+    assert.equal(result.status, 0, describeSpawn(result));
+    const profile = yaml.load(readFileSync(join(root, 'data', 'career-profile.yml'), 'utf8'));
+
+    assert.equal(profile.experiences.length, 1, 'the same employer is one company');
+    const roles = profile.experiences[0].roles;
+    assert.equal(roles.length, 2);
+    assert.deepEqual(roles.map((role) => role.name), ['Senior Engineer', 'Engineer']);
+    assert.deepEqual(roles.map((role) => role.period), ['2023 - 2026', '2021 - 2023']);
+    assert.deepEqual(roles.map((role) => role.facts[0].text), ['Led the platform.', 'Shipped the editor.']);
+    assert.notEqual(roles[0].id, roles[1].id);
   });
 });
 
@@ -52,9 +100,9 @@ test('re-import after line shifts updates evidence without duplicating approved 
     assert.equal(second.status, 0, describeSpawn(second));
     const profile = yaml.load(readFileSync(join(root, 'data', 'career-profile.yml'), 'utf8'));
     assert.equal(profile.experiences.length, 1);
-    assert.equal(profile.experiences[0].facts.length, 1);
+    assert.equal(firstRole(profile).facts.length, 1);
     assert.equal(profile.skills.length, 2);
-    assert.equal(profile.experiences[0].facts[0].evidence.line, 7);
+    assert.equal(firstRole(profile).facts[0].evidence.line, 7);
   });
 });
 
@@ -67,10 +115,20 @@ test('preview does not create a profile, and validation rejects missing evidence
       { code: 'ENOENT' });
 
     const invalidPath = join(root, 'invalid.yml');
-    writeFileSync(invalidPath, `schema_version: 1\ncandidate: {}\nsummary: []\nexperiences: []\nprojects: []\neducation: []\ncertifications: []\nskills:\n  - id: skill-1\n    text: SQL\n    review_status: verified\n    evidence:\n      source: cv.md\n`);
+    writeFileSync(invalidPath, `schema_version: 2\ncandidate: {}\nsummary: []\nexperiences: []\nprojects: []\neducation: []\ncertifications: []\nskills:\n  - id: skill-1\n    text: SQL\n    review_status: verified\n    evidence:\n      source: cv.md\n`);
     const invalid = runCli(root, ['validate', invalidPath]);
     assert.equal(invalid.status, 1);
     assert.match(invalid.stderr, /evidence requires source, positive line, and quote/);
+  });
+});
+
+test('a v1 profile is rejected, so the fork cannot silently read the old shape', () => {
+  withProfileRoot((root) => {
+    const v1Path = join(root, 'v1.yml');
+    writeFileSync(v1Path, `schema_version: 1\ncandidate: {}\nsummary: []\nexperiences: []\nprojects: []\neducation: []\ncertifications: []\nskills: []\n`);
+    const result = runCli(root, ['validate', v1Path]);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /schema_version must be 2/);
   });
 });
 
@@ -90,42 +148,45 @@ test('source paths outside the data root retain their complete absolute path', (
   });
 });
 
-test('identical statements under different experience entries retain distinct IDs', () => {
+test('identical statements under different companies retain distinct IDs', () => {
   withProfileRoot((root) => {
     const cv = `# Candidate\n## Experience\n### North Co — Analyst\n- Shipped reports.\n### South Co — Analyst\n- Shipped reports.\n`;
     writeFileSync(join(root, 'cv.md'), cv);
     const result = runCli(root, ['import', 'cv.md', '--review'], 'y\ny\ny\ny\n');
     assert.equal(result.status, 0, describeSpawn(result));
     const profile = yaml.load(readFileSync(join(root, 'data', 'career-profile.yml'), 'utf8'));
-    const ids = profile.experiences.map((entry) => entry.facts[0].id);
+    const ids = profile.experiences.map((company) => company.roles[0].facts[0].id);
     assert.equal(profile.experiences.length, 2);
     assert.notEqual(ids[0], ids[1]);
+    assert.notEqual(profile.experiences[0].roles[0].id, profile.experiences[1].roles[0].id);
   });
 });
 
-test('repeated facts are deduplicated and same-title entries with different facts stay distinct', () => {
+test('repeated facts are deduplicated, and two untitled roles at one company stay distinct', () => {
   withProfileRoot((root) => {
     const cv = `# Candidate\n## Experience\n### Acme — Analyst\n- Built reports.\n- Built reports.\n### Acme — Analyst\n- Built dashboards.\n## Skills\n- SQL, SQL\n`;
     writeFileSync(join(root, 'cv.md'), cv);
     const first = runCli(root, ['import', 'cv.md', '--review'], 'y\ny\ny\ny\ny\n');
     assert.equal(first.status, 0, describeSpawn(first));
     const before = yaml.load(readFileSync(join(root, 'data', 'career-profile.yml'), 'utf8'));
-    assert.equal(before.experiences.length, 2);
-    assert.notEqual(before.experiences[0].id, before.experiences[1].id);
-    assert.equal(before.experiences[0].facts.length, 1);
+    assert.equal(before.experiences.length, 1);
+    assert.equal(before.experiences[0].roles.length, 2);
+    assert.notEqual(before.experiences[0].roles[0].id, before.experiences[0].roles[1].id);
+    assert.equal(before.experiences[0].roles[0].facts.length, 1);
     assert.equal(before.skills.length, 1);
 
     writeFileSync(join(root, 'cv.md'), `<!-- moved -->\n${cv}`);
     const second = runCli(root, ['import', 'cv.md', '--review'], 'y\ny\ny\ny\ny\n');
     assert.equal(second.status, 0, describeSpawn(second));
     const after = yaml.load(readFileSync(join(root, 'data', 'career-profile.yml'), 'utf8'));
-    assert.equal(after.experiences.length, 2);
-    assert.deepEqual(after.experiences.map((entry) => entry.facts[0].text).sort(), ['Built dashboards.', 'Built reports.']);
+    assert.equal(after.experiences.length, 1);
+    assert.equal(after.experiences[0].roles.length, 2);
+    assert.deepEqual(after.experiences[0].roles.map((role) => role.facts[0].text).sort(), ['Built dashboards.', 'Built reports.']);
     assert.equal(after.skills.length, 1);
   });
 });
 
-test('reordering same-title entries keeps each identity attached to its facts on re-import', () => {
+test('reordering same-title roles keeps each identity attached to its facts on re-import', () => {
   withProfileRoot((root) => {
     const firstOrder = `# Candidate\n## Experience\n### Acme — Analyst\n- Built reports.\n### Acme — Analyst\n- Built dashboards.\n`;
     writeFileSync(join(root, 'cv.md'), firstOrder);
@@ -133,27 +194,34 @@ test('reordering same-title entries keeps each identity attached to its facts on
     assert.equal(first.status, 0, describeSpawn(first));
     const profilePath = join(root, 'data', 'career-profile.yml');
     const initial = yaml.load(readFileSync(profilePath, 'utf8'));
-    const idsByFact = new Map(initial.experiences.map((entry) => [entry.facts[0].text, entry.id]));
-    initial.experiences.forEach((entry, index) => {
-      entry.id = `legacy-experience-${index}`;
-      entry.facts.forEach((fact, factIndex) => { fact.id = `legacy-fact-${index}-${factIndex}`; });
+    initial.experiences.forEach((company, index) => {
+      company.id = `legacy-company-${index}`;
+      company.roles.forEach((role, roleIndex) => {
+        role.id = `legacy-role-${roleIndex}`;
+        // The fact id must vary by ROLE, not just by company: v1 had one entry per
+        // block, v2 nests two roles under one company, so a company-indexed id
+        // collides and the profile no longer validates.
+        role.facts.forEach((fact, factIndex) => { fact.id = `legacy-fact-${roleIndex}-${factIndex}`; });
+      });
     });
     writeFileSync(profilePath, yaml.dump(initial, { noRefs: true }));
+    // v2 keeps role ids across a re-import (a saved CV selection is bound to
+    // them), so the reference is the ids as they stand before the reorder.
+    const idsByFact = new Map(initial.experiences[0].roles.map((role) => [role.facts[0].text, role.id]));
 
     writeFileSync(join(root, 'cv.md'), `# Candidate\n## Experience\n### Acme — Analyst\n- Built dashboards.\n### Acme — Analyst\n- Built reports.\n`);
     const second = runCli(root, ['import', 'cv.md', '--review'], 'y\ny\ny\ny\n');
     assert.equal(second.status, 0, describeSpawn(second));
-    const reordered = yaml.load(readFileSync(join(root, 'data', 'career-profile.yml'), 'utf8'));
-    assert.equal(reordered.experiences.length, 2);
-    assert.deepEqual(reordered.experiences.map((entry) => entry.facts.map((fact) => fact.text)).sort(), [
-      ['Built dashboards.'],
-      ['Built reports.'],
-    ]);
-    for (const entry of reordered.experiences) assert.equal(entry.id, idsByFact.get(entry.facts[0].text));
+    const reordered = yaml.load(readFileSync(profilePath, 'utf8'));
+    assert.equal(reordered.experiences.length, 1);
+    assert.equal(reordered.experiences[0].roles.length, 2);
+    for (const role of reordered.experiences[0].roles) {
+      assert.equal(role.id, idsByFact.get(role.facts[0].text), 'a role id must follow its facts, not its position');
+    }
   });
 });
 
-test('skipping an experience heading also skips its facts', () => {
+test('skipping a company line also skips its facts', () => {
   withProfileRoot((root) => {
     const result = runCli(root, ['import', 'cv.md', '--review'], 'n\ny\ny\n');
     assert.equal(result.status, 0, describeSpawn(result));
@@ -171,14 +239,16 @@ test('re-import applies explicit wording edits but plain approval preserves prio
     const edited = runCli(root, ['import', 'cv.md', '--review'], 'e\nAcme — Lead Analyst\ne\nDesigned verified dashboards.\nn\nn\n');
     assert.equal(edited.status, 0, describeSpawn(edited));
     let profile = yaml.load(readFileSync(join(root, 'data', 'career-profile.yml'), 'utf8'));
-    assert.equal(profile.experiences[0].label, 'Acme — Lead Analyst');
-    assert.equal(profile.experiences[0].facts[0].text, 'Designed verified dashboards.');
+    assert.equal(profile.experiences.length, 1, 'an edited company name must not create a second company');
+    assert.equal(profile.experiences[0].company.name, 'Acme — Lead Analyst');
+    assert.equal(firstRole(profile).facts[0].text, 'Designed verified dashboards.');
 
     const approvedAgain = runCli(root, ['import', 'cv.md', '--review'], 'y\ny\nn\nn\n');
     assert.equal(approvedAgain.status, 0, describeSpawn(approvedAgain));
     profile = yaml.load(readFileSync(join(root, 'data', 'career-profile.yml'), 'utf8'));
-    assert.equal(profile.experiences[0].label, 'Acme — Lead Analyst');
-    assert.equal(profile.experiences[0].facts[0].text, 'Designed verified dashboards.');
+    assert.equal(profile.experiences.length, 1);
+    assert.equal(profile.experiences[0].company.name, 'Acme — Lead Analyst');
+    assert.equal(firstRole(profile).facts[0].text, 'Designed verified dashboards.');
   });
 });
 
