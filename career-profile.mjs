@@ -459,6 +459,10 @@ async function doImport(args) {
       if (entry.fact && entry.item && skippedEntities.has(entry.item.id)) continue;
 
       if (entry.key === 'experiences' && entry.line) {
+        // A dropped block is done: the CLI must not prompt its remaining lines,
+        // or the answers a caller queued for them land on the NEXT block — the
+        // desync that once wrote one employer's bullets onto another.
+        if (skippedBlocks.has(entry.block)) continue;
         const target = {
           id: `${entry.block.id}:${entry.index}`,
           text: entry.line.text,

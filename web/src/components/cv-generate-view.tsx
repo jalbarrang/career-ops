@@ -4,13 +4,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, CircleAlert, Download, Eye, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { allRoles } from "@/lib/cv-profile.mjs";
 
 type Fact = { id: string; text: string; review_status?: string };
-type Entry = { id: string; label: string; company?: string; role?: string; location?: string; dates?: string; facts?: Fact[] };
+type Role = { id: string; name?: string; period?: string; location?: string; facts?: Fact[] };
+type Company = { id: string; company?: { name?: string }; roles?: Role[] };
+type Entry = { id: string; label: string; facts?: Fact[] };
+type RoleRef = { company: Company; role: Role };
+const pickableRoles = (profile: Profile) => allRoles(profile) as RoleRef[];
 
 type Profile = {
   summary: Fact[];
-  experiences: Entry[];
+  experiences: Company[];
   projects: Entry[];
   education: Entry[];
   certifications: Fact[];
@@ -57,10 +62,12 @@ export function CvGenerateView() {
       setProfile(body.profile);
       // Start with the newest role pre-selected, and everything under it — the
       // common case is "the top of my history", not an empty grid.
-      const first = body.profile.experiences?.[0];
-      if (first) {
-        setEntryFacts({ [first.id]: (first.facts ?? []).map((fact) => fact.id) });
-        setLabel(first.company ?? first.label);
+      // v2: roles live under companies, so the first selectable thing is a role.
+      const firstCompany = body.profile.experiences?.[0];
+      const firstRole = firstCompany?.roles?.[0];
+      if (firstRole) {
+        setEntryFacts({ [firstRole.id]: (firstRole.facts ?? []).map((fact) => fact.id) });
+        setLabel([firstCompany?.company?.name, firstRole.name].filter(Boolean).join(' — ') || 'cv');
       }
     } catch {
       setError("Couldn’t reach the server.");
@@ -237,18 +244,19 @@ export function CvGenerateView() {
 
             <section className="rounded-2xl border border-border bg-surface/30 p-3">
               <h2 className="text-sm font-medium text-foreground">Roles</h2>
-              {profile.experiences.length === 0 && <p className="mt-1 text-xs text-faint">No roles recorded yet.</p>}
+              {pickableRoles(profile).length === 0 && <p className="mt-1 text-xs text-faint">No roles recorded yet.</p>}
               <ul className="mt-2 space-y-2">
-                {profile.experiences.map((entry) => {
+                {pickableRoles(profile).map(({ company, role: entry }) => {
+                  const employer = company.company?.name ?? '';
                   const picked = entryFacts[entry.id] ?? [];
-                  const canRender = Boolean(entry.company && entry.role);
+                  const canRender = Boolean(employer && entry.name);
                   return (
                     <li key={entry.id} className={cn("rounded-xl border p-2", picked.length > 0 ? "border-brand/40 bg-brand-soft/30" : "border-border")}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="truncate text-sm text-foreground">{entry.label}</p>
+                          <p className="truncate text-sm text-foreground">{[entry.name || "(untitled role)", employer].filter(Boolean).join(" · ")}</p>
                           <p className="text-xs text-faint">
-                            {canRender ? `${entry.company} · ${entry.role}` : "needs company and role in the profile builder"}
+                            {canRender ? `${entry.period ?? "no dates"}` : "needs a company and a role name in the profile builder"}
                             {!canRender && <span className="ml-1 text-amber-600 dark:text-amber-400">·</span>}
                           </p>
                         </div>

@@ -128,91 +128,56 @@ export function parseImportPreview(stdout = "") {
  * @returns {{ stdin: string, prompted: number[], swallowed: number[] }}
  */
 export function buildReviewInput(candidates = [], decisions = []) {
-  const swallowedHeadings = new Set();
   const prompted = [];
   const swallowed = [];
   /** @type {string[]} */
   const lines = [];
 
-  candidates.forEach((candidate, index) => {
-    const section = candidate.section;
-    const parent = candidate.parent;
-
-    // Facts under a heading the user skipped: the CLI never prompts for these.
-    if (!candidate.isHeading && parent !== null) {
-      const entityKey = `${section}\0${parent}`;
-      if (swallowedHeadings.has(entityKey)) {
-        swallowed.push(index);
+  const push = (decision) => {
+    const action = decision?.action ?? "skip";
+    if (action === "edit") {
+      const text = String(decision?.text ?? "").trim();
+      // A blank rewrite cancels in the CLI and re-prompts, which would desync
+      // every answer after it. Treat it as a skip instead of sending it.
+      if (text) {
+        lines.push("e", text);
         return;
       }
     }
-
-    const decision = decisions[index];
-    const action = decision?.action ?? "skip";
-
-    // Known limitation: headings are matched by label, the one identity the
-    // preview prints. A cv.md with two identically-labelled entries in one
-    // section (the same company twice) would fold both into one skip. The CLI
-    // itself keys on entry id and would not; closing this properly needs the
-    // preview to carry ids, which is a core change to a manifest-owned file.
-    if (action === "skip" && candidate.isHeading) {
-      swallowedHeadings.add(`${section}\0${candidate.text}`);
-    }
-
-    prompted.push(index);
-
-    if (action === "edit") {
-      const text = (decision?.text ?? "").trim();
-      // A blank rewrite cancels in the CLI and re-prompts, which would desync
-      // every answer after it. Treat it as a skip instead of sending it.
-      if (!text) {
-        lines.push("n");
-      } else {
-        lines.push("e", text);
-      }
-      return;
-    }
-
     lines.push(action === "approve" ? "y" : "n");
-  });
+  };
+
+  // Answered per BLOCK, because the importer prompts per block: it walks a
+  // block's lines and then its facts. A block whose first line is skipped is
+  // dropped whole — the CLI does not prompt the rest of it — so sending answers
+  // for those would shift every later decision onto the wrong row. That is not
+  // hypothetical: it wrote one job's bullets onto another employer during this
+  // fork's own seeding.
+  for (const block of groupImportBlocks(candidates)) {
+    const first = block.kind === "flat" ? block.factIndices[0] : block.headingIndices[0];
+    const firstDecision = decisions[first];
+    const dropped = block.kind === "entry" && (firstDecision?.action ?? "skip") === "skip";
+
+    prompted.push(first);
+    push(firstDecision);
+    if (dropped) {
+      swallowed.push(...block.headingIndices.slice(1), ...block.factIndices);
+      continue;
+    }
+    for (const index of block.headingIndices.slice(1)) {
+      prompted.push(index);
+      push(decisions[index]);
+    }
+    for (const index of block.factIndices) {
+      if (block.kind === "flat") continue;
+      prompted.push(index);
+      push(decisions[index]);
+    }
+  }
 
   return { stdin: lines.length > 0 ? `${lines.join("\n")}\n` : "", prompted, swallowed };
 }
 
-/**
- * Group parsed candidates into the units a person actually reviews.
- *
- * The importer's parser is heading-based and conservative: in an entity section
- * EVERY non-bullet line starts a new entity. A normal CV block
- *
- *     ### Series Entertainment
- *     **Senior Full Stack Engineer:**
- *     March 2025 - September 2026
- *     - Shipped …
- *
- * therefore arrives as three heading candidates — company, role, dates — and all
- * the facts hang off the last one. Reviewed candidate-by-candidate that reads as
- * three weird entries, two of them empty, and approving all three writes exactly
- * that into the profile.
- *
- * This groups consecutive headings plus the facts after them into one block with
- * ONE owner: the last heading, which is the entity the facts were attached to.
- * The earlier headings are metadata for the same role, so approving the block
- * approves the owner and skips them — the profile gets one entry instead of
- * three, and no empty ones.
- *
- * @typedef {object} ImportBlock
- * @property {string} key
- * @property {"entry" | "flat"} kind
- * @property {string} section
- * @property {number[]} headingIndices - every heading folded into this block
- * @property {number} ownerIndex - the heading that owns the facts, or -1
- * @property {number[]} factIndices
- * @property {string[]} labels - the heading texts, in order
- *
- * @param {Candidate[]} [candidates]
- * @returns {ImportBlock[]}
- */
 export function groupImportBlocks(candidates = []) {
   /** @type {ImportBlock[]} */
   const blocks = [];
@@ -317,10 +282,10 @@ export function suggestEntryFields(labels = []) {
 /**
  * The per-candidate decisions one block-level choice implies.
  *
- * Approving a block approves its owner heading and its facts, and SKIPS the
- * metadata headings — those would otherwise become empty entries. Skipping a
- * block skips everything it covers. Indices outside the block are untouched, so
- * a per-fact override made earlier survives a later block click.
+ * Approving a block approves every line and fact it covers — under v2 the
+ * company line is content, not metadata, so all of them are meaningful.
+ * Skipping a block skips all of them, and the importer then drops the block
+ * whole. Indices outside the block are untouched.
  *
  * @param {ImportBlock} block
  * @param {"approve" | "skip"} action
@@ -333,11 +298,11 @@ export function applyBlockDecision(block, action, decisions = []) {
     next[index] = decision;
   };
 
-  for (const index of block.headingIndices) set(index, { action: index === block.ownerIndex ? action : "skip" });
+  // Every line of the block is content under v2 — company, role and period —
+  // so a block decision applies to all of them, not just the owner. Skipping
+  // them is what made the importer drop the employer entirely.
+  for (const index of block.headingIndices) set(index, { action });
   for (const index of block.factIndices) set(index, { action });
-
-  // A flat block is a single candidate and owns nothing else.
-  if (block.kind === "flat") for (const index of block.factIndices) set(index, { action });
 
   return next;
 }

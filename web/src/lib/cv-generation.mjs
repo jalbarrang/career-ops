@@ -6,18 +6,24 @@
  * and never decides whether the result is valid. `build-cv-html.mjs` does that,
  * and its rejection is what the generation screen reports.
  *
+ * FORK: schema v2. A profile experience is a company with nested roles, and a
+ * CV slot is one ROLE — so a selection names role ids and this flattens them
+ * back into the payload's flat `experience[]`, taking the company name from the
+ * parent. Two roles at one employer therefore become two payload entries, which
+ * is what the renderer expects today.
+ *
  * Two field-name traps this exists to close, both silent:
  *
  *   - config/profile.yml stores the candidate as `full_name`, while the CV
  *     template reads `candidate.name`. Passing the profile straight through
  *     renders a CV with no name on it.
  *   - an `experience` entry needs `company` AND `role` or the builder drops the
- *     whole entry (see ENTRY_FIELD_SPECS.html.experience.required). The importer
- *     gives entries only a free-text `label`, so anything unbound here is
- *     reported as a gap instead of vanishing from the PDF.
+ *     whole entry (see ENTRY_FIELD_SPECS.html.experience.required). Anything
+ *     unbound here is reported as a gap instead of vanishing from the PDF.
  *
- * Plain .mjs, no I/O: the route reads the files, node --test asserts the mapping.
+ * Plain .mjs, no I/O and no `@/` aliases: the screen imports it, node --test too.
  */
+import { allRoles, ensureShape } from "./cv-profile.mjs";
 
 /** Candidate keys the CV template renders, mapped from config/profile.yml. */
 export function candidateFromProfileConfig(profileConfig = {}) {
@@ -49,46 +55,45 @@ export function candidateFromProfileConfig(profileConfig = {}) {
   return out;
 }
 
-/** Facts by id, from a flat section or every entry of an entity section. */
+/** Facts by id across every scope of the profile. */
 function factIndex(profile) {
   const index = new Map();
   const add = (fact) => {
     if (fact && typeof fact.id === "string") index.set(fact.id, fact);
   };
+  const shaped = ensureShape(profile);
   for (const section of ["summary", "certifications", "skills"]) {
-    for (const fact of Array.isArray(profile?.[section]) ? profile[section] : []) add(fact);
+    for (const fact of shaped[section]) add(fact);
   }
-  for (const section of ["experiences", "projects", "education"]) {
-    for (const entry of Array.isArray(profile?.[section]) ? profile[section] : []) {
-      for (const fact of Array.isArray(entry?.facts) ? entry.facts : []) add(fact);
-    }
+  for (const section of ["projects", "education"]) {
+    for (const entry of shaped[section]) for (const fact of entry.facts ?? []) add(fact);
   }
+  for (const { role } of allRoles(shaped)) for (const fact of role.facts ?? []) add(fact);
   return index;
 }
 
 /**
  * @typedef {object} Selection
  * @property {string[]} [summaryIds]      facts from `summary`
- * @property {{ entryId: string, factIds: string[] }[]} [experiences]  in the order to render
+ * @property {{ entryId: string, factIds: string[] }[]} [experiences]  ROLE ids, in the order to render
  * @property {string[]} [skills]          facts from `skills`
  * @property {string[]} [projectIds]      entry ids from `projects`
  * @property {string[]} [educationIds]    entry ids from `education`
- * @property {string[]} [certificationIds]
  */
 
 /**
  * Build the payload, plus everything the caller needs to warn about BEFORE it
- * ships: entries that cannot render, facts that are unverified or missing.
+ * ships: roles that cannot render, and facts that are unverified or missing.
  *
- * Nothing is silently dropped from the payload it returns — a gap means the
- * entry is omitted, and the caller is told which ones and why, so the screen can
- * say "this role has no company yet" instead of the PDF quietly having 2 roles
- * where the user selected 3.
+ * A gap means the role is omitted, and the caller is told which one and why, so
+ * the screen can say "this role has no company yet" instead of the PDF quietly
+ * having two roles where the user selected three.
  *
  * @param {{ profile: object, candidate?: object, selection?: Selection, today?: string }} input
  */
 export function buildCvPayload({ profile, candidate = {}, selection = {}, today = new Date().toISOString().slice(0, 10) }) {
   const facts = factIndex(profile);
+  const roles = allRoles(profile);
   const gaps = [];
   const warnings = [];
 
@@ -108,50 +113,48 @@ export function buildCvPayload({ profile, candidate = {}, selection = {}, today 
 
   const experience = [];
   for (const picked of selection.experiences ?? []) {
-    const entry = (profile?.experiences ?? []).find((item) => item?.id === picked.entryId);
-    if (!entry) {
-      gaps.push({ entryId: picked.entryId, reason: "entry no longer exists" });
+    const found = roles.find(({ role }) => role.id === picked.entryId);
+    if (!found) {
+      gaps.push({ entryId: picked.entryId, reason: "role no longer exists" });
       continue;
     }
-    const missing = ["company", "role"].filter((field) => !entry[field]);
+    const { company, role } = found;
+    const companyName = String(company?.company?.name ?? "").trim();
+    const roleName = String(role?.name ?? "").trim();
+    const missing = [];
+    if (!companyName) missing.push("company");
+    if (!roleName) missing.push("role");
     if (missing.length > 0) {
       gaps.push({
-        entryId: entry.id,
-        label: entry.label,
+        entryId: role.id,
+        label: roleName || companyName || "(untitled role)",
         reason: `needs ${missing.join(" and ")} — it would not render`,
         missing,
       });
       continue;
     }
     const bullets = (picked.factIds ?? []).map(textOf).filter(Boolean);
-    const item = { company: entry.company, role: entry.role, bullets };
-    if (entry.location) item.location = entry.location;
-    if (entry.dates) item.dates = entry.dates;
+    const item = { company: companyName, role: roleName, bullets };
+    if (role.location) item.location = role.location;
+    if (role.period) item.dates = role.period;
     experience.push(item);
   }
 
   const skills = (selection.skills ?? []).map(textOf).filter(Boolean);
+  const shaped = ensureShape(profile);
 
   const projectEntries = (selection.projectIds ?? [])
-    .map((id) => (profile?.projects ?? []).find((entry) => entry?.id === id))
-    .filter((entry) => entry && entry.name)
-    .map((entry) => {
-      const item = { name: entry.name, bullets: (entry.facts ?? []).map((fact) => String(fact.text ?? "").trim()).filter(Boolean) };
-      if (entry.url) item.url = entry.url;
-      if (entry.tech) item.tech = entry.tech;
-      return item;
-    });
+    .map((id) => shaped.projects.find((entry) => entry?.id === id))
+    .filter((entry) => entry && entry.label)
+    .map((entry) => ({
+      name: entry.label,
+      bullets: (entry.facts ?? []).map((fact) => String(fact.text ?? "").trim()).filter(Boolean),
+    }));
 
   const educationEntries = (selection.educationIds ?? [])
-    .map((id) => (profile?.education ?? []).find((entry) => entry?.id === id))
-    .filter((entry) => entry && entry.title)
-    .map((entry) => {
-      const item = { title: entry.title };
-      if (entry.org) item.org = entry.org;
-      if (entry.location) item.location = entry.location;
-      if (entry.year) item.year = entry.year;
-      return item;
-    });
+    .map((id) => shaped.education.find((entry) => entry?.id === id))
+    .filter((entry) => entry && entry.label)
+    .map((entry) => ({ title: entry.label }));
 
   /** @type {Record<string, unknown>} */
   const payload = { candidate };
@@ -172,7 +175,12 @@ export function buildCvPayload({ profile, candidate = {}, selection = {}, today 
     payload,
     gaps,
     warnings,
-    counts: { summary: summaryText ? 1 : 0, experience: experience.length, bullets: experience.reduce((total, item) => total + item.bullets.length, 0), skills: skills.length },
+    counts: {
+      summary: summaryText ? 1 : 0,
+      experience: experience.length,
+      bullets: experience.reduce((total, item) => total + item.bullets.length, 0),
+      skills: skills.length,
+    },
     generatedAt: today,
   };
 }
@@ -181,9 +189,6 @@ export function buildCvPayload({ profile, candidate = {}, selection = {}, today 
  * A filename stem for the generated CV: who it is for, and when.
  * Slugs are ascii-folded and dashed so the file survives any filesystem, and a
  * caller-supplied label can never escape the output directory.
- *
- * @param {string} label
- * @param {string} [date]
  */
 export function cvFileStem(label, date = new Date().toISOString().slice(0, 10)) {
   const slug = String(label ?? "")

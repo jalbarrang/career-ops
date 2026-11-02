@@ -4,11 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
 import { rootScriptEnv } from "@/lib/core/root-env.mjs";
-import * as yaml from "js-yaml";
-import { readFileSync } from "node:fs";
 import { buildReviewInput, parseImportPreview, summarizeImportRun } from "@/lib/cv-import.mjs";
-import { applyImportFields, ensureShape } from "@/lib/cv-profile.mjs";
-import { writeProfileValidated } from "@/lib/server/profile-write";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -121,7 +117,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  let body: { decisions?: unknown; cvFingerprint?: unknown; entryFields?: unknown };
+  let body: { decisions?: unknown; cvFingerprint?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -171,46 +167,14 @@ export async function POST(req: Request) {
     return Response.json({ error: summary, details: run.stderr.trim().split("\n").filter(Boolean) }, { status: 422 });
   }
 
-  // The importer stores the entry's label as whichever heading owned the facts —
-  // usually the date range — and has no notion of company/role. The reviewer saw
-  // those lines together on one block, so their answer for them is applied here,
-  // through the same core-validated write path the builder uses. Failures here
-  // are reported but never undo the import that already succeeded.
-  let applied = 0;
-  const applyErrors: string[] = [];
-  const entryFields = Array.isArray(body.entryFields) ? body.entryFields : [];
-  if (entryFields.length > 0) {
-    try {
-      const loaded: unknown = yaml.load(readFileSync(profilePath(), "utf8"));
-      let profile = ensureShape(loaded) as ReturnType<typeof ensureShape>;
-      for (const raw of entryFields) {
-        const fields = raw as { section?: unknown; ownerLabel?: unknown; company?: unknown; role?: unknown; dates?: unknown };
-        if (typeof fields.section !== "string" || typeof fields.ownerLabel !== "string") continue;
-        const result = applyImportFields(profile, {
-          section: fields.section,
-          ownerLabel: fields.ownerLabel,
-          company: typeof fields.company === "string" ? fields.company : "",
-          role: typeof fields.role === "string" ? fields.role : "",
-          dates: typeof fields.dates === "string" ? fields.dates : "",
-        });
-        if (result.updated) applied += 1;
-        profile = result.profile as ReturnType<typeof ensureShape>;
-      }
-      if (applied > 0) {
-        const written = await writeProfileValidated({ root, profile, file: profilePath() });
-        if (!written.ok) applyErrors.push(...(written.errors.length > 0 ? written.errors : [written.message]));
-      }
-    } catch (error) {
-      applyErrors.push(`could not apply the role details: ${(error as Error).message}`);
-    }
-  }
-
+  // Under schema v2 the importer classifies the block itself: the company line,
+  // the role line and the date range land in one company with one role, each
+  // keeping the CV line it came from. There is nothing left for the web to patch
+  // afterwards — a correction belongs in the builder, on a real field.
   return Response.json({
     ok: true,
     summary,
     swallowed,
-    applied,
-    applyErrors,
     profileExists: fs.existsSync(profilePath()),
   });
 }

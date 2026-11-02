@@ -52,9 +52,6 @@ export function CvImportQueue() {
   // One entry per candidate, positionally — the importer answers prompts in
   // order, so this array IS the answer sheet buildReviewInput consumes.
   const [decisions, setDecisions] = useState<(Decision | undefined)[]>([]);
-  // Company / role / dates per block, pre-filled from the block's own lines and
-  // editable before the import writes them onto the entry it creates.
-  const [entryFields, setEntryFields] = useState<Record<string, { company: string; role: string; dates: string }>>({});
   const [editing, setEditing] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
@@ -72,11 +69,6 @@ export function CvImportQueue() {
       }
       setPreview(body);
       setDecisions(new Array(body.candidates.length).fill(undefined));
-      const seeded: Record<string, { company: string; role: string; dates: string }> = {};
-      for (const block of groupImportBlocks(body.candidates) as Block[]) {
-        if (block.kind === "entry" && block.labels.length > 1) seeded[block.key] = suggestEntryFields(block.labels);
-      }
-      setEntryFields(seeded);
     } catch {
       setError("Couldn’t reach the server.");
     } finally {
@@ -143,16 +135,6 @@ export function CvImportQueue() {
         body: JSON.stringify({
           decisions: payload,
           cvFingerprint: preview?.cvFingerprint,
-          // Only for the blocks being approved, and only when the reviewer left
-          // something in them: untouched suggestions still describe the role.
-          entryFields: blocks
-            .filter((block) => block.kind === "entry" && blockApproved(block))
-            .map((block) => ({
-              section: block.section,
-              ownerLabel: block.labels[block.labels.length - 1],
-              ...(entryFields[block.key] ?? { company: "", role: "", dates: "" }),
-            }))
-            .filter((fields) => fields.company || fields.role || fields.dates),
         }),
       });
       const body = (await res.json()) as { summary?: string; error?: string; details?: string[] };
@@ -343,7 +325,7 @@ export function CvImportQueue() {
                           {isEntry && <span className="ml-1">entry · {block.factIndices.length} fact(s)</span>}
                         </p>
 
-                        {isEntry && metadata.length > 0 && !(entryFields[block.key]?.company && entryFields[block.key]?.role) && (
+                        {isEntry && metadata.length > 0 && !(suggestEntryFields(block.labels).company && suggestEntryFields(block.labels).role) && (
                           <p className="mt-0.5 text-xs text-muted">
                             {metadata.join(" · ")}
                             <span className="ml-1 text-faint">— same role, kept out as its own entry</span>
@@ -355,8 +337,8 @@ export function CvImportQueue() {
                           // fields below are applied, instead of the parser's own
                           // heading (usually the date range).
                           <p className="text-sm font-medium text-foreground">
-                            {entryFields[block.key]?.company && entryFields[block.key]?.role
-                              ? `${entryFields[block.key].company} — ${entryFields[block.key].role}`
+                            {suggestEntryFields(block.labels).company && suggestEntryFields(block.labels).role
+                              ? `${suggestEntryFields(block.labels).company} — ${suggestEntryFields(block.labels).role}`
                               : candidates[ownerIndex].text}
                             {approved && <span className="ml-2 text-xs font-normal text-emerald-600 dark:text-emerald-400">included</span>}
                           </p>
@@ -364,26 +346,18 @@ export function CvImportQueue() {
                           renderBody(ownerIndex)
                         )}
 
-                        {isEntry && (
-                          <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
-                            {(["company", "role", "dates"] as const).map((field) => (
-                              <label key={field} className="text-xs text-faint">
-                                <span className="capitalize">{field}</span>
-                                <input
-                                  value={entryFields[block.key]?.[field] ?? ""}
-                                  onChange={(event) =>
-                                    setEntryFields((current) => ({
-                                      ...current,
-                                      [block.key]: { ...(current[block.key] ?? { company: "", role: "", dates: "" }), [field]: event.target.value },
-                                    }))
-                                  }
-                                  placeholder={field === "company" ? "Acme Inc." : field === "role" ? "Senior Engineer" : "2024 – 2026"}
-                                  className="mt-0.5 w-full rounded-lg border border-border bg-surface/60 px-2 py-1 text-xs text-foreground outline-none placeholder:text-faint focus:border-brand/40"
-                                />
-                              </label>
-                            ))}
-                          </div>
-                        )}
+                        {isEntry && (() => {
+                          const guess = suggestEntryFields(block.labels);
+                          const parts = [guess.company, guess.role, guess.dates].filter(Boolean);
+                          if (parts.length === 0) return null;
+                          return (
+                            <p className="mt-1 text-xs text-muted">
+                              Saves as <span className="text-foreground">{guess.company || "(no company)"}</span>
+                              {guess.role && <> · <span className="text-foreground">{guess.role}</span></>}
+                              {guess.dates && <> · <span className="text-foreground">{guess.dates}</span></>}
+                            </p>
+                          );
+                        })()}
 
                         {isEntry && block.factIndices.length === 0 && (
                           <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">No facts under this heading — approving it adds an empty entry.</p>

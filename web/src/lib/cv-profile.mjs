@@ -1,49 +1,68 @@
 /**
  * Editing model for the Master Career Profile (`data/career-profile.yml`).
  *
+ * FORK: schema v2. An experience is a COMPANY holding a list of ROLES:
+ *
+ *   experiences:
+ *     - company: { name, evidence }
+ *       roles:
+ *         - { id, name, period, location, review_status, evidence, facts[] }
+ *
+ * That is the shape the engine writes (fork/core/career-profile.mjs) and the
+ * only shape its validator accepts, so everything here works on it: one card per
+ * employer, roles nested under it, facts under the roles.
+ *
  * The profile is the record-everything layer: facts with the source line they
  * came from, and a review status. `cv.md` stays the master document and the
- * importer (`career-profile.mjs import`) stays the only thing that extracts
- * FROM it — this module covers what the importer has no command for: a person
- * editing the library afterwards.
+ * importer stays the only thing that extracts FROM it — this module covers what
+ * the importer has no command for: a person editing the library afterwards.
  *
  * Everything here is pure and immutable so the builder is a plain function of
  * its state, and so `node --test` can assert the schema's rules without a
  * browser. The WRITE path (validate with the core's own `validate` command,
- * then back up and replace atomically) lives in the route, not here.
+ * then back up and replace atomically) lives in the route and
+ * lib/server/profile-write.ts, not here.
  *
  * Two invariants the rest of the system depends on:
  *
  *   - `evidence` is never rewritten by an edit. `quote` is the source line and
- *     `text` is the wording; keeping them apart is what lets the importer
- *     re-identify an entry by its evidence on the next import, so a reworded
- *     fact survives instead of being duplicated. A fact authored here carries
+ *     `text`/`name` is the wording; keeping them apart is what lets the importer
+ *     re-identify a role by its evidence on the next import, so a reworded fact
+ *     survives instead of being duplicated. Anything authored here carries
  *     `source: "user-stated {date}"` with its own text as the quote.
- *   - ids are permanent. Renaming a fact does not mint a new id, and merging
- *     existing entries keeps theirs.
+ *   - ids are permanent. Renaming a role or a company does not mint a new id,
+ *     and a saved CV selection is bound to a role id.
  *
  * Plain .mjs, no node built-ins and no `@/` aliases: the builder component
  * imports it directly, and `node --test` does too.
  */
 
+export const SCHEMA_VERSION = 2;
+
 /** Sections that hold facts directly. */
 export const FLAT_SECTIONS = ["summary", "certifications", "skills"];
 
-/** Sections that hold entries, each with its own facts. */
-export const ENTITY_SECTIONS = ["experiences", "projects", "education"];
+/** Sections that hold labelled entries with their own facts. */
+export const LABEL_SECTIONS = ["projects", "education"];
 
-/** Import order the importer uses; the builder renders in the same order. */
-export const PROFILE_SECTIONS = ["summary", "experiences", "projects", "education", "certifications", "skills"];
+/** The only section with companies and roles. */
+export const EXPERIENCE_SECTION = "experiences";
+
+/** Editable fields on a role. `name` is the role title. */
+export const ROLE_FIELDS = ["name", "period", "location"];
 
 export const STATUSES = ["needs_review", "verified"];
 
+/** Render order used by the builder's nav. */
+export const PROFILE_SECTIONS = ["summary", EXPERIENCE_SECTION, "projects", "education", "certifications", "skills"];
+
 /**
- * A schema-v1 profile with no content. The importer's own `readProfile()`
- * starts from exactly this shape for a file that does not exist yet.
+ * A schema-v2 profile with no content. Mirrors `emptyProfile()` in the engine's
+ * lib/career-profile.mjs so a file created here is one the validator accepts.
  */
 export function emptyProfile() {
   return {
-    schema_version: 1,
+    schema_version: SCHEMA_VERSION,
     candidate: {},
     summary: [],
     experiences: [],
@@ -57,39 +76,35 @@ export function emptyProfile() {
 /**
  * Coerce a parsed YAML document into the shape the builder renders.
  *
- * A profile written by hand (or by an older importer) can be missing sections
- * entirely; rendering it would otherwise crash on `profile.skills.map`. Missing
- * values are filled, and anything present is left exactly as it is — this is a
- * read convenience, never a migration.
- *
- * @param {unknown} profile
+ * A profile written by hand (or by an older importer) can be missing sections;
+ * rendering it would otherwise crash on `profile.skills.map`. Missing values are
+ * filled and everything present is left exactly as it is — a read convenience,
+ * never a migration.
  */
 export function ensureShape(profile) {
   const base = emptyProfile();
   if (!profile || typeof profile !== "object" || Array.isArray(profile)) return base;
-  const source = /** @type {Record<string, unknown>} */ (profile);
-  const shaped = { ...base, ...source, schema_version: 1 };
+  const source = profile;
+  const shaped = { ...base, ...source, schema_version: SCHEMA_VERSION };
   shaped.candidate = source.candidate && typeof source.candidate === "object" && !Array.isArray(source.candidate) ? source.candidate : {};
   for (const section of PROFILE_SECTIONS) {
     shaped[section] = Array.isArray(source[section]) ? source[section] : [];
   }
+  shaped.experiences = shaped.experiences.map((company) => ({
+    ...company,
+    company: company?.company && typeof company.company === "object" ? company.company : { name: "" },
+    roles: Array.isArray(company?.roles) ? company.roles : [],
+  }));
   return shaped;
 }
 
 /**
- * Deterministic id in the same `<kind>-<hex>` shape the importer's stableId()
- * produces.
+ * Deterministic id in the same `<kind>-<hex>` shape the importer produces.
  *
  * NOT the same hash: the importer uses sha256 from node:crypto, and this module
  * is imported by a browser component, where that built-in does not exist. The
- * ids are opaque to every consumer (`validateProfile` only requires uniqueness,
- * and `profile-cv-selection` passes them through), and the importer re-identifies
- * entries by EVIDENCE rather than id, so the two schemes coexist and neither
- * needs to recompute the other's.
- *
- * @param {string} kind
- * @param {string[]} parts
- * @returns {string}
+ * ids are opaque to every consumer (`validateProfile` only requires uniqueness),
+ * so the two schemes coexist and neither needs to recompute the other's.
  */
 export function makeId(kind, parts = []) {
   let hash = 0x811c9dc5;
@@ -98,8 +113,6 @@ export function makeId(kind, parts = []) {
     hash ^= input.charCodeAt(i);
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
-  // A second, differently-seeded pass keeps short inputs from colliding as
-  // readily as a single 32-bit FNV run would.
   let second = 0x1b873593;
   for (let i = input.length - 1; i >= 0; i -= 1) {
     second ^= input.charCodeAt(i);
@@ -108,127 +121,148 @@ export function makeId(kind, parts = []) {
   return `${kind}-${hash.toString(16).padStart(8, "0")}${second.toString(16).padStart(4, "0").slice(0, 4)}`;
 }
 
-/**
- * Evidence for a fact the user typed here, rather than one imported from cv.md.
- * The schema wants a non-empty source, a positive line and a quote; the honest
- * values are "they said so, on this date" and their own words.
- */
+/** Evidence for something typed here, rather than imported from cv.md. */
 export function userEvidence(text, date) {
   return { source: `user-stated ${date}`, line: 1, quote: text };
 }
 
-/** @param {string} text */
 export function cleanText(text) {
   return String(text ?? "").replace(/\s+/g, " ").trim();
 }
 
-function sectionItems(profile, section) {
-  const items = profile?.[section];
-  return Array.isArray(items) ? items : [];
-}
+const items = (profile, section) => (Array.isArray(profile?.[section]) ? profile[section] : []);
 
 /**
- * The facts of one scope: a flat section's list, or one entry's nested list.
- * `entryId` is ignored for flat sections.
+ * The facts of one scope.
+ *
+ * A scope names where the facts live: `{ section: 'skills' }` for a flat
+ * section, `{ section: 'experiences', companyId, roleId }` for a role, or
+ * `{ section: 'projects', entryId }` for a labelled entry.
  */
-function factsOf(profile, section, entryId) {
-  if (FLAT_SECTIONS.includes(section)) return sectionItems(profile, section);
-  const entry = sectionItems(profile, section).find((item) => item?.id === entryId);
-  return Array.isArray(entry?.facts) ? entry.facts : [];
-}
-
-/**
- * Apply a change only to the targeted scope, leaving every other section (and
- * any field this module does not know about) untouched.
- */
-function withFacts(profile, section, entryId, transform) {
-  const next = { ...profile };
-  if (FLAT_SECTIONS.includes(section)) {
-    next[section] = transform(sectionItems(profile, section));
-    return next;
+export function factsOf(profile, scope = {}) {
+  const { section } = scope;
+  if (FLAT_SECTIONS.includes(section)) return items(profile, section);
+  if (section === EXPERIENCE_SECTION) {
+    const company = items(profile, section).find((item) => item?.id === scope.companyId);
+    const role = (company?.roles ?? []).find((item) => item?.id === scope.roleId);
+    return Array.isArray(role?.facts) ? role.facts : [];
   }
-  next[section] = sectionItems(profile, section).map((entry) =>
-    entry?.id === entryId ? { ...entry, facts: transform(Array.isArray(entry.facts) ? entry.facts : []) } : entry,
-  );
-  return next;
+  if (LABEL_SECTIONS.includes(section)) {
+    const entry = items(profile, section).find((item) => item?.id === scope.entryId);
+    return Array.isArray(entry?.facts) ? entry.facts : [];
+  }
+  return [];
+}
+
+/** Apply a change only to the targeted scope, leaving everything else untouched. */
+function withFacts(profile, scope, transform) {
+  const { section } = scope;
+  if (FLAT_SECTIONS.includes(section)) {
+    return { ...profile, [section]: transform(items(profile, section)) };
+  }
+  if (section === EXPERIENCE_SECTION) {
+    return {
+      ...profile,
+      [section]: items(profile, section).map((company) =>
+        company?.id === scope.companyId
+          ? {
+              ...company,
+              roles: (company.roles ?? []).map((role) =>
+                role?.id === scope.roleId ? { ...role, facts: transform(Array.isArray(role.facts) ? role.facts : []) } : role,
+              ),
+            }
+          : company,
+      ),
+    };
+  }
+  if (LABEL_SECTIONS.includes(section)) {
+    return {
+      ...profile,
+      [section]: items(profile, section).map((entry) =>
+        entry?.id === scope.entryId ? { ...entry, facts: transform(Array.isArray(entry.facts) ? entry.facts : []) } : entry,
+      ),
+    };
+  }
+  return profile;
+}
+
+/** Facts identical to one already in the same scope are not stored twice. */
+function isDuplicate(facts, text) {
+  const clean = cleanText(text).toLowerCase();
+  return facts.some((fact) => cleanText(fact?.text).toLowerCase() === clean);
 }
 
 /**
- * Add a fact to a section (flat) or to one entry of an entity section.
- *
- * A fact identical to one already in the same scope is not added twice: the
- * importer de-duplicates the same way, and two identical lines in a library are
- * noise, not two facts. The caller is told which happened.
- *
  * @param {object} profile
- * @param {{ section: string, entryId?: string | null, text: string, date: string }} params
+ * @param {{ section: string, companyId?: string, roleId?: string, entryId?: string, text: string, date: string }} params
  * @returns {{ profile: object, fact: object | null, added: boolean, reason?: string }}
  */
-export function addFact(profile, { section, entryId = null, text, date }) {
+export function addFact(profile, scope) {
+  const { section, text, date } = scope;
   if (!PROFILE_SECTIONS.includes(section)) return { profile, fact: null, added: false, reason: "unknown section" };
-  if (!FLAT_SECTIONS.includes(section) && !sectionItems(profile, section).some((entry) => entry?.id === entryId)) {
-    return { profile, fact: null, added: false, reason: "unknown entry" };
-  }
   const clean = cleanText(text);
   if (!clean) return { profile, fact: null, added: false, reason: "empty" };
 
-  const existing = factsOf(profile, section, entryId);
-  if (existing.some((fact) => cleanText(fact?.text).toLowerCase() === clean.toLowerCase())) {
-    return { profile, fact: null, added: false, reason: "duplicate" };
-  }
+  const existing = factsOf(profile, scope);
+  if (isDuplicate(existing, clean)) return { profile, fact: null, added: false, reason: "duplicate" };
 
-  const parentLabel = FLAT_SECTIONS.includes(section)
-    ? ""
-    : String(sectionItems(profile, section).find((entry) => entry?.id === entryId)?.label ?? "");
+  const parent = section === EXPERIENCE_SECTION
+    ? String(items(profile, section).find((company) => company?.id === scope.companyId)?.roles?.find((role) => role?.id === scope.roleId)?.name ?? "")
+    : String(items(profile, section).find((entry) => entry?.id === scope.entryId)?.label ?? "");
   const fact = {
-    id: makeId(section, [clean, parentLabel, `user-stated ${date}`]),
+    id: makeId(section, [clean, parent, `user-stated ${date}`]),
     text: clean,
     review_status: "verified",
     evidence: userEvidence(clean, date),
   };
-  return { profile: withFacts(profile, section, entryId, (facts) => [...facts, fact]), fact, added: true };
+  return { profile: withFacts(profile, scope, (facts) => [...facts, fact]), fact, added: true };
 }
 
 /**
  * Reword a fact. Never touches its evidence or its id.
  *
- * @param {object} profile
- * @param {{ section: string, entryId?: string | null, factId: string, text: string }} params
+ * The scope names where the fact lives: a flat section, a role, or a labelled
+ * entry. Only the ids for that scope are required.
+ *
+ * @param {{ section: string, companyId?: string, roleId?: string, entryId?: string, factId: string, text?: string, status?: string, direction?: string }} params
  */
-export function updateFactText(profile, { section, entryId = null, factId, text }) {
+export function updateFactText(profile, scope) {
+  const { factId, text } = scope;
   const clean = cleanText(text);
   if (!clean) return profile;
-  return withFacts(profile, section, entryId, (facts) => facts.map((fact) => (fact.id === factId ? { ...fact, text: clean } : fact)));
+  return withFacts(profile, scope, (facts) => facts.map((fact) => (fact.id === factId ? { ...fact, text: clean } : fact)));
 }
 
 /**
  * Flip `needs_review` / `verified`. Anything else is ignored, not coerced.
  *
- * @param {object} profile
- * @param {{ section: string, entryId?: string | null, factId: string, status: string }} params
+ * @param {{ section: string, companyId?: string, roleId?: string, entryId?: string, factId: string, text?: string, status?: string, direction?: string }} params
  */
-export function setFactStatus(profile, { section, entryId = null, factId, status }) {
+export function setFactStatus(profile, scope) {
+  const { factId, status } = scope;
   if (!STATUSES.includes(status)) return profile;
-  return withFacts(profile, section, entryId, (facts) => facts.map((fact) => (fact.id === factId ? { ...fact, review_status: status } : fact)));
+  return withFacts(profile, scope, (facts) => facts.map((fact) => (fact.id === factId ? { ...fact, review_status: status } : fact)));
 }
 
 /**
- * @param {object} profile
- * @param {{ section: string, entryId?: string | null, factId: string }} params
- */
-export function removeFact(profile, { section, entryId = null, factId }) {
-  return withFacts(profile, section, entryId, (facts) => facts.filter((fact) => fact.id !== factId));
-}
-
-/**
- * Move a fact within its own scope (one flat section, or one entry's facts).
+ * Drop one fact from its scope.
  *
- * @param {object} profile
- * @param {{ section: string, entryId?: string | null, factId: string, direction: "up" | "down" }} params
+ * @param {{ section: string, companyId?: string, roleId?: string, entryId?: string, factId: string, text?: string, status?: string, direction?: string }} params
  */
-export function moveFact(profile, { section, entryId = null, factId, direction }) {
+export function removeFact(profile, scope) {
+  const { factId } = scope;
+  return withFacts(profile, scope, (facts) => facts.filter((fact) => fact.id !== factId));
+}
+
+/**
+ * Move a fact within its own scope (one flat section, one role, or one entry).
+ *
+ * @param {{ section: string, companyId?: string, roleId?: string, entryId?: string, factId: string, direction: "up" | "down" }} params
+ */
+export function moveFact(profile, scope) {
+  const { factId, direction } = scope;
   const shift = direction === "up" ? -1 : 1;
-  return withFacts(profile, section, entryId, (facts) => {
+  return withFacts(profile, scope, (facts) => {
     const from = facts.findIndex((fact) => fact.id === factId);
     const to = from + shift;
     if (from === -1 || to < 0 || to >= facts.length) return facts;
@@ -239,16 +273,145 @@ export function moveFact(profile, { section, entryId = null, factId, direction }
 }
 
 /**
- * Add an entry to an entity section. The label is the entry's identity for a
- * human ("Series Entertainment — Senior Full Stack Engineer"); the importer's
- * own labels are whatever its conservative parser found, so a builder-made
- * entry is how a role line and a date range become one entry instead of three.
+ * Add a company to the experience list.
+ *
+ * A company with no name is refused: the name is the card's identity and the
+ * validator requires it. Roles are added separately, so a company can exist
+ * before its first role is typed.
  */
+export function addCompany(profile, { name, date }) {
+  const clean = cleanText(name);
+  if (!clean) return { profile, company: null, added: false, reason: "empty" };
+  const existing = items(profile, EXPERIENCE_SECTION);
+  if (existing.some((company) => cleanText(company?.company?.name).toLowerCase() === clean.toLowerCase())) {
+    return { profile, company: null, added: false, reason: "duplicate" };
+  }
+  const company = {
+    id: makeId(EXPERIENCE_SECTION, [clean, `user-stated ${date}`]),
+    company: { name: clean, evidence: userEvidence(clean, date) },
+    roles: [],
+  };
+  return { profile: { ...profile, [EXPERIENCE_SECTION]: [...existing, company] }, company, added: true };
+}
+
+export function updateCompanyName(profile, { companyId, name }) {
+  const clean = cleanText(name);
+  if (!clean) return profile;
+  return {
+    ...profile,
+    [EXPERIENCE_SECTION]: items(profile, EXPERIENCE_SECTION).map((company) =>
+      company?.id === companyId
+        ? { ...company, company: { ...company.company, name: clean } }
+        : company,
+    ),
+  };
+}
+
+/** Drop a company and every role and fact under it. The caller confirms first. */
+export function removeCompany(profile, { companyId }) {
+  return { ...profile, [EXPERIENCE_SECTION]: items(profile, EXPERIENCE_SECTION).filter((company) => company?.id !== companyId) };
+}
+
+export function moveCompany(profile, { companyId, direction }) {
+  return moveWithin(profile, EXPERIENCE_SECTION, companyId, direction);
+}
+
+/**
+ * Add a role under a company. `name` may be empty: the importer meets blocks
+ * with a company and dates but no title line, and the builder flags the empty
+ * field rather than refusing to save.
+ */
+export function addRole(profile, { companyId, name = "", date }) {
+  const company = items(profile, EXPERIENCE_SECTION).find((item) => item?.id === companyId);
+  if (!company) return { profile, role: null, added: false, reason: "unknown company" };
+  const clean = cleanText(name);
+  const roles = Array.isArray(company.roles) ? company.roles : [];
+  if (clean && roles.some((role) => cleanText(role?.name).toLowerCase() === clean.toLowerCase())) {
+    return { profile, role: null, added: false, reason: "duplicate" };
+  }
+  const role = {
+    id: makeId(EXPERIENCE_SECTION, [clean, company.company?.name ?? "", `user-stated ${date}`]),
+    name: clean,
+    review_status: "verified",
+    evidence: userEvidence(clean || String(company.company?.name ?? ""), date),
+    facts: [],
+  };
+  return {
+    profile: {
+      ...profile,
+      [EXPERIENCE_SECTION]: items(profile, EXPERIENCE_SECTION).map((item) =>
+        item?.id === companyId ? { ...item, roles: [...roles, role] } : item,
+      ),
+    },
+    role,
+    added: true,
+  };
+}
+
+export function updateRoleField(profile, { companyId, roleId, field, value }) {
+  if (!ROLE_FIELDS.includes(field)) return profile;
+  const clean = cleanText(value);
+  const companies = items(profile, EXPERIENCE_SECTION);
+  if (!companies.some((company) => company?.id === companyId)) return profile;
+  return {
+    ...profile,
+    [EXPERIENCE_SECTION]: companies.map((company) =>
+      company?.id !== companyId
+        ? company
+        : {
+            ...company,
+            roles: (company.roles ?? []).map((role) => {
+              if (role?.id !== roleId) return role;
+              const next = { ...role };
+              if (clean) next[field] = clean;
+              else delete next[field];
+              return next;
+            }),
+          },
+    ),
+  };
+}
+
+export function removeRole(profile, { companyId, roleId }) {
+  return {
+    ...profile,
+    [EXPERIENCE_SECTION]: items(profile, EXPERIENCE_SECTION).map((company) =>
+      company?.id === companyId ? { ...company, roles: (company.roles ?? []).filter((role) => role?.id !== roleId) } : company,
+    ),
+  };
+}
+
+export function moveRole(profile, { companyId, roleId, direction }) {
+  const shift = direction === "up" ? -1 : 1;
+  return {
+    ...profile,
+    [EXPERIENCE_SECTION]: items(profile, EXPERIENCE_SECTION).map((company) => {
+      if (company?.id !== companyId) return company;
+      const roles = [...(company.roles ?? [])];
+      const from = roles.findIndex((role) => role?.id === roleId);
+      const to = from + shift;
+      if (from === -1 || to < 0 || to >= roles.length) return company;
+      [roles[from], roles[to]] = [roles[to], roles[from]];
+      return { ...company, roles };
+    }),
+  };
+}
+
+/** Rename a labelled entry (projects / education). */
+export function updateEntryLabel(profile, { section, entryId, label }) {
+  const clean = cleanText(label);
+  if (!clean) return profile;
+  return {
+    ...profile,
+    [section]: items(profile, section).map((entry) => (entry?.id === entryId ? { ...entry, label: clean } : entry)),
+  };
+}
+
 export function addEntry(profile, { section, label, date }) {
-  if (!ENTITY_SECTIONS.includes(section)) return { profile, entry: null, added: false, reason: "not an entry section" };
+  if (!LABEL_SECTIONS.includes(section)) return { profile, entry: null, added: false, reason: "not a labelled section" };
   const clean = cleanText(label);
   if (!clean) return { profile, entry: null, added: false, reason: "empty" };
-  const entries = sectionItems(profile, section);
+  const entries = items(profile, section);
   if (entries.some((entry) => cleanText(entry?.label).toLowerCase() === clean.toLowerCase())) {
     return { profile, entry: null, added: false, reason: "duplicate" };
   }
@@ -262,41 +425,30 @@ export function addEntry(profile, { section, label, date }) {
   return { profile: { ...profile, [section]: [...entries, entry] }, entry, added: true };
 }
 
-export function updateEntryLabel(profile, { section, entryId, label }) {
-  const clean = cleanText(label);
-  if (!clean) return profile;
-  return {
-    ...profile,
-    [section]: sectionItems(profile, section).map((entry) => (entry?.id === entryId ? { ...entry, label: clean } : entry)),
-  };
-}
-
-/** Drop an entry and its facts. The caller confirms first — nothing here is undoable. */
 export function removeEntry(profile, { section, entryId }) {
-  return { ...profile, [section]: sectionItems(profile, section).filter((entry) => entry?.id !== entryId) };
+  return { ...profile, [section]: items(profile, section).filter((entry) => entry?.id !== entryId) };
 }
 
 export function moveEntry(profile, { section, entryId, direction }) {
+  return moveWithin(profile, section, entryId, direction);
+}
+
+function moveWithin(profile, section, id, direction) {
   const shift = direction === "up" ? -1 : 1;
-  const entries = sectionItems(profile, section);
-  const from = entries.findIndex((entry) => entry?.id === entryId);
+  const list = [...items(profile, section)];
+  const from = list.findIndex((item) => item?.id === id);
   const to = from + shift;
-  if (from === -1 || to < 0 || to >= entries.length) return profile;
-  const next = [...entries];
-  [next[from], next[to]] = [next[to], next[from]];
-  return { ...profile, [section]: next };
+  if (from === -1 || to < 0 || to >= list.length) return profile;
+  [list[from], list[to]] = [list[to], list[from]];
+  return { ...profile, [section]: list };
 }
 
 /**
  * Pull the error lines out of `career-profile.mjs validate` output.
  *
- * The command prints `Invalid profile:` (or `Valid Master Career Profile: <path>`)
- * and then one `- <error>` line per problem, on stderr or stdout depending on
- * the outcome. Reading only the `- ` lines keeps the parse independent of which
- * stream carried them and of the heading's wording.
- *
- * @param {string} [output]
- * @returns {string[]}
+ * The command prints `Invalid profile:` then one `- <error>` line per problem,
+ * on stderr or stdout depending on the outcome. Reading only the `- ` lines
+ * keeps the parse independent of which stream carried them.
  */
 export function parseValidationErrors(output = "") {
   return String(output)
@@ -309,81 +461,28 @@ export function parseValidationErrors(output = "") {
 }
 
 /**
- * Fields an entry carries beyond its human label. The html CV payload needs
- * `company` + `role` before it will render the entry at all, and these are also
- * what the builder's entry form edits. The importer never sets them — its
- * conservative parser only produces a label — so a person fills them in here.
- */
-export const ENTRY_FIELDS = ["company", "role", "location", "dates"];
-
-/**
- * Set one structured field on an entry.
- *
- * `label` stays the entry's identity (what the builder lists and what evidence
- * describes); these fields are what a rendered CV reads. An empty value clears
- * the field rather than storing "", so a payload builder can fall back to
- * "not provided" instead of rendering a blank line.
- *
- * @param {object} profile
- * @param {{ section: string, entryId: string, field: string, value: string }} params
- */
-export function updateEntryField(profile, { section, entryId, field, value }) {
-  if (!ENTITY_SECTIONS.includes(section) || !ENTRY_FIELDS.includes(field)) return profile;
-  const entries = sectionItems(profile, section);
-  // Return the SAME object when nothing matches, so a caller that treats a
-  // changed reference as "edited" (the builder marks the document dirty that
-  // way) does not report a change that never happened.
-  if (!entries.some((entry) => entry?.id === entryId)) return profile;
-  const clean = cleanText(value);
-  return {
-    ...profile,
-    [section]: entries.map((entry) => {
-      if (entry?.id !== entryId) return entry;
-      const next = { ...entry };
-      if (clean) next[field] = clean;
-      else delete next[field];
-      return next;
-    }),
-  };
-}
-
-/**
- * Reorder entries in an entity section by moving one to a new index.
- * The up/down buttons use moveEntry(); this is for an explicit position, which
- * is what "newest first" needs when an imported profile arrives in cv.md's own
- * order.
- *
- * @param {object} profile
- * @param {{ section: string, entryId: string, toIndex: number }} params
- */
-export function moveEntryTo(profile, { section, entryId, toIndex }) {
-  const entries = sectionItems(profile, section);
-  const from = entries.findIndex((entry) => entry?.id === entryId);
-  if (from === -1 || toIndex < 0 || toIndex >= entries.length || toIndex === from) return profile;
-  const next = [...entries];
-  const [moved] = next.splice(from, 1);
-  next.splice(toIndex, 0, moved);
-  return { ...profile, [section]: next };
-}
-
-/**
- * Per-section totals for the nav: entries for entity sections, facts for flat
- * ones, plus the fact count behind each entry, which is what tells an empty
- * entry from a populated one.
+ * Per-section totals for the nav: companies and roles for experiences, entries
+ * for the labelled sections, facts for the flat ones.
  */
 export function profileCounts(profile) {
   const shaped = ensureShape(profile);
-  /** @type {Record<string, { entries: number, facts: number }>} */
   const counts = {};
   for (const section of PROFILE_SECTIONS) {
-    const items = sectionItems(shaped, section);
-    if (FLAT_SECTIONS.includes(section)) {
-      counts[section] = { entries: 0, facts: items.length };
-    } else {
+    if (section === EXPERIENCE_SECTION) {
+      const companies = shaped.experiences;
       counts[section] = {
-        entries: items.length,
-        facts: items.reduce((total, entry) => total + (Array.isArray(entry?.facts) ? entry.facts.length : 0), 0),
+        entries: companies.length,
+        roles: companies.reduce((total, company) => total + (company.roles?.length ?? 0), 0),
+        facts: companies.reduce(
+          (total, company) => total + (company.roles ?? []).reduce((inner, role) => inner + (role.facts?.length ?? 0), 0),
+          0,
+        ),
       };
+    } else if (LABEL_SECTIONS.includes(section)) {
+      const entries = shaped[section];
+      counts[section] = { entries: entries.length, facts: entries.reduce((total, entry) => total + (entry.facts?.length ?? 0), 0) };
+    } else {
+      counts[section] = { entries: 0, facts: shaped[section].length };
     }
   }
   return counts;
@@ -393,63 +492,36 @@ export function totalFacts(profile) {
   return Object.values(profileCounts(profile)).reduce((total, count) => total + count.facts, 0);
 }
 
-/**
- * Apply the company / role / dates a reviewer typed for a block the importer
- * just created an entry for.
- *
- * The importer stores the entry label as whichever heading line owned the facts
- * — usually the date range — so an imported role reads as "March 2025 -
- * September 2026" in the builder and has no company or role for a CV payload to
- * render. This sets those fields, and renames the entry to
- * "company — role" so the library reads like a CV.
- *
- * Deliberately conservative, because it runs on a re-import too:
- *   - only fields that are still EMPTY are set, so a value the user already
- *     edited is never overwritten;
- *   - the label is only recomposed when both company and role end up present;
- *   - an entry that cannot be found is reported, not created.
- *
- * @param {object} profile
- * @param {{ section: string, ownerLabel: string, company?: string, role?: string, dates?: string }} params
- * @returns {{ profile: object, updated: boolean, reason?: string }}
- */
-export function applyImportFields(profile, { section, ownerLabel, company = "", role = "", dates = "" }) {
-  if (!ENTITY_SECTIONS.includes(section)) return { profile, updated: false, reason: "not an entry section" };
-  const entries = sectionItems(profile, section);
-  const target = String(ownerLabel ?? "").trim();
-  const index = entries.findIndex((entry) => cleanText(entry?.label) === target);
-  if (index === -1) return { profile, updated: false, reason: "entry not found" };
-
-  const entry = entries[index];
-  const next = { ...entry };
-  for (const [field, value] of [["company", company], ["role", role], ["dates", dates]]) {
-    const clean = cleanText(value);
-    if (clean && !next[field]) next[field] = clean;
-  }
-  // Recomposition is safe because the entry was FOUND by the importer's own
-  // label: an entry the user has renamed no longer matches `ownerLabel`, so this
-  // never reaches it (see the "entry not found" path above).
-  if (next.company && next.role) next.label = `${next.company} — ${next.role}`;
-
-  const changed = ENTRY_FIELDS.some((field) => next[field] !== entry[field]) || next.label !== entry.label;
-  if (!changed) return { profile, updated: false, reason: "nothing to apply" };
-
-  const updated = [...entries];
-  updated[index] = next;
-  return { profile: { ...profile, [section]: updated }, updated: true };
-}
-
-/**
- * Facts that were imported from cv.md but never reviewed. Surfaced so a library
- * that is mostly `needs_review` is not mistaken for a reviewed one.
- */
+/** Facts imported from cv.md but never reviewed, so a library is not mistaken for a reviewed one. */
 export function unverifiedCount(profile) {
   const shaped = ensureShape(profile);
   let count = 0;
+  const check = (fact) => {
+    if (fact?.review_status !== "verified") count += 1;
+  };
   for (const section of PROFILE_SECTIONS) {
-    const items = sectionItems(shaped, section);
-    const facts = FLAT_SECTIONS.includes(section) ? items : items.flatMap((entry) => (Array.isArray(entry?.facts) ? entry.facts : []));
-    for (const fact of facts) if (fact?.review_status !== "verified") count += 1;
+    if (section === EXPERIENCE_SECTION) {
+      for (const company of shaped.experiences) for (const role of company.roles ?? []) for (const fact of role.facts ?? []) check(fact);
+    } else if (LABEL_SECTIONS.includes(section)) {
+      for (const entry of shaped[section]) for (const fact of entry.facts ?? []) check(fact);
+    } else {
+      for (const fact of shaped[section]) check(fact);
+    }
   }
   return count;
+}
+
+/**
+ * Every role in the profile, flattened with the company it belongs to.
+ *
+ * CV generation and any picker work on roles, so this is the one place that
+ * knows how to walk the nesting.
+ */
+export function allRoles(profile) {
+  const shaped = ensureShape(profile);
+  const roles = [];
+  for (const company of shaped.experiences) {
+    for (const role of company.roles ?? []) roles.push({ company, role });
+  }
+  return roles;
 }

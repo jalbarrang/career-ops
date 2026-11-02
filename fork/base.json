@@ -9,7 +9,7 @@
     "tests/profile-cv-selection.test.mjs": "0172ff1ecfa1448c6c6a3a51de7667bc7abd447779196f009b8328ebb026510d"
   },
   "installed": {
-    "career-profile.mjs": "9abd80fa57e5a11f2ee781d515ff1e7e01c9cd3b1ad5d4f706ae37c5ef63a941",
+    "career-profile.mjs": "a635dd89b1a3e3bfec015cb08d045828dc46767e003442fe562220c2b0c1ec95",
     "lib/career-profile.mjs": "ee5bfe109e91ff65a60693a3369ceab8d03f5a2dc1a9d0763c286e2ce594590a",
     "lib/profile-cv-selection.mjs": "48c874561d2251a1eafd571d0f10298be75378a461faff3e5940ea16b9c8b9eb",
     "tests/profile-cv-selection.test.mjs": "bcfb13b61bb344d9cdea864c35abff40e7beb64a80611af3d75cd59dadf87bcd",

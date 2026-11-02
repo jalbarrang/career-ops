@@ -184,7 +184,12 @@ test("consecutive headings fold together, and a later heading with facts starts 
   assert.equal(blocks[1].ownerIndex, 4);
 });
 
-test("approving a block approves its owner and facts and skips the metadata headings", () => {
+/**
+ * Under v2 the company line is content, so approving a block approves every
+ * line. Skipping the metadata lines is what used to drop the employer on the
+ * floor — and what desynced the answer stream against the other employer.
+ */
+test("approving a block approves every line and fact it covers", () => {
   const { candidates } = parseImportPreview(
     [
       "Found 5 review candidates in cv.md.",
@@ -198,30 +203,37 @@ test("approving a block approves its owner and facts and skips the metadata head
   const blocks = groupImportBlocks(candidates);
   const decided = applyBlockDecision(blocks[0], "approve", []);
 
-  assert.deepEqual(decided[0], { action: "skip" }); // "Acme" — metadata, would be an empty entry
-  assert.deepEqual(decided[1], { action: "skip" }); // "Senior Engineer:" — same
-  assert.deepEqual(decided[2], { action: "approve" }); // owner
+  assert.deepEqual(decided[0], { action: "approve" }); // Acme — the company
+  assert.deepEqual(decided[1], { action: "approve" }); // Senior Engineer: — the role
+  assert.deepEqual(decided[2], { action: "approve" }); // 2024 - 2026 — the period
   assert.deepEqual(decided[3], { action: "approve" }); // its fact
   assert.equal(decided[4], undefined); // another block, untouched
 
-  // The importer is then told to skip the metadata headings, so none of them
-  // becomes an entry, and no answer is queued for a fact nobody prompts. The
-  // untouched skills candidate still gets its own answer (a default skip) —
-  // every candidate the CLI prompts for is answered, in order.
   const { stdin, prompted } = buildReviewInput(candidates, decided);
   assert.deepEqual(prompted, [0, 1, 2, 3, 4]);
-  assert.equal(stdin, "n\nn\ny\ny\nn\n");
+  assert.equal(stdin, "y\ny\ny\ny\nn\n");
 });
 
-test("skipping a block skips every candidate it covers and leaves other blocks alone", () => {
-  const { candidates } = parseImportPreview(PREVIEW);
+test("skipping a block queues ONE answer for it, because the importer drops the rest", () => {
+  const { candidates } = parseImportPreview(
+    [
+      "Found 5 review candidates in cv.md.",
+      "- experiences heading: Acme",
+      "- experiences heading: Senior Engineer:",
+      "- experiences heading: 2024 - 2026",
+      "- experiences: 2024 - 2026: Shipped the editor.",
+      "- skills: TypeScript",
+    ].join("\n"),
+  );
   const blocks = groupImportBlocks(candidates);
-  const decided = applyBlockDecision(blocks[1], "skip", []);
+  const decided = applyBlockDecision(blocks[0], "skip", []);
+  const { stdin, prompted, swallowed } = buildReviewInput(candidates, decided);
 
-  assert.deepEqual(decided[1], { action: "skip" });
-  assert.deepEqual(decided[2], { action: "skip" });
-  assert.deepEqual(decided[3], { action: "skip" });
-  assert.equal(decided[0], undefined); // the summary block is untouched
+  // The CLI prompts the company line, sees a skip, and drops the block whole —
+  // so the next prompt is the skills candidate, not the role or the fact.
+  assert.deepEqual(prompted, [0, 4]);
+  assert.deepEqual(swallowed, [1, 2, 3]);
+  assert.equal(stdin, "n\nn\n");
 });
 
 test("a per-fact edit survives a later block-level change to its siblings", () => {
