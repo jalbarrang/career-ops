@@ -8,6 +8,8 @@ import {
   addRole,
   allRoles,
   emptyProfile,
+  formatPeriod,
+  parsePeriod,
   ensureShape,
   factsOf,
   makeId,
@@ -289,4 +291,64 @@ test("ids are deterministic, differ by scope, and keep the importer's shape", ()
   assert.equal(makeId("experiences", ["TypeScript", "", "user-stated x"]), makeId("experiences", ["TypeScript", "", "user-stated x"]));
   assert.notEqual(makeId("experiences", ["TypeScript", "", "a"]), makeId("experiences", ["TypeScript", "", "b"]));
   assert.match(makeId("experiences", ["x"]), /^experiences-[0-9a-f]{12}$/);
+});
+
+test('a period parses into start and end, whichever month naming the CV uses', () => {
+  assert.deepEqual(parsePeriod('March 2025 - September 2026'), { start: { year: 2025, month: 3 }, end: { year: 2026, month: 9 }, present: false });
+  assert.deepEqual(parsePeriod('Mar 2025 – Sep 2026'), { start: { year: 2025, month: 3 }, end: { year: 2026, month: 9 }, present: false });
+  assert.deepEqual(parsePeriod('June 2016 - December 2021'), { start: { year: 2016, month: 6 }, end: { year: 2021, month: 12 }, present: false });
+  // Spanish/Portuguese abbreviations are read too, so an imported CV in those
+  // languages still opens in the picker instead of falling back to raw text.
+  assert.deepEqual(parsePeriod('Ago 2021 – Dez 2022'), { start: { year: 2021, month: 8 }, end: { year: 2022, month: 12 }, present: false });
+});
+
+test('a year-only period, a single date, and "present" all parse', () => {
+  assert.deepEqual(parsePeriod('2025 – 2026'), { start: { year: 2025, month: null }, end: { year: 2026, month: null }, present: false });
+  assert.deepEqual(parsePeriod('2025'), { start: { year: 2025, month: null }, end: null, present: false });
+  assert.deepEqual(parsePeriod('Mar 2025'), { start: { year: 2025, month: 3 }, end: null, present: false });
+  assert.deepEqual(parsePeriod('Mar 2025 – Present'), { start: { year: 2025, month: 3 }, end: null, present: true });
+  assert.deepEqual(parsePeriod('2025 to 2026'), { start: { year: 2025, month: null }, end: { year: 2026, month: null }, present: false });
+});
+
+test('a value the picker cannot read returns null, so the builder keeps a text box', () => {
+  assert.equal(parsePeriod('last summer'), null);
+  assert.equal(parsePeriod('Clients: SoftPatagonia, Valueinnova LLC'), null);
+  assert.equal(parsePeriod(''), null);
+  assert.equal(parsePeriod('   '), null);
+  assert.equal(parsePeriod(undefined), null);
+});
+
+test('formatPeriod writes the canonical string the two consumers expect', () => {
+  // Start first, English month, en dash, no trailing punctuation.
+  assert.equal(formatPeriod({ startMonth: 3, startYear: 2025, endMonth: 9, endYear: 2026 }), 'Mar 2025 – Sep 2026');
+  assert.equal(formatPeriod({ startMonth: 3, startYear: 2025, present: true }), 'Mar 2025 – Present');
+  assert.equal(formatPeriod({ startYear: 2025, endYear: 2026 }), '2025 – 2026');
+  assert.equal(formatPeriod({ startYear: 2025 }), '2025');
+});
+
+test('formatPeriod refuses a half-typed year instead of blanking the stored period', () => {
+  assert.equal(formatPeriod({ startMonth: 3, startYear: 20 }), null);
+  assert.equal(formatPeriod({ startMonth: 3, startYear: null }), null);
+  assert.equal(formatPeriod({}), null);
+  // A month without a year is not a date.
+  assert.equal(formatPeriod({ startMonth: 3, endMonth: 9, endYear: 2026 }), null);
+});
+
+test('what the picker writes parses back to the same dates', () => {
+  for (const value of [
+    { startMonth: 3, startYear: 2025, endMonth: 9, endYear: 2026 },
+    { startMonth: 1, startYear: 2024, endMonth: 3, endYear: 2025 },
+    { startMonth: 3, startYear: 2025, present: true },
+    { startYear: 2016, endYear: 2021 },
+  ]) {
+    const written = formatPeriod(value);
+    const reread = parsePeriod(written);
+    assert.notEqual(reread, null, `${written} should parse back`);
+    assert.equal(reread.start.year, value.startYear);
+    assert.equal(reread.start.month, value.startMonth ?? null);
+    assert.equal(reread.present, Boolean(value.present));
+    assert.equal(reread.end?.year ?? null, value.present ? null : (value.endYear ?? null));
+    // And it stays inside the length the importer classifies on.
+    assert.ok(written.length <= 40, `${written} is too long for the importer`);
+  }
 });

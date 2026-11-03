@@ -17,6 +17,7 @@ import {
   Upload,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { PeriodField } from "@/components/period-field";
 import {
   EXPERIENCE_SECTION,
   FLAT_SECTIONS,
@@ -384,13 +385,17 @@ export function CvProfileBuilder() {
               onCommit: (value) => mutate(updateRoleField(profile, { companyId: company.id, roleId: role.id, field: "name", value }) as Profile),
               warn: !role.name,
             })}
-            {fieldInput({
-              draftKey: `role:${role.id}:period`,
-              value: role.period ?? "",
-              placeholder: "2024 – 2026",
-              label: "Period",
-              onCommit: (value) => mutate(updateRoleField(profile, { companyId: company.id, roleId: role.id, field: "period", value }) as Profile),
-            })}
+            {/* The period is a picker, not a free-text field: it composes the
+                stored string from start/end + "currently working here". */}
+            <div>
+              <PeriodField
+                key={role.id}
+                value={role.period ?? ""}
+                onChange={(value) =>
+                  mutate(updateRoleField(profile, { companyId: company.id, roleId: role.id, field: "period", value }) as Profile)
+                }
+              />
+            </div>
             {fieldInput({
               draftKey: `role:${role.id}:location`,
               value: role.location ?? "",

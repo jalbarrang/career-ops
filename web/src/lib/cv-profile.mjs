@@ -132,6 +132,87 @@ export function cleanText(text) {
 
 const items = (profile, section) => (Array.isArray(profile?.[section]) ? profile[section] : []);
 
+/** Month labels the CV prints, and the picker offers. */
+export const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// English, plus the Spanish and Portuguese abbreviations a CV written in those
+// languages arrives with. The picker always writes the English form back, which
+// is what the PDF's ordering guard understands.
+const MONTH_INDEX = new Map([
+  ["jan", 1], ["ene", 1], ["feb", 2], ["mar", 3], ["apr", 4], ["abr", 4], ["may", 5],
+  ["jun", 6], ["jul", 7], ["aug", 8], ["ago", 8], ["sep", 9], ["set", 9], ["oct", 10],
+  ["nov", 11], ["dec", 12], ["dic", 12], ["dez", 12],
+]);
+
+const MONTH_NAME = /\b([a-z\u00C0-\u024F]{3,9})\.?\s*$/i;
+const SEPARATOR = /\s+-\s+|\s+to\s+/i;
+
+/**
+ * Read a stored period into the pieces the picker edits.
+ *
+ * The stored value is free text — it comes from cv.md, from the picker, or from
+ * a hand-edit — and the PDF's reverse-chronological guard reads only its START,
+ * so parse and format are both anchored on the start date. A value this cannot
+ * read (a sentence, a stray company name, a bare year) returns null, and the
+ * builder falls back to a plain text box rather than discarding what is there.
+ *
+ * @param {string} text
+ * @returns {{ start: { year: number, month: number | null }, end: { year: number, month: number | null } | null, present: boolean } | null}
+ */
+export function parsePeriod(text) {
+  const raw = String(text ?? "").replace(/[\u2010-\u2015]/g, "-").trim();
+  if (!raw) return null;
+  // "Currently working here" spelled any of the ways a CV does.
+  const present = /\b(present|current|currently|now|today|actualidad|actualmente|hoy|atual|atualmente)\b/i.test(raw);
+
+  const side = (value) => {
+    const year = value.match(/\b(19|20)\d{2}\b/);
+    if (!year) return null;
+    const named = value.slice(0, year.index).match(MONTH_NAME);
+    const key = named ? named[1].normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().slice(0, 3) : "";
+    return { year: Number(year[0]), month: MONTH_INDEX.get(key) ?? null };
+  };
+
+  const parts = raw.split(SEPARATOR);
+  const start = side(parts[0] ?? "");
+  if (!start) return null;
+  if (present) return { start, end: null, present: true };
+  if (parts.length === 1) return { start, end: null, present: false };
+  return { start, end: side(parts.slice(1).join(" ")), present: false };
+}
+
+/**
+ * Compose the canonical period from picker values.
+ *
+ * Keeps the four rules two consumers depend on: start date FIRST (the PDF guard
+ * reads only the start), a 4-digit year, English month abbreviations (so roles
+ * in the same year compare by month), and no trailing period or semicolon —
+ * which is also how the importer recognises a cv.md line as a period, along with
+ * staying under 40 characters.
+ *
+ * Returns null when there is no usable start year, so a half-typed year never
+ * overwrites a stored period.
+ *
+ * @param {{ startMonth?: number | null, startYear?: number | null, endMonth?: number | null, endYear?: number | null, present?: boolean }} value
+ * @returns {string | null}
+ */
+export function formatPeriod(value = {}) {
+  const asYear = (input) => (Number.isInteger(input) && input >= 1900 && input <= 2100 ? String(input) : null);
+  const asMonth = (input) => (Number.isInteger(input) && input >= 1 && input <= 12 ? MONTH_LABELS[input - 1] : null);
+  const side = (monthInput, yearInput) => {
+    const year = asYear(yearInput);
+    if (!year) return null;
+    const month = asMonth(monthInput);
+    return month ? `${month} ${year}` : year;
+  };
+
+  const start = side(value.startMonth, value.startYear);
+  if (!start) return null;
+  if (value.present) return `${start} – Present`;
+  const end = side(value.endMonth, value.endYear);
+  return end ? `${start} – ${end}` : start;
+}
+
 /**
  * The facts of one scope.
  *
