@@ -26,8 +26,8 @@ const loader = `
 `;
 register(`data:text/javascript,${encodeURIComponent(loader)}`, pathToFileURL(webSrc));
 
-const { POST: updateProfile } = await import("../../src/app/api/profile/route.ts");
-const { POST: updateCadence } = await import("../../src/app/api/followups/cadence/route.ts");
+const { POST: updateProfile } = await import("../../src/routes/api/profile/+server.ts");
+const { POST: updateCadence } = await import("../../src/routes/api/followups/cadence/+server.ts");
 
 const routes = [
   { name: "profile", post: updateProfile, patch: { name: "Updated Fixture Candidate" } },
@@ -53,12 +53,16 @@ async function withFixture(source, fn) {
   }
 }
 
+// SvelteKit's +server.ts handlers take a request event, not a bare Request, so
+// this helper builds the event both routes are called with.
 function request(route) {
-  return new Request(`http://fixture.invalid/api/${route.name}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(route.patch),
-  });
+  return {
+    request: new Request(`http://fixture.invalid/api/${route.name}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(route.patch),
+    }),
+  };
 }
 
 for (const route of routes) {

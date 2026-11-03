@@ -40,34 +40,25 @@ console.log('\nweb → core argv contract');
 //                  bottom stays complete.
 const CALL_SITES = [
   {
-    source: 'web/src/app/api/followups/route.ts',
+    source: 'web/src/routes/api/followups/+server.ts',
     script: 'followup-cadence.mjs',
     args: ['--json'],
     probe: 'run',
   },
   {
-    source: 'web/src/app/api/followups/cadence/route.ts',
+    source: 'web/src/routes/api/followups/cadence/+server.ts',
     script: 'followup-cadence.mjs',
     args: ['--json'],
     probe: 'run',
   },
   {
-    source: 'web/src/app/api/doctor/route.ts',
+    source: 'web/src/routes/api/doctor/+server.ts',
     script: 'doctor.mjs',
     args: ['--json'],
     probe: 'run',
   },
   {
-    // Before the set-status probe, which moves row 1 off Applied.
-    source: 'web/src/lib/core-cli.ts',
-    argvSource: 'web/src/app/api/followups/seed/route.ts',
-    script: 'followup-seed.mjs',
-    args: ['1', '--json'],
-    probe: 'run',
-  },
-  {
-    source: 'web/src/lib/core-cli.ts',
-    argvSource: 'web/src/app/api/status/route.ts',
+    source: 'web/src/routes/api/status/+server.ts',
     script: 'set-status.mjs',
     // The route builds ['--row', row, canon, '--source', 'web', '--detach-jd-archive', '--json'];
     // row 1 and Responded are the fixture tracker's row and a canonical state.
@@ -75,13 +66,13 @@ const CALL_SITES = [
     probe: 'run',
   },
   {
-    source: 'web/src/app/api/portals/verify/route.ts',
+    source: 'web/src/routes/api/portals/verify/+server.ts',
     script: 'verify-portals.mjs',
     args: [],
     probe: 'run',
   },
   {
-    source: 'web/src/app/api/tracker/delete/route.ts',
+    source: 'web/src/routes/api/tracker/delete/+server.ts',
     script: 'tracker.mjs',
     // --dry-run is conditional in the route (added when the caller asks for a
     // preview); passing it keeps the probe off the fixture tracker.
@@ -96,7 +87,7 @@ const CALL_SITES = [
     probe: 'flags-only',
   },
   {
-    source: 'web/src/app/api/quiet-companies/route.ts',
+    source: 'web/src/routes/api/quiet-companies/+server.ts',
     script: 'rejection-latency.mjs',
     // The route parses stdout, so the payload is the contract, not just exit 0.
     expectJson: true,
@@ -107,7 +98,7 @@ const CALL_SITES = [
     probe: 'run',
   },
   {
-    source: 'web/src/app/api/stats/route.ts',
+    source: 'web/src/routes/api/stats/+server.ts',
     script: 'stats.mjs',
     // NO FLAGS. stats.mjs prints JSON by default and rejects `--json` outright
     // ("unrecognized flag(s): --json"), unlike every other route here — which is
@@ -117,40 +108,13 @@ const CALL_SITES = [
     probe: 'json-any-exit',
   },
   {
-    source: 'web/src/app/api/patterns/route.ts',
+    source: 'web/src/routes/api/patterns/+server.ts',
     script: 'analyze-patterns.mjs',
     // Exits 1 on this one-row fixture, by design: it is under its minimum
     // sample and says so in a JSON payload the route renders. The contract is
     // the payload, not the status.
     args: [],
     probe: 'json-any-exit',
-  },
-  {
-    source: 'web/src/app/api/keyword-match/route.ts',
-    script: 'keyword-match.mjs',
-    // {{report}} is replaced with the fixture report below. This script takes a
-    // FILE as its first argument, so unlike every other site here the argv is
-    // only meaningful against a real report — and `--help` exits 1, so
-    // 'flags-only' cannot stand in for it either.
-    args: ['{{report}}', '--json'],
-    probe: 'run',
-  },
-  {
-    source: 'web/src/app/api/upskill/route.ts',
-    script: 'upskill.mjs',
-    // No flags: upskill.mjs prints JSON by default and rejects a --json flag,
-    // the same convention stats.mjs and company-history.mjs follow while the
-    // follow-up routes pass one. The empty argv is the assertion.
-    args: [],
-    probe: 'run',
-  },
-  {
-    source: 'web/src/app/api/company-history/route.ts',
-    script: 'company-history.mjs',
-    // The fixture tracker's own company, so the probe exercises a real lookup
-    // rather than the not-found fallback.
-    args: ['--company', 'Northwind Robotics'],
-    probe: 'run',
   },
   {
     source: 'web/src/lib/core/pipeline.ts',

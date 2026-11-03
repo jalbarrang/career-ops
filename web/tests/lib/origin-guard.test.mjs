@@ -65,31 +65,58 @@ test("parseAllowedHosts returns an empty set for blank/undefined", () => {
 
 // --- where the guard runs -------------------------------------------------
 
-// A decision this module cannot make about itself: proxy.ts's matcher chooses
-// which requests reach checkRequest at all, and a guard that never runs is
-// indistinguishable from one that always allows. The matcher is a plain regex
-// path, so it is extracted and exercised rather than pattern-matched as text.
-test("the guard runs on page routes, not only on /api", () => {
-  // Given the matcher proxy.ts exports
-  const source = readFileSync(join(WEB_ROOT, "src", "proxy.ts"), "utf8");
-  const matcher = /matcher:\s*"([^"]+)"/.exec(source)?.[1];
-  assert.ok(matcher, "proxy.ts should export a single string matcher");
-  const matches = (path) => new RegExp(`^${matcher}$`).test(path);
+// A decision this module cannot make about itself: the hook chooses which
+// requests reach checkRequest at all, and a guard that never runs is
+// indistinguishable from one that always allows. The Next app expressed that as
+// a proxy.ts matcher regex; SvelteKit hooks run for every request and opt OUT of
+// static assets, so the property is asserted behaviourally instead of by reading
+// a pattern — the hook is invoked with real events.
+import "../helpers/web-ts-alias-loader.mjs";
 
-  // When the paths that carry the user's data are tested against it
-  // Then they are gated. Scoping this to /api left every page ungated, which a
-  // loopback bind does not cover: a DNS-rebinding page reads /pipeline from the
-  // user's own browser as same-origin, and force-dynamic pages read the tracker
-  // off disk on each request.
-  assert.equal(matches("/"), true, "the dashboard root renders user data");
-  assert.equal(matches("/pipeline"), true, "page routes must be gated");
-  assert.equal(matches("/cv"), true);
-  assert.equal(matches("/api/run"), true, "the API must stay gated");
+const { handle } = await import("../../src/hooks.server.ts");
+
+/** A RequestEvent-shaped object good enough for the origin guard. */
+function event(path, headers = {}) {
+  const url = new URL(path, "http://localhost:3000");
+  return { url, request: new Request(url, { headers }) };
+}
+
+/** Resolve spy: the guard let the request through if this ran. */
+async function passes(path, headers) {
+  let reached = false;
+  await handle({
+    event: event(path, headers),
+    resolve: async () => {
+      reached = true;
+      return new Response("page");
+    },
+  });
+  return reached;
+}
+
+test("the guard runs on page routes, not only on /api", async () => {
+  // Given a DNS-rebinding request: same-origin by the browser's reckoning, but
+  // carrying the attacker's Host. Scoping the guard to /api left every page
+  // ungated, and these pages read the tracker off disk per request.
+  const hostile = { "sec-fetch-site": "same-origin", host: "attacker.example" };
+
+  // When the paths that carry the user's data are requested
+  // Then every one of them is refused before the route can render
+  for (const path of ["/", "/pipeline", "/cv", "/api/run"]) {
+    assert.equal(await passes(path, hostile), false, `${path} must be gated`);
+  }
 
   // And build assets stay out: they carry no user data, and a 403 on them would
   // break the very error page that explains the 403.
-  assert.equal(matches("/_next/static/chunks/main.js"), false);
-  assert.equal(matches("/favicon.ico"), false);
+  for (const path of ["/_app/immutable/chunks/main.js", "/favicon.ico"]) {
+    assert.equal(await passes(path, hostile), true, `${path} must stay ungated`);
+  }
+
+  // And the app's own traffic still passes, so the guard cannot fail closed on
+  // the loopback user it exists to protect.
+  const own = { "sec-fetch-site": "same-origin", origin: "http://localhost:3000", host: "localhost:3000" };
+  assert.equal(await passes("/pipeline", own), true, "a same-origin page read must reach the route");
+  assert.equal(await passes("/api/status", own), true, "the API must stay reachable same-origin");
 });
 
 // --- checkRequest: the app's own same-origin traffic passes ---------------

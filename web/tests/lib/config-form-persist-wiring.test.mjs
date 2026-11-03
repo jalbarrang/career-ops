@@ -13,7 +13,7 @@ import { test } from "node:test";
 // first-run-copy.test.mjs and decision-card-cta.test.mjs.
 
 const src = readFileSync(
-  join(dirname(fileURLToPath(import.meta.url)), "../../src/components/config-form.tsx"),
+  join(dirname(fileURLToPath(import.meta.url)), "../../src/components/config-form.svelte"),
   "utf8",
 );
 
@@ -61,7 +61,10 @@ test("the persist call lives in the detect effect, ahead of save()", () => {
 // no-op on any machine with two or more CLIs installed.
 test("the detect effect only keeps the restored id while its CLI is installed", () => {
   const detect = src.slice(src.indexOf('fetch("/api/clis")'), src.indexOf("function save()"));
-  assert.match(detect, /if\s*\(\s*keepIfInstalled\(\s*prev\s*,\s*list\s*\)\s*\)\s*return\s+prev/);
+  // Svelte has no functional setState: the handler reads the live `cliId` and
+  // returns without reassigning it, which is the same "keep the current value"
+  // the React updater expressed with `return prev`. The guard is what matters.
+  assert.match(detect, /if\s*\(\s*keepIfInstalled\(\s*cliId\s*,\s*list\s*\)\s*\)\s*return;/);
   assert.doesNotMatch(
     detect,
     /if\s*\(\s*prev\s*\)\s*return\s+prev/,

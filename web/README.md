@@ -79,11 +79,18 @@ directory.
 
 ## Development
 
+UI primitives are **shadcn-svelte** components in `src/components/ui/` (aliased to this
+app's tree in `components.json`, with the CSS tokens mapped to the career-ops palette
+rather than replaced). UI strings live in `messages/{locale}.json` and are rendered
+through **Paraglide JS**; see [AGENTS.md](AGENTS.md) for the rules that keep both
+coherent.
+
 ```bash
-npm run dev          # dev server (Turbopack)
+npm run dev          # dev server (SvelteKit + Vite)
 npm test             # unit suites (node --test, no framework)
-npx tsc --noEmit     # typecheck
-npm run build        # production build
+npm run typecheck    # svelte-check (compiles the i18n messages first)
+npm run build        # production build → build/ (`npm start` serves it)
+npm run check:i18n   # lint the translation catalogue
 ```
 
 Set `CAREER_OPS_ROOT=/path/to/checkout` in `web/.env.local` to point the app at
@@ -161,8 +168,8 @@ header, so on a widened bind the allow-list filters honest clients rather than
 hostile ones; and a `0.0.0.0` bind is IPv4-only, so an opted-in IPv6 address will
 pass the filter with nothing listening for it.
 
-The guard covers page routes as well as `/api/*` (`src/proxy.ts`'s matcher spans
-everything but build assets). That is not about the bind: a page you visit can
+The guard covers page routes as well as `/api/*` (`src/hooks.server.ts` gates every
+request except build assets). That is not about the bind: a page you visit can
 re-resolve its own domain to `127.0.0.1` and read the dashboard from your own
 browser as same-origin, which a loopback bind does nothing to stop. The `Host`
 header on that request carries the attacker's domain, which is what refuses it.
@@ -176,14 +183,15 @@ falls back to every interface, which is what a namespace needs. A forwarded port
 the guard admits, so the port publication is the whole of the access control
 there: publish it on `127.0.0.1:3000:3000`, not `0.0.0.0`.
 
-You can also override the bind directly — `npm run dev -- -H 0.0.0.0`. When you
-pass `-H` or `--hostname`, the launcher injects nothing and Next resolves the
-flag itself, so the startup line says the bind is Next's to choose rather than
-claiming an address it would have to guess. **Prefer the env var.** An `-H` on
-its own opens the socket while the allow-list stays empty, which is the one
-combination with no honest reading: the guard then refuses LAN clients that
-identify themselves truthfully and admits any that spell `Host: localhost`. The
-launcher says so on startup rather than doing it quietly.
+You can also override the bind directly — `npm run dev -- --host 0.0.0.0`. When you
+pass `--host` (or the older `-H` / `--hostname` spellings, which the launcher
+accepts), the launcher injects nothing of its own: that value is the bind, so the
+startup line says the run may be reachable rather than claiming an address it
+would have to guess. **Prefer the env var.** A host flag on its own opens the
+socket while the allow-list stays empty, which is the one combination with no
+honest reading: the guard then refuses LAN clients that identify themselves
+truthfully and admits any that spell `Host: localhost`. The launcher says so on
+startup rather than doing it quietly.
 
 Use it on a network you trust, and prefer an SSH tunnel
 (`ssh -L 3000:127.0.0.1:3000 you@box`) where you can — that needs no env var at
@@ -203,12 +211,12 @@ only `web/tests/lib/` and a suite outside it would never run in the required che
 needs **no registration** — just add the file. **Requires Node ≥ 22**: earlier
 versions don't expand CLI globs for `node --test`, so `npm test` prints
 `Could not find '…'`, runs nothing and exits 1. Hence `engines.node` in
-`web/package.json` — a higher floor than `next` itself asks for.
+`web/package.json` — a higher floor than `vite` itself asks for.
 
 Three constraints follow from all this:
 
-- **Keep tests out of `src/`.** `src/` is the Next.js app's own tree, scanned by
-  `next build`'s file tracing and `tsc --noEmit`; test files there entangle
+- **Keep tests out of `src/`.** `src/` is the SvelteKit app's own tree, processed
+  by `vite build` and typechecked by `svelte-check`; test files there entangle
   fixtures with build and route conventions.
 - **Use `.mjs`, not `.ts`.** There is no test framework and no TypeScript loader
   by design — `node --test` cannot run a `.ts` suite, so one would look like

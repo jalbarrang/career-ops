@@ -33,11 +33,11 @@ const SRC = join(
   "..",
   "..",
   "src",
-  "app",
+  "routes",
   "api",
   "apply",
   "drive",
-  "route.ts",
+  "+server.ts",
 );
 const src = readFileSync(SRC, "utf8");
 

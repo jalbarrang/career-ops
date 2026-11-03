@@ -40,7 +40,14 @@ export async function resolve(specifier, context, nextResolve) {
   const base = path.join(WEB_SRC, specifier.slice(2));
   // Specifiers that already name an extension (e.g. "@/lib/tracker-table.mjs")
   // resolve as-is; extensionless ones (the TS convention) try .ts then .tsx.
-  const candidates = HAS_EXT.test(specifier) ? [base] : [`${base}.ts`, `${base}.tsx`];
+  //
+  // .js is in the list for GENERATED code: shadcn-svelte components import
+  // `@/lib/cn.js` (a .ts file behind a .js specifier, the bundler convention),
+  // and Paraglide emits real .js under src/lib/paraglide. Without it, resolving
+  // either falls through to a nonexistent .ts and the importing test cannot load.
+  const candidates = HAS_EXT.test(specifier)
+    ? [base]
+    : [`${base}.ts`, `${base}.tsx`, `${base}.js`, `${base}.mjs`];
   // Falling back to the FIRST candidate rather than to the raw specifier keeps
   // Node's own error useful: a miss then reports the file that is actually
   // absent instead of blaming the unresolvable package "@/lib".

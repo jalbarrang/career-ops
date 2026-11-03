@@ -25,7 +25,7 @@ const loader = `
 register(`data:text/javascript,${encodeURIComponent(loader)}`, pathToFileURL(webSrc));
 
 
-const { POST } = await import("../../src/app/api/profile/route.ts");
+const { POST } = await import("../../src/routes/api/profile/+server.ts");
 const source = "# Original fixture comment\ncandidate:\n  full_name: Fixture Candidate\n  email: fixture@example.invalid\ncompensation:\n  currency: USD\n  target_range: 80-90\n";
 async function fixture(t, body) {
   const root = mkdtempSync(path.join(tmpdir(), "profile-input-"));
@@ -40,9 +40,9 @@ async function fixture(t, body) {
   mkdirSync(config);
   const file = path.join(config, "profile.yml");
   writeFileSync(file, source);
-  const response = await POST(new Request("http://fixture.invalid/api/profile", {
+  const response = await POST({ request: new Request("http://fixture.invalid/api/profile", {
     method: "POST", headers: { "Content-Type": "application/json" }, body,
-  }));
+  }) });
   return { response, file, config };
 }
 

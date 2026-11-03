@@ -95,10 +95,10 @@ for (let i = 0; i < args.length; i++) {
 }
 
 try {
-  createRequire(path.join(webDir, "package.json")).resolve("next/package.json");
+  createRequire(path.join(webDir, "package.json")).resolve("vite/package.json");
 } catch (err) {
   if (err.code !== "MODULE_NOT_FOUND") throw err;
-  console.error("\x1b[31mError:\x1b[0m Web UI dependencies are not installed (next was not found from web/).");
+  console.error("\x1b[31mError:\x1b[0m Web UI dependencies are not installed (vite was not found from web/).");
   console.error("Install them once, then retry:  npm --prefix web ci\n");
   process.exit(1);
 }
@@ -112,7 +112,7 @@ console.log("\x1b[1m\x1b[36m====================================================
 const dataRoot = getCareerOpsRoot();
 console.log("\x1b[32m✓\x1b[0m Data root resolved: " + dataRoot);
 
-// Plan Next.js run and resolve bind host from CAREER_OPS_WEB_ALLOWED_HOSTS
+// Plan the run's bind and resolve it from CAREER_OPS_WEB_ALLOWED_HOSTS
 const plan = planNextRun({
   command: "dev",
   extra: host !== "127.0.0.1" ? ["-H", host, "-p", String(port)] : ["-p", String(port)],
@@ -197,7 +197,7 @@ const childEnv = {
   CAREER_OPS_ROOT: dataRoot,
 };
 
-// Spawn Next.js server directly via node executable (no shell parsing, avoiding shell escaping issues)
+// Spawn the SvelteKit dev server through web/server.mjs (no shell parsing, avoiding shell escaping issues)
 const isWindows = process.platform === "win32";
 const serverScript = path.join(webDir, "server.mjs");
 const serverArgs = [serverScript, "dev", "-p", String(port)];

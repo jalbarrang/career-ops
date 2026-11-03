@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compareTrackerNumbers } from "../../src/lib/pipeline-sort.mjs";
 
-const SRC = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "src", "components", "pipeline-view.tsx");
+const SRC = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "src", "components", "pipeline-view.svelte");
 const source = readFileSync(SRC, "utf8");
 
 test("tracker identifiers sort numerically rather than lexicographically", () => {
@@ -19,15 +19,16 @@ test("Tracker is the first sortable Pipeline column", () => {
 });
 
 test("sortable Pipeline headers use native keyboard-operable buttons", () => {
-  assert.match(source, /<th[\s\S]*?aria-sort=[\s\S]*?<button\s+type="button"[\s\S]*?onClick=/);
-  assert.doesNotMatch(source, /<th(?:(?!>).)*onClick/s);
+  // Svelte uses lowercase event attributes (`onclick`), not React's `onClick`.
+  assert.match(source, /<th[\s\S]*?aria-sort=[\s\S]*?<button\s+type="button"[\s\S]*?onclick=/);
+  assert.doesNotMatch(source, /<th(?:(?!>).)*onclick/s);
 });
 
 test("the visible tracker identifier uses the canonical tracker route", () => {
-  assert.match(source, /<Link href=\{`\/pipeline\/\$\{r\.n\}`\}[^>]*>\s*#\{r\.n\}\s*<\/Link>/);
+  assert.match(source, /<a href=\{`\/pipeline\/\$\{r\.n\}`\}[^>]*>\s*#\{r\.n\}\s*<\/a>/);
 });
 
 test("the lower-priority Date header and cells hide below the large breakpoint", () => {
   assert.match(source, /k === "date" && "hidden lg:table-cell"/);
-  assert.match(source, /<td className="hidden whitespace-nowrap px-4 py-3 text-faint tabular-nums lg:table-cell">\{r\.date\}<\/td>/);
+  assert.match(source, /<td class="hidden whitespace-nowrap px-4 py-3 text-faint tabular-nums lg:table-cell">\{r\.date\}<\/td>/);
 });

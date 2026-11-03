@@ -9,14 +9,17 @@ test("theme constants keep the persisted contract stable", () => {
 });
 
 test("the literal bootstrap script stays pinned to the shared theme contract", async () => {
-  const layoutSource = await readFile(new URL("../../src/app/layout.tsx", import.meta.url), "utf8");
-  const script = layoutSource.match(/const THEME_SCRIPT = `([^`]*)`;/)?.[1];
+  // The pre-paint theme bootstrap used to be a THEME_SCRIPT template in the Next
+  // layout. It is now the inline <script> in app.html — same contract, read from
+  // its new home.
+  const shellSource = await readFile(new URL("../../src/app.html", import.meta.url), "utf8");
+  const script = shellSource.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 
-  assert.ok(script, "layout must define a literal THEME_SCRIPT");
-  assert.doesNotMatch(script, /\$\{/);
-  assert.match(script, new RegExp(`localStorage\\.getItem\\('${THEME_STORAGE_KEY}'\\)`));
-  assert.match(script, /t==='light'\|\|t==='dark'\?t:null/);
-  assert.ok(script.includes(`d?'${THEME_COLORS.dark}':'${THEME_COLORS.light}'`));
+  assert.ok(script, "app.html must define the pre-paint theme script");
+  assert.doesNotMatch(script, /\$\{|%sveltekit\./, "the bootstrap must stay static — no templating inside it");
+  assert.match(script, new RegExp(`localStorage\\.getItem\\(['"]${THEME_STORAGE_KEY}['"]\\)`));
+  assert.match(script, /t === ['"]light['"] \|\| t === ['"]dark['"] \? t : null/);
+  assert.ok(script.includes(THEME_COLORS.dark) && script.includes(THEME_COLORS.light));
 });
 
 test("theme helpers accept only the two supported modes", () => {

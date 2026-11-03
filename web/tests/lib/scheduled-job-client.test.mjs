@@ -5,7 +5,6 @@ import path from "node:path";
 import { cadenceMinimum, cadenceValueForUnit, createScheduledJobRequest, MIN_SCHEDULE_MINUTES, updateScheduledJobRequest } from "../../src/lib/scheduled-job-client.mjs";
 import { runStatusTone } from "../../src/lib/scheduled-run-status.mjs";
 import { isSchedulerStatusPayload } from "../../src/lib/scheduled-scheduler-status.mjs";
-import { cycleFocusIndex } from "../../src/lib/scheduled-overlay-focus.mjs";
 import { scheduledRunnerResourcePath, scheduledStorePath } from "../../src/lib/scheduled-runner-path.mjs";
 
 test("scheduled-job client keeps one cadence minimum and preserves payload", async () => {
@@ -37,13 +36,10 @@ test("scheduled-job client updates by encoded id and preserves payload", async (
   assert.deepEqual(JSON.parse(request[1].body), { status: "paused" });
 });
 
-test("scheduler payload and overlay focus helpers fail closed and wrap", () => {
+test("the scheduler status payload fails closed", () => {
   assert.equal(isSchedulerStatusPayload({ task: {} }), true);
   assert.equal(isSchedulerStatusPayload({ error: "offline" }), false);
   assert.equal(isSchedulerStatusPayload(null), false);
-  assert.equal(cycleFocusIndex(0, 2, true), 1);
-  assert.equal(cycleFocusIndex(1, 2, false), 0);
-  assert.equal(cycleFocusIndex(0, 0), -1);
 });
 
 test("runner and scheduler-status derive the same default and custom lock path", () => {
@@ -84,7 +80,7 @@ test("minute cadence changes clamp to the shared minimum without shrinking large
 });
 
 test("scheduled run route has a bounded SIGKILL fallback and idempotent cleanup", () => {
-  const source = fs.readFileSync(new URL("../../src/app/api/scheduled-jobs/[id]/run/route.ts", import.meta.url), "utf8");
+  const source = fs.readFileSync(new URL("../../src/routes/api/scheduled-jobs/[id]/run/+server.ts", import.meta.url), "utf8");
   assert.match(source, /SIGKILL/);
   assert.match(source, /killTimer/);
   assert.match(source, /if \(settled\) return/);

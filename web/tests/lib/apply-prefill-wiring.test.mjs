@@ -27,8 +27,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
-const route = readFileSync(join(root, "src/app/api/apply/prefill/route.ts"), "utf8");
-const provider = readFileSync(join(root, "src/components/apply/apply-provider.tsx"), "utf8");
+const route = readFileSync(join(root, "src/routes/api/apply/prefill/+server.ts"), "utf8");
+const provider = readFileSync(join(root, "src/lib/apply.svelte.ts"), "utf8");
 
 test("the prefill route hands buildAnswerPrompt the applyCvSource result", () => {
   // The call this PR exists to change. Without the argument the prompt falls
@@ -75,15 +75,15 @@ test("the prefill route reads company and application off the request body", () 
 test("the apply provider sends both identifiers to prefill", () => {
   const body = callBody("/api/apply/prefill");
   assert.match(body, /\bsessionId\b/, "located the wrong call");
-  assert.match(body, /company:\s*companyRef\.current/, "prefill must send the company the fill call sends");
-  assert.match(body, /application:\s*nRef\.current/, "prefill must send the application number the fill call sends");
+  assert.match(body, /company:\s*this\.#companyRef/, "prefill must send the company the fill call sends");
+  assert.match(body, /application:\s*this\.#nRef/, "prefill must send the application number the fill call sends");
 });
 
 test("prefill and fill read the identifiers from the same two refs", () => {
   // Two sources for one answer is how the halves drift apart again.
   const fill = callBody("/api/apply/fill");
-  assert.match(fill, /company:\s*companyRef\.current/);
-  assert.match(fill, /application:\s*nRef\.current/);
+  assert.match(fill, /company:\s*this\.#companyRef/);
+  assert.match(fill, /application:\s*this\.#nRef/);
 });
 
 /** The object literal buildAnswerPrompt is called with in prefill/route.ts. */

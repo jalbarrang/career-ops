@@ -441,9 +441,13 @@ export async function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEve
       // printed nothing. Otherwise it is a note beside the sources that finished.
       onEvent(incomplete.length === ats.length ? { kind: "error", message } : { kind: "log", line: message });
     }
+    const merged = mergeScanResults(finished, offers.length);
     onEvent({
       kind: "summary",
-      ...mergeScanResults(finished, offers.length),
+      ...merged,
+      // scan-merge.mjs is plain JS, so TS infers `datasetStatus` as `{}`. The
+      // core's contract for it is a per-source status map.
+      datasetStatus: merged.datasetStatus as Record<string, "ok" | "stale" | "empty">,
       ...(incomplete.length ? { incomplete } : {}),
     });
     return offers;

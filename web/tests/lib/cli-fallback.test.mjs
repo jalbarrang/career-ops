@@ -49,14 +49,14 @@ test("installedCliIds lists only installed entries, for the 404 body", () => {
   assert.deepEqual(installedCliIds([null, { installed: true }, { id: "codex", installed: false }]), []);
 });
 
-const API = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "src", "app", "api");
+const API = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "src", "routes", "api");
 const read = (rel) => readFileSync(join(API, rel), "utf8");
 
 // Routes that spawn the CLI they resolve. Each must rebind cliId to the resolved
 // spec's id before anything keyed on it runs.
-const SPAWNING_ROUTES = ["run/route.ts", "assistant/route.ts", "cv/ingest/route.ts", "explore/ai/route.ts", "apply/prefill/route.ts"];
+const SPAWNING_ROUTES = ["run/+server.ts", "assistant/+server.ts", "cv/ingest/+server.ts", "explore/ai/+server.ts", "apply/prefill/+server.ts"];
 // Routes that hand the id to lib/apply, which resolves it again itself.
-const PASS_THROUGH_ROUTES = ["apply/session/route.ts", "apply/drive/route.ts"];
+const PASS_THROUGH_ROUTES = ["apply/session/+server.ts", "apply/drive/+server.ts"];
 
 for (const rel of [...SPAWNING_ROUTES, ...PASS_THROUGH_ROUTES]) {
   test(`${rel} resolves the requested CLI through the fallback, not resolveCli()`, () => {
@@ -84,7 +84,7 @@ for (const rel of SPAWNING_ROUTES) {
 // answered "PDF upload needs Claude Code" (400) even with Claude installed,
 // instead of the 404 that lists the installed CLIs and points to Config.
 test("cv/ingest/route.ts reports an unavailable CLI before judging PDF eligibility, and resolves it once", () => {
-  const src = read("cv/ingest/route.ts");
+  const src = read("cv/ingest/+server.ts");
   const calls = src.match(/resolveCliOrFallback\(/g) ?? [];
   assert.equal(calls.length, 2, "expected one call for uploads and one `??=` for pasted text");
   assert.match(src, /resolved \?\?= resolveCliOrFallback\(cliId\)/, "pasted text must reuse an upload's resolution, not resolve again");
