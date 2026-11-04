@@ -11,8 +11,8 @@
 // injected, so nothing leaves the machine.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { verifyOffers } from '../scan.ts';
-import { setHostResolver } from '../liveness-browser.ts';
+import { verifyOffers } from '../packages/core/src/scanning/scan.ts';
+import { setHostResolver } from '../packages/core/src/liveness/liveness-browser.ts';
 
 const ANSWERS = {
   'outage.example': [],

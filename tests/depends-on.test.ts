@@ -212,7 +212,7 @@ test('a code span ending in a backslash still closes', () => {
   // backslash, and the span ran on to the next backtick and swallowed the
   // declaration between them. Windows paths make `C:\\` an everyday body.
   assert.deepEqual(
-    refs('Writes to `C:\\` on Windows.\n\n**Depends on #4076** first.\n\nSee `set-status.ts`.\n'),
+    refs('Writes to `C:\\` on Windows.\n\n**Depends on #4076** first.\n\nSee `packages/cli/src/commands/tracker/set-status.ts`.\n'),
     [4076],
   );
   // The opening side of the rule still holds: an escaped backtick opens nothing.

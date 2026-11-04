@@ -14,7 +14,7 @@ import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\nverify-portals — probe redirects are followed one checked hop at a time');
 
-const { probeSlug } = await import(pathToFileURL(join(ROOT, 'verify-portals.ts')).href);
+const { probeSlug } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/verify-portals.ts')).href);
 
 const OLD = 'https://boards-api.greenhouse.io/v1/boards/old-slug/jobs';
 const NEW = 'https://boards-api.greenhouse.io/v1/boards/new-slug/jobs';

@@ -4,22 +4,23 @@
 // DATA_CONTRACT.md: "System Layer files continue to be resolved relative to the
 // codebase/repository root, keeping code and personal data completely separate."
 //
-// normalize-statuses.ts broke that for templates/states.yml: one variable served
+// packages/cli/src/commands/tracker/normalize-statuses.ts broke that for templates/states.yml: one variable served
 // both roles, so `join(getCareerOpsRoot(), 'templates', 'states.yml')` looked for a
 // System Layer file inside the user's data directory. A data root that legitimately
 // has no templates/ is indistinguishable from the broken checkout the surrounding
 // `catch` was written for, so every status silently normalized to unknown — the
 // documented tracker repair path rewriting 156 localized spellings to nothing.
-// followup-cadence.ts carried the identical join.
+// packages/core/src/outreach/followup-cadence.ts carried the identical join.
 //
 // The suite never caught it because it runs with the default root, where data root
 // and codebase root are the same directory. These checks therefore run the modules
 // with a data root configured, and additionally scan for the pattern itself so a
 // new consumer of states.yml cannot reintroduce the leak.
 import { pass, fail, ROOT, NODE } from './helpers.ts';
+import { listTree } from '../packages/core/src/kernel/walk-tree.ts';
 import { execFileSync } from 'child_process';
 import { mkdirSync, mkdtempSync, rmSync, readFileSync, readdirSync } from 'fs';
-import { join } from 'path';
+import { join, relative } from 'path';
 import { tmpdir } from 'os';
 
 console.log('\nSystem Layer resolution under a configured data root (#3500)');
@@ -42,7 +43,7 @@ try {
   //    Spanish, and a localized alias, i.e. exactly the table in the bug report.
   for (const envVar of ['CAREER_OPS_ROOT', 'CAREER_OPS_DATA_DIR']) {
     const out = runWithDataRoot(
-      `import('./normalize-statuses.ts').then(m => console.log(` +
+      `import('./packages/cli/src/commands/tracker/normalize-statuses.ts').then(m => console.log(` +
       `['Accepted','Contratado','Evaluada','Rechazado'].map(v => v + '=' + (m.normalizeStatus(v).status ?? 'unknown')).join(' ')))`,
       envVar,
     );
@@ -55,7 +56,7 @@ try {
   // 2. followup-cadence reads the same System Layer file for its alias map; a
   //    localized status resolving to '' there drops the row out of the funnel.
   const cadence = runWithDataRoot(
-    `import('./followup-cadence.ts').then(m => console.log(` +
+    `import('./packages/core/src/outreach/followup-cadence.ts').then(m => console.log(` +
     `['Contratado','Aplicado','Entrevista'].map(v => v + '=' + (m.normalizeStatus(v) || 'unknown')).join(' ')))`,
   );
   const cadenceExpected = 'Contratado=hired Aplicado=applied Entrevista=interview';
@@ -69,8 +70,9 @@ try {
   //    files ARE user data that happens to live under modes/.
   const USER_FILES_IN_MODES = /^_(profile|custom|brief)\.md$/;
   const offenders = [];
-  for (const file of readdirSync(ROOT).filter(f => f.endsWith('.ts'))) {
-    const src = readFileSync(join(ROOT, file), 'utf-8');
+  for (const abs of listTree(join(ROOT, 'packages'), { match: /\.ts$/ })) {
+    const file = relative(ROOT, abs).split('\\').join('/');
+    const src = readFileSync(abs, 'utf-8');
     const dataVars = [...src.matchAll(/const\s+(\w+)\s*=\s*getCareerOpsRoot\(\)/g)].map(m => m[1]);
     if (!dataVars.length) continue;
     for (const v of dataVars) {
@@ -90,7 +92,7 @@ try {
 
   // 4. A genuinely unreadable states.yml must be loud, not a silent empty list —
   //    the property that made the original path bug invisible.
-  const src = readFileSync(join(ROOT, 'normalize-statuses.ts'), 'utf-8');
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/tracker/normalize-statuses.ts'), 'utf-8');
   /console\.error\(/.test(src.slice(src.indexOf('function canonicalStates'), src.indexOf('function normalizeStatus')))
     ? pass('normalize-statuses reports an unreadable states.yml on stderr instead of degrading silently')
     : fail('normalize-statuses swallows a states.yml load failure with no diagnostic (#3500)');

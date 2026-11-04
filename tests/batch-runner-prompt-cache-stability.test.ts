@@ -24,7 +24,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, chmodSync } from 'node:fs';
-import { join, delimiter } from 'node:path';
+import {dirname, join, delimiter } from 'node:path';
 import { tmpdir } from 'node:os';
 import { getBash, rmSync } from './helpers.ts';
 
@@ -82,7 +82,8 @@ test('two offers with different URLs/report numbers/dates/IDs resolve to a byte-
 
     // Report numbers must differ between the two offers too, so the test
     // cannot pass by accident on a fixture that happens to reuse "001".
-    writeFileSync(join(dir, 'reserve-report-num.ts'), [
+   mkdirSync(dirname(join(dir, 'packages/cli/src/commands/tracker/reserve-report-num.ts')), { recursive: true });
+    writeFileSync(join(dir, 'packages/cli/src/commands/tracker/reserve-report-num.ts'), [
       "import { readFileSync, writeFileSync, existsSync } from 'node:fs';",
       "if (!process.argv.includes('--release')) {",
       "  const f = 'counter.txt';",
@@ -92,8 +93,13 @@ test('two offers with different URLs/report numbers/dates/IDs resolve to a byte-
       "}",
     ].join('\n') + '\n');
 
-    for (const script of ['merge-tracker', 'reconcile-pipeline', 'verify-pipeline']) {
-      writeFileSync(join(dir, `${script}.ts`), '// No external integrations in this fixture.\n');
+    for (const script of [
+      'packages/cli/src/commands/tracker/merge-tracker.ts',
+      'packages/cli/src/commands/pipeline/reconcile-pipeline.ts',
+      'packages/cli/src/commands/platform/verify-pipeline.ts',
+    ]) {
+      mkdirSync(dirname(join(dir, script)), { recursive: true });
+      writeFileSync(join(dir, script), '// No external integrations in this fixture.\n');
     }
 
     // curl fails immediately so JD prefetch short-circuits without a network

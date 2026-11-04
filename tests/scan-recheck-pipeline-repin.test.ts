@@ -19,7 +19,7 @@
 // URL has no scan-history row to have released it, so it stays pinned whatever
 // its checkbox says.
 import { pass, fail } from './helpers.ts';
-import { collectSeenUrls } from '../scan.ts';
+import { collectSeenUrls } from '../packages/core/src/scanning/scan.ts';
 
 console.log('\nscan.ts — recheck_after_days survives the pipeline.md pass');
 

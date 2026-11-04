@@ -2,7 +2,7 @@
 
 career-ops was built for AI coding CLIs, but it also runs inside [Claude Cowork](https://www.anthropic.com/news/cowork) — Anthropic's desktop "work with your files" surface — with no changes to the system. If a terminal is a barrier for you, this is the friendlier door.
 
-**First-party verified (July 2026):** the full cycle — onboarding from a PDF CV, portal config, a complete A–G evaluation of a live Greenhouse posting, and canonical tracker registration via `merge-tracker.ts` — ran end to end inside Cowork. Bonus: Cowork renders the onboarding steps as native clickable options and a progress checklist.
+**First-party verified (July 2026):** the full cycle — onboarding from a PDF CV, portal config, a complete A–G evaluation of a live Greenhouse posting, and canonical tracker registration via `packages/cli/src/commands/tracker/merge-tracker.ts` — ran end to end inside Cowork. Bonus: Cowork renders the onboarding steps as native clickable options and a progress checklist.
 
 ## How it works
 
@@ -17,7 +17,7 @@ Cowork mounts your career-ops folder and the agent reads the same instruction fi
    ```
 2. Install [Claude Cowork](https://claude.com/download) and, in **Colaborar/Collaborate** mode, add the `~/career-ops` folder.
 3. Say (anchored, so Cowork's own generic setup doesn't hijack the phrase "set me up"):
-   > *"This folder contains career-ops. Read AGENTS.md, run its startup check (`bun doctor.ts --json`) and walk me through career-ops onboarding based on its output."*
+   > *"This folder contains career-ops. Read AGENTS.md, run its startup check (`career-ops doctor --json`) and walk me through career-ops onboarding based on its output."*
 4. Hand over your CV any way you like — paste the text, or just point the agent at an existing **PDF**: it reads the file itself and converts it to `cv.md` (the parsing is your agent's ability, not a career-ops script).
 5. Evaluate your first posting: paste a job URL or the JD text into the chat. From there, everything in the [README](../README.md) applies — same modes, same files, same data contract.
 
@@ -26,9 +26,9 @@ Cowork mounts your career-ops folder and the agent reads the same instruction fi
 | Piece | In Cowork |
 |---|---|
 | Evaluations, tracker, reports, all modes | ✅ Native — the agent edits your mounted folder directly |
-| Zero-token portal scan (`scan.ts`, API-based) | ✅ Runs in Cowork's Linux sandbox (`node` available) |
-| Merge/validation scripts (`merge-tracker.ts`, `verify-pipeline.ts`, …) | ✅ Sandbox |
-| **PDF generation** (`generate-pdf.ts`) and **browser-driven checks** (Playwright) | ⚠️ Playwright's Chromium lives on your machine, not in the sandbox — run these through the local shell when asked, or generate the HTML in Cowork and print to PDF |
+| Zero-token portal scan (`packages/core/src/scanning/scan.ts`, API-based) | ✅ Runs in Cowork's Linux sandbox (`node` available) |
+| Merge/validation scripts (`packages/cli/src/commands/tracker/merge-tracker.ts`, `packages/cli/src/commands/platform/verify-pipeline.ts`, …) | ✅ Sandbox |
+| **PDF generation** (`packages/cli/src/commands/cv/generate-pdf.ts`) and **browser-driven checks** (Playwright) | ⚠️ Playwright's Chromium lives on your machine, not in the sandbox — run these through the local shell when asked, or generate the HTML in Cowork and print to PDF |
 
 That Playwright caveat is the only real difference from the CLI experience. Two more small notes from verification: run `bun install` in a terminal before starting (Cowork's local shell can't reach the npm registry), and if a stray `reports/.reserve-*` sentinel file survives a run (Cowork's file bridge can't delete files), it's harmless — the allocator garbage-collects stale sentinels after 4 hours.
 

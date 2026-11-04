@@ -13,7 +13,7 @@
 # quote either matches the doc or fails a test.
 #
 # Detection stays in code. `detect` names a detector registered in
-# cv-templates.ts and dispatched by rule id; `detect: null` marks a rule that
+# packages/cli/src/commands/cv/cv-templates.ts and dispatched by rule id; `detect: null` marks a rule that
 # is agreed policy but has no detector yet, and carries
 # `unimplemented_because` saying what has to be settled first. Those are the
 # open items — a rule cannot be added, removed or silenced without this file
@@ -157,7 +157,7 @@ rules:
       is a measured boundary rather than a cautious one: the shipped
       templates/ats/cv-template.ats.html hides a decorative separator with
       `.contact-row .separator { display: none }`, so a stylesheet-wide scan
-      fires on the template literally named "ats". verify-ats.ts already draws
+      fires on the template literally named "ats". packages/cli/src/commands/cv/verify-ats.ts already draws
       this same line for white text and says why. Also not flagged: aria-hidden
       on decoration; @media print hiding a screen-only control.
 
@@ -172,7 +172,7 @@ rules:
 # Both classes were measured on #3109 with a rendered PDF, not argued from a CSS
 # value. Which extractor read the PDF changes the answer, so each entry names
 # one: this project extracts with `pdftotext -layout` (cv-visual.spec.ts,
-# intake.ts), and a construct that is clean under pdftotext is NOT thereby
+# packages/cli/src/commands/profile/intake.ts), and a construct that is clean under pdftotext is NOT thereby
 # clean under whatever a given ATS uses.
 cannot_catch:
   - id: css-generated-content-positioned
@@ -189,7 +189,7 @@ cannot_catch:
       letter-spacing and font-variant:small-caps fragment a heading into separate
       glyph runs, so the heading is present, selectable and unreadable to a
       tokeniser. Measured here on the shipped templates rendered through
-      generate-pdf.ts and read back with `pdftotext -layout`: of six heading
+      packages/cli/src/commands/cv/generate-pdf.ts and read back with `pdftotext -layout`: of six heading
       tokens, cv-template.{leadership,modern,jake}.html each keep 3 while
       cv-template.html and cv-template.{executive,compact}.html keep 6 —
       "PROFESSIONAL SUMMARY" comes out of the leadership template as

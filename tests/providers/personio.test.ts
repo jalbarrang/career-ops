@@ -7,7 +7,7 @@ console.log('\nProvider — personio');
 
 
 try {
-  const personioModule = await import(pathToFileURL(join(ROOT, 'providers/personio.ts')).href);
+  const personioModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/personio.ts')).href);
   const personio = personioModule.default;
   const { parsePersonioXml, parsePersonioHtml, parsePersonioListing } = personioModule;
 

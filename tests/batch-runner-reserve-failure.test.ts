@@ -2,13 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, delimiter } from 'node:path';
+import {dirname, join, delimiter } from 'node:path';
 import { tmpdir } from 'node:os';
 import { ROOT, getBash, rmSync } from './helpers.ts';
 import { describeSpawn, exitedNonZero } from './helpers/describe-spawn.ts';
 
 // A failed report-number reservation (lock timeout, unwritable reports/, ...)
-// makes reserve-report-num.ts exit 1 with nothing on stdout. The runner used
+// makes packages/cli/src/commands/tracker/reserve-report-num.ts exit 1 with nothing on stdout. The runner used
 // to take the empty string as the number: it launched the paid worker with a
 // blank "Report number:", recorded an empty report_num cell in batch-state.tsv
 // (which the next row rewrite reads back shifted, tab being IFS whitespace),
@@ -21,14 +21,17 @@ function fixture() {
   const bin = join(root, 'bin');
   mkdirSync(batch);
   mkdirSync(bin);
+  mkdirSync(dirname(join(batch, 'batch-runner.sh')), { recursive: true });
   copyFileSync(join(ROOT, 'batch/batch-runner.sh'), join(batch, 'batch-runner.sh'));
   writeFileSync(join(batch, 'batch-prompt.md'), 'Test prompt');
   // localhost is refused by the JD prefetch guard before curl connects, so the
   // test never touches the network even when the reservation wrongly succeeds.
   writeFileSync(join(batch, 'batch-input.tsv'), 'id\turl\tsource\tnotes\n1\thttp://localhost/jobs/1\ttest\tfirst\n');
   // The allocator fails with no output, as it does when it cannot take its lock.
-  writeFileSync(join(root, 'reserve-report-num.ts'), 'process.stderr.write("reserve-report-num: lock timeout\\n");\nprocess.exitCode = 1;\n');
-  for (const name of ['merge-tracker.ts', 'reconcile-pipeline.ts', 'verify-pipeline.ts']) {
+  mkdirSync(dirname(join(root, 'packages/cli/src/commands/tracker/reserve-report-num.ts')), { recursive: true });
+  writeFileSync(join(root, 'packages/cli/src/commands/tracker/reserve-report-num.ts'), 'process.stderr.write("reserve-report-num: lock timeout\\n");\nprocess.exitCode = 1;\n');
+  for (const name of ['packages/cli/src/commands/tracker/merge-tracker.ts', 'packages/cli/src/commands/pipeline/reconcile-pipeline.ts', 'packages/cli/src/commands/platform/verify-pipeline.ts']) {
+    mkdirSync(dirname(join(root, name)), { recursive: true });
     writeFileSync(join(root, name), '// stub: the merge steps are not under test\n');
   }
   const marker = join(root, 'worker-ran');

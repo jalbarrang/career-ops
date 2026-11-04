@@ -1,7 +1,7 @@
 import { pass, fail } from './helpers.ts';
 import assert from 'node:assert/strict';
-import { extractReqId, matchInvite, selectApplyTarget } from '../invite-match.ts';
-import { extractReqNumber } from '../tracker-parse.ts';
+import { extractReqId, matchInvite, selectApplyTarget } from '../packages/core/src/interview/invite-match.ts';
+import { extractReqNumber } from '../packages/core/src/tracker/tracker-parse.ts';
 
 const row = (num, status, notes) => ({ num, company: 'Acme', role: `Engineer ${num}`, status, notes });
 const reqId = extractReqId('Req ID: JR1234');

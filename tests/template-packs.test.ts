@@ -8,7 +8,7 @@
 // two strings concatenated or split across the wrong fields. The answer is a
 // variant with a different DOM, not plainer CSS on the existing ones.
 //
-// A different DOM means different section partials, and build-cv-html.ts
+// A different DOM means different section partials, and packages/cli/src/commands/cv/build-cv-html.ts
 // resolves partials from the `sections/` co-located with the template file.
 // Co-location is therefore the whole mechanism: a template in its own
 // subdirectory alongside its own `sections/` gets its own DOM without touching
@@ -24,7 +24,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, symlinkSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { pass, fail, warn } from './helpers.ts';
-import { listTemplates, resolveTemplate } from '../cv-templates.ts';
+import { listTemplates, resolveTemplate } from '../packages/cli/src/commands/cv/cv-templates.ts';
 
 console.log('\nCV template packs — discovery, resolution, and name collisions');
 
@@ -249,8 +249,8 @@ function throws(label, fn, ...patterns) {
 // The gap the issue's own proposal understated. Discovery alone would let a
 // pack list and then throw on resolve: resolveTemplate() built dir/<file>
 // directly and never consulted the listing. Every by-name caller lands there
-// (build-cv-latex.ts, generate-cover-letter.ts), so the demo path — handing
-// build-cv-html.ts an explicit path — would keep working while selecting the
+// (packages/cli/src/commands/cv/build-cv-latex.ts, packages/cli/src/commands/cv/generate-cover-letter.ts), so the demo path — handing
+// packages/cli/src/commands/cv/build-cv-html.ts an explicit path — would keep working while selecting the
 // same template by name failed.
 
 {
@@ -376,7 +376,7 @@ function throws(label, fn, ...patterns) {
   }
 }
 
-// NOTE: cv-templates.ts also has a node:test suite at test/cv-templates.test.ts
+// NOTE: packages/cli/src/commands/cv/cv-templates.ts also has a node:test suite at test/cv-templates.test.ts
 // (singular). Nothing runs it: test-all.ts discovers tests/**/*.test.ts only,
 // CI runs `bun test-all.ts --quick`, and root package.json declares no `test`
 // script. Worth its own issue; not fixed here.

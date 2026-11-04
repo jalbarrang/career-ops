@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTitleFilter, buildDomainFilter } from '../title-keywords.ts';
-import { matchedTitleKeywords } from '../scan.ts';
+import { buildTitleFilter, buildDomainFilter } from '../packages/core/src/scanning/title-keywords.ts';
+import { matchedTitleKeywords } from '../packages/core/src/scanning/scan.ts';
 
 const titleFilter = { positive: ['product manager'], negative: ['sales engineer'] };
 const filter = buildTitleFilter(titleFilter);

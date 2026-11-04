@@ -4,10 +4,10 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as yaml from 'js-yaml';
-import { replaceNextPin } from '../followup-seed.ts';
+import { replaceNextPin } from '../packages/core/src/outreach/followup-seed.ts';
 import { ROOT, pass, fail } from './helpers.ts';
 
-const SCRIPT = join(ROOT, 'debrief-sync.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/interview/debrief-sync.ts');
 const SENTENCE = 'No on-site roles outside the home city';
 const DOLLAR_SENTENCE = "Pay floor $'quoted";
 
@@ -139,7 +139,7 @@ const fullArgs = [
   const root = freshRoot();
   try {
     writeFixture(root);
-    const before = summary(root, 'followup-cadence.ts', ['--summary']);
+    const before = summary(root, 'packages/core/src/outreach/followup-cadence.ts', ['--summary']);
     check('an overdue pin is OVERDUE before the debrief command', () => {
       assert.equal(before.status, 0, before.stderr);
       assert.match(before.stdout, /OVERDUE/);
@@ -157,7 +157,7 @@ const fullArgs = [
       assert.match(tracker, /\| 4\.2\/5 \|/);
       assert.match(tracker, /\| Interview \|/);
       assert.equal((tracker.match(/Dealbreaker: No on-site roles outside the home city/g) || []).length, 1);
-      const contacts = summary(root, 'contacts.ts', ['--summary']);
+      const contacts = summary(root, 'packages/cli/src/commands/outreach/contacts.ts', ['--summary']);
       assert.equal(contacts.status, 0, contacts.stderr);
       assert.match(contacts.stdout, /Avery Quinn/);
       assert.match(contacts.stdout, /interviewer/);
@@ -168,7 +168,7 @@ const fullArgs = [
       const tsv = readRoot(root, 'data/contacts.tsv');
       assert.match(tsv, /Avery Quinn\tNorthwind\tinterviewer\t\t\tavery\.quinn@northwind\.example/);
       assert.match(tsv, /Casey Bloom\tNorthwind\t\t\t\tcasey\.bloom@northwind\.example/);
-      const cadence = summary(root, 'followup-cadence.ts', ['--summary']);
+      const cadence = summary(root, 'packages/core/src/outreach/followup-cadence.ts', ['--summary']);
       assert.equal(cadence.status, 0, cadence.stderr);
       assert.ok(FUTURE > localISO(new Date()));
       assert.doesNotMatch(cadence.stdout, /OVERDUE/);
@@ -195,7 +195,7 @@ const fullArgs = [
         assert.equal(readRoot(root, 'data/contacts.tsv'), contactsAfter);
         assert.equal(readRoot(root, 'data/follow-ups.md'), pinned);
         assert.equal((readRoot(root, 'data/applications.md').match(/Dealbreaker: No on-site roles outside the home city/g) || []).length, 1);
-        const contacts = summary(root, 'contacts.ts', ['--summary']);
+        const contacts = summary(root, 'packages/cli/src/commands/outreach/contacts.ts', ['--summary']);
         assert.match(contacts.stdout, /total: 2 contacts/);
         assert.match(contacts.stdout, /duplicates: none/);
       });
@@ -228,7 +228,7 @@ refuses('a Machine Summary holding only comments writes nothing', ['--app', '7',
   report: reportText('4.2', 'Apply', '[]').replace(/```yaml\n[\s\S]*?```/, '```yaml\n# summary pending\n```'),
 });
 
-refuses('a tracker status set-status.ts rejects writes nothing', ['--app', '7', '--dealbreaker', SENTENCE], {
+refuses('a tracker status packages/cli/src/commands/tracker/set-status.ts rejects writes nothing', ['--app', '7', '--dealbreaker', SENTENCE], {
   status: 'Waiting on panel',
 });
 
@@ -299,7 +299,7 @@ for (const [label, from, to] of [
       assert.equal(result.status, 0, result.stderr);
       assert.match(readFileSync(custom, 'utf8'), new RegExp(`^- next #7 ${FUTURE} `, 'm'));
       assert.match(readRoot(root, 'data/follow-ups.md'), /2026-02-01/);
-      const cadence = summary(root, 'followup-cadence.ts', ['--summary'], {
+      const cadence = summary(root, 'packages/core/src/outreach/followup-cadence.ts', ['--summary'], {
         CAREER_OPS_FOLLOWUPS: custom,
       });
       assert.equal(cadence.status, 0, cadence.stderr);
@@ -343,9 +343,9 @@ for (const [label, from, to] of [
 check('the override route keeps the web lock timeout', () => {
   // SvelteKit: the lock timeout is applied by withFollowupsWrite, and the
   // override route must write through it rather than taking its own lock.
-  const route = readFileSync(join(ROOT, 'web/src/routes/api/followups/override/+server.ts'), 'utf8');
+  const route = readFileSync(join(ROOT, 'apps/web/src/routes/api/followups/override/+server.ts'), 'utf8');
   assert.match(route, /withFollowupsWrite/);
-  const lock = readFileSync(join(ROOT, 'web/src/lib/core/followups-lock.ts'), 'utf8');
+  const lock = readFileSync(join(ROOT, 'apps/web/src/lib/core/followups-lock.ts'), 'utf8');
   assert.match(lock, /CAREER_OPS_WEB_FOLLOWUPS_LOCK_TIMEOUT_MS/);
 });
 
@@ -366,10 +366,10 @@ check('Step 10 tells the agent how to record the call', () => {
     'local calendar day',
     'today counts',
     'next week',
-    'bun debrief-sync.ts',
-    'bun contacts.ts --summary',
-    'bun followup-cadence.ts --summary',
-    'set-status.ts',
+    'career-ops debrief-sync',
+    'career-ops contacts --summary',
+    'career-ops followup-cadence --summary',
+    'packages/cli/src/commands/tracker/set-status.ts',
     'Do not change status unless the user names a new status',
     'A second run of the same command is safe',
   ]) {

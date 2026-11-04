@@ -6,10 +6,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-import { atomicWriteFile, isIgnorableDirectoryFsyncError } from '../scan.ts';
+import { atomicWriteFile, isIgnorableDirectoryFsyncError } from '../packages/core/src/scanning/scan.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SCAN = join(ROOT, 'scan.ts');
+const SCAN = join(ROOT, 'packages/core/src/scanning/scan.ts');
 
 function workspace(portals) {
   const root = mkdtempSync(join(tmpdir(), 'career-ops-scan-receipt-'));
@@ -154,7 +154,7 @@ test('--json returns exit 2 and structured errors for a partial failure', () => 
 
 test('a receipt larger than the pipe buffer drains completely', () => {
   const script = [
-    `import { emitJsonReceipt } from ${JSON.stringify(new URL('../scan.ts', import.meta.url).href)};`,
+    `import { emitJsonReceipt } from ${JSON.stringify(new URL('../packages/core/src/scanning/scan.ts', import.meta.url).href)};`,
     "const added_urls = Array.from({ length: 20000 }, (_, i) => `https://example.invalid/very/long/job/posting/path/number/${i}`);",
     "emitJsonReceipt({ version: 'careerops.scan.receipt@1', added_urls }, 0);",
   ].join('\n');

@@ -87,12 +87,12 @@ If a file is dropped, Hermes shows a marker in place of the content. The skill s
 
 ### Cost, and where the model is chosen
 
-- The portal scan, the liveness check, and PDF generation run with no model tokens at all. Prefer them, and prefer `scan.ts --verify`, which drops dead postings before they cost anything to evaluate.
+- The portal scan, the liveness check, and PDF generation run with no model tokens at all. Prefer them, and prefer `packages/core/src/scanning/scan.ts --verify`, which drops dead postings before they cost anything to evaluate.
 - An evaluation sends roughly 25,000 tokens of instructions plus your CV and the posting. When the agent drives it interactively in the folder, the instructions are larger, around 38,000 tokens per evaluation. A batch of evaluations through the standalone script is cheaper than pasting links one at a time.
 - `spend_tier` in `config/profile.yml` has no effect here. Hermes picks the model from its own configuration (`hermes model`), so set it there. If you want a cheap evaluation path, pin the model on the standalone script instead:
 
 ```bash
-bun openai-eval.ts --url <endpoint> --model <model> --file jds/<posting>.txt
+career-ops openai-eval --url <endpoint> --model <model> --file jds/<posting>.txt
 ```
 
 - Keeping an interactive session to about ten evaluations is a practical ceiling. Past that, output quality degrades before your quota does.

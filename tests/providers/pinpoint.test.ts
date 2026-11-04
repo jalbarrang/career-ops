@@ -7,7 +7,7 @@ console.log('\nProvider — pinpoint');
 
 
 try {
-  const pinpointModule = await import(pathToFileURL(join(ROOT, 'providers/pinpoint.ts')).href);
+  const pinpointModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/pinpoint.ts')).href);
   const pinpoint = pinpointModule.default;
   const { parsePinpointResponse } = pinpointModule;
 

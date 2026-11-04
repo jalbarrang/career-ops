@@ -16,7 +16,7 @@
 // would also make "maintenance" match `ai` again.
 
 import { pass, fail } from './helpers.ts';
-import { compileKeyword, compilePositiveKeyword } from '../title-keywords.ts';
+import { compileKeyword, compilePositiveKeyword } from '../packages/core/src/scanning/title-keywords.ts';
 
 console.log('\ntitle keywords — CJK characters are word boundaries');
 

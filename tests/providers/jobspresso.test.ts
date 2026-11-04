@@ -9,7 +9,7 @@ try {
   const {
     default: jobspresso,
     parseJobspressoFeed,
-  } = await import(pathToFileURL(join(ROOT, 'providers/jobspresso.ts')).href);
+  } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/jobspresso.ts')).href);
 
   if (jobspresso.id === 'jobspresso') {
     pass('jobspresso.id is "jobspresso"');

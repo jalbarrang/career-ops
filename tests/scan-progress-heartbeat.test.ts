@@ -1,4 +1,4 @@
-// scan.ts prints a timestamped progress line on stderr every 25 sources, and
+// packages/core/src/scanning/scan.ts prints a timestamped progress line on stderr every 25 sources, and
 // after the last one, so a long --quiet or --json run is visibly alive.
 import { pass, fail, ROOT, NODE, rmSync } from './helpers.ts';
 import { spawnSync } from 'node:child_process';
@@ -8,7 +8,7 @@ import { join } from 'node:path';
 
 console.log('\nscan: stderr progress line');
 
-const SCAN = join(ROOT, 'scan.ts');
+const SCAN = join(ROOT, 'packages/core/src/scanning/scan.ts');
 const PARSER = join(ROOT, 'tests', 'fixtures', 'noc-board.ts');
 
 function scan(companyCount, flags) {

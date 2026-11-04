@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — higheredjobs');
 
 try {
-  const hejModule = await import(pathToFileURL(join(ROOT, 'providers/higheredjobs.ts')).href);
+  const hejModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/higheredjobs.ts')).href);
   const higheredjobs = hejModule.default;
   const { parseHigherEdJobsFeed } = hejModule;
 

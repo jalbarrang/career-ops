@@ -6,13 +6,13 @@ import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { getCareerOpsRoot } from "../path-resolver.ts";
-import { isWildcardAddress, planDevRun } from "../web/src/lib/bind-host.ts";
+import { getCareerOpsRoot } from "../packages/core/src/kernel/path-resolver.ts";
+import { isWildcardAddress, planDevRun } from "../apps/web/src/lib/bind-host.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
-const webDir = path.join(rootDir, "web");
+const webDir = path.join(rootDir, "apps", "web");
 
 // Port and host validation helpers
 function parsePort(val) {
@@ -100,7 +100,7 @@ for (let i = 0; i < args.length; i++) {
 // answers.
 if (!fs.existsSync(path.join(webDir, "node_modules", "vite", "package.json"))) {
   console.error("\x1b[31mError:\x1b[0m Web UI dependencies are not installed (vite was not found from web/).");
-  console.error("Install them once, then retry:  bun install --cwd web\n");
+  console.error("Install them once, then retry:  bun install --cwd apps/web\n");
   process.exit(1);
 }
 
@@ -198,7 +198,7 @@ const childEnv = {
   CAREER_OPS_ROOT: dataRoot,
 };
 
-// Spawn the SvelteKit dev server through web/server.ts (no shell parsing, avoiding shell escaping issues)
+// Spawn the SvelteKit dev server through apps/web/server.ts (no shell parsing, avoiding shell escaping issues)
 const isWindows = process.platform === "win32";
 const serverScript = path.join(webDir, "server.ts");
 const serverArgs = [serverScript, "dev", "-p", String(port)];

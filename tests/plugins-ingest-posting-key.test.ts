@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { newPipelineJobs } from '../plugins.ts';
+import { newPipelineJobs } from '../packages/cli/src/commands/platform/plugins.ts';
 
 const job = (url, title = 'Senior AI Engineer') => ({ title, url });
 

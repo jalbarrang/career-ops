@@ -1,5 +1,5 @@
 import { pass, fail } from './helpers.ts';
-import { metricClaims, auditClaims } from '../verify-cv-facts.ts';
+import { metricClaims, auditClaims } from '../packages/cli/src/commands/cv/verify-cv-facts.ts';
 
 console.log('\nStandard identifiers are not count claims (EIP-712, ERC-4626, BIP-39)');
 

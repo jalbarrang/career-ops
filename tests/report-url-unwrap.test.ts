@@ -13,8 +13,8 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { pass, fail, ROOT, NODE, rmSync } from './helpers.ts';
-import { unwrapReportUrlToken } from '../tracker-parse.ts';
-import { normalizeUrl } from '../url-key.ts';
+import { unwrapReportUrlToken } from '../packages/core/src/tracker/tracker-parse.ts';
+import { normalizeUrl } from '../packages/core/src/kernel/url-key.ts';
 
 console.log('\nReport URL token unwrap (angle brackets + trailing punctuation)');
 
@@ -58,7 +58,7 @@ for (const [input, expected] of cases) {
       join(work, 'reports/001-acme-2026-10-01.md'),
       '# Acme — Platform Engineer\n\n**Score:** 4.1/5 | **URL:** <https://boards.greenhouse.io/acme/jobs/123>, | **PDF:** -\n',
     );
-    execFileSync(NODE, [join(ROOT, 'merge-tracker.ts'), '--backfill-urls'], {
+    execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts'), '--backfill-urls'], {
       cwd: ROOT,
       encoding: 'utf8',
       env: {
@@ -88,7 +88,7 @@ for (const [input, expected] of cases) {
       join(work, 'reports/002-acme-2026-10-02.md'),
       '# Acme — Data Analyst\n\n**Score:** 4.0/5 | **URL:** https://boards.greenhouse.io/acme/jobs/123\n',
     );
-    const mergeOut = execFileSync(NODE, [join(ROOT, 'merge-tracker.ts')], {
+    const mergeOut = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts')], {
       cwd: ROOT,
       encoding: 'utf8',
       env: {
@@ -133,7 +133,7 @@ for (const [input, expected] of cases) {
       join(work, 'reports/002-acme-2026-10-02.md'),
       '# Acme — Engineer\n\n**Score:** 4.0/5 | **URL:** <https://jobs.example.test/acme/role> | **PDF:** -\n',
     );
-    const out = execFileSync(NODE, [join(ROOT, 'verify-pipeline.ts')], {
+    const out = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/verify-pipeline.ts')], {
       cwd: ROOT,
       encoding: 'utf8',
       env: {

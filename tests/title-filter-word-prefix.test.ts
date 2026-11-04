@@ -19,9 +19,9 @@ import { pass, fail, ROOT } from './helpers.ts';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import * as yaml from 'js-yaml';
-import { buildTitleFilter, compileKeyword } from '../scan.ts';
-import { AND_SEPARATOR } from '../title-keywords.ts';
-import { parsePortals } from '../openrouter-runner.ts';
+import { buildTitleFilter, compileKeyword } from '../packages/core/src/scanning/scan.ts';
+import { AND_SEPARATOR } from '../packages/core/src/scanning/title-keywords.ts';
+import { parsePortals } from '../packages/cli/src/commands/evaluation/openrouter-runner.ts';
 
 console.log('\ntitle filter — `word:` prefix and dead-positive guard');
 
@@ -141,7 +141,7 @@ if (vetoed.length === 0) {
 }
 
 // ── 4. Both title-filtering paths must agree ─────────────────────────
-// openrouter-runner.ts cannot import scan.ts (scan.ts creates data/ at
+// packages/cli/src/commands/evaluation/openrouter-runner.ts cannot import packages/core/src/scanning/scan.ts (packages/core/src/scanning/scan.ts creates data/ at
 // import time), so it used to keep a second copy of the matching rules. The two
 // had drifted in three ways, none of which the shipped config can expose,
 // because it has positives and no malformed entries. Each case below is a
@@ -205,7 +205,7 @@ const bothPaths = [
 ];
 const disagreed = bothPaths.filter((t) => titleMatches(t) !== shipped(t));
 if (disagreed.length === 0) {
-  pass('scan.ts and openrouter-runner agree on every intern/internal title');
+  pass('packages/core/src/scanning/scan.ts and openrouter-runner agree on every intern/internal title');
 } else {
   fail(`the two title-filter paths disagree on: ${JSON.stringify(disagreed)}`);
 }
@@ -301,7 +301,7 @@ if (accentWrong.length === 0) {
   fail(`word: boundary wrong for: ${JSON.stringify(accentWrong)}`);
 }
 
-// (b) A truthy non-string title must not throw. scan.ts used `(title || '')`
+// (b) A truthy non-string title must not throw. packages/core/src/scanning/scan.ts used `(title || '')`
 // and openrouter-runner used `String(title ?? '')`; merging the two paths onto
 // the former would abort jobs.filter and lose a whole company's results.
 const anyTitle = buildTitleFilter({ positive: ['engineer'] });

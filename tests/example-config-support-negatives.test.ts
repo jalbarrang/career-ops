@@ -16,7 +16,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import * as yaml from 'js-yaml';
 import { pass, fail, ROOT } from './helpers.ts';
-import { buildTitleFilter } from '../scan.ts';
+import { buildTitleFilter } from '../packages/core/src/scanning/scan.ts';
 
 console.log('\nexample config — support negatives name the role, not the domain');
 

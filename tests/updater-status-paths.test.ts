@@ -34,9 +34,9 @@
 
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import {dirname, join } from 'path';
 import { pass, fail, sealProcessGitEnv } from './helpers.ts';
-import { gitIn, gitStatusEntries, parsePorcelainStatus, userLayerViolations } from '../update-system.ts';
+import { gitIn, gitStatusEntries, parsePorcelainStatus, userLayerViolations } from '../packages/cli/src/commands/platform/update-system.ts';
 
 // quotepath: false in most repos here only to keep assertion strings readable —
 // with `-z` the parser never sees a quoted path regardless of the setting. The
@@ -110,7 +110,8 @@ console.log('\n🧪 Testing updater git-status path parsing...');
   try {
     mkdirSync(join(dir, 'data'));
     writeFileSync(join(dir, 'data', 'user-file.md'), 'v1\n');
-    writeFileSync(join(dir, 'scan.ts'), 'x\n');
+    mkdirSync(dirname(join(dir, 'packages/core/src/scanning/scan.ts')), { recursive: true });
+    writeFileSync(join(dir, 'packages/core/src/scanning/scan.ts'), 'x\n');
     g('add', '-A');
     g('commit', '-qm', 'base');
     // Dirty a tracked file WITHOUT staging: its porcelain line is ` M …`
@@ -131,16 +132,18 @@ console.log('\n🧪 Testing updater git-status path parsing...');
 {
   const { dir, g } = makeRepo();
   try {
-    writeFileSync(join(dir, 'tracker.ts'), 'x\n');
-    g('add', 'tracker.ts');
+    mkdirSync(dirname(join(dir, 'packages/cli/src/commands/tracker/tracker.ts')), { recursive: true });
+    writeFileSync(join(dir, 'packages/cli/src/commands/tracker/tracker.ts'), 'x\n');
+    g('add', 'packages/cli/src/commands/tracker/tracker.ts');
     g('commit', '-qm', 'base');
-    writeFileSync(join(dir, 'tracker.ts'), 'y\n');
-    g('add', 'tracker.ts');
+    mkdirSync(dirname(join(dir, 'packages/cli/src/commands/tracker/tracker.ts')), { recursive: true });
+    writeFileSync(join(dir, 'packages/cli/src/commands/tracker/tracker.ts'), 'y\n');
+    g('add', 'packages/cli/src/commands/tracker/tracker.ts');
 
     assertRoundTrip(
       'staged-first-line entry keeps `M ` code and full path',
       dir,
-      [{ code: 'M ', path: 'tracker.ts' }],
+      [{ code: 'M ', path: 'packages/cli/src/commands/tracker/tracker.ts' }],
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });

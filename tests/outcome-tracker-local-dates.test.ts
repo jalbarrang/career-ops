@@ -3,13 +3,13 @@
 // (#3070).
 //
 // tests/local-today-gates.test.ts scoped itself to places that "GATE a
-// decision rather than stamping a filename", and included assessment-log.ts
+// decision rather than stamping a filename", and included packages/cli/src/commands/insights/assessment-log.ts
 // for "the date written into a user's assessments.tsv row". These two write
 // exactly that kind of date and were both on `new Date().toISOString()`:
 //
-//   outcome.ts:62    the `## Entry:` header and `**Date**:` in data/outcomes/,
-//                     which calibrate.ts and funnel-velocity.ts then read
-//   tracker.ts       the date on a row in the SQLite status_events table
+//   packages/cli/src/commands/tracker/outcome.ts:62    the `## Entry:` header and `**Date**:` in data/outcomes/,
+//                     which packages/cli/src/commands/insights/calibrate.ts and packages/core/src/insights/funnel-velocity.ts then read
+//   packages/cli/src/commands/tracker/tracker.ts       the date on a row in the SQLite status_events table
 //
 // The tracker one sticks: the index is derived and rebuildable, and since
 // #5555 so are the events the transition ledger explains, but a status change
@@ -99,13 +99,13 @@ test('the premise: at this instant the UTC day and the New York day differ', () 
   assert.notEqual(UTC_DAY, NY_DAY);
 });
 
-test('outcome.ts journals the local day', () => {
+test('packages/cli/src/commands/tracker/outcome.ts journals the local day', () => {
   const dir = sandbox();
   try {
-    const r = runFrozen(dir, 'outcome.ts', ['1', 'rejected'], dir);
+    const r = runFrozen(dir, 'packages/cli/src/commands/tracker/outcome.ts', ['1', 'rejected'], dir);
     const outcomesDir = join(dir, 'data', 'outcomes');
     assert.ok(existsSync(outcomesDir), `no outcome journal was written:\n${r.all.slice(0, 500)}`);
-    // outcome.ts writes data/outcomes/<slug>/outcome.md — a directory per
+    // packages/cli/src/commands/tracker/outcome.ts writes data/outcomes/<slug>/outcome.md — a directory per
     // outcome, not loose files — so collect one level down.
     const journals = readdirSync(outcomesDir, { withFileTypes: true })
       .filter((e) => e.isDirectory())
@@ -127,7 +127,7 @@ test('outcome.ts journals the local day', () => {
   }
 });
 
-test('tracker.ts dates its status events with the local day', async () => {
+test('packages/cli/src/commands/tracker/tracker.ts dates its status events with the local day', async () => {
   // node:sqlite needs Node >= 22.13 (no flag); skip rather than fail on an older runtime,
   // the way test-all does for the tracker index suites. Probed in-process, so
   // this file contains no process.exit literal — tests/main-guard-convention
@@ -146,9 +146,9 @@ test('tracker.ts dates its status events with the local day', async () => {
     // (`DATE_RE.test(a.date) ? a.date : today`), so a single sync never touches
     // the clock and a test built on one measures nothing. That is exactly how
     // the first draft of this passed with the fix reverted.
-    runFrozen(dir, 'tracker.ts', ['sync'], dir);
+    runFrozen(dir, 'packages/cli/src/commands/tracker/tracker.ts', ['sync'], dir);
     writeFileSync(join(dir, 'data', 'applications.md'), TRACKER.replace('| Applied |', '| Interview |'));
-    const r = runFrozen(dir, 'tracker.ts', ['sync'], dir);
+    const r = runFrozen(dir, 'packages/cli/src/commands/tracker/tracker.ts', ['sync'], dir);
     const dbPath = join(dir, 'data', 'applications.db');
     assert.ok(existsSync(dbPath), `no index was built:\n${r.all.slice(0, 500)}`);
 

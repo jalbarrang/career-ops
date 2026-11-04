@@ -198,7 +198,7 @@ Negli annunci e nelle trattative in Italia si usano termini e tutele specifici c
 
 0. **Lettera di presentazione:** Se il modulo lo consente, includerla SEMPRE. PDF con lo stesso design visivo del CV. Citazioni dell'annuncio mappate sui proof point. Massimo 1 pagina.
 1. Leggere `cv.md` e `article-digest.md` (se presente) prima di valutare un annuncio
-1b. **Prima valutazione di ogni sessione:** eseguire `bun cv-sync-check.ts` via Bash. In caso di avvisi, informare il candidato.
+1b. **Prima valutazione di ogni sessione:** eseguire `career-ops cv-sync-check` via Bash. In caso di avvisi, informare il candidato.
 2. Rilevare l'archetipo del ruolo e adattare il framing
 3. Citare righe esatte del CV durante il matching
 4. Usare WebSearch per dati retributivi e informazioni sull'azienda
@@ -207,7 +207,7 @@ Negli annunci e nelle trattative in Italia si usano termini e tutele specifici c
 7. Essere diretti e concreti -- nessun giro di parole
 8. Italiano tech naturale per i testi generati. Frasi brevi, verbi d'azione, evitare il passivo. Non tradurre forzatamente i termini tecnici (stack, pipeline, deployment, embedding, ecc.)
 8b. **URL dei case study nel Professional Summary del PDF:** Se il PDF menziona demo o case study, i relativi URL DEVONO comparire nel primo paragrafo (Professional Summary) -- i recruiter spesso leggono solo quello. Tutti gli URL in HTML con `white-space: nowrap`
-9. **Inserimenti nel tracker in formato TSV** -- Non modificare MAI `applications.md` direttamente per nuovi inserimenti. Scrivere il file TSV in `batch/tracker-additions/`, sarà `merge-tracker.ts` a gestire la fusione. Scrivere prima una riga con i **nomi delle colonne** e sotto esattamente una riga di dati (vedi AGENTS.md, «TSV Format for Tracker Additions»). È la riga dei nomi a permettere a `merge-tracker.ts` di risolvere i campi per NOME invece di indovinare quale colonna sia score e quale status
+9. **Inserimenti nel tracker in formato TSV** -- Non modificare MAI `applications.md` direttamente per nuovi inserimenti. Scrivere il file TSV in `batch/tracker-additions/`, sarà `packages/cli/src/commands/tracker/merge-tracker.ts` a gestire la fusione. Scrivere prima una riga con i **nomi delle colonne** e sotto esattamente una riga di dati (vedi AGENTS.md, «TSV Format for Tracker Additions»). È la riga dei nomi a permettere a `packages/cli/src/commands/tracker/merge-tracker.ts` di risolvere i campi per NOME invece di indovinare quale colonna sia score e quale status
 10. **`**URL:**` in ogni intestazione di report** -- inserito tra Score e PDF
 
 ### Strumenti
@@ -219,5 +219,5 @@ Negli annunci e nelle trattative in Italia si usano termini e tutele specifici c
 | Playwright | Verificare se gli annunci sono attivi (browser_navigate + browser_snapshot), estrarre annunci da Single Page Application (SPA). **CRITICO: non eseguire MAI 2+ agenti in parallelo con Playwright -- condividono la stessa istanza del browser** |
 | Read | cv.md, article-digest.md, cv-template.html |
 | Write | HTML temporaneo per PDF, report .md, file TSV per il tracker in `batch/tracker-additions/` (mai `applications.md` direttamente) |
-| Edit | Correzioni a report e altri contenuti generati. Mai la tabella del tracker: le nuove righe entrano come TSV unito con `bun merge-tracker.ts`, le modifiche di stato e note passano da `bun set-status.ts` |
-| Bash | `bun generate-pdf.ts`, `bun merge-tracker.ts`, `bun set-status.ts` |
+| Edit | Correzioni a report e altri contenuti generati. Mai la tabella del tracker: le nuove righe entrano come TSV unito con `career-ops merge-tracker`, le modifiche di stato e note passano da `career-ops set-status` |
+| Bash | `career-ops generate-pdf`, `career-ops merge-tracker`, `career-ops set-status` |

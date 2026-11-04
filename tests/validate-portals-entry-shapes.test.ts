@@ -2,7 +2,7 @@
 // portals.yml shapes the scanner reads differently from how they look.
 //
 //   1. `enabled: no` / `enabled: off` / `enabled: "false"`. Every consumer
-//      (scan.ts, scan-ats-full, verify-portals, audit-portals, ...) reads only
+//      (packages/core/src/scanning/scan.ts, scan-ats-full, verify-portals, audit-portals, ...) reads only
 //      a boolean `false` as "off". js-yaml follows YAML 1.2, where `no` and
 //      `off` are strings, so the entry stays enabled while looking disabled.
 //   2. `title_filter.positive: Engineer` (a bare string instead of a list).
@@ -22,11 +22,11 @@ const writeYml = (name, body) => {
   writeFileSync(p, body, 'utf-8');
   return p;
 };
-const validate = (file) => run(NODE, ['validate-portals.ts', '--file', file]);
+const validate = (file) => run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', file]);
 // run() maps every non-zero exit to null, so a crash would look like a reported error;
 // keep the exit status and the output to assert on the message itself.
 const validateWithOutput = (file) => {
-  const r = spawnSync(NODE, ['validate-portals.ts', '--file', file], { cwd: ROOT, encoding: 'utf-8' });
+  const r = spawnSync(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', file], { cwd: ROOT, encoding: 'utf-8' });
   return { status: r.status, output: `${r.stdout}${r.stderr}` };
 };
 

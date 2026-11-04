@@ -9,16 +9,16 @@
 
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { collectSourceFiles } from '../lib/source-files.ts';
-import { checkSyntax } from '../lib/syntax-check.ts';
+import { collectSourceFiles } from '../packages/core/src/kernel/source-files.ts';
+import { checkSyntax } from '../packages/core/src/kernel/syntax-check.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-// The walk (and the list of directories it skips) lives in lib/source-files.ts
+// The walk (and the list of directories it skips) lives in packages/core/src/kernel/source-files.ts
 // so that this linter and test-all.ts's syntax gate cannot disagree about
 // which files exist — see that module's header for what happened when they
 // did (#3419). The check itself is shared for the same reason
-// (lib/syntax-check.ts): one process parses every file, and `node --check`
+// (packages/core/src/kernel/syntax-check.ts): one process parses every file, and `node --check`
 // runs on any file that pass did not vouch for, so a failure below is still
 // `node --check`'s own message (#5078).
 const files = collectSourceFiles(root);

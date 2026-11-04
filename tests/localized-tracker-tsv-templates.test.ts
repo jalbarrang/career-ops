@@ -21,13 +21,13 @@ import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'fs'
 import { join, relative } from 'path';
 import { tmpdir } from 'os';
 import { execFileSync } from 'child_process';
-import { listTree } from '../lib/walk-tree.ts';
+import { listTree } from '../packages/core/src/kernel/walk-tree.ts';
 import { pass, fail, NODE, ROOT, isolatedBatchStatePath } from './helpers.ts';
 
 console.log('\nLocalized tracker-addition templates (#3702)');
 
 const MODES = join(ROOT, 'modes');
-const ALIASES = JSON.parse(readFileSync(join(ROOT, 'tracker-aliases.json'), 'utf-8'));
+const ALIASES = JSON.parse(readFileSync(join(ROOT, 'packages/core/src/tracker/tracker-aliases.json'), 'utf-8'));
 
 // The files #3702 catalogued as showing a concrete row. A tripwire, not the
 // input: discovery below runs over all of modes/, and this set only asserts it
@@ -199,7 +199,7 @@ for (const rel of [...seen].sort()) {
     fail(`${rel}: header row [${header.join(' ')}] is not resolvable — ${[
       missing.length ? `missing ${missing.join(', ')}` : '',
       dupes.length ? `repeats ${dupes.join(', ')}` : '',
-      unknown.length ? `unrecognized label(s) ${unknown.join(', ')} (labels must be the English names in tracker-aliases.json)` : '',
+      unknown.length ? `unrecognized label(s) ${unknown.join(', ')} (labels must be the English names in packages/core/src/tracker/tracker-aliases.json)` : '',
     ].filter(Boolean).join('; ')}`);
     continue;
   }
@@ -317,7 +317,7 @@ for (const rel of [...seen].sort()) {
 
     let out = '';
     try {
-      out = execFileSync(NODE, [join(ROOT, 'merge-tracker.ts')], {
+      out = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts')], {
         encoding: 'utf-8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'],
         env: { ...process.env, CAREER_OPS_TRACKER: tracker, CAREER_OPS_ADDITIONS: adds, CAREER_OPS_BATCH_STATE: isolatedBatchStatePath(adds) },
       });

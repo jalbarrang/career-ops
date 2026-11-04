@@ -1,5 +1,5 @@
 import { pass, fail } from './helpers.ts';
-import { factClaims, metricClaims, stripMarkup, verifyFacts } from '../verify-cv-facts.ts';
+import { factClaims, metricClaims, stripMarkup, verifyFacts } from '../packages/cli/src/commands/cv/verify-cv-facts.ts';
 import { mkdtempSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';

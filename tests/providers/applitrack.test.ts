@@ -10,7 +10,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — applitrack');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/applitrack.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/applitrack.ts')).href);
   const applitrack = mod.default;
   const { parseApplitrackOutput } = mod;
 

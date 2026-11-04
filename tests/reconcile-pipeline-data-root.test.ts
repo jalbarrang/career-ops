@@ -22,7 +22,7 @@ function fixture(t, mode = 'CAREER_OPS_ROOT') {
   mkdirSync(code); mkdirSync(data);
   // Copy the actual entry's relative import closure, so its code root differs
   // from both the data root and cwd. No installed CLI or network is involved.
-  const stack = [join(ROOT, 'reconcile-pipeline.ts')], seen = new Set();
+  const stack = [join(ROOT, 'packages/cli/src/commands/pipeline/reconcile-pipeline.ts')], seen = new Set();
   const imports = /(?:import|export)\s[^'"]*?from\s*['"](\.[^'"]+)['"]|import\(\s*['"](\.[^'"]+)['"]\s*\)|^import\s*['"](\.[^'"]+)['"]/gm;
   while (stack.length) {
     const file = stack.pop();
@@ -37,7 +37,8 @@ function fixture(t, mode = 'CAREER_OPS_ROOT') {
     const target = join(code, relative(ROOT, file));
     mkdirSync(dirname(target), { recursive: true }); copyFileSync(file, target);
   }
-  copyFileSync(join(ROOT, 'tracker-aliases.json'), join(code, 'tracker-aliases.json'));
+  mkdirSync(dirname(join(code, 'packages/core/src/tracker/tracker-aliases.json')), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/core/src/tracker/tracker-aliases.json'), join(code, 'packages/core/src/tracker/tracker-aliases.json'));
   const depsReason = linkNodeModules(code, ROOT);
   if (depsReason) {
     t.skip(depsReason);
@@ -50,7 +51,7 @@ function fixture(t, mode = 'CAREER_OPS_ROOT') {
   delete env.CAREER_OPS_ROOT; delete env.CAREER_OPS_DATA_DIR;
   if (mode === 'marker') write(join(code, '.career-ops-data'), data);
   else env[mode] = data;
-  const run = (...args) => spawnSync(process.execPath, [join(code, 'reconcile-pipeline.ts'), ...args], {
+  const run = (...args) => spawnSync(process.execPath, [join(code, 'packages/cli/src/commands/pipeline/reconcile-pipeline.ts'), ...args], {
     env, cwd: root, encoding: 'utf8', timeout: 15_000,
   });
   return { root, code, data, pipeline, state, run };

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { checkJdArchive, mapTrackerCaptureLinks, findUnarchivedApplications } from '../check-jd-archive.ts';
+import { checkJdArchive, mapTrackerCaptureLinks, findUnarchivedApplications } from '../packages/core/src/evaluation/check-jd-archive.ts';
 
 const header = '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |\n|---|------|---------|------|-------|--------|-----|--------|-------|';
 for (const ext of ['pdf', 'txt', 'md']) {

@@ -6,7 +6,7 @@
 
 1. **Oku** `data/pipeline.md` (`grep -n -m 20 '^- \[ \] ' data/pipeline.md` ile ara, her gruptan sonra yalnızca bu çalıştırmada Bekleyenler içinde bıraktığın satırlar kalana kadar aramayı tekrarla, dosyanın tamamını okuma) → "Bekleyenler" bölümündeki `- [ ]` satırlarını bul
 2. **Her bekleyen URL için:**
-   a. Sıradaki `REPORT_NUM` değerini atomik olarak rezerve etmek üzere `bun reserve-report-num.ts` komutunu çalıştır (ve rapor yazıldıktan sonra `bun reserve-report-num.ts --release <num>` çalıştırarak sentineli serbest bırak)
+   a. Sıradaki `REPORT_NUM` değerini atomik olarak rezerve etmek üzere `career-ops reserve-report-num` komutunu çalıştır (ve rapor yazıldıktan sonra `career-ops reserve-report-num --release <num>` çalıştırarak sentineli serbest bırak)
    b. **İlan içeriğini çek:** Playwright (browser_navigate + browser_snapshot) → WebFetch → WebSearch. **Playwright kullanılmadıysa** (toplu/headless mod veya yedek yola düşüldüyse) rapor başlığına `**Doğrulama:** doğrulanmamış (toplu mod)` etiketini ekle.
    c. URL erişilemiyorsa → `- [!]` olarak işaretle, not ekle ve bir sonrakine geç
    d. **Tam pipeline'ı çalıştır:** A-G değerlendirmesi → Rapor (.md) → PDF (puan ≥ 3,0 ise) → Takipçi
@@ -36,7 +36,7 @@
 ## URL'den İlan İçeriği Çekme
 
 1. **Playwright (tercih edilen):** `browser_navigate` + `browser_snapshot` — tüm SPA'larla çalışır.
-   - **İsteğe bağlı — CLI çıkarıcı (`config/profile.yml` içinde `scan.extractor: cli`):** bunun yerine `bun browser-extract.ts <url>` (`--mode jd`) çalıştır — kompakt `{ "url", "title", "text" }`, daha az token (portala bağlı). Hata veya eksiklik durumunda **sessizce** `browser_navigate` + `browser_snapshot`'a geri dön.
+   - **İsteğe bağlı — CLI çıkarıcı (`config/profile.yml` içinde `scan.extractor: cli`):** bunun yerine `career-ops browser-extract <url>` (`--mode jd`) çalıştır — kompakt `{ "url", "title", "text" }`, daha az token (portala bağlı). Hata veya eksiklik durumunda **sessizce** `browser_navigate` + `browser_snapshot`'a geri dön.
 2. **WebFetch (yedek):** Playwright mevcut değilse (toplu/headless mod). Bu durumda rapor başlığına `**Doğrulama:** doğrulanmamış (toplu mod)` ekle — kullanıcı daha sonra manuel doğrulayabilir.
 3. **WebSearch (son çare):** İlanı indeksleyen diğer platformlarda ara. WebFetch'te olduğu gibi rapor başlığına `**Doğrulama:** doğrulanmamış (toplu mod)` ekle.
 
@@ -49,14 +49,14 @@
 
 ## Rapor Numaralandırma
 
-1. Sıradaki rapor numarasını atomik olarak rezerve etmek için `bun reserve-report-num.ts` komutunu çalıştır (standart çıktı `{###}` değerini döndürür).
+1. Sıradaki rapor numarasını atomik olarak rezerve etmek için `career-ops reserve-report-num` komutunu çalıştır (standart çıktı `{###}` değerini döndürür).
 2. Bu numarayı kullanarak rapor dosyasını yaz.
-3. Rapor yazıldıktan sonra `bun reserve-report-num.ts --release {###}` komutunu çalıştırarak sentineli serbest bırak.
+3. Rapor yazıldıktan sonra `career-ops reserve-report-num --release {###}` komutunu çalıştırarak sentineli serbest bırak.
 
 ## Başlamadan Önce
 
 Herhangi bir URL'yi işlemeden önce yapılandırma kontrolü çalıştır:
 ```bash
-bun cv-sync-check.ts
+career-ops cv-sync-check
 ```
 Uyarı varsa adayı bilgilendirmeden devam etme.

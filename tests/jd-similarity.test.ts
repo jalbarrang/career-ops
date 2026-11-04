@@ -1,4 +1,4 @@
-import { hardMismatch, jaccardSimilarity, recommendCvReuse, tokenize } from '../jd-similarity.ts';
+import { hardMismatch, jaccardSimilarity, recommendCvReuse, tokenize } from '../packages/cli/src/commands/evaluation/jd-similarity.ts';
 import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { mkdtempSync, rmSync, writeFileSync } from 'fs';
@@ -30,7 +30,7 @@ ok('seniority matching uses whole words', hardMismatch('International React Engi
 ok('leadership does not imply lead seniority', hardMismatch('Leadership platform role', 'Senior platform role') === false);
 
 try {
-  execFileSync(process.execPath, [fileURLToPath(new URL('../jd-similarity.ts', import.meta.url)), '/tmp/does-not-exist-jd.txt', '/tmp/does-not-exist-cv.txt'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  execFileSync(process.execPath, [fileURLToPath(new URL('../packages/cli/src/commands/evaluation/jd-similarity.ts', import.meta.url)), '/tmp/does-not-exist-jd.txt', '/tmp/does-not-exist-cv.txt'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   ok('CLI reports missing files cleanly', false);
 } catch (error) {
   ok('CLI reports missing files cleanly', /Unable to read input files/.test(error.stderr));
@@ -38,7 +38,7 @@ try {
 
 // --- CLI flag parsing ---
 
-const cliPath = fileURLToPath(new URL('../jd-similarity.ts', import.meta.url));
+const cliPath = fileURLToPath(new URL('../packages/cli/src/commands/evaluation/jd-similarity.ts', import.meta.url));
 const runCli = (...args) =>
   execFileSync(process.execPath, [cliPath, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 

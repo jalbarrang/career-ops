@@ -7,7 +7,7 @@ import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\nscan-ats-full — resume machinery');
 
-const mod = await import(pathToFileURL(join(ROOT, 'scan-ats-full.ts')).href);
+const mod = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/scanning/scan-ats-full.ts')).href);
 const { parallelEach, withTimeout, datasetFingerprint } = mod;
 
 // withTimeout: passes a fast promise through untouched.
@@ -234,7 +234,7 @@ const { loadCheckpoint, checkpointCompatible } = mod;
 {
   const { SOURCES } = mod;
   if (!SOURCES) {
-    fail('SOURCES not exported from scan-ats-full.ts');
+    fail('SOURCES not exported from packages/cli/src/commands/scanning/scan-ats-full.ts');
   } else if (!SOURCES.icims) {
     fail('SOURCES.icims missing');
   } else {
@@ -258,12 +258,12 @@ const { loadCheckpoint, checkpointCompatible } = mod;
 // board that simply had nothing fresh. The counter is a local in main(), so
 // this asserts on the source of the payload literal rather than a run.
 {
-  const src = readFileSync(join(ROOT, 'scan-ats-full.ts'), 'utf-8');
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/scanning/scan-ats-full.ts'), 'utf-8');
   const start = src.indexOf('if (opts.json) {');
   const end = src.indexOf('offers: offers.map(', start);
 
   if (start === -1 || end === -1 || end <= start) {
-    fail('could not locate the --json payload literal in scan-ats-full.ts');
+    fail('could not locate the --json payload literal in packages/cli/src/commands/scanning/scan-ats-full.ts');
   } else {
     const payload = src.slice(start, end);
     // Control arm: if the slice ever stops covering the payload, this sibling

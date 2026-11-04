@@ -3,9 +3,9 @@
 // data/pipeline.md under the pipeline lock, not write back the copy it read
 // when the run started.
 //
-// A run takes minutes (liveness check + model call per offer). scan.ts,
-// plugins.ts and agent-inbox.ts append to the same file meanwhile, and
-// scan.ts has already recorded each appended offer in scan-history.tsv, so an
+// A run takes minutes (liveness check + model call per offer). packages/core/src/scanning/scan.ts,
+// packages/cli/src/commands/platform/plugins.ts and packages/cli/src/commands/platform/agent-inbox.ts append to the same file meanwhile, and
+// packages/core/src/scanning/scan.ts has already recorded each appended offer in scan-history.tsv, so an
 // offer erased by the final write is never queued again.
 //
 // No Playwright and no model: the merge is the exported finishPipelineBatch /
@@ -15,9 +15,9 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { finishPipelineBatch, mergeProcessedLines } from '../batch-evaluate-gemini.ts';
-import { lockDirFor, withPipelineLock } from '../pipeline-lock.ts';
-import { appendToPipeline } from '../scan.ts';
+import { finishPipelineBatch, mergeProcessedLines } from '../packages/cli/src/commands/evaluation/batch-evaluate-gemini.ts';
+import { lockDirFor, withPipelineLock } from '../packages/core/src/kernel/pipeline-lock.ts';
+import { appendToPipeline } from '../packages/core/src/scanning/scan.ts';
 
 const PENDING = [
   '- [ ] https://example.test/job/1 | Co1 | Role 1',

@@ -31,13 +31,13 @@ import {
   UPDATE_APPLIED_INSTALL_FAILED_EXIT,
   installDependencies,
   refreshDependencies,
-} from '../update-system.ts';
+} from '../packages/cli/src/commands/platform/update-system.ts';
 import { fail, makeUpdaterRepo, pass, rmSync } from './helpers.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const updaterSource = readFileSync(join(ROOT, 'update-system.ts'), 'utf8');
+const updaterSource = readFileSync(join(ROOT, 'packages/cli/src/commands/platform/update-system.ts'), 'utf8');
 // The updater reads its system-layer list from here (#5554); rollback refuses without it.
-const manifestSource = readFileSync(join(ROOT, 'lib', 'update-manifest.ts'), 'utf8');
+const manifestSource = readFileSync(join(ROOT, 'packages/core/src/platform/update-manifest.ts'), 'utf8');
 
 function check(condition, passMessage, failMessage) {
   if (condition) pass(passMessage);
@@ -231,7 +231,7 @@ function runRollback(dir, stubDir) {
   }
   const pathKey = Object.keys(env).find((key) => key.toUpperCase() === 'PATH') || 'PATH';
   env[pathKey] = `${stubDir}${delimiter}${env[pathKey] || ''}`;
-  const result = spawnSync(process.execPath, ['update-system.ts', 'rollback'], {
+  const result = spawnSync(process.execPath, ['packages/cli/src/commands/platform/update-system.ts', 'rollback'], {
     cwd: dir,
     encoding: 'utf8',
     timeout: 60_000,
@@ -247,9 +247,11 @@ const TARGET_PACKAGE = '{\n  "name": "fixture",\n  "dependencies": { "js-yaml": 
 function seedRepo(prefix) {
   const fixture = makeUpdaterRepo({ prefix });
   const { dir, g } = fixture;
-  writeFileSync(join(dir, 'update-system.ts'), updaterSource);
+  mkdirSync(dirname(join(dir, 'packages/cli/src/commands/platform/update-system.ts')), { recursive: true });
+  writeFileSync(join(dir, 'packages/cli/src/commands/platform/update-system.ts'), updaterSource);
   mkdirSync(join(dir, 'lib'), { recursive: true });
-  writeFileSync(join(dir, 'lib', 'update-manifest.ts'), manifestSource);
+  mkdirSync(dirname(join(dir, 'packages/core/src/platform/update-manifest.ts')), { recursive: true });
+  writeFileSync(join(dir, 'packages/core/src/platform/update-manifest.ts'), manifestSource);
   writeFileSync(join(dir, 'package.json'), BACKUP_PACKAGE);
   g('add', '-A');
   g('commit', '-qm', 'backup state');

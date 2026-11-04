@@ -84,7 +84,7 @@ jobs:
       # unset when false, so the bare form works for it and not for this one).
       #
       # Runs on ANY release, not only a career-ops one: a web-only release
-      # would otherwise become Latest, and update-system.ts resolves what to
+      # would otherwise become Latest, and packages/cli/src/commands/platform/update-system.ts resolves what to
       # install from /releases/latest — it refuses a web-* tag, so every
       # install would stop getting updates until the next career-ops release.
       - name: Keep the career-ops release marked as Latest

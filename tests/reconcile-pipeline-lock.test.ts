@@ -1,6 +1,6 @@
-// reconcile-pipeline.ts must take the pipeline lock around its read → compute
+// packages/cli/src/commands/pipeline/reconcile-pipeline.ts must take the pipeline lock around its read → compute
 // → write (#4895). It used to read pipeline.md, rebuild it, and write it back
-// with no lock, so an offer scan.ts appended in between was silently
+// with no lock, so an offer packages/core/src/scanning/scan.ts appended in between was silently
 // overwritten — and the .pre-reconcile.bak, copied before the append, did not
 // have it either.
 //
@@ -15,9 +15,9 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { acquirePipelineLock } from '../pipeline-lock.ts';
+import { acquirePipelineLock } from '../packages/core/src/kernel/pipeline-lock.ts';
 
-const SCRIPT = join(dirname(dirname(fileURLToPath(import.meta.url))), 'reconcile-pipeline.ts');
+const SCRIPT = join(dirname(dirname(fileURLToPath(import.meta.url))), 'packages/cli/src/commands/pipeline/reconcile-pipeline.ts');
 const DONE_URL = 'https://jobs.example.test/4521';
 const SCANNED_URL = 'https://jobs.example.test/9001';
 

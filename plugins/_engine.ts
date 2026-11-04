@@ -2,14 +2,14 @@
 /**
  * plugins/_engine.ts — the career-ops plugin engine.
  *
- * Generalizes the proven providers/ auto-loader (scan.ts `loadProviders`) into
+ * Generalizes the proven providers/ auto-loader (packages/core/src/scanning/scan.ts `loadProviders`) into
  * a sibling `plugins/` layer for integrations that need a KEY or talk to an
  * EXTERNAL service. The zero-key providers/ dir is untouched and stays pure.
  *
  * Design invariants (every one is asserted by test-all.ts section 49):
  *  - ZERO module-level side effects. Importing this file reads no config, loads
- *    no dotenv, and mutates no process.env. scan.ts imports `mergeProviderPlugins`
- *    on every run, and that import must be free — so a plain `bun scan.ts` with
+ *    no dotenv, and mutates no process.env. packages/core/src/scanning/scan.ts imports `mergeProviderPlugins`
+ *    on every run, and that import must be free — so a plain `bun packages/core/src/scanning/scan.ts` with
  *    no config/plugins.yml behaves byte-identically to before this feature.
  *  - Fail-open everywhere. A malformed manifest, a throwing import, a missing
  *    key, or a hung hook logs a `⚠️` and is SKIPPED — never crashes the core.
@@ -20,7 +20,7 @@
  *    is code review (bundled plugins, same gate as providers/) + user trust
  *    (plugins.local/). See plugins/README.md "Trust model".
  *
- * Pure + side-effect-free so scan.ts, plugins.ts, doctor.ts and test-all.ts
+ * Pure + side-effect-free so packages/core/src/scanning/scan.ts, packages/cli/src/commands/platform/plugins.ts, packages/cli/src/commands/platform/doctor.ts and test-all.ts
  * all reuse it with no prod-vs-test drift.
  */
 
@@ -28,8 +28,8 @@ import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'f
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { resolveAndValidate } from './_net.ts';
-import { normalizeUrl, aggregatorPostingId } from '../url-key.ts';
-import { getCareerOpsRoot } from '../path-resolver.ts';
+import { normalizeUrl, aggregatorPostingId } from '../packages/core/src/kernel/url-key.ts';
+import { getCareerOpsRoot } from '../packages/core/src/kernel/path-resolver.ts';
 import { readLock, writeLockEntry, diffPlugin, describeDrift, hashPluginTree, consentSurface } from './_lock.ts';
 import { loadRegistry } from './_registry.ts';
 
@@ -103,7 +103,7 @@ function pluginsConfigPath(root) {
 
 /**
  * Read config/plugins.yml. Fail-open to {} if absent or malformed — exactly the
- * graceful posture scan.ts uses for its own config. js-yaml is imported lazily
+ * graceful posture packages/core/src/scanning/scan.ts uses for its own config. js-yaml is imported lazily
  * so this module stays side-effect-free at import time.
  * @param {string} root
  * @returns {Promise<object>}
@@ -112,7 +112,7 @@ export async function loadPluginConfig(root) {
   const file = pluginsConfigPath(root);
   if (!existsSync(file)) return {};
   try {
-    const { loadYaml } = await import('../lib/yaml-document.ts');
+    const { loadYaml } = await import('../packages/core/src/kernel/yaml-document.ts');
     const parsed = loadYaml(readFileSync(file, 'utf8'));
     return parsed && typeof parsed === 'object' ? parsed : {};
   } catch (err) {
@@ -123,7 +123,7 @@ export async function loadPluginConfig(root) {
 
 /**
  * The user-layer files the plugin layer reads from the data root. Until it did,
- * plugins.yml was read from (and `plugins.ts enable` wrote it to) the code
+ * plugins.yml was read from (and `packages/cli/src/commands/platform/plugins.ts enable` wrote it to) the code
  * folder and .env came from the working directory, so an older split checkout
  * can still have both beside the code.
  */
@@ -158,7 +158,7 @@ export function warnConfigLeftInCodeRoot(root, dataRoot) {
 /**
  * Validate a parsed manifest object. Returns a normalized manifest on success,
  * or null (with a ⚠️) on any violation. NEVER throws — identical fail-open to
- * scan.ts loadProviders.
+ * packages/core/src/scanning/scan.ts loadProviders.
  *
  * @param {any} m   Parsed manifest.json.
  * @param {string} dir   Absolute plugin directory.
@@ -233,7 +233,7 @@ export function validateManifest(m, dir, dirName) {
   if (!isSafePluginPath(dir, entryAbs)) { warnSkip(label, `entry "${entry}" escapes the plugin directory`); return null; }
 
   // Optional companion skill (Open-Agent-Skill-Standard SKILL.md). Traversal-
-  // guarded like entry. Surfaced on-demand via `plugins.ts skill <id>`; never
+  // guarded like entry. Surfaced on-demand via `packages/cli/src/commands/platform/plugins.ts skill <id>`; never
   // auto-injected into AGENTS.md/modes (the data-vs-brain firewall).
   let skill = null;
   if (m.skill !== undefined) {
@@ -299,7 +299,7 @@ export function discoverPlugins(roots, overrideIds = new Set()) {
     // exists so a developer can work on a plugin from its own checkout, and
     // linking it in is the natural way to do that. Dirent.isDirectory() is false
     // for a symlink, so those were silently skipped -- no warning, the plugin
-    // simply never appeared in `plugins.ts list`. statSync resolves the link;
+    // simply never appeared in `packages/cli/src/commands/platform/plugins.ts list`. statSync resolves the link;
     // a broken one throws and is treated as not-a-directory rather than crashing
     // discovery for every other plugin.
     const isDirLike = (e) => {
@@ -642,10 +642,10 @@ export function lockGate(manifest, root) {
     case 'legit-update': repin(); return { load: true };        // version bumped → honest update, re-pin quietly
     case 'drift-nobump':
       if (source === 'bundled') { repin(); return { load: true }; } // reviewed-by-construction (branch-protected checkout) → re-pin
-      warnSkip(manifest.id, `files changed since you trusted it without a version bump — possible tampering (${describeDrift(d)}). Review, then \`bun plugins.ts trust ${manifest.id}\``);
+      warnSkip(manifest.id, `files changed since you trusted it without a version bump — possible tampering (${describeDrift(d)}). Review, then \`career-ops plugins trust ${manifest.id}\``);
       return { load: false };
     case 'surface-widened':
-      warnSkip(manifest.id, `capability surface expanded since you consented (${[...d.addedHosts, ...d.addedEnv].join(', ')}${manifest.allowsLocalhost ? ', localhost' : ''}) — re-consent: \`bun plugins.ts enable ${manifest.id}\``);
+      warnSkip(manifest.id, `capability surface expanded since you consented (${[...d.addedHosts, ...d.addedEnv].join(', ')}${manifest.allowsLocalhost ? ', localhost' : ''}) — re-consent: \`bun packages/cli/src/commands/platform/plugins.ts enable ${manifest.id}\``);
       return { load: false };
     default: return { load: true };
   }
@@ -666,7 +666,7 @@ export async function loadPlugins(kind, { root, dataRoot = root, dryRun = false,
   return out;
 }
 
-/** Lazily load dotenv exactly once (mirrors gemini-eval.ts). Idempotent. */
+/** Lazily load dotenv exactly once (mirrors packages/cli/src/commands/evaluation/gemini-eval.ts). Idempotent. */
 let dotenvLoaded = false;
 export async function loadDotenvOnce(root = null) {
   if (dotenvLoaded) return;
@@ -726,7 +726,7 @@ export function filterResultsForId(results, id) {
 
 /**
  * Merge enabled provider-plugins into the core providers Map. THE one hot-path
- * hook (scan.ts calls this right after loadProviders). Critical guarantees:
+ * hook (packages/core/src/scanning/scan.ts calls this right after loadProviders). Critical guarantees:
  *
  *  1. BYTE-IDENTICAL when opted out: returns IMMEDIATELY if config/plugins.yml
  *     is absent — no discovery, no dotenv, no process.env mutation. The one
@@ -745,7 +745,7 @@ export function filterResultsForId(results, id) {
  *     an actionable message (disabled / missing key) — so `provider: apify` with
  *     the plugin off yields a helpful error, not a confusing "unknown provider".
  *
- * @param {Map<string, any>} providersMap   The Map returned by scan.ts loadProviders.
+ * @param {Map<string, any>} providersMap   The Map returned by packages/core/src/scanning/scan.ts loadProviders.
  * @param {{ root: string, dataRoot?: string }} opts
  */
 // A detect-exempt provider whose fetch throws an actionable message — used when
@@ -754,11 +754,11 @@ export function filterResultsForId(results, id) {
 function inactiveProviderStub(id, reason) {
   return {
     id,
-    // Read by tools that diagnose without fetching (coverage-check.ts), so
+    // Read by tools that diagnose without fetching (packages/cli/src/commands/pipeline/coverage-check.ts), so
     // they can say why the board is never scanned instead of calling it live.
     inactiveReason: reason,
     detect: () => null,
-    fetch: async () => { throw new Error(`plugin "${id}" inactive: ${reason}. Run \`bun doctor.ts\` for setup.`); },
+    fetch: async () => { throw new Error(`plugin "${id}" inactive: ${reason}. Run \`bun packages/cli/src/commands/platform/doctor.ts\` for setup.`); },
   };
 }
 
@@ -792,7 +792,7 @@ export async function mergeProviderPlugins(providersMap, { root, dataRoot = root
         continue;
       }
       if (!lockGate(manifest, root).load) {
-        providersMap.set(manifest.id, inactiveProviderStub(manifest.id, 'integrity/consent check failed — see ⚠️ above; run `bun plugins.ts trust ' + manifest.id + '` or `enable ' + manifest.id + '`'));
+        providersMap.set(manifest.id, inactiveProviderStub(manifest.id, 'integrity/consent check failed — see ⚠️ above; run `bun packages/cli/src/commands/platform/plugins.ts trust ' + manifest.id + '` or `enable ' + manifest.id + '`'));
         continue;
       }
       const hook = await importHook(manifest, 'provider');

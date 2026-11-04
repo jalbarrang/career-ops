@@ -25,7 +25,7 @@
 import { writeFileSync, mkdirSync, rmSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { pass, fail, makeUpdaterRepo } from './helpers.ts';
-import { addPaths, isTracked, expandToShippedFiles, stagingFileList } from '../update-system.ts';
+import { addPaths, isTracked, expandToShippedFiles, stagingFileList } from '../packages/cli/src/commands/platform/update-system.ts';
 
 // Shared with updater-is-tracked.test.ts so the git-isolation pins live in one
 // body: dropping one has to redden both suites, not leave this one quietly
@@ -878,24 +878,24 @@ console.log('\n🧪 Testing updater staging behavior (ignored + never-tracked pa
 //    pull back in — the subtraction the exclude spec never did during staging.
 {
   const { dir, g, ctx } = makeRepo();
-  mkdirSync(join(dir, 'providers'));
+  mkdirSync(join(dir, 'packages/core/src/scanning/providers'), { recursive: true });
   writeFileSync(join(dir, 'AGENTS.md'), 'v1');
   writeFileSync(join(dir, 'Dockerfile'), 'shipped upstream');
-  writeFileSync(join(dir, 'providers/core.ts'), 'v1');
-  writeFileSync(join(dir, 'providers/acme.ts'), 'v1');
+  writeFileSync(join(dir, 'packages/core/src/scanning/providers/core.ts'), 'v1');
+  writeFileSync(join(dir, 'packages/core/src/scanning/providers/acme.ts'), 'v1');
   g('add', '-A');
   g('commit', '-qm', 'base');
 
   // The update rewrites all four, but this install locally edited Dockerfile
-  // (standalone) and providers/acme.ts (under an updated directory), so both
+  // (standalone) and packages/core/src/scanning/providers/acme.ts (under an updated directory), so both
   // are preserved: kept on disk with the user's content and out of the commit.
   writeFileSync(join(dir, 'AGENTS.md'), 'v2');
   writeFileSync(join(dir, 'Dockerfile'), "the user's local sandbox edit");
-  writeFileSync(join(dir, 'providers/core.ts'), 'v2');
-  writeFileSync(join(dir, 'providers/acme.ts'), "the user's local edit");
+  writeFileSync(join(dir, 'packages/core/src/scanning/providers/core.ts'), 'v2');
+  writeFileSync(join(dir, 'packages/core/src/scanning/providers/acme.ts'), "the user's local edit");
 
-  const pathsToStage = ['AGENTS.md', 'providers/', ':(exclude)Dockerfile', ':(exclude)providers/acme.ts'];
-  const preserved = ['Dockerfile', 'providers/acme.ts'];
+  const pathsToStage = ['AGENTS.md', 'packages/core/src/scanning/providers/', ':(exclude)Dockerfile', ':(exclude)packages/core/src/scanning/providers/acme.ts'];
+  const preserved = ['Dockerfile', 'packages/core/src/scanning/providers/acme.ts'];
   const files = stagingFileList(pathsToStage, preserved, 'HEAD', ctx);
 
   if (!files.some(f => f.startsWith(':(exclude)'))) {
@@ -903,12 +903,12 @@ console.log('\n🧪 Testing updater staging behavior (ignored + never-tracked pa
   } else {
     fail(`an exclusion spec survived into the staging list: ${files.join(', ')}`);
   }
-  if (!files.includes('Dockerfile') && !files.includes('providers/acme.ts')) {
+  if (!files.includes('Dockerfile') && !files.includes('packages/core/src/scanning/providers/acme.ts')) {
     pass('a standalone AND an under-directory preserved file are both subtracted');
   } else {
     fail(`a preserved file reached the staging list: ${files.join(', ')}`);
   }
-  if (files.includes('AGENTS.md') && files.includes('providers/core.ts')) {
+  if (files.includes('AGENTS.md') && files.includes('packages/core/src/scanning/providers/core.ts')) {
     pass("the update's own files remain in the staging list");
   } else {
     fail(`stagingFileList dropped a real update file: ${files.join(', ')}`);
@@ -921,8 +921,8 @@ console.log('\n🧪 Testing updater staging behavior (ignored + never-tracked pa
     threw = err;
   }
   const staged = stagedPaths(g);
-  if (!threw && staged.has('AGENTS.md') && staged.has('providers/core.ts')
-      && !staged.has('Dockerfile') && !staged.has('providers/acme.ts')) {
+  if (!threw && staged.has('AGENTS.md') && staged.has('packages/core/src/scanning/providers/core.ts')
+      && !staged.has('Dockerfile') && !staged.has('packages/core/src/scanning/providers/acme.ts')) {
     pass('the derived list stages cleanly and leaves preserved files uncommitted');
   } else {
     fail(`staging the derived list failed: ${threw?.message.split('\n')[0] ?? [...staged].join(', ')}`);

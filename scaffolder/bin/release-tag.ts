@@ -10,7 +10,7 @@
 // release.yml re-marks the career-ops release on every run, but between the
 // two releases being created, or if that step stops running, the answer is a
 // web tag. Only an exact `career-ops-vX.Y.Z` counts as a release here, the same
-// rule as RELEASE_TAG_RE in update-system.ts (not imported: the npm package
+// rule as RELEASE_TAG_RE in packages/cli/src/commands/platform/update-system.ts (not imported: the npm package
 // ships only scaffolder/bin).
 
 export const LATEST_RELEASE = "https://api.github.com/repos/career-ops-hq/career-ops/releases/latest";

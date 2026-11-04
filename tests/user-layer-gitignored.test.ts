@@ -178,8 +178,8 @@ for (const path of timestampedBackupProbes) {
 }
 
 // The backups' sibling, from the same two writers: the temp file an atomic
-// write renames into place. `.{name}.{pid}.{ts}.{uuid}.tmp` (tracker-utils.ts
-// writeFileAtomic and web/src/lib/core/safe-write.ts atomicWrite), plus the
+// write renames into place. `.{name}.{pid}.{ts}.{uuid}.tmp` (packages/core/src/tracker/tracker-utils.ts
+// writeFileAtomic and apps/web/src/lib/core/safe-write.ts atomicWrite), plus the
 // `{file}.tmp-{pid}-{uuid}` shape safe-write.ts used before they were aligned —
 // a checkout that predates the alignment can still have one lying around.
 //
@@ -204,7 +204,7 @@ for (const path of atomicWriteTempProbes) {
   else fail(`${path}: git check-ignore could not answer — ${stderr}`);
 }
 
-// The tracker's DERIVED SQLite index (tracker.ts, #918), which carries the
+// The tracker's DERIVED SQLite index (packages/cli/src/commands/tracker/tracker.ts, #918), which carries the
 // same content as the markdown it indexes — company, role, score, status,
 // notes.
 //
@@ -223,7 +223,7 @@ for (const path of atomicWriteTempProbes) {
 // on its own: it is already covered by the blanket `data/*` rule at the top of
 // the file, so it passes either way.
 //
-// Built as a cross-product rather than hand-listed. tracker.ts derives every
+// Built as a cross-product rather than hand-listed. packages/cli/src/commands/tracker/tracker.ts derives every
 // one of these from a single path — DB_PATH is resolveTrackerPath() with .md
 // swapped for .db, and SQLite appends the sidecar suffixes to that — so any
 // directory that can hold the index can hold all three names. Enumerating them

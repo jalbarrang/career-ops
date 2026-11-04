@@ -5,7 +5,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — radancy (TalentBrew SSR search-results parser)');
 try {
-  const radancyModule = await import(pathToFileURL(join(ROOT, 'providers/radancy.ts')).href);
+  const radancyModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/radancy.ts')).href);
   const radancy = radancyModule.default;
   const { resolveListUrl: radListUrl, parseResults } = radancyModule;
 
@@ -440,7 +440,7 @@ try {
     fail(`radancy.fetch() probe-cap handling: jobs=${probeCapJobs?.length} pages=${probeCapPage} warnings=${JSON.stringify(probeCapWarnings)}`);
   }
 
-  // A ctx.fetch* rejection while probing — the shape of verify-portals.ts's
+  // A ctx.fetch* rejection while probing — the shape of packages/core/src/scanning/verify-portals.ts's
   // budget-exhaustion sentinel — must propagate unwrapped, not be absorbed
   // into a normal stopReason/partial-result path: a swallowed sentinel reads
   // to verify-portals as "board is down" instead of "live, partial".

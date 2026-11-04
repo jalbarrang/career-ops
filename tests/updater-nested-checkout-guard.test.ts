@@ -3,15 +3,15 @@
  *
  * A career-ops install with no `.git` of its own that sits inside another
  * repository (a ZIP unpacked into an existing project) used to make every git
- * call in update-system.ts resolve to that OUTER repo: check() reported a
+ * call in packages/cli/src/commands/platform/update-system.ts resolve to that OUTER repo: check() reported a
  * phantom system-files-changed against a stranger's history, and apply()
  * created its backup branch and fetched upstream into a repository that has
  * nothing to do with career-ops, then failed on pathspecs prefixed by the
- * install's subpath — `git checkout FETCH_HEAD -- update-system.ts` is the
+ * install's subpath — `git checkout FETCH_HEAD -- packages/cli/src/commands/platform/update-system.ts` is the
  * failing path from the original report.
  *
  * The behavioral sections spawn the real CLI inside a throwaway outer repo.
- * That is possible without staging the whole tree because update-system.ts is
+ * That is possible without staging the whole tree because packages/cli/src/commands/platform/update-system.ts is
  * self-loading by contract (#1706): copying just it and VERSION is a faithful
  * model of the ZIP install that triggers the bug.
  */
@@ -19,9 +19,9 @@
 import { mkdtempSync, mkdirSync, writeFileSync, copyFileSync, existsSync, realpathSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import {dirname, join } from 'path';
 import { pass, fail, NODE, ROOT, rmSync, hermeticGitEnv } from './helpers.ts';
-import { gitIn, gitToplevelMismatch } from '../update-system.ts';
+import { gitIn, gitToplevelMismatch } from '../packages/cli/src/commands/platform/update-system.ts';
 
 console.log('\n🧪 Testing updater nested-checkout guard (#3334)...');
 
@@ -44,7 +44,9 @@ function makeNestedFixture() {
   g('config', 'core.autocrlf', 'false');
   const nested = join(dir, 'tools', 'career-ops');
   mkdirSync(nested, { recursive: true });
-  copyFileSync(join(ROOT, 'update-system.ts'), join(nested, 'update-system.ts'));
+  mkdirSync(dirname(join(nested, 'packages/cli/src/commands/platform/update-system.ts')), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/cli/src/commands/platform/update-system.ts'), join(nested, 'packages/cli/src/commands/platform/update-system.ts'));
+  mkdirSync(dirname(join(nested, 'VERSION')), { recursive: true });
   copyFileSync(join(ROOT, 'VERSION'), join(nested, 'VERSION'));
   g('add', '-A');
   g('commit', '-qm', 'vendored');
@@ -52,7 +54,7 @@ function makeNestedFixture() {
 }
 
 function runUpdater(fixture, cmd) {
-  return spawnSync(NODE, ['update-system.ts', cmd], {
+  return spawnSync(NODE, ['packages/cli/src/commands/platform/update-system.ts', cmd], {
     cwd: fixture.nested,
     encoding: 'utf-8',
     timeout: 60000,

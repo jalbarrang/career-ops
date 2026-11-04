@@ -72,7 +72,7 @@ try {
     }
   }
 
-  // The writer that leaked: assessment-log.ts add, run from the checkout with
+  // The writer that leaked: packages/cli/src/commands/insights/assessment-log.ts add, run from the checkout with
   // no env of its own.
   {
     const r = child({ CAREER_OPS_ROOT: theirs }, 'writer');

@@ -11,9 +11,9 @@
 
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import {dirname, join } from 'path';
 import { pass, fail, hermeticGitRunner } from './helpers.ts';
-import { removeAdditionsNotInHead, staleSystemFiles } from '../update-system.ts';
+import { removeAdditionsNotInHead, staleSystemFiles } from '../packages/cli/src/commands/platform/update-system.ts';
 
 // A throwaway git repo plus a ctx that binds the rollback helper's git runner
 // and filesystem root to it, so nothing touches the real working tree.
@@ -166,12 +166,13 @@ console.log('\n🧪 Testing updater rollback behavior (#2015)...');
   g('add', '-A');
   g('commit', '-qm', 'base');
 
-  writeFileSync(join(dir, 'browser-extract.ts'), 'added by update');
-  g('add', 'browser-extract.ts');
+  mkdirSync(dirname(join(dir, 'packages/cli/src/commands/scanning/browser-extract.ts')), { recursive: true });
+  writeFileSync(join(dir, 'packages/cli/src/commands/scanning/browser-extract.ts'), 'added by update');
+  g('add', 'packages/cli/src/commands/scanning/browser-extract.ts');
 
-  removeAdditionsNotInHead('browser-extract.ts', new Set(), ctx);
+  removeAdditionsNotInHead('packages/cli/src/commands/scanning/browser-extract.ts', new Set(), ctx);
 
-  if (!existsSync(join(dir, 'browser-extract.ts'))) {
+  if (!existsSync(join(dir, 'packages/cli/src/commands/scanning/browser-extract.ts'))) {
     pass('rollback removes an added file for a file pathspec');
   } else {
     fail('rollback left an added file for a file pathspec');

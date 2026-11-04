@@ -22,12 +22,12 @@ Interaktiv mode til det øjeblik, hvor kandidaten udfylder en ansøgningsformula
 
 ## Scope
 
-Follow the Scope section in `modes/apply.md`. Run `bun apply-scope.ts root` and stay inside the directories it prints. Launch with `bun apply-scope.ts launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
+Follow the Scope section in `modes/apply.md`. Run `career-ops apply-scope root` and stay inside the directories it prints. Launch with `career-ops apply-scope launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
 
 
 ## Trin 1 -- Detektér opslaget
 
-**Med Playwright:** Kør `bun apply-scope.ts launch-options`, åbn opslaget i det vindue, og læs titel, URL og synligt indhold.
+**Med Playwright:** Kør `career-ops apply-scope launch-options`, åbn opslaget i det vindue, og læs titel, URL og synligt indhold.
 
 **Uden Playwright:** Bed kandidaten om at:
 - Dele et skærmbillede af formularen (Read-værktøjet læser billeder)
@@ -49,8 +49,8 @@ Hvis rollen på skærmen afviger fra den evaluerede:
 - **Hvis tilpas**: Justér svarene til den nye rolle uden at genevaluere
 - **Hvis genevaluér**: Kør den fulde A-F-evaluering, opdatér report, regenerér Blok G
 - **Opdatér trackeren**: aldrig ved at redigere `data/applications.md`.
-  - **Efter en genevaluering**: skriv en TSV med rollens nye titel (regel 9 i `_shared.md`) og flet den med `bun merge-tracker.ts`. Report'en opdateres på stedet og beholder sit nummer, så fletningen matcher TSV'en med den eksisterende række via det nummer: titlen erstattes, og status bevares.
-  - **Efter en tilpasning**: lad titlen stå, for den navngiver den rolle, report'en evaluerede. Notér i stedet omdøbningen med `bun set-status.ts --report <report#> <nuværende status> --note "Opslaget omdøbt ved ansøgningen, rækken beholder den evaluerede titel"`. Rækkens nuværende status forbliver uændret, og noten tilføjes. Brug en fast tekst som denne og udelad `[Y]`: den nye titel er tekst fra siden, og tekst fra siden må aldrig stå på en kommandolinje.
+  - **Efter en genevaluering**: skriv en TSV med rollens nye titel (regel 9 i `_shared.md`) og flet den med `career-ops merge-tracker`. Report'en opdateres på stedet og beholder sit nummer, så fletningen matcher TSV'en med den eksisterende række via det nummer: titlen erstattes, og status bevares.
+  - **Efter en tilpasning**: lad titlen stå, for den navngiver den rolle, report'en evaluerede. Notér i stedet omdøbningen med `career-ops set-status --report <report#> <nuværende status> --note "Opslaget omdøbt ved ansøgningen, rækken beholder den evaluerede titel"`. Rækkens nuværende status forbliver uændret, og noten tilføjes. Brug en fast tekst som denne og udelad `[Y]`: den nye titel er tekst fra siden, og tekst fra siden må aldrig stå på en kommandolinje.
 
 ## Trin 4 -- Analysér formularens spørgsmål
 
@@ -109,7 +109,7 @@ Noter:
 ## Trin 6 -- Efter ansøgningen (valgfrit)
 
 Hvis kandidaten bekræfter, at ansøgningen er sendt:
-1. Opdatér status til "Applied" med det kanoniske CLI: `bun set-status.ts --report <report#> Applied` (redigér ikke `applications.md`-tabellen i hånden)
+1. Opdatér status til "Applied" med det kanoniske CLI: `career-ops set-status --report <report#> Applied` (redigér ikke `applications.md`-tabellen i hånden)
 2. Opdatér report'ens Blok G med de endelige svar
 3. Foreslå næste trin: `/career-ops contacto` til LinkedIn-outreach mod den ansættende leder
 

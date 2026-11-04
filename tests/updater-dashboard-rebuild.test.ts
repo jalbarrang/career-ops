@@ -8,12 +8,12 @@
  *     The rebuild trigger looked for `.go` files, so an install with a built
  *     binary kept the old dependency code through every such update.
  *   - `go build -o career-dashboard .` writes exactly that filename. On Windows
- *     the binary is career-dashboard.exe (build-dashboard.ts), so the rebuild
+ *     the binary is career-dashboard.exe (packages/cli/src/commands/platform/build-dashboard.ts), so the rebuild
  *     wrote a second, extension-less file and left the .exe stale, while the
  *     updater printed "dashboard binary rebuilt".
  */
 
-import { dashboardBinaryName, dashboardBuildInputsChanged } from '../update-system.ts';
+import { dashboardBinaryName, dashboardBuildInputsChanged } from '../packages/cli/src/commands/platform/update-system.ts';
 import { fail, pass } from './helpers.ts';
 
 function check(condition, passMessage, failMessage) {
@@ -43,7 +43,7 @@ for (const changed of [
   ['dashboard/README.md'],
   ['go.sum', 'internal/go.mod'],
   ['dashboard/internal/testdata/go.sum.txt'],
-  ['web/go.mod'],
+  ['apps/web/go.mod'],
 ]) {
   check(
     !dashboardBuildInputsChanged(changed),

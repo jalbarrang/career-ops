@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { injectThemeStyle, readStyleTokens } from '../theme-style.ts';
+import { injectThemeStyle, readStyleTokens } from '../packages/cli/src/commands/cv/theme-style.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const TEMPLATE = join(ROOT, 'templates', 'cv-template.zh-minimal.html');
@@ -39,7 +39,7 @@ test('Chinese Minimal applies profile typography and colors without changing its
       awards: [{ title: 'Example Award', org: 'Example Foundation', year: '2024' }],
       skills: [{ category: 'Engineering', items: ['TypeScript'] }],
     }));
-    execFileSync(process.execPath, ['build-cv-html.ts', input, output, TEMPLATE], { cwd: ROOT });
+    execFileSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', input, output, TEMPLATE], { cwd: ROOT });
     const html = readFileSync(output, 'utf8');
     writeFileSync(profile, 'style:\n  font_family: "Georgia, serif"\n  font_size: "10pt"\n  accent_color: "#2563eb"\n  secondary_color: "#111827"\n');
     const tokens = readStyleTokens(profile);

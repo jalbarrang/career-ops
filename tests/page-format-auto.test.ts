@@ -2,7 +2,7 @@
  * page-format-auto.test.ts — `page_format: auto` picks the sheet from the
  * employer's country (#5099).
  *
- * Expected values are literals, never read back out of lib/page-format.ts: an
+ * Expected values are literals, never read back out of packages/core/src/cv/page-format.ts: an
  * assertion that reads its answer from the module it pins compares the module to
  * itself and stays green whatever the module becomes (see page-format.test.ts).
  */
@@ -19,7 +19,7 @@ import {
   PAGE_FORMATS,
   pageFormatForCountry,
   resolvePageFormat,
-} from '../lib/page-format.ts';
+} from '../packages/core/src/cv/page-format.ts';
 import { describeSpawn, exitedNonZero } from './helpers/describe-spawn.ts';
 
 function workspace(pageFormat) {
@@ -122,7 +122,7 @@ test('injectPrintPageCss: auto picks the sheet from the country', () => {
     const dir = workspace('auto');
     const probe = join(dir, 'probe.ts');
     writeFileSync(probe, [
-      `import { injectPrintPageCss } from ${JSON.stringify(pathToFileURL(join(ROOT, 'generate-pdf.ts')).href)};`,
+      `import { injectPrintPageCss } from ${JSON.stringify(pathToFileURL(join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts')).href)};`,
       `process.stdout.write(injectPrintPageCss('<html><head></head><body></body></html>', undefined, ${JSON.stringify(country)}));`,
       '',
     ].join('\n'));
@@ -136,7 +136,7 @@ test('build-cv-html: country is a known payload key, not a typo to warn about', 
   const dir = workspace('auto');
   const payloadPath = join(dir, 'payload.json');
   writeFileSync(payloadPath, JSON.stringify({ ...PAYLOAD, country: 'DE' }));
-  const res = spawnSync(NODE, [join(ROOT, 'build-cv-html.ts'), payloadPath, join(dir, 'output', 'cv.html')], {
+  const res = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/build-cv-html.ts'), payloadPath, join(dir, 'output', 'cv.html')], {
     env: workspaceEnv(dir), encoding: 'utf-8',
   });
   assert.equal(res.status, 0, res.stderr);
@@ -147,7 +147,7 @@ function buildHtml(dir, payload) {
   const payloadPath = join(dir, 'payload.json');
   writeFileSync(payloadPath, JSON.stringify(payload));
   const out = join(dir, 'output', 'cv.html');
-  const res = spawnSync(NODE, [join(ROOT, 'build-cv-html.ts'), payloadPath, out], {
+  const res = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/build-cv-html.ts'), payloadPath, out], {
     env: workspaceEnv(dir), encoding: 'utf-8',
   });
   assert.equal(res.status, 0, res.stderr);
@@ -170,7 +170,7 @@ test('build-cv-html: a payload country is ignored when the profile states a shee
 });
 
 function runPdf(dir, ...flags) {
-  return spawnSync(NODE, [join(ROOT, 'generate-pdf.ts'), join(dir, 'absent.html'), join(dir, 'output', 'cv.pdf'), ...flags], {
+  return spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts'), join(dir, 'absent.html'), join(dir, 'output', 'cv.pdf'), ...flags], {
     env: workspaceEnv(dir), encoding: 'utf-8',
   });
 }
@@ -211,7 +211,7 @@ test('renderHtmlToPdf: auto records the sheet the country calls for', () => {
     const dir = workspace('auto');
     const probe = join(dir, 'probe.ts');
     writeFileSync(probe, `
-      import { renderHtmlToPdf } from ${JSON.stringify(pathToFileURL(join(ROOT, 'generate-pdf.ts')).href)};
+      import { renderHtmlToPdf } from ${JSON.stringify(pathToFileURL(join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts')).href)};
       const stub = async () => ({
         async newPage() {
           return {
@@ -253,14 +253,14 @@ function mediaBox(pdfPath) {
 
 function runBatch(dir, entries) {
   writeFileSync(join(dir, 'manifest.json'), JSON.stringify(entries));
-  return spawnSync(NODE, [join(ROOT, 'generate-pdf.ts'), `--batch=${join(dir, 'manifest.json')}`], {
+  return spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts'), `--batch=${join(dir, 'manifest.json')}`], {
     env: workspaceEnv(dir), encoding: 'utf-8',
   });
 }
 
 function runBatchWithFlags(dir, entries, ...flags) {
   writeFileSync(join(dir, 'manifest.json'), JSON.stringify(entries));
-  return spawnSync(NODE, [join(ROOT, 'generate-pdf.ts'), `--batch=${join(dir, 'manifest.json')}`, ...flags], {
+  return spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts'), `--batch=${join(dir, 'manifest.json')}`, ...flags], {
     env: workspaceEnv(dir), encoding: 'utf-8',
   });
 }
@@ -303,7 +303,7 @@ test('generate-cover-letter: the payload country steers auto, and --country outr
     writeFileSync(payloadPath, JSON.stringify({
       candidate: { name: 'A Candidate' }, letter, country: payloadCountry, output_path: `output/cover-${i}.pdf`,
     }));
-    const res = spawnSync(NODE, [join(ROOT, 'generate-cover-letter.ts'), '--payload', payloadPath, ...flag], {
+    const res = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/generate-cover-letter.ts'), '--payload', payloadPath, ...flag], {
       env: workspaceEnv(dir), encoding: 'utf-8',
     });
     assert.equal(res.status, 0, res.stderr + res.stdout);
@@ -325,7 +325,7 @@ function runCover(flags) {
     letter: { role_title: 'Head of Marketing', opening: 'Opening line.', profile_intro: 'Profile intro.', company: 'Example Corp', city: 'Berlin', date: 'September 8, 2026' },
     country: 'DE', output_path: 'output/cover.pdf',
   }));
-  return spawnSync(NODE, [join(ROOT, 'generate-cover-letter.ts'), '--payload', payloadPath, ...flags], {
+  return spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/generate-cover-letter.ts'), '--payload', payloadPath, ...flags], {
     env: workspaceEnv(dir), encoding: 'utf-8',
   });
 }
@@ -360,7 +360,7 @@ test('generate-pdf --batch: a global --country covers an entry with none, and an
 });
 
 test('generate-pdf: the usage text names --country', () => {
-  const res = spawnSync(NODE, [join(ROOT, 'generate-pdf.ts')], { env: workspaceEnv(workspace(null)), encoding: 'utf-8' });
+  const res = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts')], { env: workspaceEnv(workspace(null)), encoding: 'utf-8' });
   assert.match(res.stderr, /--country=XX/);
   assert.match(res.stderr, /country\?/);
 });

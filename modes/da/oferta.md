@@ -103,7 +103,7 @@ Inkludér også:
 
 Gem den fulde evaluering i `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
-- `{###}` = næste fortløbende nummer (3 cifre, nul-paddet). For at allokere det atomisk og undgå race conditions skal du køre `bun reserve-report-num.ts` for at reservere nummeret (stdout returnerer `{###}`), skrive rapporten og derefter køre `bun reserve-report-num.ts --release {###}` for at frigive sentinel'en.
+- `{###}` = næste fortløbende nummer (3 cifre, nul-paddet). For at allokere det atomisk og undgå race conditions skal du køre `career-ops reserve-report-num` for at reservere nummeret (stdout returnerer `{###}`), skrive rapporten og derefter køre `career-ops reserve-report-num --release {###}` for at frigive sentinel'en.
 - `{company-slug}` = virksomhedsnavn i små bogstaver, uden mellemrum (brug bindestreger)
 - `{YYYY-MM-DD}` = dagens dato
 
@@ -152,7 +152,7 @@ Gem den fulde evaluering i `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
 ### 2. Registrér i trackeren
 
-**ALTID** registrér i trackeren. Skriv en TSV (regel 9 i `_shared.md`) og flet den med `bun merge-tracker.ts`; skriv aldrig en række direkte i `data/applications.md`. Felter:
+**ALTID** registrér i trackeren. Skriv en TSV (regel 9 i `_shared.md`) og flet den med `career-ops merge-tracker`; skriv aldrig en række direkte i `data/applications.md`. Felter:
 - Næste fortløbende nummer
 - Dagens dato
 - Virksomhed

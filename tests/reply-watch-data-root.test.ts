@@ -1,7 +1,7 @@
 // tests/reply-watch-data-root.test.ts — the reply-watch pair reads and writes the
 // USER's data directory, not the directory the scripts live in.
 //
-// reply-watch.ts resolved three user-layer paths against __dirname: the tracker,
+// packages/cli/src/commands/outreach/reply-watch.ts resolved three user-layer paths against __dirname: the tracker,
 // data/follow-ups.md, and data/reply-candidates.json. DATA_CONTRACT.md resolves
 // the user layer through CAREER_OPS_ROOT / CAREER_OPS_DATA_DIR / a
 // .career-ops-data marker, and none of those reached this script.
@@ -11,8 +11,8 @@
 // the digest still printed a type, evidence and a suggested status. Only the match
 // to an application was missing -- the one thing the tracker is consulted for.
 //
-// paste-reply.ts shared the defect, and its header said so ("next to this
-// script, matching reply-watch.ts's default"). The two agreed with each other,
+// packages/cli/src/commands/outreach/paste-reply.ts shared the defect, and its header said so ("next to this
+// script, matching packages/cli/src/commands/outreach/reply-watch.ts's default"). The two agreed with each other,
 // which is what made the pair look correct, so both legs are asserted here: a fix
 // to one alone splits the documented handoff.
 
@@ -21,7 +21,7 @@ import { tmpdir } from 'os';
 import { basename, join, relative, sep } from 'path';
 import { execFileSync } from 'child_process';
 import { pass, fail, warn, ROOT, NODE } from './helpers.ts';
-import { walkTree } from '../lib/walk-tree.ts';
+import { walkTree } from '../packages/core/src/kernel/walk-tree.ts';
 
 console.log('\nreply-watch + paste-reply — user-layer paths follow the data root');
 
@@ -42,7 +42,7 @@ const CANDIDATE = [{
   date: '2026-09-20',
 }];
 
-// The shape reply-watch.ts's own loadFollowups() parses, not the one
+// The shape packages/cli/src/commands/outreach/reply-watch.ts's own loadFollowups() parses, not the one
 // data/follow-ups.md shows a human. It reads positionally and REQUIRES
 // `parts[2]` to be an integer application number:
 //
@@ -133,7 +133,7 @@ function runScript(script, args, environment) {
 // ── the tracker: a matched reply names the ROW, not the email ───────────────
 {
   const dir = makeDataRoot();
-  const r = runScript('reply-watch.ts', [], env(dir));
+  const r = runScript('packages/cli/src/commands/outreach/reply-watch.ts', [], env(dir));
 
   // The discriminator. Unmatched, reply-watch falls back to the email's subject
   // for the header; matched, it prints "{company} — {role}" from the tracker row.
@@ -159,7 +159,7 @@ function runScript(script, args, environment) {
 // intact. Each root mechanism is exercised on its own.
 {
   const dir = makeDataRoot();
-  const r = runScript('reply-watch.ts', [], {
+  const r = runScript('packages/cli/src/commands/outreach/reply-watch.ts', [], {
     ...process.env,
     CAREER_OPS_ROOT: '',
     CAREER_OPS_DATA_DIR: dir,
@@ -179,7 +179,7 @@ function runScript(script, args, environment) {
 // so testing it means writing a file into the checkout the suite is running from
 // — the hazard tests/stats.test.ts has to work around for its own live-file
 // assertions. The two env legs above cover the same resolver; the marker is
-// path-resolver.ts's own contract and is tested there.
+// packages/core/src/kernel/path-resolver.ts's own contract and is tested there.
 
 // ── the candidates ledger: written and read in the same place ──────────────
 {
@@ -188,7 +188,7 @@ function runScript(script, args, environment) {
     'Subject: Interview at Acme Corp\nFrom: recruiting@acmecorp.com\n\nWe would like to schedule an interview.\n');
 
   const repoLedgerExisted = existsSync(REPO_LEDGER);
-  const pasted = runScript('paste-reply.ts', ['--file', join(dir, 'mail.txt')], env(dir));
+  const pasted = runScript('packages/cli/src/commands/outreach/paste-reply.ts', ['--file', join(dir, 'mail.txt')], env(dir));
   if (pasted.code === 0) pass('paste-reply accepts a pasted reply');
   else fail(`paste-reply failed: ${pasted.stderr.slice(0, 200)}`);
 
@@ -223,8 +223,8 @@ function runScript(script, args, environment) {
       + 'skipping the untouched-checkout check rather than reading or rewriting a developer\'s ledger');
   }
 
-  // The handoff paste-reply's own output promises: "Next: run bun reply-watch.ts".
-  const watched = runScript('reply-watch.ts', [], env(dir));
+  // The handoff paste-reply's own output promises: "Next: run career-ops reply-watch".
+  const watched = runScript('packages/cli/src/commands/outreach/reply-watch.ts', [], env(dir));
   if (/1 application updates? need review/.test(watched.stdout)) {
     pass('reply-watch picks up the ledger paste-reply just wrote (the documented handoff)');
   } else {
@@ -233,7 +233,7 @@ function runScript(script, args, environment) {
 
   // Guard: the explicit override still wins over the data root.
   const custom = join(dir, 'elsewhere.json');
-  const overridden = runScript('paste-reply.ts', ['--file', join(dir, 'mail.txt')],
+  const overridden = runScript('packages/cli/src/commands/outreach/paste-reply.ts', ['--file', join(dir, 'mail.txt')],
     env(dir, { CAREER_OPS_REPLY_CANDIDATES: custom }));
   if (overridden.code === 0 && existsSync(custom)) {
     pass('CAREER_OPS_REPLY_CANDIDATES still outranks the data root');
@@ -244,7 +244,7 @@ function runScript(script, args, environment) {
 
 // ── follow-ups.md: the file followup-seed writes ───────────────────────────
 //
-// followup-seed.ts writes join(getCareerOpsRoot(), 'data/follow-ups.md'), so
+// packages/core/src/outreach/followup-seed.ts writes join(getCareerOpsRoot(), 'data/follow-ups.md'), so
 // before the fix one script wrote a file the other could not see.
 //
 // The writer half is MEASURED: followup-seed is spawned against a root with no
@@ -263,7 +263,7 @@ function runScript(script, args, environment) {
 // path and one precise one.
 {
   const dir = makeDataRoot({ withFollowups: false });
-  const seeded = runScript('followup-seed.ts', ['1', '--json'], env(dir, { CAREER_OPS_FOLLOWUPS: '' }));
+  const seeded = runScript('packages/core/src/outreach/followup-seed.ts', ['1', '--json'], env(dir, { CAREER_OPS_FOLLOWUPS: '' }));
 
   // Positive control first: an assertion that the file is absent from the wrong
   // place is worthless if the script never ran. `seeded:true` is the script's
@@ -301,7 +301,7 @@ function runScript(script, args, environment) {
       + 'untouched-checkout check rather than reading or rewriting a developer\'s follow-ups');
   }
 
-  const src = readFileSync(join(ROOT, 'reply-watch.ts'), 'utf8');
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/outreach/reply-watch.ts'), 'utf8');
 
   if (/FOLLOWUPS_FILE = path\.join\(DATA_ROOT, 'data', 'follow-ups\.md'\)/.test(src)) {
     pass('reply-watch resolves follow-ups.md against the data root');
@@ -340,7 +340,7 @@ for (const dir of cleanup) rmSync(dir, { recursive: true, force: true, maxRetrie
 // directory for good reasons (a shipped template, a sibling module, .env), and
 // judging those needs the context each one carries.
 {
-  for (const file of ['reply-watch.ts', 'paste-reply.ts']) {
+  for (const file of ['packages/cli/src/commands/outreach/reply-watch.ts', 'packages/cli/src/commands/outreach/paste-reply.ts']) {
     const src = readFileSync(join(ROOT, file), 'utf8');
     const offenders = src.split('\n')
       .map((line, i) => ({ line: line.trim(), n: i + 1 }))

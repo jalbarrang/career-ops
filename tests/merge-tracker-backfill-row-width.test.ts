@@ -10,13 +10,13 @@
 //
 // Driven as a CLI integration test through the CAREER_OPS_TRACKER /
 // CAREER_OPS_ADDITIONS overrides, matching tests/merge-tracker.test.ts:
-// importing merge-tracker.ts runs the CLI at import time.
+// importing packages/cli/src/commands/tracker/merge-tracker.ts runs the CLI at import time.
 import { pass, fail, NODE, ROOT, isolatedBatchStatePath } from './helpers.ts';
 import { join } from 'path';
 import { execFileSync } from 'child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
-import { resolveColumns, parseTrackerRow } from '../tracker-parse.ts';
+import { resolveColumns, parseTrackerRow } from '../packages/core/src/tracker/tracker-parse.ts';
 
 console.log('\nmerge-tracker.ts — --backfill-urls row width');
 
@@ -37,7 +37,7 @@ function runBackfill({ rows, reports }) {
     }
     const tracker = join(dir, 'applications.md');
     writeFileSync(tracker, ['# Applications Tracker', '', HEADER, SEP, ...rows, ''].join('\n'));
-    const out = execFileSync(NODE, [join(ROOT, 'merge-tracker.ts'), '--backfill-urls'], {
+    const out = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts'), '--backfill-urls'], {
       cwd: dir,
       encoding: 'utf-8',
       env: { ...process.env, CAREER_OPS_TRACKER: tracker, CAREER_OPS_ADDITIONS: join(dir, 'none'), CAREER_OPS_BATCH_STATE: isolatedBatchStatePath(join(dir, 'none')) },
@@ -164,7 +164,7 @@ const urlCell = (text, n) => {
       '| 7 | 2026-08-01 | Acme | Director, Test | 4.5/5 | Evaluated | ✅ | [7](reports/7-acme.md) | has a url | https://example.com/j/7 |',
       '',
     ].join('\n'));
-    const out = execFileSync(NODE, [join(ROOT, 'merge-tracker.ts'), '--backfill-urls'], {
+    const out = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts'), '--backfill-urls'], {
       cwd: dir, encoding: 'utf-8',
       env: { ...process.env, CAREER_OPS_TRACKER: tracker, CAREER_OPS_ADDITIONS: join(dir, 'none'), CAREER_OPS_BATCH_STATE: isolatedBatchStatePath(join(dir, 'none')) },
     });

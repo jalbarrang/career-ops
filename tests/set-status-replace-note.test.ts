@@ -11,7 +11,7 @@ function reset(note, status = 'Applied') {
   writeFileSync(tracker, `| # | Date | Company | Role | Score | Status | PDF | Report | Notes |\n|---|---|---|---|---|---|---|---|---|\n| 1 | 2026-09-01 | Example | Engineer | 4/5 | ${status} | — | — | ${note} |\n`);
 }
 function run(args, state = 'Applied') {
-  const r = spawnSync(NODE, [join(ROOT, 'set-status.ts'), '--row', '1', state, '--json', ...args], {
+  const r = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/set-status.ts'), '--row', '1', state, '--json', ...args], {
     encoding: 'utf8', env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_DATA_DIR: dir, CAREER_OPS_TRACKER: tracker },
   });
   return { ...r, data: JSON.parse(r.stdout) };

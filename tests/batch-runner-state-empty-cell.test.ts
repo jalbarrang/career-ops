@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, delimiter } from 'node:path';
+import {dirname, join, delimiter } from 'node:path';
 import { tmpdir } from 'node:os';
 import { ROOT, getBash, rmSync } from './helpers.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
@@ -20,12 +20,14 @@ function fixture() {
   const bin = join(root, 'bin');
   mkdirSync(batch);
   mkdirSync(bin);
+  mkdirSync(dirname(join(batch, 'batch-runner.sh')), { recursive: true });
   copyFileSync(join(ROOT, 'batch/batch-runner.sh'), join(batch, 'batch-runner.sh'));
   writeFileSync(join(batch, 'batch-prompt.md'), 'Test prompt');
   // localhost is refused by the JD prefetch guard before curl connects.
   writeFileSync(join(batch, 'batch-input.tsv'),
     'id\turl\tsource\tnotes\n1\thttp://localhost/jobs/1\ttest\tfirst\n2\thttp://localhost/jobs/2\ttest\tsecond\n');
-  writeFileSync(join(root, 'reserve-report-num.ts'), [
+ mkdirSync(dirname(join(root, 'packages/cli/src/commands/tracker/reserve-report-num.ts')), { recursive: true });
+  writeFileSync(join(root, 'packages/cli/src/commands/tracker/reserve-report-num.ts'), [
     "import fs from 'node:fs';",
     "const f = new URL('./.counter', import.meta.url);",
     "let n = 0; try { n = Number(fs.readFileSync(f, 'utf8')); } catch {}",
@@ -33,7 +35,8 @@ function fixture() {
     "console.log(String(n).padStart(3, '0'));",
     '',
   ].join('\n'));
-  for (const name of ['merge-tracker.ts', 'reconcile-pipeline.ts', 'verify-pipeline.ts']) {
+  for (const name of ['packages/cli/src/commands/tracker/merge-tracker.ts', 'packages/cli/src/commands/pipeline/reconcile-pipeline.ts', 'packages/cli/src/commands/platform/verify-pipeline.ts']) {
+    mkdirSync(dirname(join(root, name)), { recursive: true });
     writeFileSync(join(root, name), '// stub: the merge steps are not under test\n');
   }
   // A worker that dies without a byte of output.

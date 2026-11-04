@@ -8,7 +8,7 @@
 // Product" is an internship, not a directorship. Every such title classified
 // `senior`.
 //
-// It matters because scan.ts:2396 drops a posting outright when its tier is in
+// It matters because packages/core/src/scanning/scan.ts:2396 drops a posting outright when its tier is in
 // `skip_tiers`, with no log line naming it. A junior candidate skipping
 // `senior` therefore lost exactly the internships they were scanning for.
 //
@@ -23,7 +23,7 @@ import { pathToFileURL } from 'url';
 console.log('\nclassify-tier.ts — the leftmost level marker is the role\'s own');
 
 try {
-  const { classifyTier } = await import(pathToFileURL(join(ROOT, 'classify-tier.ts')).href);
+  const { classifyTier } = await import(pathToFileURL(join(ROOT, 'packages/core/src/evaluation/classify-tier.ts')).href);
 
   const check = (title, expected) => {
     const got = classifyTier(title);
@@ -103,7 +103,7 @@ try {
 
   // ── Guard (b) scoping: bridge noun present but NO trailing senior noun → stays at level marker ──
   // These cases prove the guard does not overreach. Removing the trailing-noun
-  // requirement at classify-tier.ts:119 would flip all three to 'senior' and
+  // requirement at packages/core/src/evaluation/classify-tier.ts:119 would flip all three to 'senior' and
   // a junior candidate would silently lose intern-programme roles.
   check('Intern Program Coordinator', 'intern');
   check('Graduate Scheme Analyst', 'intern');
@@ -111,7 +111,7 @@ try {
 
   // ── Guard (a): `associate` names a RANK, not a junior variant (#3178) ──
   // These fell through the closed noun list to the `associate` matcher at
-  // classify-tier.ts:72 and classified `entry`. scan.ts drops a posting whose
+  // packages/core/src/evaluation/classify-tier.ts:72 and classified `entry`. packages/core/src/scanning/scan.ts drops a posting whose
   // tier is in `skip_tiers` and never names it (it prints a "Filtered by tier: N
   // removed" count, not the title), so an academic candidate running the
   // documented example config — templates/portals.example.yml suggests
@@ -177,5 +177,5 @@ try {
   check('Associate Counsel - Office of General Counsel', 'entry');
 
 } catch (error) {
-  fail(`classify-tier.ts tests could not run: ${error.message}`);
+  fail(`packages/core/src/evaluation/classify-tier.ts tests could not run: ${error.message}`);
 }

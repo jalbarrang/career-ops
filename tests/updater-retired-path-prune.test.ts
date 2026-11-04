@@ -16,7 +16,7 @@
 // `bun test-all.ts` red. Found in review by @nikitacometa.
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { staleSystemFiles } from '../update-system.ts';
+import { staleSystemFiles } from '../packages/cli/src/commands/platform/update-system.ts';
 import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\nupdate-system.ts — retired paths stay prunable');
@@ -28,7 +28,7 @@ const RETIRED = [
   'set-status-tests.ts',
 ];
 
-const src = readFileSync(join(ROOT, 'lib', 'update-manifest.ts'), 'utf-8');
+const src = readFileSync(join(ROOT, 'packages/core/src/platform/update-manifest.ts'), 'utf-8');
 const block = src.match(/const SYSTEM_PATHS = \[([\s\S]*?)\n\];/);
 const systemPaths = block ? Array.from(block[1].matchAll(/'([^']+)'/g), (m) => m[1]) : [];
 

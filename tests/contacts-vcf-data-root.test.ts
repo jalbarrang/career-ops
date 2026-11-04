@@ -1,8 +1,8 @@
-// tests/contacts-vcf-data-root.test.ts — contacts.ts --vcf measures its write
+// tests/contacts-vcf-data-root.test.ts — packages/cli/src/commands/outreach/contacts.ts --vcf measures its write
 // guard against the data root, the same root it reads contacts from and
 // defaults its output into.
 //
-// contacts.ts resolves three things:
+// packages/cli/src/commands/outreach/contacts.ts resolves three things:
 //
 //   CONTACTS_PATH = join(DATA_ROOT, 'data/contacts.tsv')    (read)
 //   DEFAULT_VCF   = join(DATA_ROOT, 'output/contacts.vcf')  (default target)
@@ -23,11 +23,11 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import {dirname, join } from 'node:path';
 import { ROOT, rmSync } from './helpers.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
-const SCRIPT = join(ROOT, 'contacts.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/outreach/contacts.ts');
 
 const CONTACT = [
   'Jane Doe', 'Acme', 'recruiter', 'Talent Partner', '', 'jane@acme.example', '', '-', 'met at screen',

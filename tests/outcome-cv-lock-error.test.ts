@@ -40,7 +40,7 @@ Date.now = () => now() + (${timeout} && attempted ? 61_000 : 0);
 syncBuiltinESMExports();
 `);
   try {
-    const result = spawnSync(process.execPath, ['--import', pathToFileURL(preload).href, join(ROOT, 'outcome.ts'), '1', 'hired', ...(explicit ? ['--cv', source] : []), ...(json ? ['--json'] : [])], {
+    const result = spawnSync(process.execPath, ['--import', pathToFileURL(preload).href, join(ROOT, 'packages/cli/src/commands/tracker/outcome.ts'), '1', 'hired', ...(explicit ? ['--cv', source] : []), ...(json ? ['--json'] : [])], {
       cwd: root, env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_TRACKER: tracker }, encoding: 'utf8', timeout: 15000,
     });
     assert.equal(result.status, 1, result.error?.message || result.stderr);

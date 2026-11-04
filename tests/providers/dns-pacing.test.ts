@@ -8,7 +8,7 @@ console.log('\nProvider — DNS lookup pacing');
 
 try {
   const { createTokenBucket, createCachedLookup, lookupsPerMinFromEnv } = await import(
-    pathToFileURL(join(ROOT, 'providers/_dns-cache.ts')).href
+    pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_dns-cache.ts')).href
   );
 
   /**

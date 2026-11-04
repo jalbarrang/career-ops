@@ -4,7 +4,7 @@ Fetch a finished project / paper / internship from a link (or plain text), turn
 it into ATS-style CV content **grounded only in what the source actually says**,
 preview it, and — after you confirm — append it to `cv.md` and (for projects)
 `article-digest.md`. Deterministic dedup and insertion are handled by
-`add-entry.ts`, so re-adding the same thing is a safe no-op.
+`packages/cli/src/commands/cv/add-entry.ts`, so re-adding the same thing is a safe no-op.
 
 > **Non-negotiables (from the project's source-of-truth rules in `_shared.md`):**
 > - **Confirm before write.** Never touch `cv.md` / `article-digest.md` until the
@@ -60,7 +60,7 @@ If no source was given, ask the user for one.
    `/tmp/add-<slug>.json`, then run:
 
    ```bash
-   bun add-entry.ts /tmp/add-<slug>.json
+   career-ops add-entry /tmp/add-<slug>.json
    ```
 
    (Add `--dry-run` first if the user wants to see the file-level change without
@@ -77,10 +77,10 @@ If no source was given, ask the user for one.
 | an internship / job / role | `Work Experience` |
 | a talk / course / certification | `Education` (or ask if unclear) |
 
-`add-entry.ts` creates the section heading if it doesn't exist yet, so a new
+`packages/cli/src/commands/cv/add-entry.ts` creates the section heading if it doesn't exist yet, so a new
 `## Publications` is fine.
 
-## Payload schema (input to `add-entry.ts`)
+## Payload schema (input to `packages/cli/src/commands/cv/add-entry.ts`)
 
 Both keys optional; provide at least one. `articleDigest` is for projects only.
 

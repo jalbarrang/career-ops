@@ -26,7 +26,7 @@ process.env.CAREER_OPS_PROFILE = join(ROOT, 'tests', 'fixtures', 'profile-defaul
 
 let cadence;
 try {
-  cadence = await import('../followup-cadence.ts');
+  cadence = await import('../packages/core/src/outreach/followup-cadence.ts');
 } finally {
   if (PRIOR_PROFILE_ENV === undefined) delete process.env.CAREER_OPS_PROFILE;
   else process.env.CAREER_OPS_PROFILE = PRIOR_PROFILE_ENV;

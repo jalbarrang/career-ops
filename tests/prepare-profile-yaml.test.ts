@@ -11,7 +11,7 @@ writeFileSync(join(root, 'output', 'fictional.pdf'), '%PDF-fixture');
 const env = { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_PROFILE: '' };
 const run = yaml => {
   writeFileSync(join(root, 'config', 'profile.yml'), yaml);
-  return spawnSync(process.execPath, [join(ROOT, 'prepare-application.ts'), '--url', 'https://boards.greenhouse.io/fictional/jobs/1', '--pdf', 'output/fictional.pdf'], { env, encoding: 'utf8' });
+  return spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/evaluation/prepare-application.ts'), '--url', 'https://boards.greenhouse.io/fictional/jobs/1', '--pdf', 'output/fictional.pdf'], { env, encoding: 'utf8' });
 };
 function check(label, fn) { try { fn(); pass(label); } catch (e) { fail(`${label}: ${e.message}`); process.exitCode = 1; } }
 try {

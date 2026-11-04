@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import { fetchText, fetchResponse } from '../../providers/_http.ts';
+import { fetchText, fetchResponse } from '../../packages/core/src/scanning/providers/_http.ts';
 
 async function listening(server) {
   server.listen(0, '127.0.0.1');
@@ -132,7 +132,7 @@ test('direct requests work without undici; opting in explains how to install it'
   const loader = 'data:text/javascript,' + encodeURIComponent(
     'export async function resolve(s, c, next) { if (s === "undici") throw new Error("undici unavailable"); return next(s, c); }',
   );
-  const moduleUrl = new URL('../../providers/_http.ts', import.meta.url).href;
+  const moduleUrl = new URL('../../packages/core/src/scanning/providers/_http.ts', import.meta.url).href;
   const script = `
     import assert from 'node:assert/strict';
     const { fetchText } = await import(${JSON.stringify(moduleUrl)});

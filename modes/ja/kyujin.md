@@ -284,7 +284,7 @@ I am happy to discuss further at your convenience.
 
 Full evaluation を `reports/{###}-{company-slug}-{YYYY-MM-DD}.md` に保存する。
 
-- `{###}` = next sequential number（3 digits, zero-padded）。競合を防ぐため、必ず `bun reserve-report-num.ts` を実行して番号を claim し（stdout returns `{###}`）、report を write してから `bun reserve-report-num.ts --release {###}` を実行して sentinel を release する。
+- `{###}` = next sequential number（3 digits, zero-padded）。競合を防ぐため、必ず `career-ops reserve-report-num` を実行して番号を claim し（stdout returns `{###}`）、report を write してから `career-ops reserve-report-num --release {###}` を実行して sentinel を release する。
 - `{company-slug}` = company name in lowercase, without spaces（use hyphens）
 - `{YYYY-MM-DD}` = current date
 
@@ -344,11 +344,11 @@ Full evaluation を `reports/{###}-{company-slug}-{YYYY-MM-DD}.md` に保存す�
 (posting の全文を verbatim で貼る — 下の要件を参照)
 ```
 
-**JD archival（必須、#2789）：** すべての report に `## Job Description (archived verbatim)` section を入れ、posting の全文をそのまま貼る。要約・言い換えはしない。見出しは英語のまま：`check-jd-archive.ts` が名前で探す。`**URL:**` は archive ではない：posting が閉じると link は切れ、元の要件はもう取り戻せない。Section の 1 行目は source に表示されている掲載日（`Posted: {日付または表示どおりの相対表記}`、本当に無いときは `Posted: not visible in source`）で、report file 自体の日時で代用しない。JD が長すぎる、または全文を引用できないときは `archive-posting.ts <url> --company={company-slug} --report={num}` で capture し、section には `See jds/{filename} for the full archive (archive-posting.ts --report={num}).` の一文**だけ**を書く。言い換えで代用しない。Rule 全体は `modes/oferta.md` の **JD archival** を参照。
+**JD archival（必須、#2789）：** すべての report に `## Job Description (archived verbatim)` section を入れ、posting の全文をそのまま貼る。要約・言い換えはしない。見出しは英語のまま：`packages/core/src/evaluation/check-jd-archive.ts` が名前で探す。`**URL:**` は archive ではない：posting が閉じると link は切れ、元の要件はもう取り戻せない。Section の 1 行目は source に表示されている掲載日（`Posted: {日付または表示どおりの相対表記}`、本当に無いときは `Posted: not visible in source`）で、report file 自体の日時で代用しない。JD が長すぎる、または全文を引用できないときは `packages/cli/src/commands/evaluation/archive-posting.ts <url> --company={company-slug} --report={num}` で capture し、section には `See jds/{filename} for the full archive (packages/cli/src/commands/evaluation/archive-posting.ts --report={num}).` の一文**だけ**を書く。言い換えで代用しない。Rule 全体は `modes/oferta.md` の **JD archival** を参照。
 
 ### 2. Record in tracker
 
-**ALWAYS** record in the tracker. Write a TSV (rule 9 in `_shared.md`) and merge it with `bun merge-tracker.ts`; never write a row into `data/applications.md` by hand. Fields:
+**ALWAYS** record in the tracker. Write a TSV (rule 9 in `_shared.md`) and merge it with `career-ops merge-tracker`; never write a row into `data/applications.md` by hand. Fields:
 - Next sequential number
 - Current date
 - Company
@@ -356,7 +356,7 @@ Full evaluation を `reports/{###}-{company-slug}-{YYYY-MM-DD}.md` に保存す�
 - Score: match average (1-5)
 - Status: `Evaluated`
 - PDF: ❌（または auto-pipeline が PDF を生成した場合は ✅）
-- Report: root-relative link `[001](reports/001-company-2026-01-01.md)`（`merge-tracker.ts` 経由で merge されると tracker file からの相対 link に normalize される。例：`../reports/...`。#760 参照）
+- Report: root-relative link `[001](reports/001-company-2026-01-01.md)`（`packages/cli/src/commands/tracker/merge-tracker.ts` 経由で merge されると tracker file からの相対 link に normalize される。例：`../reports/...`。#760 参照）
 
 **Tracker format:**
 

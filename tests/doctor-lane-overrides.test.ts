@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import {dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { rmSync } from './helpers.ts';
@@ -10,7 +10,7 @@ import { rmSync } from './helpers.ts';
 const root = fileURLToPath(new URL('..', import.meta.url));
 
 function runDoctor(env, args = []) {
-  const result = spawnSync(process.execPath, [join(root, 'doctor.ts'), ...args], {
+  const result = spawnSync(process.execPath, [join(root, 'packages/cli/src/commands/platform/doctor.ts'), ...args], {
     cwd: root,
     encoding: 'utf8',
     env: { ...process.env, ...env },
@@ -28,6 +28,7 @@ function fixture(t) {
   mkdirSync(lanes);
   const portals = join(lanes, 'portals.yml');
   const pipeline = join(lanes, 'pipeline.md');
+  mkdirSync(dirname(portals), { recursive: true });
   copyFileSync(join(root, 'templates', 'portals.example.yml'), portals);
   writeFileSync(pipeline, '# Pipeline\n\n## Pending\n');
   return {
@@ -61,6 +62,7 @@ test('doctor creates the CAREER_OPS_PIPELINE parent when the override file is mi
   mkdirSync(join(dataRoot, 'data'), { recursive: true });
   const portals = join(dir, 'lanes', 'portals.yml');
   mkdirSync(join(dir, 'lanes'));
+  mkdirSync(dirname(portals), { recursive: true });
   copyFileSync(join(root, 'templates', 'portals.example.yml'), portals);
   const pipeline = join(dir, 'deep', 'nested', 'pipeline.md');
   const env = { CAREER_OPS_ROOT: dataRoot, CAREER_OPS_DATA_DIR: '', CAREER_OPS_PORTALS: portals, CAREER_OPS_PIPELINE: pipeline };

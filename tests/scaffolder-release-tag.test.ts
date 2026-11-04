@@ -9,7 +9,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { pass, fail, ROOT } from './helpers.ts';
 import { resolveReleaseTag, RELEASE_TAG_RE, LATEST_RELEASE } from '../scaffolder/bin/release-tag.ts';
-import { RELEASE_TAG_RE as UPDATER_RELEASE_TAG_RE } from '../update-system.ts';
+import { RELEASE_TAG_RE as UPDATER_RELEASE_TAG_RE } from '../packages/cli/src/commands/platform/update-system.ts';
 
 console.log('\nscaffolder — resolving the release tag to clone');
 
@@ -57,7 +57,7 @@ await check('a malformed career-ops tag is not cloned',
   respond({ body: { tag_name: 'career-ops-vpreview-v1.32.0' } }), { reason: /not a career-ops-vX\.Y\.Z release/ });
 
 // 4. The scaffolder and the updater agree on what a release tag is. The
-//    scaffolder cannot import update-system.ts (the npm package ships only
+//    scaffolder cannot import packages/cli/src/commands/platform/update-system.ts (the npm package ships only
 //    scaffolder/bin), so the rule is duplicated and this keeps the copies equal.
 for (const t of ['career-ops-v1.37.0', 'career-ops-v10.0.12', 'web-v0.15.0', 'v1.37.0', 'career-ops-v1.37', 'career-ops-vpreview-v1.32.0', 'career-ops-v1.37.0-rc.1', '']) {
   if (RELEASE_TAG_RE.test(t) === UPDATER_RELEASE_TAG_RE.test(t)) pass(`scaffolder and updater agree on ${JSON.stringify(t)}`);

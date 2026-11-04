@@ -9,7 +9,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — neogov');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/neogov.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/neogov.ts')).href);
   const neogov = mod.default;
   const { parseNeogovPage } = mod;
 

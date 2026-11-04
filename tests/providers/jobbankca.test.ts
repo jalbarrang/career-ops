@@ -8,7 +8,7 @@ import { tmpdir } from 'os';
 console.log('\nProvider — jobbankca');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/jobbankca.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/jobbankca.ts')).href);
   const jobbankca = mod.default;
   const { parseJobBankFeed, parseJobBankConfig, buildFeedUrl, assertJobBankUrl } = mod;
 

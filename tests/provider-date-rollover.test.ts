@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseSoftgardenDate } from '../providers/softgarden.ts';
-import { parseCsbDate } from '../providers/successfactors.ts';
+import { parseSoftgardenDate } from '../packages/core/src/scanning/providers/softgarden.ts';
+import { parseCsbDate } from '../packages/core/src/scanning/providers/successfactors.ts';
 
 test('softgarden rejects a day past the end of the month', () => {
   assert.equal(parseSoftgardenDate('02/31/2026'), undefined);

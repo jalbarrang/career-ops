@@ -1,5 +1,5 @@
 // tests/providers/_http.test.ts — direct coverage for the shared HTTP layer
-// (providers/_http.ts).
+// (packages/core/src/scanning/providers/_http.ts).
 import { pass, fail, ROOT } from '../helpers.ts';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
@@ -7,7 +7,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — _http retry helpers');
 
 const { isRetryableError, isRefusedRedirectError, fetchJsonWithRetry, fetchResponse, fetchResponseWithRetry, makeHttpCtx, sleep } =
-  await import(pathToFileURL(join(ROOT, 'providers/_http.ts')).href);
+  await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_http.ts')).href);
 
 // isRetryableError() — status-based classification.
 if (isRetryableError({ status: 429 }) === true) pass('isRetryableError(429) is true');
@@ -74,7 +74,7 @@ if (isRetryableError(nonTypeErrorLookalike) === true) {
 }
 
 // isRefusedRedirectError() — the same verdict, now reachable by name so a
-// second consumer (discover-ats.ts, which reports it to a human) cannot drift
+// second consumer (packages/cli/src/commands/scanning/discover-ats.ts, which reports it to a human) cannot drift
 // from the retry layer's answer. Asserted directly rather than only through
 // isRetryableError: a caller that needs "is this a refused redirect" gets a
 // wrong answer from "is this retryable" for every 4xx, which is not a redirect
@@ -194,7 +194,7 @@ if (isRefusedRedirectError(transportFailure) === false) {
 {
   const realFetch = globalThis.fetch;
   try {
-    const { fetchText } = await import(pathToFileURL(join(ROOT, 'providers/_http.ts')).href);
+    const { fetchText } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_http.ts')).href);
     globalThis.fetch = async () => new Response('', { status: 302, statusText: 'Found', headers: { location: 'https://t.me/gophersjob' } });
     let err = null;
     try { await fetchText('https://t.me/s/gophersjob', { redirect: 'manual' }); } catch (e) { err = e; }
@@ -205,7 +205,7 @@ if (isRefusedRedirectError(transportFailure) === false) {
     }
     if (err && isRetryableError(err) === false) pass('a manual-redirect 3xx is not retried');
     else fail('a manual-redirect 3xx must not be retryable');
-    const { fetchTextWithRetry } = await import(pathToFileURL(join(ROOT, 'providers/_http.ts')).href);
+    const { fetchTextWithRetry } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_http.ts')).href);
     let requests = 0;
     const ctx = { fetchText: async (u, o) => { requests++; return fetchText(u, o); }, sleep: async () => {} };
     let viaRetry = null;
@@ -224,7 +224,7 @@ if (isRefusedRedirectError(transportFailure) === false) {
 // stops a 3xx from pointing the follow-up request somewhere else. It has to
 // be the default, not something every provider remembers to pass.
 {
-  const { fetchText, fetchJson } = await import(pathToFileURL(join(ROOT, 'providers/_http.ts')).href);
+  const { fetchText, fetchJson } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_http.ts')).href);
   const realFetch = globalThis.fetch;
   const seen = [];
   globalThis.fetch = async (url, init) => {

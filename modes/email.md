@@ -376,12 +376,12 @@ Best regards,
 ## Confirmed-Time No-Show Follow-up (`confirmed_time_noshow`)
 
 **Scope note:** this variant is unrelated to the elapsed-time cadence in
-`modes/followup.md` / `followup-cadence.ts` (applied: 7 days, responded: 3
+`modes/followup.md` / `packages/core/src/outreach/followup-cadence.ts` (applied: 7 days, responded: 3
 days, interview: 1 day). Those track "it's been N days since the status
 changed." This variant is same-day and commitment-specific: a recruiter or
 interviewer explicitly confirmed a call time in a two-way exchange (email,
 ATS scheduler, text) and the call did not happen. There is no day-elapsed
-scoring here and no `followup-cadence.ts` output to read — the trigger is
+scoring here and no `packages/core/src/outreach/followup-cadence.ts` output to read — the trigger is
 the user telling you the confirmed time passed with no call.
 
 ### Intake

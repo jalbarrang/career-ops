@@ -27,6 +27,6 @@ tracked_companies:
 
 ## Then
 
-`bun scan.ts` runs the provider for that entry and writes the results to the
+`bun packages/core/src/scanning/scan.ts` runs the provider for that entry and writes the results to the
 pipeline like any other source. An optional `field_map.description` caches the
 JD locally under `jds/`.

@@ -1,6 +1,6 @@
 // tests/providers-explicit-only-stanza.test.ts — every provider module that
 // omits detect() can only ever be reached via an explicit `provider:` field
-// (resolveProvider() in providers/_registry.ts never calls a missing
+// (resolveProvider() in packages/core/src/scanning/providers/_registry.ts never calls a missing
 // detect()), so templates/portals.example.yml is where a user learns HOW to
 // configure one — the required/optional fields, as a copy-pasteable stanza.
 // Checks that coverage directly against the real provider directory rather
@@ -13,10 +13,10 @@ import { pass, fail, ROOT } from './helpers.ts';
 console.log('\nproviders without detect() each get a portals.example.yml stanza');
 
 const { loadProviders } = await import(
-  pathToFileURL(join(ROOT, 'providers', '_registry.ts')).href
+  pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_registry.ts')).href
 );
 
-const providers = await loadProviders(join(ROOT, 'providers'));
+const providers = await loadProviders(join(ROOT, 'packages/core/src/scanning/providers'));
 const explicitOnlyIds = [...providers.values()]
   .filter((p) => typeof p.detect !== 'function')
   .map((p) => p.id)

@@ -1,10 +1,10 @@
 // tests/install-latex-engine.test.ts -- the opt-in local LaTeX engine
-// installer (#5132) and the hint generate-latex.ts gives when no engine is
+// installer (#5132) and the hint packages/cli/src/commands/cv/generate-latex.ts gives when no engine is
 // found.
 //
 // No test here touches the network: fetch and engine detection are injected,
 // and the CLI cases exit in validateFlags before any download could start. The
-// real download is exercised by hand (`bun install-latex-engine.ts`), not in CI.
+// real download is exercised by hand (`career-ops install-latex-engine`), not in CI.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -15,12 +15,12 @@ import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   TECTONIC_VERSION, TECTONIC_ASSETS, tectonicAsset, verifySha256, installTectonic,
-} from '../install-latex-engine.ts';
-import { localTectonicPath } from '../generate-latex.ts';
+} from '../packages/cli/src/commands/cv/install-latex-engine.ts';
+import { localTectonicPath } from '../packages/cli/src/commands/cv/generate-latex.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const SCRIPT = join(ROOT, 'install-latex-engine.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/cv/install-latex-engine.ts');
 
 function run(script, args, env = process.env) {
   const result = spawnSync(process.execPath, [script, ...args], {
@@ -152,7 +152,7 @@ test('tectonic that is already available short-circuits without downloading', as
   assert.equal(calls.length, 0);
 });
 
-// generate-latex.ts sends pdflatex-only users with CJK content here; stopping
+// packages/cli/src/commands/cv/generate-latex.ts sends pdflatex-only users with CJK content here; stopping
 // at "already available" would leave them unable to build the CJK template.
 test('a host with only pdflatex still gets tectonic', async () => {
   const { impl, calls } = fakeFetch('x');
@@ -262,7 +262,7 @@ test('install-latex-engine --help prints usage and exits 0', () => {
     const result = run(SCRIPT, [flag]);
     assert.equal(result.status, 0, describeSpawn(result, `${flag} exited ${result.status}`));
     assert.match(result.stdout, /Usage:/);
-    assert.match(result.stdout, /bun install-latex-engine\.ts/);
+    assert.match(result.stdout, /career-ops install-latex-engine/);
     assert.doesNotMatch(result.all, /Downloading/, `${flag} started a download`);
   }
 });
@@ -282,12 +282,12 @@ test('generate-latex reports installHint when no LaTeX engine is found', { skip:
     const tex = join(dir, 'cv.tex');
     writeFileSync(tex, '\\documentclass{article}\n\\begin{document}\nHello\n\\end{document}\n');
     const env = { ...process.env, PATH: dirname(process.execPath), Path: dirname(process.execPath) };
-    const result = run(join(ROOT, 'generate-latex.ts'), [tex, '--compile-only'], env);
+    const result = run(join(ROOT, 'packages/cli/src/commands/cv/generate-latex.ts'), [tex, '--compile-only'], env);
     const report = JSON.parse(result.stdout);
     if (report.engine) return; // a tectonic/pdflatex lives beside node; nothing to assert
     assert.equal(report.compiled, false);
-    assert.equal(report.installHint, 'bun install-latex-engine.ts');
-    assert.match(report.compileError, /bun install-latex-engine.ts/);
+    assert.equal(report.installHint, 'career-ops install-latex-engine');
+    assert.match(report.compileError, /career-ops install-latex-engine/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

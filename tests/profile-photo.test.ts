@@ -36,7 +36,7 @@ function buildWith(inputPayload, profilePhoto) {
   const input = join(dir, 'input.json');
   const output = join(dir, 'output.html');
   writeFileSync(input, JSON.stringify(inputPayload));
-  const result = spawnSync(process.execPath, ['build-cv-html.ts', input, output, TEMPLATE], {
+  const result = spawnSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', input, output, TEMPLATE], {
     cwd: ROOT, encoding: 'utf8', env: { ...process.env, CAREER_OPS_ROOT: root },
   });
   return { result, output };
@@ -48,11 +48,11 @@ function render(inputPayload, { preview = false, profilePhoto } = {}) {
   const output = join(dir, 'output.html');
   writeFileSync(input, JSON.stringify(inputPayload));
   const args = preview
-    ? ['build-cv-html.ts', '--preview', input, TEMPLATE]
-    : ['build-cv-html.ts', input, output, TEMPLATE];
+    ? ['packages/cli/src/commands/cv/build-cv-html.ts', '--preview', input, TEMPLATE]
+    : ['packages/cli/src/commands/cv/build-cv-html.ts', input, output, TEMPLATE];
 
   // --preview ignores the output argument and resolves its destination from the
-  // DATA ROOT (build-cv-html.ts's only use of it), which is the candidate's own
+  // DATA ROOT (packages/cli/src/commands/cv/build-cv-html.ts's only use of it), which is the candidate's own
   // output/ -- not the checkout. Unqualified, this test drops a "Test Candidate"
   // fixture into a real user's CV output directory on every run, from any
   // checkout, and then reads it back from the CHECKOUT's output/. Those two
@@ -101,7 +101,7 @@ test('single-letter Windows drive paths reach local file handling', () => {
   writeFileSync(input, JSON.stringify(payload(winPath)));
   const root = mkdtempSync(join(tmpdir(), 'photo-windows-root-'));
   writeProfile(root, winPath);
-  const result = spawnSync(process.execPath, ['build-cv-html.ts', input, output, TEMPLATE], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, CAREER_OPS_ROOT: root } });
+  const result = spawnSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', input, output, TEMPLATE], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, CAREER_OPS_ROOT: root } });
   assert.ok(exitedNonZero(result), describeSpawn(result, 'expected a non-zero exit'));
   assert.doesNotMatch(result.stderr, /Unsupported profile photo URL scheme/);
   assert.match(result.stderr, /not found or unreadable/);
@@ -163,7 +163,7 @@ test('missing, unsupported, and invalid-style photos fail clearly', () => {
     writeFileSync(input, JSON.stringify(value));
     const root = mkdtempSync(join(tmpdir(), 'photo-fail-root-'));
     writeProfile(root, value.candidate.photo);
-    const result = spawnSync(process.execPath, ['build-cv-html.ts', input, output, TEMPLATE], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, CAREER_OPS_ROOT: root } });
+    const result = spawnSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', input, output, TEMPLATE], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, CAREER_OPS_ROOT: root } });
     assert.ok(exitedNonZero(result), describeSpawn(result, 'an invalid profile photo must fail the build'));
     assert.match(result.stderr, expected);
     assert.equal(existsSync(output), false);

@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — remotli');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/remotli.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/remotli.ts')).href);
   const remotli = mod.default;
   const { normalizeRemotliJob } = mod;
 
@@ -87,7 +87,7 @@ try {
   }
 
   if (full && full.salary && full.salary.min === 180000 && full.salary.max === 220000 && full.salary.currency === 'CHF') {
-    pass('normalizeRemotliJob maps salaryMin/Max/Currency to the {min,max,currency} shape scan.ts expects');
+    pass('normalizeRemotliJob maps salaryMin/Max/Currency to the {min,max,currency} shape packages/core/src/scanning/scan.ts expects');
   } else {
     fail(`normalizeRemotliJob salary = ${JSON.stringify(full?.salary)}`);
   }

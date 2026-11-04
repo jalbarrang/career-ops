@@ -31,21 +31,21 @@ try {
   const absentPath = join(tmp, 'strict-absent.yml');
   writeFileSync(absentPath, CONFIG(''), 'utf-8');
 
-  const boolResult = run(NODE, ['validate-portals.ts', '--file', boolPath]);
+  const boolResult = run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', boolPath]);
   if (boolResult !== null && boolResult.includes('0 errors')) {
     pass('validate-portals accepts location_filter.strict: true');
   } else {
     fail('validate-portals should accept a boolean location_filter.strict');
   }
 
-  const stringResult = run(NODE, ['validate-portals.ts', '--file', stringPath]);
+  const stringResult = run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', stringPath]);
   if (stringResult === null) {
     pass('validate-portals rejects a non-boolean location_filter.strict');
   } else {
     fail('validate-portals should reject location_filter.strict: "yes"');
   }
 
-  const absentResult = run(NODE, ['validate-portals.ts', '--file', absentPath]);
+  const absentResult = run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', absentPath]);
   if (absentResult !== null && absentResult.includes('0 errors')) {
     pass('validate-portals accepts a location_filter with no strict key');
   } else {

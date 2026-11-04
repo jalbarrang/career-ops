@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * tests/set-status.test.ts — regression tests for the set-status.ts CLI (#1428).
+ * tests/set-status.test.ts — regression tests for the packages/cli/src/commands/tracker/set-status.ts CLI (#1428).
  *
- * set-status.ts is the canonical write path for tracker status updates, so
+ * packages/cli/src/commands/tracker/set-status.ts is the canonical write path for tracker status updates, so
  * these tests pin down the full CLI contract: row resolution (by number, by
  * company, --role disambiguation), strict state validation against
  * templates/states.yml, idempotent note appends, dry-run, JSON output, exit
@@ -24,12 +24,12 @@ import { execFileSync } from 'child_process';
 import { readFileSync, writeFileSync, mkdtempSync, mkdirSync, rmSync, chmodSync, existsSync, utimesSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { acquireTrackerLock } from '../tracker-utils.ts';
+import { acquireTrackerLock } from '../packages/core/src/tracker/tracker-utils.ts';
 // The ledger date is the LOCAL calendar day (#2932). Computing the expected
 // value with toISOString() here would compare a local date against a UTC one
 // and fail for the hours of the day where they differ — a test that passes
 // only in part of the UTC day.
-import { localToday } from '../lib/local-today.ts';
+import { localToday } from '../packages/core/src/kernel/local-today.ts';
 // directoryDenyBinds is shared with tests/mark-pdf-ready.test.ts so the two
 // write-failure setups cannot drift apart again (#3423).
 import { pass, fail, ROOT, directoryDenyBinds } from './helpers.ts';
@@ -38,7 +38,7 @@ console.log('\nset-status.ts — canonical tracker status writes');
 const NODE = process.execPath;
 
 
-// Run set-status.ts with the tracker redirected to a sandbox. Returns
+// Run packages/cli/src/commands/tracker/set-status.ts with the tracker redirected to a sandbox. Returns
 // { code, stdout, stderr }.
 function runSetStatus(args, sandbox, extraEnv = {}) {
   const env = {
@@ -48,7 +48,7 @@ function runSetStatus(args, sandbox, extraEnv = {}) {
     ...extraEnv,
   };
   try {
-    const stdout = execFileSync(NODE, [join(ROOT, 'set-status.ts'), ...args], {
+    const stdout = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/set-status.ts'), ...args], {
       cwd: ROOT, env, encoding: 'utf-8', timeout: 30000, stdio: ['pipe', 'pipe', 'pipe'],
     });
     return { code: 0, stdout, stderr: '' };
@@ -105,7 +105,7 @@ const TRACKER_10 = `# Applications Tracker
 | 1 | 2026-06-01 | Initech | AI Engineer | Remote | 4.5/5 | Evaluated | ✅ | [1](../reports/001-initech-2026-06-01.md) | — |
 `;
 
-// Two unrelated rows share tracker number 5 (the #1704 bug: merge-tracker.ts
+// Two unrelated rows share tracker number 5 (the #1704 bug: packages/cli/src/commands/tracker/merge-tracker.ts
 // once trusted a stale TSV number as-is when it was numerically ahead of that
 // run's max, even though the number was already used by an unrelated row
 // merged in a separate, earlier invocation).
@@ -1387,7 +1387,7 @@ for (const bad of ['correction', 'backfill', 'cell-edit', 'nonsense']) {
   // the suite runs: at 01:30 UTC it is still the previous day in New York, and
   // the UTC-day form would write tomorrow into status-log.tsv.
   const probe = execFileSync(NODE, ['-e',
-    "const {localToday}=await import('./lib/local-today.ts');" +
+    "const {localToday}=await import('./packages/core/src/kernel/local-today.ts');" +
     "const i=new Date('2026-08-16T01:30:00Z');" +
     "process.stdout.write(localToday(i)+' '+i.toISOString().slice(0,10));",
     '--input-type=module',

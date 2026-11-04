@@ -1,6 +1,6 @@
 // tests/bun-floor.test.ts
 //
-// The project's Bun floor (lib/bun-floor.ts) and every place that restates
+// The project's Bun floor (packages/core/src/kernel/bun-floor.ts) and every place that restates
 // it. The transformation from the npm toolchain to Bun is only real if the
 // declared floor, the CI floor step and the published scaffolder agree — a
 // Renovate bump or a hand edit that moves one of them silently leaves the
@@ -13,7 +13,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { pass, fail, ROOT } from './helpers.ts';
-import { bunFloor, BUN_MIN, BUN_ENGINES } from '../lib/bun-floor.ts';
+import { bunFloor, BUN_MIN, BUN_ENGINES } from '../packages/core/src/kernel/bun-floor.ts';
 
 console.log('\n🔎 Bun floor (one number, every restatement in step)');
 

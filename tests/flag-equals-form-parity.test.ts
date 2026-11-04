@@ -1,16 +1,16 @@
 // tests/flag-equals-form-parity.test.ts — `--flag=value` must mean the same
-// thing as `--flag value` in doctor.ts, upskill.ts and update-system.ts.
+// thing as `--flag value` in packages/cli/src/commands/platform/doctor.ts, packages/cli/src/commands/insights/upskill.ts and update-system.ts.
 //
-// lib/cli-flags.ts's validateFlags() accepts `--target=<path>` whenever
+// packages/core/src/kernel/cli-flags.ts's validateFlags() accepts `--target=<path>` whenever
 // `--target` is a declared value flag, but these scripts then read the value
 // with `argv.indexOf('--flag')`, which cannot see the `=` form. The value was
 // dropped and the default ran, at exit 0:
-//   - `doctor.ts --target=<dir>` diagnosed the current checkout, not <dir>;
-//   - `upskill.ts --url-text=<path>` ran the aggregate map instead;
-//   - `upskill.ts --min-reports=3` used the default threshold of 5;
-//   - `update-system.ts apply --channel=main` resolved to the release
+//   - `packages/cli/src/commands/platform/doctor.ts --target=<dir>` diagnosed the current checkout, not <dir>;
+//   - `packages/cli/src/commands/insights/upskill.ts --url-text=<path>` ran the aggregate map instead;
+//   - `packages/cli/src/commands/insights/upskill.ts --min-reports=3` used the default threshold of 5;
+//   - `packages/cli/src/commands/platform/update-system.ts apply --channel=main` resolved to the release
 //     channel, and `--channel=<typo>` skipped the unknown-channel error;
-//   - `update-system.ts dismiss --version=X.Y.Z` dismissed the latest
+//   - `packages/cli/src/commands/platform/update-system.ts dismiss --version=X.Y.Z` dismissed the latest
 //     release instead of the one named.
 //
 // Every case runs both spellings and asserts they agree, so a fix to one form
@@ -23,7 +23,7 @@ import { join } from 'path';
 import { spawnSync } from 'child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
-import { resolveTargetRef, dismiss } from '../update-system.ts';
+import { resolveTargetRef, dismiss } from '../packages/cli/src/commands/platform/update-system.ts';
 
 console.log('\n🧪 Testing --flag=value parity (doctor, upskill, update-system)...');
 
@@ -41,7 +41,7 @@ function run(script, args, dataRoot) {
 const parseJson = (text) => { try { return JSON.parse(text); } catch { return null; } };
 
 try {
-  // ── doctor.ts --target ──────────────────────────────────────────────
+  // ── packages/cli/src/commands/platform/doctor.ts --target ──────────────────────────────────────────────
   // The doctor starts with its data root on an EMPTY directory; the target
   // has cv.md. Only a target that is actually read drops cv.md from missing.
   {
@@ -51,29 +51,29 @@ try {
     mkdirSync(target);
     writeFileSync(join(target, 'cv.md'), '# Synthetic CV\n');
 
-    const spaced = parseJson(run('doctor.ts', ['--json', '--target', target], startRoot).stdout);
-    const equals = parseJson(run('doctor.ts', ['--json', `--target=${target}`], startRoot).stdout);
+    const spaced = parseJson(run('packages/cli/src/commands/platform/doctor.ts', ['--json', '--target', target], startRoot).stdout);
+    const equals = parseJson(run('packages/cli/src/commands/platform/doctor.ts', ['--json', `--target=${target}`], startRoot).stdout);
     if (spaced && !spaced.missing.includes('cv.md')) pass('doctor --target <dir> diagnoses <dir>');
     else fail(`doctor --target <dir> output: ${JSON.stringify(spaced)}`);
     if (equals && !equals.missing.includes('cv.md')) pass('doctor --target=<dir> diagnoses <dir>, not the starting root');
     else fail(`doctor --target=<dir> reported cv.md missing (read the wrong root): ${JSON.stringify(equals?.missing)}`);
   }
 
-  // ── doctor.ts --cli ─────────────────────────────────────────────────
+  // ── packages/cli/src/commands/platform/doctor.ts --cli ─────────────────────────────────────────────────
   // An unknown name surfaces as a warning naming it; a dropped value never does.
   {
     const root = join(sandbox, 'doctor-cli');
     mkdirSync(root);
     const bogus = 'not-a-real-cli';
-    const spaced = run('doctor.ts', ['--json', '--cli', bogus], root);
-    const equals = run('doctor.ts', ['--json', `--cli=${bogus}`], root);
+    const spaced = run('packages/cli/src/commands/platform/doctor.ts', ['--json', '--cli', bogus], root);
+    const equals = run('packages/cli/src/commands/platform/doctor.ts', ['--json', `--cli=${bogus}`], root);
     if (spaced.stdout.includes(`Unknown --cli \\"${bogus}\\"`)) pass('doctor --cli <name> reads the name');
     else fail(`doctor --cli <name> did not report the name: ${spaced.stdout.slice(0, 200)}`);
     if (equals.stdout.includes(`Unknown --cli \\"${bogus}\\"`)) pass('doctor --cli=<name> reads the name');
     else fail(`doctor --cli=<name> dropped the name: ${equals.stdout.slice(0, 200)}`);
   }
 
-  // ── upskill.ts --min-reports ────────────────────────────────────────
+  // ── packages/cli/src/commands/insights/upskill.ts --min-reports ────────────────────────────────────────
   // An empty tracker always lands on "not enough data", which echoes the
   // threshold in effect.
   {
@@ -82,19 +82,19 @@ try {
     writeFileSync(join(root, 'data', 'applications.md'),
       '# Applications Tracker\n\n| # | Date | Company | Role | Score | Status | PDF | Report | Notes |\n|---|------|---------|------|-------|--------|-----|--------|-------|\n');
 
-    const spaced = parseJson(run('upskill.ts', ['--min-reports', '3'], root).stdout);
-    const equals = parseJson(run('upskill.ts', ['--min-reports=3'], root).stdout);
+    const spaced = parseJson(run('packages/cli/src/commands/insights/upskill.ts', ['--min-reports', '3'], root).stdout);
+    const equals = parseJson(run('packages/cli/src/commands/insights/upskill.ts', ['--min-reports=3'], root).stdout);
     if (spaced?.threshold === 3) pass('upskill --min-reports 3 uses threshold 3');
     else fail(`upskill --min-reports 3 output: ${JSON.stringify(spaced)}`);
     if (equals?.threshold === 3) pass('upskill --min-reports=3 uses threshold 3, not the default');
     else fail(`upskill --min-reports=3 used threshold ${equals?.threshold}`);
 
-    // ── upskill.ts --url-text ─────────────────────────────────────────
+    // ── packages/cli/src/commands/insights/upskill.ts --url-text ─────────────────────────────────────────
     // A missing file is the targeted branch's own Fatal: line; the aggregate
     // branch would instead print JSON at exit 0.
     const missing = join(sandbox, 'no-such-jd.txt');
     for (const [label, args] of [['--url-text <path>', ['--url-text', missing]], ['--url-text=<path>', [`--url-text=${missing}`]]]) {
-      const res = run('upskill.ts', args, root);
+      const res = run('packages/cli/src/commands/insights/upskill.ts', args, root);
       if (res.code === 1 && res.stderr.includes('Fatal:') && res.stderr.includes(missing) && res.stdout.trim() === '') {
         pass(`upskill ${label} runs the targeted branch`);
       } else {
@@ -103,7 +103,7 @@ try {
     }
   }
 
-  // ── update-system.ts --channel ──────────────────────────────────────
+  // ── packages/cli/src/commands/platform/update-system.ts --channel ──────────────────────────────────────
   {
     const curlGet = async () => JSON.stringify({ tag_name: 'career-ops-v1.32.0' });
     for (const args of [['apply', '--channel', 'main', '--confirm'], ['apply', '--channel=main', '--confirm']]) {
@@ -123,7 +123,7 @@ try {
     else fail(`--channel=release with env main resolved to ${viaEnv}`);
   }
 
-  // ── update-system.ts dismiss --version ──────────────────────────────
+  // ── packages/cli/src/commands/platform/update-system.ts dismiss --version ──────────────────────────────
   {
     const quietly = async (fn) => { const log = console.log; console.log = () => {}; try { return await fn(); } finally { console.log = log; } };
     for (const args of [['dismiss', '--version', '1.34.0'], ['dismiss', '--version=1.34.0']]) {

@@ -1,8 +1,8 @@
 // tests/updater-system-paths-shadowing.test.ts — no SYSTEM_PATHS file entry may sit
 // under a directory entry that already covers it.
 //
-// `covered()` in validate-system-paths-coverage.ts matches a trailing-slash
-// entry by prefix, and `pathMatchesManifest` in update-system.ts does the same
+// `covered()` in packages/cli/src/commands/platform/validate-system-paths-coverage.ts matches a trailing-slash
+// entry by prefix, and `pathMatchesManifest` in packages/cli/src/commands/platform/update-system.ts does the same
 // for the stale-file prune. So a directory entry covers everything beneath it
 // for BOTH things the manifest is used for — delivery and pruning — and a file
 // entry underneath one is dead weight.
@@ -19,12 +19,12 @@
 // directory entry, so they do not trip this.
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { extractArrayFromSource } from '../update-system.ts';
+import { extractArrayFromSource } from '../packages/cli/src/commands/platform/update-system.ts';
 import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\nupdate-system.ts — no shadowed SYSTEM_PATHS entries');
 
-// The manifest is read with update-system.ts's OWN exported extractor rather
+// The manifest is read with packages/cli/src/commands/platform/update-system.ts's OWN exported extractor rather
 // than a regex of this file's own. A second parser is a second set of rules to
 // drift: the first draft here required exactly two spaces and a single quote,
 // which silently skipped any other style — not a parse error, an entry the
@@ -35,7 +35,7 @@ console.log('\nupdate-system.ts — no shadowed SYSTEM_PATHS entries');
 // updater considers an entry is exactly what is checked here, and
 // tests/updater-extract-array-syntax.test.ts already covers the parser itself.
 
-// The list itself is in lib/update-manifest.ts (#5554), which the updater
+// The list itself is in packages/core/src/platform/update-manifest.ts (#5554), which the updater
 // reads with that same extractor.
 //
 // A missing or renamed manifest must report as a controlled failure,
@@ -44,15 +44,15 @@ console.log('\nupdate-system.ts — no shadowed SYSTEM_PATHS entries');
 // expects", which is the actionable half.
 let src = null;
 try {
-  src = readFileSync(join(ROOT, 'lib', 'update-manifest.ts'), 'utf-8');
+  src = readFileSync(join(ROOT, 'packages/core/src/platform/update-manifest.ts'), 'utf-8');
 } catch (err) {
-  fail(`lib/update-manifest.ts is unreadable at ${ROOT} (${err.code || err.message}) — the manifest was never parsed, so this is not a clean result`);
+  fail(`packages/core/src/platform/update-manifest.ts is unreadable at ${ROOT} (${err.code || err.message}) — the manifest was never parsed, so this is not a clean result`);
 }
 
 const entries = src ? extractArrayFromSource(src, 'SYSTEM_PATHS') : [];
 
 if (entries.length > 0) {
-  pass(`SYSTEM_PATHS parsed via update-system.ts's own extractor (${entries.length} entries)`);
+  pass(`SYSTEM_PATHS parsed via packages/cli/src/commands/platform/update-system.ts's own extractor (${entries.length} entries)`);
 } else if (src) {
   fail('could not parse SYSTEM_PATHS — this guard would pass vacuously');
 }

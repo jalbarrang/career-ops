@@ -201,7 +201,7 @@ Nederland en België gebruiken deels dezelfde taal, maar hebben verschillende ar
 
 0. **Sollicitatiebrief:** Als het formulier dit toelaat, voeg er ALTIJD één toe. PDF in hetzelfde visuele ontwerp als het cv. Koppel citaten uit de vacature aan proof points. Maximaal 1 pagina.
 1. Lees `cv.md` en `article-digest.md` (indien aanwezig) voordat u een vacature evalueert
-1b. **Eerste evaluatie van elke sessie:** Voer `bun cv-sync-check.ts` uit via Bash. Bij waarschuwingen de kandidaat hiervan op de hoogte stellen
+1b. **Eerste evaluatie van elke sessie:** Voer `career-ops cv-sync-check` uit via Bash. Bij waarschuwingen de kandidaat hiervan op de hoogte stellen
 2. Detecteer het archetype van de rol en pas de positionering aan
 3. Citeer bij matching de exacte regels uit het CV
 4. Gebruik WebSearch voor belonings- en bedrijfsgegevens
@@ -210,7 +210,7 @@ Nederland en België gebruiken deels dezelfde taal, maar hebben verschillende ar
 7. Wees direct en concreet – geen gebabbel
 8. Natuurlijk technisch Nederlands voor gegenereerde teksten. Korte zinnen, actiewerkwoorden, vermijd het passieve. Vertaal technische termen (stack, pipeline, deployment, embedding) niet met geweld
 8b. **Casestudies-URL's in de professionele samenvatting van de PDF:** Als de PDF casestudies of demo's vermeldt, MOETEN de URL's in de eerste paragraaf (Professionele samenvatting) verschijnen. Recruiters lezen vaak alleen de samenvatting. Alle URL's in HTML met `white-space: nowrap`
-9. **TSV-trackergegevens** -- Bewerk applications.md NOOIT rechtstreeks voor nieuwe toevoegingen. Schrijf de TSV in `batch/tracker-additions/`, `merge-tracker.ts` beheert de samenvoeging. Schrijf eerst een regel met **kolomnamen** en daaronder precies één dataregel (zie AGENTS.md, "TSV Format for Tracker Additions"). Die namenregel is wat `merge-tracker.ts` toelaat de velden op NAAM te herleiden in plaats van te raden welke kolom score is en welke status
+9. **TSV-trackergegevens** -- Bewerk applications.md NOOIT rechtstreeks voor nieuwe toevoegingen. Schrijf de TSV in `batch/tracker-additions/`, `packages/cli/src/commands/tracker/merge-tracker.ts` beheert de samenvoeging. Schrijf eerst een regel met **kolomnamen** en daaronder precies één dataregel (zie AGENTS.md, "TSV Format for Tracker Additions"). Die namenregel is wat `packages/cli/src/commands/tracker/merge-tracker.ts` toelaat de velden op NAAM te herleiden in plaats van te raden welke kolom score is en welke status
 10. **`**URL:**` in elke rapportkop** -- tussen Score en PDF
 
 ### Hulpmiddelen
@@ -222,5 +222,5 @@ Nederland en België gebruiken deels dezelfde taal, maar hebben verschillende ar
 | Playwright | Controleer of de vacatures actief zijn (browser_navigate + browser_snapshot), extraheer de vacatures uit SPA's. **KRITIEK: NOOIT 2+ agenten parallel met Playwright -- ze delen dezelfde browserinstantie** |
 | Read | `config/profile.yml`, cv.md, article-digest.md, `_profile.md`, `_custom.md`, voice-dna.md, writing-samples/ en cv-template.html |
 | Write | Tijdelijke HTML voor PDF, rapporten .md en TSV-bestanden in `batch/tracker-additions/` |
-| Edit | Bestaande rapportinhoud bijwerken; bewerk `applications.md` nooit rechtstreeks: nieuwe rijen gaan als TSV via `bun merge-tracker.ts`, status- en notitiewijzigingen via `bun set-status.ts` |
-| Bash | `bun generate-pdf.ts`, `bun merge-tracker.ts`, `bun set-status.ts` |
+| Edit | Bestaande rapportinhoud bijwerken; bewerk `applications.md` nooit rechtstreeks: nieuwe rijen gaan als TSV via `career-ops merge-tracker`, status- en notitiewijzigingen via `career-ops set-status` |
+| Bash | `career-ops generate-pdf`, `career-ops merge-tracker`, `career-ops set-status` |

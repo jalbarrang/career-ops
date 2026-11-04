@@ -13,8 +13,8 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { buildHtml } from '../generate-cover-letter.ts';
-import { assertFacts, verifyFacts } from '../verify-cv-facts.ts';
+import { buildHtml } from '../packages/cli/src/commands/cv/generate-cover-letter.ts';
+import { assertFacts, verifyFacts } from '../packages/cli/src/commands/cv/verify-cv-facts.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const COVER_PDF_REGISTER = pathToFileURL(join(ROOT, 'tests', 'fixtures', 'cover-pdf-register.ts')).href;
@@ -163,7 +163,7 @@ test('the fact-check CLI names only the files it read', () => {
     const probe = join(dir, 'probe.html');
     writeFileSync(probe, `<p>${PLAN}</p>`);
     writeFileSync(join(dir, 'cv.md'), 'Avery Quinn builds ledger services.\n');
-    const result = spawnSync(process.execPath, [join(ROOT, 'verify-cv-facts.ts'), probe, '--config', CONFIG], {
+    const result = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/cv/verify-cv-facts.ts'), probe, '--config', CONFIG], {
       cwd: dir,
       encoding: 'utf-8',
       timeout: 30_000,
@@ -187,7 +187,7 @@ function runCover(payload) {
   writeFileSync(payloadPath, JSON.stringify({ ...payload, output_path: 'output/letter.pdf' }));
   const result = spawnSync(process.execPath, [
     '--import', COVER_PDF_REGISTER,
-    join(ROOT, 'generate-cover-letter.ts'),
+    join(ROOT, 'packages/cli/src/commands/cv/generate-cover-letter.ts'),
     '--payload', payloadPath,
   ], {
     cwd: dir,

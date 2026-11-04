@@ -13,7 +13,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveAtsApi } from '../liveness-api.ts';
+import { resolveAtsApi } from '../packages/core/src/liveness/liveness-api.ts';
 
 test('plain-http gh_jid pages resolve to the fixed Greenhouse embed API', () => {
   for (const [url, id] of [

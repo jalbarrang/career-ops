@@ -27,7 +27,7 @@ import { mkdtempSync, readFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { pass, fail, rmSync } from './helpers.ts';
-import { checkStatus, dismiss, parseDismissMarker, dismissalCovers } from '../update-system.ts';
+import { checkStatus, dismiss, parseDismissMarker, dismissalCovers } from '../packages/cli/src/commands/platform/update-system.ts';
 
 console.log('\n🧪 Testing update check on the release channel (version-only prompt, per-release dismiss)...');
 

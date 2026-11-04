@@ -10,7 +10,7 @@ import { pass, fail, ROOT, withLocalServerAs } from '../helpers.ts';
 
 console.log('\nProvider — _http timeout');
 
-const { fetchJson, fetchText } = await import(pathToFileURL(join(ROOT, 'providers/_http.ts')).href);
+const { fetchJson, fetchText } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_http.ts')).href);
 
 // Independent upper bound: if the mechanism under test regresses and the call
 // never settles, this makes the test fail fast (hitting the elapsed assertion)
@@ -92,7 +92,7 @@ const isAbort = (err) => { const e = err?.cause ?? err; return e?.name === 'Abor
 // a deployment concern, so it is an env var; an unusable value must fall back
 // rather than fail a scan at request time.
 {
-  const { resolveDefaultTimeoutMs } = await import(pathToFileURL(join(ROOT, 'providers/_http.ts')).href);
+  const { resolveDefaultTimeoutMs } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_http.ts')).href);
   const eq = (label, actual, expected) => {
     if (actual === expected) pass(label);
     else fail(`${label} — got ${JSON.stringify(actual)}, want ${JSON.stringify(expected)}`);
@@ -136,7 +136,7 @@ const isAbort = (err) => { const e = err?.cause ?? err; return e?.name === 'Abor
     // `?query` spelling of a file URL resolves to one instance), so the
     // "fresh instance" this case needs is a child process: the env has to be in
     // place before _http.ts reads it at import time.
-    const script = join(ROOT, 'providers', '_http.ts');
+    const script = join(ROOT, 'packages/core/src/scanning/providers/_http.ts');
     const probe = spawnSync(process.execPath, ['--input-type=module', '-e', `
       import { createServer } from 'node:http';
       import { pathToFileURL } from 'node:url';

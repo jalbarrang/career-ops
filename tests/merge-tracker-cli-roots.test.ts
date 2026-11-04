@@ -26,7 +26,7 @@ function runMergeTrackerCli(dataRoot, ...args) {
   delete env.CAREER_OPS_TRACKER;
   delete env.CAREER_OPS_ADDITIONS;
   delete env.CAREER_OPS_BATCH_STATE;
-  const result = spawnSync(process.execPath, [join(CODE_ROOT, 'merge-tracker.ts'), ...args], {
+  const result = spawnSync(process.execPath, [join(CODE_ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts'), ...args], {
     cwd: CODE_ROOT,
     env,
     encoding: 'utf-8',
@@ -53,7 +53,7 @@ test('merge-tracker --help exits before mutating tracker or additions', () => {
     const result = runMergeTrackerCli(dataRoot, '--help');
 
     assert.equal(result.status, 0, result.output);
-    assert.match(result.output, /Usage: bun merge-tracker\.ts/);
+    assert.match(result.output, /Usage: career-ops merge-tracker/);
     assert.equal(readFileSync(tracker, 'utf-8'), trackerBefore, '--help rewrote the tracker');
     assert.equal(readFileSync(addition, 'utf-8'), additionBefore, '--help rewrote or archived the pending TSV');
     assert.equal(existsSync(join(additionsDir, 'merged')), false, '--help created the merged archive directory');

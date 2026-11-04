@@ -7,7 +7,7 @@ console.log('\nProvider — successfactors (SAP RMK tile parser)');
 
 
 try {
-  const successfactorsModule = await import(pathToFileURL(join(ROOT, 'providers/successfactors.ts')).href);
+  const successfactorsModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/successfactors.ts')).href);
   const sf = successfactorsModule.default;
   const { parseTiles, cityFromSlug, resolveConfig } = successfactorsModule;
 
@@ -287,7 +287,7 @@ try {
   // RangeError out of the whole parse. The local decodeEntities copy guarded
   // only with Number.isFinite (no `<= 0x10FFFF` / surrogate check), so ONE
   // adversarial/malformed entity (&#99999999;, &#xFFFFFFFF;) crashed the entire
-  // provider parse and scan.ts's per-company catch dropped EVERY posting for
+  // provider parse and packages/core/src/scanning/scan.ts's per-company catch dropped EVERY posting for
   // that run. parseTiles now routes through the shared guarded decoder, which
   // degrades an out-of-range or lone-surrogate entity to literal text while
   // still decoding valid ones (&amp;).

@@ -1,5 +1,5 @@
 /**
- * migrate-scan-runs.ts (#4423).
+ * packages/cli/src/commands/scanning/migrate-scan-runs.ts (#4423).
  *
  * appendScanRunSummary writes the header only when the file does not exist, so
  * a release that inserts or appends a counter leaves every existing
@@ -24,9 +24,9 @@ import { pass, fail, ROOT, NODE, rmSync } from './helpers.ts';
 // URL scheme and dynamic import rejects it. Windows is one of the three CI
 // platforms, so a bare path fails there and nowhere a local run would show it.
 const load = (m) => import(pathToFileURL(join(ROOT, m)).href);
-const { migrateScanRuns, schemasByWidth, CURRENT_COLUMNS, writeMigrated } = await load('migrate-scan-runs.ts');
-const { computeRunStats } = await load('stats.ts');
-const { SCAN_RUNS_HEADER } = await load('scan.ts');
+const { migrateScanRuns, schemasByWidth, CURRENT_COLUMNS, writeMigrated } = await load('packages/cli/src/commands/scanning/migrate-scan-runs.ts');
+const { computeRunStats } = await load('packages/core/src/insights/stats.ts');
+const { SCAN_RUNS_HEADER } = await load('packages/core/src/scanning/scan.ts');
 
 const CURRENT = SCAN_RUNS_HEADER.trim().split('\t');
 
@@ -257,14 +257,14 @@ console.log('\n🧪 Testing migrate-scan-runs (#4423)...');
     const before = [GEN14.join('\t'), rowFor(GEN14, 1)].join('\n') + '\n';
     writeFileSync(file, before, 'utf-8');
 
-    const dry = spawnSync(NODE, [join(ROOT, 'migrate-scan-runs.ts'), '--file', file], { encoding: 'utf-8' });
+    const dry = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/scanning/migrate-scan-runs.ts'), '--file', file], { encoding: 'utf-8' });
     if (dry.status === 0 && readFileSync(file, 'utf-8') === before && !existsSync(`${file}.bak`)) {
       pass('CLI dry run is the default: it reports, writes nothing, and leaves no .bak');
     } else {
       fail(`dry run wrote to disk: status=${dry.status}\n${dry.stdout}${dry.stderr}`);
     }
 
-    const applied = spawnSync(NODE, [join(ROOT, 'migrate-scan-runs.ts'), '--file', file, '--apply'], { encoding: 'utf-8' });
+    const applied = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/scanning/migrate-scan-runs.ts'), '--file', file, '--apply'], { encoding: 'utf-8' });
     const nowText = readFileSync(file, 'utf-8');
     if (applied.status === 0 && nowText.split('\n')[0] === CURRENT.join('\t')) {
       pass('CLI --apply migrates the file in place');
@@ -294,7 +294,7 @@ console.log('\n🧪 Testing migrate-scan-runs (#4423)...');
 //
 // No mkfifo and no timing race, so this runs the same on Windows CI.
 {
-  const { acquirePipelineLock } = await load('pipeline-lock.ts');
+  const { acquirePipelineLock } = await load('packages/core/src/kernel/pipeline-lock.ts');
   const dir = mkdtempSync(join(tmpdir(), 'career-ops-msr-lock-'));
   try {
     const file = join(dir, 'scan-runs.tsv');

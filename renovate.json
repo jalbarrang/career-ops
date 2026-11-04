@@ -27,7 +27,7 @@
       "automerge": false
     },
     {
-      "description": "test.yml pins the project's Bun floor (lib/bun-floor.ts); bumping it silently drops the floor from CI, as 647ab019 did with the old Node floor. Raise it by hand together with BUN_MIN.",
+      "description": "test.yml pins the project's Bun floor (packages/core/src/kernel/bun-floor.ts); bumping it silently drops the floor from CI, as 647ab019 did with the old Node floor. Raise it by hand together with BUN_MIN.",
       "matchFileNames": [".github/workflows/test.yml"],
       "matchDatasources": ["node-version"],
       "enabled": false

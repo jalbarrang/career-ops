@@ -1,7 +1,7 @@
 // tests/ascii-fold-punctuation.test.ts — the punctuation option is a
 // behaviour switch, not a spelling preference (#3040).
 //
-// _trust-validator.ts and lib/ascii-fold.ts carried the same folding table
+// _trust-validator.ts and packages/core/src/kernel/ascii-fold.ts carried the same folding table
 // with one difference in the final class: 'delete' removes residual
 // punctuation, 'space' turns it into a separator. Unifying them without the
 // option would have silently loosened the trust validator, because its
@@ -17,8 +17,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { asciiFold } from '../lib/ascii-fold.ts';
-import { companyMatchesHostname, asciiFoldForHostname } from '../providers/_trust-validator.ts';
+import { asciiFold } from '../packages/core/src/kernel/ascii-fold.ts';
+import { companyMatchesHostname, asciiFoldForHostname } from '../packages/core/src/scanning/providers/_trust-validator.ts';
 
 test("'space' separates on punctuation, 'delete' does not", () => {
   assert.equal(asciiFold("Smith&Jones"), 'smith jones');

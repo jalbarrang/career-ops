@@ -5,12 +5,12 @@
 //   import type { PluginManifest, PluginContext, PluginHooks } from '../_types.ts';
 //
 // The runtime contract is enforced by _engine.ts (validateManifest) — the
-// compiler checks the static half. Exactly the providers/_types.ts + scan.ts
+// compiler checks the static half. Exactly the packages/core/src/scanning/providers/_types.ts + packages/core/src/scanning/scan.ts
 // split.
 //
 // Files prefixed with _ are shared helpers and are NEVER discovered as plugins.
 
-import type { Job } from '../providers/_types.ts';
+import type { Job } from '../packages/core/src/scanning/providers/_types.ts';
 
 /** Hook types a manifest may declare. There is deliberately no auto-submit hook. */
 export type PluginHookName = 'provider' | 'ingest' | 'search' | 'notify' | 'export';

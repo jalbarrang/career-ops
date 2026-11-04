@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, wr
 import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { walkTree } from '../lib/walk-tree.ts';
+import { walkTree } from '../packages/core/src/kernel/walk-tree.ts';
 import { describeSpawn, exitedNonZero } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -18,7 +18,7 @@ function fixture(t) {
 }
 
 function doctor(dir, args = ['--json']) {
-  const result = spawnSync(process.execPath, [join(ROOT, 'doctor.ts'), '--target', dir, ...args], {
+  const result = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), '--target', dir, ...args], {
     cwd: dir, encoding: 'utf8', timeout: 30_000,
     env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_DATA_DIR: '', CAREER_OPS_CLI: 'claude' },
   });

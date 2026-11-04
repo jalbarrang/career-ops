@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — amazon (amazon.jobs search.json)');
 
 try {
-  const amazon = (await import(pathToFileURL(join(ROOT, 'providers/amazon.ts')).href)).default;
+  const amazon = (await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/amazon.ts')).href)).default;
 
   if (amazon.id === 'amazon') pass('amazon.id is "amazon"');
   else fail(`amazon.id is ${JSON.stringify(amazon.id)}`);

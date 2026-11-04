@@ -18,7 +18,7 @@ import { join } from 'path';
 import { pathToFileURL } from 'url';
 
 const { boardTitleOwner, boardIdentityMatches } = await import(
-  pathToFileURL(join(ROOT, 'verify-portals.ts')).href
+  pathToFileURL(join(ROOT, 'packages/core/src/scanning/verify-portals.ts')).href
 );
 
 console.log('\nverify-portals.ts — HTML entities in a board page title (#3155)');

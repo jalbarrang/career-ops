@@ -10,7 +10,7 @@
 // plugin config into a silent empty config.
 //
 // The repo was converted to `import * as yaml` wholesale, but a conversion only
-// holds until the next file. rejection-latency.ts landed with the default form
+// holds until the next file. packages/cli/src/commands/outreach/rejection-latency.ts landed with the default form
 // while that conversion sat in review — which is exactly why the rule needs a
 // guard rather than a one-time sweep.
 //

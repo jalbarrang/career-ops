@@ -159,7 +159,7 @@ On first launch it asks for all that in chat. Nothing to configure by hand.
 
 ## What career-ops will not do
 
-- **Auto-submit an application.** It drafts the answer to every field; you review and click Submit. The script never POSTs (`prepare-application.ts`).
+- **Auto-submit an application.** It drafts the answer to every field; you review and click Submit. The script never POSTs (`packages/cli/src/commands/evaluation/prepare-application.ts`).
 - **Send an email.** Drafts only. There is no mail transport anywhere in this codebase.
 - **Phone home.** No telemetry, no backend of ours. Your CV goes from your machine to the AI provider you chose, and nowhere else. The only public ledger is this repo: `HIRED.md` and its issues.
 - **Push you to apply below 4.0/5.** It will tell you not to. You can override it, and it will say so.
@@ -175,7 +175,7 @@ It reformulates your CV; it must never fabricate it. A check in code stops a PDF
 | **ATS PDF Generation**   | ATS-readable CVs tailored to each JD from your own experience, in Space Grotesk + DM Sans design                                                                                 |
 | **Cover Letter Generator** | Research-backed cover letters with keyword mirroring, four interactive angle prompts (why/problems/approach/tone), draft-in-chat approval gate, and A4 PDF via the same HTML + Playwright pipeline as CVs. Auto-drafts on every evaluation; complete and generate on demand via `/career-ops cover` |
 | **Beyond the CV**        | Company research ([`deep`](modes/deep.md)) surfaces AI strategy, recent moves, engineering culture, and the angle your profile should take. Contact discovery ([`contacto`](modes/contacto.md)) identifies the hiring manager, recruiter, or team peer worth reaching out to and drafts a ≤300-character LinkedIn message tuned to each contact type. Formal application email drafts ([`email`](modes/email.md)) turn an evaluated report or pasted JD into a subject line, body, and attachment checklist without sending, submitting, or clicking anything. Applications get you in the queue; research gets you a conversation. |
-| **Pattern Analysis**     | Rejection patterns and per-ATS-channel advance rates (`analyze-patterns.ts`), lifetime funnel stats (`stats.ts`), repost detection, a possible sign of a ghost job (`detect-reposts.ts`) |
+| **Pattern Analysis**     | Rejection patterns and per-ATS-channel advance rates (`packages/cli/src/commands/insights/analyze-patterns.ts`), lifetime funnel stats (`packages/core/src/insights/stats.ts`), repost detection, a possible sign of a ghost job (`packages/cli/src/commands/insights/detect-reposts.ts`) |
 
 <details>
 <summary><b>Everything else it does</b></summary>
@@ -192,8 +192,8 @@ It reformulates your CV; it must never fabricate it. A check in code stops a PDF
 | **Dashboard TUI**        | Terminal UI to browse, filter, and sort your pipeline                                                                                    |
 | **Pipeline Integrity**   | Automated merge, dedup, status normalization, health checks                                                                              |
 | **Interview Suite**      | Time-blocked prep plans, practice sessions with feedback, post-interview debriefs ([`interview/`](modes/interview/README.md)), and a company red-flag detector ([`interview-redflag`](modes/interview-redflag.md)) |
-| **Offer Stage**          | Contract reading companion -- clause walk plus a lawyer question list ([`offer-prep`](modes/offer-prep.md)) -- and a desired/advertised/actual salary-gap analyzer (`salary-gap.ts`) |
-| **Follow-ups & Replies** | Follow-up cadence calculator and seeded reminders (`followup-cadence.ts`, `followup-seed.ts`); turn them off with `follow_ups.enabled: false` in `config/profile.yml`; employer reply classification into tracker updates ([`reply-watch`](modes/reply-watch.md)) |
+| **Offer Stage**          | Contract reading companion -- clause walk plus a lawyer question list ([`offer-prep`](modes/offer-prep.md)) -- and a desired/advertised/actual salary-gap analyzer (`packages/cli/src/commands/insights/salary-gap.ts`) |
+| **Follow-ups & Replies** | Follow-up cadence calculator and seeded reminders (`packages/core/src/outreach/followup-cadence.ts`, `packages/core/src/outreach/followup-seed.ts`); turn them off with `follow_ups.enabled: false` in `config/profile.yml`; employer reply classification into tracker updates ([`reply-watch`](modes/reply-watch.md)) |
 | **Plugin System**        | Opt-in integrations (Gmail, Notion, Apify + a community registry), disabled by default -- see [docs/PLUGINS.md](docs/PLUGINS.md)        |
 
 </details>
@@ -256,7 +256,7 @@ claude   # or codex / opencode / qwen / agy / grok
 
 ### Scanning through an outbound proxy
 
-The runtime's ordinary `fetch()` may ignore `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` in a proxy-only sandbox. Provider requests can use those variables with `CAREER_OPS_TRUST_PROXY_EGRESS=1 bun scan.ts`. This uses a request-scoped proxy dispatcher; unrelated requests are unaffected, and `NO_PROXY` destinations still use the local private-address guard.
+The runtime's ordinary `fetch()` may ignore `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` in a proxy-only sandbox. Provider requests can use those variables with `CAREER_OPS_TRUST_PROXY_EGRESS=1 bun packages/core/src/scanning/scan.ts`. This uses a request-scoped proxy dispatcher; unrelated requests are unaffected, and `NO_PROXY` destinations still use the local private-address guard.
 
 Set this flag **only when the configured proxy itself blocks connections to private, loopback and metadata addresses**. When a proxy resolves the destination remotely, career-ops cannot verify that final address locally; the proxy must enforce that part of the SSRF boundary. Without this explicit trust setting, provider requests keep their normal direct transport and a DNS failure names the proxy setup needed. Proxy URLs containing credentials must use HTTPS; credential-free HTTP proxies remain supported. Existing installations keep direct transport after a system update; proxy environment variables alone do not enable it. Before enabling the flag, run `bun install` in the career-ops directory to install the added `undici` dependency. It is loaded only for an opted-in request with a configured proxy, so direct scanning continues to work even before that dependency is installed.
 
@@ -466,9 +466,9 @@ cp .env.example .env
 bun install
 
 # 3. Evaluate a job description
-bun gemini-eval.ts "We are looking for a Senior AI Engineer..."
-bun gemini-eval.ts --file ./jds/my-job.txt
-bun agent-inbox.ts add "..."   # queue a request for the next session
+bun packages/cli/src/commands/evaluation/gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun packages/cli/src/commands/evaluation/gemini-eval.ts --file ./jds/my-job.txt
+bun packages/cli/src/commands/platform/agent-inbox.ts add "..."   # queue a request for the next session
 bun run gemini:eval -- "JD text here"
 ```
 
@@ -491,10 +491,10 @@ The scanner comes with **100+ companies** ready to scan and **35+ search queries
 
 Keep the list current: `portals.yml` is designed to stay live, not be a one-time setup file. See [Keeping portals.yml live](docs/KEEPING_PORTALS_LIVE.md) for the house rule that adds new companies automatically and the commands to validate the file after every change.
 
-By default `bun scan.ts` (a.k.a. `bun run scan`) trusts what each ATS feed returns. Some companies leave stale postings in their public API even after the role is closed, so those expired entries can leak into `pipeline.md`. Pass `--verify` to launch Playwright after the API pass and drop expired postings before they hit the pipeline:
+By default `bun packages/core/src/scanning/scan.ts` (a.k.a. `bun run scan`) trusts what each ATS feed returns. Some companies leave stale postings in their public API even after the role is closed, so those expired entries can leak into `pipeline.md`. Pass `--verify` to launch Playwright after the API pass and drop expired postings before they hit the pipeline:
 
 ```bash
-bun scan.ts --verify          # zero-token discovery + Playwright liveness check
+bun packages/core/src/scanning/scan.ts --verify          # zero-token discovery + Playwright liveness check
 ```
 
 The verification is sequential and only runs against new offers (after dedup), so the cost stays bounded.
@@ -510,7 +510,7 @@ bun run build:dashboard   # optional: build the standalone binary
 
 Features: 10 filter tabs, 8 sort modes, grouped/flat view, lazy-loaded previews, inline status changes.
 
-There is also an **experimental web UI** (alpha and opt-in: nothing runs unless you start it): see [`web/README.md`](web/README.md).
+There is also an **experimental web UI** (alpha and opt-in: nothing runs unless you start it): see [`apps/web/README.md`](apps/web/README.md).
 
 ## Project Structure
 
@@ -567,9 +567,9 @@ Once resolved, all user files are resolved and written relative to that folder, 
 
 - **Tracker Override:** You can also set `CAREER_OPS_TRACKER` to override the applications tracker file path directly.
 - **Writes:** All write operations (such as merges) canonically target `{DATA_ROOT}/data/applications.md`.
-- **Scanner config:** `portals.yml` is read and validated at `{DATA_ROOT}/portals.yml`, so `bun validate-portals.ts` checks the same file `scan.ts` reads.
+- **Scanner config:** `portals.yml` is read and validated at `{DATA_ROOT}/portals.yml`, so `bun packages/cli/src/commands/scanning/validate-portals.ts` checks the same file `packages/core/src/scanning/scan.ts` reads.
 - **Generated documents:** tailored CVs and cover letters are written under `{DATA_ROOT}/output/`, and the PDF manifest that links them to a report lives at `{DATA_ROOT}/data/pdf-index.tsv`. While `CAREER_OPS_TRACKER` is unset, the tracker workspace that bounds those writes is the data root, not the checkout.
-- **PDFs under a tracker override:** `generate-pdf.ts` resolves `CAREER_OPS_TRACKER` before it derives the workspace, so with the override set the workspace is the folder that holds that tracker (or the folder above it, when the tracker sits in a `data/` folder). The CV's HTML and every PDF must then sit inside that workspace, and the manifest moves to its `data/pdf-index.tsv`. Cover letters still target `{DATA_ROOT}/output/`, so they are refused when that folder falls outside the tracker's workspace.
+- **PDFs under a tracker override:** `packages/cli/src/commands/cv/generate-pdf.ts` resolves `CAREER_OPS_TRACKER` before it derives the workspace, so with the override set the workspace is the folder that holds that tracker (or the folder above it, when the tracker sits in a `data/` folder). The CV's HTML and every PDF must then sit inside that workspace, and the manifest moves to its `data/pdf-index.tsv`. Cover letters still target `{DATA_ROOT}/output/`, so they are refused when that folder falls outside the tracker's workspace.
 - **Code layer stays put:** `node_modules/`, `providers/`, `modes/` and the scripts themselves always resolve against the repository, never the data root.
 
 The Go dashboard TUI, Bun scripts, and AI agent modes all automatically respect this resolution hierarchy.
@@ -628,7 +628,7 @@ The Go dashboard TUI, Bun scripts, and AI agent modes all automatically respect 
 career-ops ([career-ops.org](https://career-ops.org), also known as **careerops**) is an open-source AI job search that runs locally in your AI coding CLI (Claude Code, Codex, OpenCode and others) and leaves every decision to you. It evaluates job offers against your CV, generates ATS-tailored PDFs, finds the right person to contact, and tracks everything in one place: you always have the final call. It is the first reference implementation of the [CareerOps Manifesto](https://career-ops.org/manifesto).
 
 **Can the tailored CV invent things?**
-It must not, and the prompts say so: reformulate, never fabricate. `generate-pdf` blocks a CV whose numbers or facts are missing from your sources, unless you pass `--skip-fact-check`. The `pdf` mode also runs `cv-title-check.ts`, which compares each job title in the tailored CV with the title cv.md gives the same job (matched by company and dates) and asks you to keep or revert any that differ. It warns rather than blocks, because reframing a title is sometimes your call. Nothing judges rewording yet: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (fail-closed faithfulness check) tracks that. Until then, read every CV before you send it. The [Legal Disclaimer](LEGAL_DISCLAIMER.md) says the same in longer words.
+It must not, and the prompts say so: reformulate, never fabricate. `generate-pdf` blocks a CV whose numbers or facts are missing from your sources, unless you pass `--skip-fact-check`. The `pdf` mode also runs `packages/cli/src/commands/cv/cv-title-check.ts`, which compares each job title in the tailored CV with the title cv.md gives the same job (matched by company and dates) and asks you to keep or revert any that differ. It warns rather than blocks, because reframing a title is sometimes your call. Nothing judges rewording yet: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (fail-closed faithfulness check) tracks that. Until then, read every CV before you send it. The [Legal Disclaimer](LEGAL_DISCLAIMER.md) says the same in longer words.
 
 **Can I run career-ops for free, or on a cheaper / local model?**
 Yes. career-ops is CLI-agnostic and runs on free and local models (OpenRouter free models, Ollama or any OpenAI-compatible endpoint), so you are not tied to a paid subscription. See [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md) for the full setup.

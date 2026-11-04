@@ -20,7 +20,7 @@ function runRanking(rows, results, current = null, limit = rows.length) {
       + (current === null ? '' : `require('node:fs').writeFileSync(process.env.RANK_PIPELINE, ${JSON.stringify(current.join('\n'))});\n`)
       + `console.log(${JSON.stringify(JSON.stringify(results))});\n`);
     chmodSync(binary, 0o755);
-    execFileSync(process.execPath, [join(ROOT, 'rank-pipeline.ts'), '--cli', 'fixture-ranker', '--limit', String(limit)], {
+    execFileSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/pipeline/rank-pipeline.ts'), '--cli', 'fixture-ranker', '--limit', String(limit)], {
       env: {
         ...process.env,
         CAREER_OPS_ROOT: root,

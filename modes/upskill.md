@@ -6,7 +6,7 @@ After dozens of evaluations, the tracker holds dozens of verdicts — and no agg
 
 Phase 1 (this mode): aggregate gap map from tracked reports, with an optional LLM synthesis pass and a diff against the previous run. Phase 2b adds a **web-searched learning plan** — free-first resources per gap, grounded in live search results — layered on top of the same gap map (Step 3; trust model in Rules).
 
-**Targeted mode** (`bun upskill.ts --url-text <url-or-file>`, #1739) analyses a *single* JD instead of the tracked history: it extracts the JD's required skills, suppresses the ones already in `cv.md`/`config/profile.yml`, and prints the remaining gaps as JSON (`{ mode: "targeted", gaps, excludedAsKnown, knownSkills }`). Known-skill suppression uses the same canonical extraction as the aggregate path, so a CV skill is never reported as a gap and a real gap is never hidden. `--url-text` accepts either an `http(s)` URL (Playwright, then a redirect-refusing fetch fallback) or a local file path. The web-searched learning plan (Step 3, #1740) is generated for the aggregate report; the targeted single-JD path prints gaps only.
+**Targeted mode** (`career-ops upskill --url-text <url-or-file>`, #1739) analyses a *single* JD instead of the tracked history: it extracts the JD's required skills, suppresses the ones already in `cv.md`/`config/profile.yml`, and prints the remaining gaps as JSON (`{ mode: "targeted", gaps, excludedAsKnown, knownSkills }`). Known-skill suppression uses the same canonical extraction as the aggregate path, so a CV skill is never reported as a gap and a real gap is never hidden. `--url-text` accepts either an `http(s)` URL (Playwright, then a redirect-refusing fetch fallback) or a local file path. The web-searched learning plan (Step 3, #1740) is generated for the aggregate report; the targeted single-JD path prints gaps only.
 
 Pattern credit: [MadsLorentzen/ai-job-search](https://github.com/MadsLorentzen/ai-job-search)'s `/upskill`, adapted to career-ops' tracker and A–F scoring model.
 
@@ -20,7 +20,7 @@ Pattern credit: [MadsLorentzen/ai-job-search](https://github.com/MadsLorentzen/a
 ## Step 1 — Run the Aggregator
 
 ```bash
-bun upskill.ts
+career-ops upskill
 ```
 
 Parse the JSON output:
@@ -72,7 +72,7 @@ Turn the eligible gaps into a resourced, actionable plan. This section is **pure
 
 **Search, budget, and liveness** (the full trust model is frozen in Rules):
 - Hard search budget: **max 2 searches per gap**, capped at **~12 searches per aggregate run**; always include the current year in the query.
-- **Write-time URL liveness:** verify every cited resource URL with a lightweight navigation or fetch: require a successful HTTP response, a non-error title, and substantive page content. Reject 4xx/5xx responses, error/challenge pages, empty bodies, and redirects to unrelated destinations. Do not use `check-liveness.ts` / `liveness-core.ts`: their Apply-control heuristic is intentionally specific to job postings.
+- **Write-time URL liveness:** verify every cited resource URL with a lightweight navigation or fetch: require a successful HTTP response, a non-error title, and substantive page content. Reject 4xx/5xx responses, error/challenge pages, empty bodies, and redirects to unrelated destinations. Do not use `packages/cli/src/commands/liveness/check-liveness.ts` / `packages/core/src/liveness/liveness-core.ts`: their Apply-control heuristic is intentionally specific to job postings.
 - **Free-first with explicit failure:** if no free option surfaces for a gap, the plan SAYS so — it never silently substitutes a paid resource.
 - **Scope boundary:** the plan LINKS each resource to `/career-ops training {name}` for a full judging pass; it never runs training's 6-dimension scoring itself. `upskill` finds; `training` judges.
 
@@ -163,7 +163,7 @@ These eight rules are non-negotiable; each is frozen as a CI assertion so a futu
 1. **Search-result-or-nothing (grounding).** Every resource must come from an actual web-search result — never invented from memory. On a cheap model, or when WebSearch is unavailable or weak, **skip the Learning Plan section and say so explicitly** in the report.
 2. **Deterministic degradation.** When search is skipped or weak, the heatmap + Suggested Order still ship WITHOUT resources and the report states why — the plan is purely additive, so its absence never breaks the rest of the report.
 3. **Ephemeral / non-versioned resources.** Resources are regenerated fresh every run, never diffed, never revalidated across runs; only gap-tier changes are stable across reports. The report carries a one-line disclaimer stating this.
-4. **Write-time URL liveness.** Every cited resource gets a lightweight navigation or fetch at generation time. Require a successful HTTP response, a non-error title, and substantive page content; reject 4xx/5xx responses, error/challenge pages, empty bodies, and redirects to unrelated destinations. The job-posting-only `check-liveness.ts` / `liveness-core.ts` Apply-control heuristic must not classify learning resources. Dead links never enter the report, and the artifact carries a one-line staleness disclaimer.
+4. **Write-time URL liveness.** Every cited resource gets a lightweight navigation or fetch at generation time. Require a successful HTTP response, a non-error title, and substantive page content; reject 4xx/5xx responses, error/challenge pages, empty bodies, and redirects to unrelated destinations. The job-posting-only `packages/cli/src/commands/liveness/check-liveness.ts` / `packages/core/src/liveness/liveness-core.ts` Apply-control heuristic must not classify learning resources. Dead links never enter the report, and the artifact carries a one-line staleness disclaimer.
 5. **Hard search budget.** Max 2 searches per gap, capped at ~12 searches per aggregate run; always include the current year in queries.
 6. **Free-first with explicit failure.** If no free option is found for a gap, the plan SAYS so — it never silently substitutes a paid resource.
 7. **Effort from stated length only.** Effort estimates come only from the resource's own stated length — never invented.

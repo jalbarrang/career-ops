@@ -1,15 +1,15 @@
 /**
  * tests/discover-ats-small-board.test.ts — soft warning for small boards (#4772)
  *
- * discover-ats.ts keeps resolving a board that lists only a few postings, but
+ * packages/cli/src/commands/scanning/discover-ats.ts keeps resolving a board that lists only a few postings, but
  * flags it: a `smallBoard` field in the JSON, a marker in --summary, and a
  * `# verify:` comment on the entry --write appends. The threshold and wording
- * are shared with audit-portals.ts through lib/small-board.ts. No network.
+ * are shared with packages/cli/src/commands/scanning/audit-portals.ts through lib/small-board.ts. No network.
  */
 
-import { flagSmallBoards, renderPortalEntry, insertIntoTrackedCompanies } from '../discover-ats.ts';
-import { DEFAULT_SMALL_THRESHOLD as AUDIT_THRESHOLD, classifyBoard } from '../audit-portals.ts';
-import { DEFAULT_SMALL_THRESHOLD, isSmallBoard, smallBoardDetail } from '../lib/small-board.ts';
+import { flagSmallBoards, renderPortalEntry, insertIntoTrackedCompanies } from '../packages/cli/src/commands/scanning/discover-ats.ts';
+import { DEFAULT_SMALL_THRESHOLD as AUDIT_THRESHOLD, classifyBoard } from '../packages/cli/src/commands/scanning/audit-portals.ts';
+import { DEFAULT_SMALL_THRESHOLD, isSmallBoard, smallBoardDetail } from '../packages/core/src/scanning/small-board.ts';
 import * as yaml from 'js-yaml';
 import { execFileSync } from 'child_process';
 import { dirname, join } from 'path';
@@ -19,7 +19,7 @@ import { pass, fail } from './helpers.ts';
 console.log('\ndiscover-ats.ts — small board warning');
 
 const ok = (label, cond) => (cond ? pass(label) : fail(label));
-const script = join(dirname(fileURLToPath(import.meta.url)), '..', 'discover-ats.ts');
+const script = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/cli/src/commands/scanning/discover-ats.ts');
 
 // Shared with audit-portals
 ok('threshold is shared with audit-portals', AUDIT_THRESHOLD === DEFAULT_SMALL_THRESHOLD);

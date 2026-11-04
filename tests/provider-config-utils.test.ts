@@ -22,7 +22,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const { intInRange } = await import(pathToFileURL(join(ROOT, 'providers', '_config-utils.ts')).href);
+const { intInRange } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_config-utils.ts')).href);
 
 test('a value inside the range is returned unchanged', () => {
   assert.equal(intInRange(50, 100, 1, 100), 50);

@@ -1,13 +1,13 @@
-// tests/scan-flag-forms.test.ts — scan.ts must read --flag=value, not only
+// tests/scan-flag-forms.test.ts — packages/core/src/scanning/scan.ts must read --flag=value, not only
 // --flag value, and must reject a flag passed with no operand.
 //
 // `args.indexOf('--posted-after')` returns -1 for `--posted-after=2026-07-28`,
 // so the bound resolved to null — indistinguishable from the flag never having
 // been passed. The run then scanned with NO date bound and reported a clean
-// result, which is the failure mode lib/cli-flags.ts was written to end
+// result, which is the failure mode packages/core/src/kernel/cli-flags.ts was written to end
 // (#2401/#2402/#2498, and 37055d7d which fixed five other scripts).
 //
-// The sharpest symptom is that the typo guard stops guarding: scan.ts
+// The sharpest symptom is that the typo guard stops guarding: packages/core/src/scanning/scan.ts
 // validates these dates and exits 1 on a malformed one precisely "since a
 // silently-ignored bound would look like 'no jobs matched' instead of an
 // error" — but with the = form the value never reached the validator, so a
@@ -15,7 +15,7 @@
 // prevent.
 //
 // HERMETIC: every run pins CAREER_OPS_PORTALS at a path that does not exist, so
-// scan.ts stops at its portals check and can never load providers, reach the
+// packages/core/src/scanning/scan.ts stops at its portals check and can never load providers, reach the
 // network, or write scan state — regardless of whether the developer running
 // the suite has a real portals.yml. Each assertion also checks the subprocess
 // actually ran (no spawn error, no signal), so a timeout cannot pass silently.
@@ -31,14 +31,14 @@ const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const NO_PORTALS = join(tmpdir(), 'career-ops-no-such-portals.yml');
 
 function runScan(...args) {
-  const r = spawnSync(process.execPath, [join(ROOT, 'scan.ts'), ...args], {
+  const r = spawnSync(process.execPath, [join(ROOT, 'packages/core/src/scanning/scan.ts'), ...args], {
     cwd: ROOT,
     encoding: 'utf-8',
     timeout: 30_000,
     env: { ...process.env, CAREER_OPS_PORTALS: NO_PORTALS },
   });
-  assert.equal(r.error, undefined, `scan.ts failed to spawn: ${r.error?.message}`);
-  assert.equal(r.signal, null, `scan.ts was killed by ${r.signal} (timeout?)`);
+  assert.equal(r.error, undefined, `packages/core/src/scanning/scan.ts failed to spawn: ${r.error?.message}`);
+  assert.equal(r.signal, null, `packages/core/src/scanning/scan.ts was killed by ${r.signal} (timeout?)`);
   return { ...r, all: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 }
 

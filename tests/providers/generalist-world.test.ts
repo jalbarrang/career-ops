@@ -10,11 +10,11 @@ const LIST_URL = 'https://generalist.world/jobs/';
 
 console.log('\nProvider — generalist-world (generalist.world/jobs/ HTML board)');
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/generalist-world.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/generalist-world.ts')).href);
   const gw = mod.default;
   const { parseGeneralistWorldJobs, normalizeGeneralistWorldCard, resolveGeneralistWorldUrl } = mod;
-  const { resolveProvider } = await import(pathToFileURL(join(ROOT, 'providers/_registry.ts')).href);
-  const { decodeEntities } = await import(pathToFileURL(join(ROOT, 'providers/_html-entities.ts')).href);
+  const { resolveProvider } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_registry.ts')).href);
+  const { decodeEntities } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_html-entities.ts')).href);
 
   if (gw.id === 'generalist-world') pass('generalist-world.id is "generalist-world"');
   else fail(`generalist-world.id is ${JSON.stringify(gw.id)}`);

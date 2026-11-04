@@ -14,7 +14,7 @@ test('doctor finds the CLI extractor in the code checkout with a separate data r
   try {
     mkdirSync(join(dataRoot, 'config'));
     writeFileSync(join(dataRoot, 'config', 'profile.yml'), 'scan:\n  extractor: cli\n');
-    const result = spawnSync(process.execPath, [join(root, 'doctor.ts'), '--target', dataRoot], {
+    const result = spawnSync(process.execPath, [join(root, 'packages/cli/src/commands/platform/doctor.ts'), '--target', dataRoot], {
       cwd: root,
       encoding: 'utf8',
     });

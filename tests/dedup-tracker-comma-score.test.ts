@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const DEDUP = join(dirname(fileURLToPath(import.meta.url)), '..', 'dedup-tracker.ts');
+const DEDUP = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/cli/src/commands/tracker/dedup-tracker.ts');
 const ok = (name, fn) => { try { fn(); pass(name); } catch (e) { fail(`${name} — ${e.message}`); } };
 
 ok('a hand-typed decimal-comma score wins the dedup keeper pick', () => {

@@ -12,7 +12,7 @@ function cvWarning(t, cv) {
   const dir = mkdtempSync(join(tmpdir(), 'doctor-cv-hint-'));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   writeFileSync(join(dir, 'cv.md'), cv);
-  const r = spawnSync(process.execPath, [join(ROOT, 'doctor.ts'), '--json', '--target', dir], {
+  const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), '--json', '--target', dir], {
     cwd: dir, encoding: 'utf-8', timeout: 60_000, env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_DATA_DIR: '' },
   });
   assert.equal(r.status, 0, r.stderr);

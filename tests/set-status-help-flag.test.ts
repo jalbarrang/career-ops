@@ -1,4 +1,4 @@
-// tests/set-status-help-flag.test.ts — set-status.ts must answer --help/-h
+// tests/set-status-help-flag.test.ts — packages/cli/src/commands/tracker/set-status.ts must answer --help/-h
 // with the canonical states, exit 0, and never touch the tracker.
 //
 // HERMETIC: every run pins CAREER_OPS_TRACKER at a path that does not exist.
@@ -11,7 +11,7 @@ import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { loadCanonicalStates } from '../tracker-utils.ts';
+import { loadCanonicalStates } from '../packages/core/src/tracker/tracker-utils.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -19,14 +19,14 @@ const NO_TRACKER = join(tmpdir(), 'career-ops-no-such-tracker.md');
 const NO_TRACKER_FOUND = /No tracker found/i;
 
 function runSetStatus(...args) {
-  const r = spawnSync(process.execPath, [join(ROOT, 'set-status.ts'), ...args], {
+  const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/tracker/set-status.ts'), ...args], {
     cwd: ROOT,
     encoding: 'utf-8',
     timeout: 30_000,
     env: { ...process.env, CAREER_OPS_TRACKER: NO_TRACKER },
   });
-  assert.equal(r.error, undefined, `set-status.ts failed to spawn: ${r.error?.message}`);
-  assert.equal(r.signal, null, `set-status.ts was killed by ${r.signal} (timeout?)`);
+  assert.equal(r.error, undefined, `packages/cli/src/commands/tracker/set-status.ts failed to spawn: ${r.error?.message}`);
+  assert.equal(r.signal, null, `packages/cli/src/commands/tracker/set-status.ts was killed by ${r.signal} (timeout?)`);
   return { ...r, all: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 }
 
@@ -35,7 +35,7 @@ const STATES = loadCanonicalStates(join(ROOT, 'templates', 'states.yml'));
 test('--help exits 0 and prints the usage block', () => {
   const r = runSetStatus('--help');
   assert.equal(r.status, 0, describeSpawn(r, `--help should exit 0, got ${r.status}`));
-  assert.match(r.all, /Usage: bun set-status\.ts/);
+  assert.match(r.all, /Usage: career-ops set-status/);
 });
 
 test('-h behaves identically to --help', () => {
@@ -86,7 +86,7 @@ test('--help never consults the tracker', () => {
 test('--help wins over otherwise-invalid arguments', () => {
   const r = runSetStatus('--report', 'not-a-number', 'Bogus', '--help');
   assert.equal(r.status, 0, describeSpawn(r, `--help should win over invalid args, got ${r.status}`));
-  assert.match(r.all, /Usage: bun set-status\.ts/);
+  assert.match(r.all, /Usage: career-ops set-status/);
 });
 
 test('"--help" in a VALUE position is not a help request', () => {
@@ -108,5 +108,5 @@ test('an unrecognized flag still exits 1 and does not print help', () => {
 test('bare invocation still reports a usage error rather than succeeding', () => {
   const r = runSetStatus();
   assert.equal(r.status, 1, `bare invocation should exit 1, got ${r.status}`);
-  assert.match(r.all, /Usage: bun set-status\.ts/);
+  assert.match(r.all, /Usage: career-ops set-status/);
 });

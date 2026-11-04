@@ -66,7 +66,7 @@ syncBuiltinESMExports();
 `);
     const children = [];
     function start(path, writer) {
-      const child = spawn(process.execPath, ['--import', pathToFileURL(preload).href, join(rootCode, 'outcome.ts'), '1', 'hired', ...((writer === 'first' || explicit) ? ['--cv', path] : []), '--json'], { cwd: dir, env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_TRACKER: tracker, CV_RACE_WRITER: writer } });
+      const child = spawn(process.execPath, ['--import', pathToFileURL(preload).href, join(rootCode, 'packages/cli/src/commands/tracker/outcome.ts'), '1', 'hired', ...((writer === 'first' || explicit) ? ['--cv', path] : []), '--json'], { cwd: dir, env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_TRACKER: tracker, CV_RACE_WRITER: writer } });
       const result = { done: false, status: null, stdout: '', stderr: '' };
       child.stdout.on('data', chunk => { result.stdout += chunk; });
       child.stderr.on('data', chunk => { result.stderr += chunk; });

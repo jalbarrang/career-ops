@@ -18,11 +18,11 @@
 import { createHash } from 'crypto';
 import { existsSync, readFileSync, realpathSync, statSync } from 'fs';
 import { join, relative, resolve, sep } from 'path';
-import { walkTree } from '../lib/walk-tree.ts';
+import { walkTree } from '../packages/core/src/kernel/walk-tree.ts';
 
 /**
  * The user layer, relative to the data root — the content half of
- * `USER_PATHS` in update-system.ts; the rest is `CHECKOUT_GUARDED_PATHS`
+ * `USER_PATHS` in packages/cli/src/commands/platform/update-system.ts; the rest is `CHECKOUT_GUARDED_PATHS`
  * and `UNGUARDED_USER_PATHS` below. An entry is a file or a directory; one that
  * does not exist contributes nothing, so a fresh clone snapshots to almost
  * nothing and costs nothing.
@@ -48,9 +48,9 @@ export const GUARDED_PATHS = [
 
 /**
  * The user files resolved from the checkout, not from the data root (#5207):
- * the plugin store and its trust lock sit beside plugins/ (`plugins.ts`,
- * `plugin-install.ts`, `plugins/_lock.ts`), and the CLI configs are read
- * from the working directory (`doctor.ts`, and the CLIs themselves). The
+ * the plugin store and its trust lock sit beside plugins/ (`packages/cli/src/commands/platform/plugins.ts`,
+ * `packages/cli/src/commands/platform/plugin-install.ts`, `plugins/_lock.ts`), and the CLI configs are read
+ * from the working directory (`packages/cli/src/commands/platform/doctor.ts`, and the CLIs themselves). The
  * scratch root the suite pins does not move them, so they are fingerprinted
  * where they are, relative to the checkout.
  */

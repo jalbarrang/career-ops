@@ -9,7 +9,7 @@
 //
 // These tests pin three things:
 //   1. the contention classifiers agree on the measured Windows codes,
-//   2. there is ONE implementation of the protocol, lib/dir-lock.ts (plus the
+//   2. there is ONE implementation of the protocol, packages/core/src/kernel/dir-lock.ts (plus the
 //      web's byte-identical copy of it) — and the files that could hold a
 //      second one are derived from the repo, not listed here. #2984 patched two files and declared the drift dead; there
 //      were four, and the other two carried all three faces of the bug for
@@ -20,25 +20,25 @@ import { readFileSync, mkdirSync, existsSync, rmSync, mkdtempSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { pass, fail, ROOT } from './helpers.ts';
-import { isMkdirContention, isRmContention, rmLockArtifactSync } from '../lib/dir-lock.ts';
-import { trackedFiles } from '../lib/source-files.ts';
+import { isMkdirContention, isRmContention, rmLockArtifactSync } from '../packages/core/src/kernel/dir-lock.ts';
+import { trackedFiles } from '../packages/core/src/kernel/source-files.ts';
 
 console.log('\n🔒 lock artifacts: rm contention is contention, not death (#2777)');
 
 const ok = (cond, msg) => (cond ? pass(msg) : fail(msg));
 
-const DEFINITION = 'lib/dir-lock.ts';
-// The web bundle cannot import the core (web/next.config.ts pins its Turbopack
-// root to web/), so it carries a copy. A copy is a second body only if it can
+const DEFINITION = 'packages/core/src/kernel/dir-lock.ts';
+// The web bundle cannot import the core (apps/web/next.config.ts pins its Turbopack
+// root to apps/web/), so it carries a copy. A copy is a second body only if it can
 // differ, so it is accepted on one condition, checked here as well as in its
-// own parity test (web/tests/lib/dir-lock.test.ts): byte-for-byte identity.
-const MIRROR = 'web/src/lib/core/dir-lock.ts';
+// own parity test (apps/web/tests/lib/dir-lock.test.ts): byte-for-byte identity.
+const MIRROR = 'apps/web/src/lib/core/dir-lock.ts';
 const PROTOCOL_FILES = [DEFINITION, MIRROR];
 
 // Every module git ships, minus the suites: test fixtures stamp owner.json by
 // hand on purpose, to stage the states the lock must survive.
 const shippedCoreModules = () => trackedFiles(ROOT, (rel) => rel.endsWith('.ts')
-  && !rel.startsWith('tests/') && !rel.startsWith('web/tests/') && rel !== 'test-all.ts')
+  && !rel.startsWith('tests/') && !rel.startsWith('apps/web/tests/') && rel !== 'test-all.ts')
   .map((abs) => abs.slice(ROOT.length + 1).replace(/\\/g, '/'));
 
 // Comments are stripped first: explaining what the protocol does is not
@@ -81,7 +81,7 @@ const mkErr = (code) => Object.assign(new Error(code), { code });
 // recovery verdict, the wait policy and the identity helper into one module,
 // and the acquire/release bodies that called them were still five copies that
 // had drifted apart (#5358). So the guard is no longer "every copy imports the
-// helpers" but "there is no second copy": the protocol is lib/dir-lock.ts, and
+// helpers" but "there is no second copy": the protocol is packages/core/src/kernel/dir-lock.ts, and
 // any other shipped file that pairs a mkdir with an owner.json stamp has an
 // acquire loop of its own.
 //

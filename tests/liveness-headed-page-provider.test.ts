@@ -7,7 +7,7 @@
 // been closed" rather than a real verdict. The headless path was unaffected, so
 // nothing in the output showed the fallback had stopped working.
 import { pass, fail } from './helpers.ts';
-import { createHeadedPageProvider } from '../liveness-browser.ts';
+import { createHeadedPageProvider } from '../packages/core/src/liveness/liveness-browser.ts';
 
 console.log('\nliveness-browser — createHeadedPageProvider drops a closed page');
 

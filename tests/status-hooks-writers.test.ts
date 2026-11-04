@@ -1,12 +1,12 @@
 // tests/status-hooks-writers.test.ts — status changes made outside
-// set-status.ts run the same hooks (#5536).
+// packages/cli/src/commands/tracker/set-status.ts run the same hooks (#5536).
 //
-// reply-watch.ts used to edit the Status cell itself and write only a ledger
+// packages/cli/src/commands/outreach/reply-watch.ts used to edit the Status cell itself and write only a ledger
 // row, so a recruiter's interview invite never triggered the JD archive.
-// dedup-tracker.ts moves a removed duplicate's status onto the kept row and
+// packages/cli/src/commands/tracker/dedup-tracker.ts moves a removed duplicate's status onto the kept row and
 // ran no hook at all. Each path is driven end to end here.
 //
-// The JD archive is pointed at 127.0.0.1, which archive-posting.ts refuses
+// The JD archive is pointed at 127.0.0.1, which packages/cli/src/commands/evaluation/archive-posting.ts refuses
 // before it launches a browser, so the attempt is visible as a failure without
 // any network access.
 //
@@ -20,8 +20,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ROOT, rmSync } from './helpers.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
-import { parseStatusLog, foldObservations } from '../funnel-velocity.ts';
-import { loadCanonicalStates } from '../tracker-utils.ts';
+import { parseStatusLog, foldObservations } from '../packages/core/src/insights/funnel-velocity.ts';
+import { loadCanonicalStates } from '../packages/core/src/tracker/tracker-utils.ts';
 
 const BLOCKED_URL = 'http://127.0.0.1:9/jobs/1';
 const REPORT = '[5](../reports/005-acme-2026-06-01.md)';
@@ -73,12 +73,12 @@ test('reply-watch: an accepted Interview goes through set-status and attempts th
     body_snippet: 'We would like to invite you to interview. Please pick a time slot.',
   }]));
 
-  const r = runScript(w, 'reply-watch.ts', [candidates], 'y\n');
+  const r = runScript(w, 'packages/cli/src/commands/outreach/reply-watch.ts', [candidates], 'y\n');
   assert.equal(r.status, 0, describeSpawn(r));
   assert.match(r.stdout, /Updated #1 to Interview/);
   assert.match(readFileSync(w.file, 'utf8'), /\| 1 \|.+\| Interview \|/);
   // The archive was attempted for this row's report. It fails only because
-  // the fixture URL is a host archive-posting.ts refuses.
+  // the fixture URL is a host packages/cli/src/commands/evaluation/archive-posting.ts refuses.
   assert.match(r.all, /JD archive trigger failed .*archive-posting\.ts --report=5 --company=Acme/);
   assert.deepEqual(ledger(w).map(line => line.split('\t').slice(2, 5)), [['Applied', 'Interview', 'reply-watch']]);
 });
@@ -89,7 +89,7 @@ test('dedup-tracker: a promotion into Applied writes a ledger row and seeds a fo
     `| 2 | 2026-06-03 | Acme | Backend Engineer | 4.0/5 | Applied | ❌ | ${REPORT} | sent |`,
   ]);
 
-  const r = runScript(w, 'dedup-tracker.ts');
+  const r = runScript(w, 'packages/cli/src/commands/tracker/dedup-tracker.ts');
   assert.equal(r.status, 0, describeSpawn(r));
   assert.match(r.stdout, /#1: status promoted to "Applied" \(from #2\)/);
   assert.match(readFileSync(w.file, 'utf8'), /\| 1 \|.+\| Applied \|/);
@@ -107,7 +107,7 @@ test('dedup-tracker: a promotion into Interview attempts the JD archive', (t) =>
     `| 2 | 2026-06-03 | Acme | Backend Engineer | 4.0/5 | Interview | ❌ | ${REPORT} | screen | ${BLOCKED_URL} |`,
   ], { url: true });
 
-  const r = runScript(w, 'dedup-tracker.ts');
+  const r = runScript(w, 'packages/cli/src/commands/tracker/dedup-tracker.ts');
   assert.equal(r.status, 0, describeSpawn(r));
   assert.match(r.all, /JD archive trigger failed .*archive-posting\.ts --report=5 --company=Acme/);
   assert.match(ledger(w)[0], /^1\t\d{4}-\d{2}-\d{2}\tApplied\tInterview\tdedup-tracker\tfrom #2$/);
@@ -118,14 +118,14 @@ test('dedup-tracker: a dry run and a run with no promotion leave no ledger row',
     `| 1 | 2026-06-01 | Acme | Backend Engineer | 4.5/5 | Evaluated | ❌ | ${REPORT} | first |`,
     `| 2 | 2026-06-03 | Acme | Backend Engineer | 4.0/5 | Applied | ❌ | ${REPORT} | sent |`,
   ]);
-  assert.equal(runScript(w, 'dedup-tracker.ts', ['--dry-run']).status, 0);
+  assert.equal(runScript(w, 'packages/cli/src/commands/tracker/dedup-tracker.ts', ['--dry-run']).status, 0);
   assert.equal(existsSync(join(w.data, 'status-log.tsv')), false);
 
   const same = workspace(t, [
     `| 1 | 2026-06-01 | Acme | Backend Engineer | 4.5/5 | Evaluated | ❌ | ${REPORT} | first |`,
     `| 2 | 2026-06-03 | Acme | Backend Engineer | 4.0/5 | Evaluated | ❌ | ${REPORT} | second |`,
   ]);
-  assert.equal(runScript(same, 'dedup-tracker.ts').status, 0);
+  assert.equal(runScript(same, 'packages/cli/src/commands/tracker/dedup-tracker.ts').status, 0);
   assert.equal(existsSync(join(same.data, 'status-log.tsv')), false);
 });
 

@@ -197,7 +197,7 @@ Dalam lowongan dan negosiasi di Indonesia, beberapa istilah tidak ada di pasar E
 
 0. **Cover letter:** Jika formulir memungkinkan, SELALU sertakan. PDF dengan desain visual yang sama dengan CV. Kutipan dari lowongan dipetakan ke proof point. Maksimal 1 halaman.
 1. Baca `cv.md` dan `article-digest.md` (jika ada) sebelum mengevaluasi lowongan
-1b. **Evaluasi pertama setiap sesi:** Jalankan `bun cv-sync-check.ts` via Bash. Jika ada peringatan, beri tahu kandidat
+1b. **Evaluasi pertama setiap sesi:** Jalankan `career-ops cv-sync-check` via Bash. Jika ada peringatan, beri tahu kandidat
 2. Deteksi arketipe role dan sesuaikan framing
 3. Kutip baris persis dari CV saat melakukan matching
 4. Gunakan WebSearch untuk data kompensasi dan perusahaan
@@ -206,7 +206,7 @@ Dalam lowongan dan negosiasi di Indonesia, beberapa istilah tidak ada di pasar E
 7. Bersikap langsung dan konkret -- tanpa basa-basi
 8. Bahasa Indonesia teknis yang natural untuk teks yang dihasilkan. Kalimat pendek, kata kerja aktif, hindari kalimat pasif. Jangan memaksakan menerjemahkan istilah teknis (stack, pipeline, deployment, embedding)
 8b. **URL case study di Professional Summary pada PDF:** Jika PDF menyebut case study atau demo, URL-nya WAJIB muncul di paragraf pertama (Professional Summary). Recruiter sering hanya membaca summary. Semua URL dalam HTML dengan `white-space: nowrap`
-9. **Entri tracker dalam TSV** -- JANGAN PERNAH mengedit applications.md langsung untuk penambahan baru. Tulis TSV di `batch/tracker-additions/`, `merge-tracker.ts` menangani penggabungan. Tulis satu baris **nama kolom** lebih dulu, lalu tepat satu baris data di bawahnya (lihat AGENTS.md, "TSV Format for Tracker Additions"). Baris nama itulah yang membuat `merge-tracker.ts` menyelesaikan setiap field berdasarkan NAMA, bukan menebak kolom mana yang score dan mana yang status
+9. **Entri tracker dalam TSV** -- JANGAN PERNAH mengedit applications.md langsung untuk penambahan baru. Tulis TSV di `batch/tracker-additions/`, `packages/cli/src/commands/tracker/merge-tracker.ts` menangani penggabungan. Tulis satu baris **nama kolom** lebih dulu, lalu tepat satu baris data di bawahnya (lihat AGENTS.md, "TSV Format for Tracker Additions"). Baris nama itulah yang membuat `packages/cli/src/commands/tracker/merge-tracker.ts` menyelesaikan setiap field berdasarkan NAMA, bukan menebak kolom mana yang score dan mana yang status
 10. **`**URL:**` di setiap header report** -- di antara Score dan PDF
 
 ### Perkakas
@@ -218,5 +218,5 @@ Dalam lowongan dan negosiasi di Indonesia, beberapa istilah tidak ada di pasar E
 | Playwright | Verifikasi apakah lowongan masih aktif (browser_navigate + browser_snapshot), ekstrak lowongan dari SPA. **KRITIS: JANGAN PERNAH menjalankan 2+ agen paralel dengan Playwright -- mereka berbagi instance browser yang sama** |
 | Read | cv.md, article-digest.md, cv-template.html |
 | Write | HTML sementara untuk PDF, report .md, file TSV tambahan tracker di `batch/tracker-additions/` (jangan pernah `applications.md` secara langsung) |
-| Edit | Perbaikan pada report dan konten hasil generate lainnya. Jangan pernah mengedit tabel tracker: baris baru masuk sebagai TSV yang digabung dengan `bun merge-tracker.ts`, perubahan status dan catatan melalui `bun set-status.ts` |
-| Bash | `bun generate-pdf.ts`, `bun merge-tracker.ts`, `bun set-status.ts` |
+| Edit | Perbaikan pada report dan konten hasil generate lainnya. Jangan pernah mengedit tabel tracker: baris baru masuk sebagai TSV yang digabung dengan `career-ops merge-tracker`, perubahan status dan catatan melalui `career-ops set-status` |
+| Bash | `career-ops generate-pdf`, `career-ops merge-tracker`, `career-ops set-status` |

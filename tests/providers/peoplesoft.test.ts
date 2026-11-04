@@ -6,10 +6,10 @@ import { pass, fail, ROOT } from '../helpers.ts';
 
 console.log('\nProvider — peoplesoft (PeopleSoft Fluid Candidate Gateway)');
 
-const { makeHttpCtx } = await import(pathToFileURL(join(ROOT, 'providers/_http.ts')).href);
+const { makeHttpCtx } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_http.ts')).href);
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/peoplesoft.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/peoplesoft.ts')).href);
   const peoplesoft = mod.default;
   const {
     resolveConfig,

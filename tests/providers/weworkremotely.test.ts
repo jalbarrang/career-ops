@@ -7,7 +7,7 @@ console.log('\nProvider — weworkremotely');
 
 
 try {
-  const wwrModule = await import(pathToFileURL(join(ROOT, 'providers/weworkremotely.ts')).href);
+  const wwrModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/weworkremotely.ts')).href);
   const weworkremotely = wwrModule.default;
   const { parseWwrFeed } = wwrModule;
 

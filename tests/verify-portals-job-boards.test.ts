@@ -27,7 +27,7 @@ import { pass, fail, ROOT, rmSync } from './helpers.ts';
 console.log('\nverify-portals — job_boards are swept alongside tracked_companies');
 
 const { verifyPortalsFile } = await import(
-  pathToFileURL(join(ROOT, 'verify-portals.ts')).href
+  pathToFileURL(join(ROOT, 'packages/core/src/scanning/verify-portals.ts')).href
 );
 
 // tracked_companies control: a real ATS slug, probed via tier 1. Greenhouse/Ashby

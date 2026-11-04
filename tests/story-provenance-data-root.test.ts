@@ -7,7 +7,7 @@ import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSyn
 import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { walkTree } from '../lib/walk-tree.ts';
+import { walkTree } from '../packages/core/src/kernel/walk-tree.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const BUCKETS = ['existing', 'supportedByResume', 'derivedUnverified', 'userCannotConfirm'];
@@ -35,7 +35,8 @@ function fixture(t) {
   }
   // Copy the actual dependency closure, without personal files or node_modules.
   mkdirSync(join(f.code.root, 'lib'));
-  for (const file of ['story-provenance-check.ts', 'path-resolver.ts', 'lib/cli-flags.ts', 'lib/is-main-module.ts', 'lib/story-bank.ts']) {
+  for (const file of ['packages/cli/src/commands/interview/story-provenance-check.ts', 'packages/core/src/kernel/path-resolver.ts', 'packages/core/src/kernel/cli-flags.ts', 'packages/core/src/kernel/is-main-module.ts', 'packages/core/src/interview/story-bank.ts', 'packages/core/src/kernel/repo-root.ts',]) {
+    mkdirSync(dirname(join(f.code.root, file)), { recursive: true });
     copyFileSync(join(ROOT, file), join(f.code.root, file));
   }
   return f;
@@ -59,7 +60,7 @@ function snapshot(root) {
 
 function run(f, args, env) {
   const before = snapshot(f.dir);
-  const result = spawnSync(process.execPath, [join(f.code.root, 'story-provenance-check.ts'), ...args], {
+  const result = spawnSync(process.execPath, [join(f.code.root, 'packages/cli/src/commands/interview/story-provenance-check.ts'), ...args], {
     cwd: f.cwd.root,
     env: { ...process.env, CAREER_OPS_ROOT: '', CAREER_OPS_DATA_DIR: '', ...env },
     encoding: 'utf8',

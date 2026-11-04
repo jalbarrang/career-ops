@@ -10,7 +10,7 @@ import { join } from 'path';
 
 console.log('\ndoctor.ts — billing source');
 
-const DOCTOR = join(ROOT, 'doctor.ts');
+const DOCTOR = join(ROOT, 'packages/cli/src/commands/platform/doctor.ts');
 
 /** Run doctor and return its human output (it exits non-zero when it finds issues). */
 function runDoctor(env) {

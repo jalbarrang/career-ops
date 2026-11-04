@@ -5,7 +5,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — local-parser');
 
 try {
-  const localParserModule = await import(pathToFileURL(join(ROOT, 'providers/local-parser.ts')).href);
+  const localParserModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/local-parser.ts')).href);
   const localParser = localParserModule.default;
 
   // 1. Identity

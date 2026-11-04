@@ -34,7 +34,7 @@ function run(root, args = [], envExtra = { CAREER_OPS_ROOT: root }) {
   const env = { ...process.env, ...envExtra };
   for (const k of ['CAREER_OPS_DATA_DIR', 'CAREER_OPS_TRACKER', 'CAREER_OPS_ADDITIONS', 'CAREER_OPS_BATCH_STATE']) delete env[k];
   if (!('CAREER_OPS_ROOT' in envExtra)) delete env.CAREER_OPS_ROOT;
-  const r = spawnSync(process.execPath, [join(CODE_ROOT, 'merge-tracker.ts'), ...args], { cwd: CODE_ROOT, env, encoding: 'utf-8', timeout: 30_000 });
+  const r = spawnSync(process.execPath, [join(CODE_ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts'), ...args], { cwd: CODE_ROOT, env, encoding: 'utf-8', timeout: 30_000 });
   assert.equal(r.error, undefined);
   return { status: r.status, out: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 }
@@ -92,7 +92,7 @@ test('a link to a directory is not a report: merge-tracker warns and verify-pipe
 
   const env = { ...process.env, CAREER_OPS_ROOT: root };
   for (const k of ['CAREER_OPS_DATA_DIR', 'CAREER_OPS_TRACKER']) delete env[k];
-  const v = spawnSync(process.execPath, [join(CODE_ROOT, 'verify-pipeline.ts')], { cwd: CODE_ROOT, env, encoding: 'utf-8', timeout: 30_000 });
+  const v = spawnSync(process.execPath, [join(CODE_ROOT, 'packages/cli/src/commands/platform/verify-pipeline.ts')], { cwd: CODE_ROOT, env, encoding: 'utf-8', timeout: 30_000 });
   assert.equal(v.error, undefined);
   assert.match(`${v.stdout}${v.stderr}`, /Report not found: (?:\.\.\/)?reports\//, 'verify-pipeline must agree with the merge-time warning');
 }));

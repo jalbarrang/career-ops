@@ -8,7 +8,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — gupy');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/gupy.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/gupy.ts')).href);
   const provider = mod.default;
   const { normalizeGupyApiJob, buildGupyLocation, extractGupyRows } = mod;
   // Every fetch() below runs with a no-op clock, so the inter-request delay
@@ -74,7 +74,7 @@ try {
   if (noDate && !('description' in noDate)) pass('normalizeGupyApiJob omits the description key when the payload carries none');
   else fail(`normalizeGupyApiJob description key = ${JSON.stringify(noDate)}`);
 
-  // No employer, no posting (Source Indexing Policy rule 1). scan.ts copies
+  // No employer, no posting (Source Indexing Policy rule 1). packages/core/src/scanning/scan.ts copies
   // company into the pipeline as-is, so '' would land there unattributed.
   const noCompany = [
     normalizeGupyApiJob({ name: 'T', jobUrl: 'https://a.gupy.io/job/3' }),
@@ -300,7 +300,7 @@ try {
     fail(`fetch() lying-total = ${JSON.stringify({ calls: lyingCalls.length, jobs: lying.length })}`);
   }
 
-  // verify-portals.ts probes with ctx.maxPages:1 under a 4-request sentinel.
+  // packages/core/src/scanning/verify-portals.ts probes with ctx.maxPages:1 under a 4-request sentinel.
   // This provider paginates per (keyword × page), so the budget must be a TOTAL
   // for the call: read per keyword, a 10-keyword entry would spend 10 requests
   // on a 1-page probe, trip the sentinel, and get a live board reported as a
@@ -737,7 +737,7 @@ try {
     fail(`ctx.sinceMs precedence = ${JSON.stringify({ calls: ctxWinCalls.length, jobs: ctxWindowed.length })}`);
   }
 
-  // A ctx window is early-stop ONLY. scan.ts applies postedDateFilter itself,
+  // A ctx window is early-stop ONLY. packages/core/src/scanning/scan.ts applies postedDateFilter itself,
   // and re-deriving that floor here risks sub-second drift dropping a boundary
   // posting the scanner wanted.
   const ctxNoFilter = await provider.fetch({ gupy: { keywords: ['X'] }, max_pages: 1 }, {
@@ -747,7 +747,7 @@ try {
   if (ctxNoFilter.length === 2) pass('ctx.sinceMs never filters postings out — it only stops pagination');
   else fail(`ctx.sinceMs filtering = ${JSON.stringify(ctxNoFilter.map((j) => j.url))}`);
 
-  // Undated postings pass the window (scan.ts's "don't penalize missing data").
+  // Undated postings pass the window (packages/core/src/scanning/scan.ts's "don't penalize missing data").
   const undated = await provider.fetch({ gupy: { keywords: ['X'], since_days: 14 }, max_pages: 1 }, {
     sleep: noSleep, fetchJson: async () => ({
       data: [{ name: 'No date', jobUrl: 'https://acme.gupy.io/job/nd', careerPageName: 'Co' }, dated(9, 400)],
@@ -761,7 +761,7 @@ try {
   }
 
   // since_days must mean exactly what --since means: a floor truncated to UTC
-  // midnight (scan.ts's resolveEffectiveAfter). An exact `now - days` stamp
+  // midnight (packages/core/src/scanning/scan.ts's resolveEffectiveAfter). An exact `now - days` stamp
   // would make the same config return different results by the hour.
   const noonUtc = Date.parse('2026-08-13T12:34:56Z');
   const cutoff14 = mod.sinceDaysToCutoffMs(14, noonUtc);

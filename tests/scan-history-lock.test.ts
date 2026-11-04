@@ -1,7 +1,7 @@
 // tests/scan-history-lock.test.ts — appendToScanHistory() must write
 // data/scan-history.tsv under the same lock appendToPipeline() uses.
 //
-// scan.ts, scan-ats-full.ts, scan-interamt.ts and plugins.ts all append to
+// packages/core/src/scanning/scan.ts, packages/cli/src/commands/scanning/scan-ats-full.ts, packages/cli/src/commands/scanning/scan-interamt.ts and packages/cli/src/commands/platform/plugins.ts all append to
 // this one file, which is why appendToPipeline() takes a lock. scan-history
 // took none, leaving two races (#2600):
 //
@@ -24,7 +24,7 @@
 // this writer takes part at all, and that is deterministic.
 //
 // The writer runs in a child process because discovered suites share one
-// process (and one module cache) with the rest of test-all, so scan.ts may
+// process (and one module cache) with the rest of test-all, so packages/core/src/scanning/scan.ts may
 // already be imported with its real SCAN_HISTORY_PATH baked in.
 import { pass, fail, NODE } from './helpers.ts';
 import { execFile } from 'child_process';
@@ -32,7 +32,7 @@ import { mkdtempSync, rmSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { promisify } from 'util';
-import { acquirePipelineLock } from '../pipeline-lock.ts';
+import { acquirePipelineLock } from '../packages/core/src/kernel/pipeline-lock.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -62,11 +62,11 @@ const writerSource = `
   }], '2026-08-09', 'added');
 `;
 
-// cwd is the scratch root, not the repo: scan.ts resolves its data paths
+// cwd is the scratch root, not the repo: packages/core/src/scanning/scan.ts resolves its data paths
 // relative to cwd, so a writer that ignored CAREER_OPS_SCAN_HISTORY still
 // lands in the temp dir rather than the developer's real data/.
 const runWriter = (writer) =>
-  execFileAsync(NODE, ['--input-type=module', '-e', writerSource, '--', new URL('../scan.ts', import.meta.url).href, writer], {
+  execFileAsync(NODE, ['--input-type=module', '-e', writerSource, '--', new URL('../packages/core/src/scanning/scan.ts', import.meta.url).href, writer], {
     cwd: root,
     env: {
       ...process.env,

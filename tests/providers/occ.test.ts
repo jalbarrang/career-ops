@@ -8,7 +8,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — occ');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/occ.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/occ.ts')).href);
   const occ = mod.default;
   const { buildSearchUrl, parseCards, isEmptyResultPage } = mod;
 
@@ -245,7 +245,7 @@ try {
     }
   }
 
-  // ── ctx.maxPages (verify-portals.ts health probe) ───────────────────────
+  // ── ctx.maxPages (packages/core/src/scanning/verify-portals.ts health probe) ───────────────────────
   const probeRequests = [];
   const probeCtx = {
     async sleep() {},
@@ -263,7 +263,7 @@ try {
   }
 
   // While probing, a per-request error must propagate UNWRAPPED so
-  // verify-portals.ts's `err instanceof ProbePageBudgetReached` still works.
+  // packages/core/src/scanning/verify-portals.ts's `err instanceof ProbePageBudgetReached` still works.
   class FakeSentinel extends Error {}
   let sentinel = null;
   let sentinelAttempts = 0;

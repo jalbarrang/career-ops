@@ -1,7 +1,7 @@
 // tests/openrouter-runner-429-reset.test.ts — a model's 429 count is reset
 // when it answers, so only CONSECUTIVE 429s blacklist it.
 //
-// openrouter-runner.ts documents the rule ("auto-blacklist after 3 consecutive
+// packages/cli/src/commands/evaluation/openrouter-runner.ts documents the rule ("auto-blacklist after 3 consecutive
 // 429s") but rateLimitCounts[model] was only ever incremented. Three scattered
 // 429s over a batch, with successful answers in between, blacklisted a model
 // that was working, and the entry was persisted to data/model-blacklist.json for
@@ -15,7 +15,7 @@
 // The runner resolves its data root, model list and blacklist path at import
 // time and keeps per-model counters at module scope, so each scenario needs its
 // own module instance with its own environment. A cache-busting query string
-// (`…openrouter-runner.ts?variant`) does that on Node but NOT on Bun, which
+// (`…packages/cli/src/commands/evaluation/openrouter-runner.ts?variant`) does that on Node but NOT on Bun, which
 // resolves every `?query` spelling of a file URL to one module — the second
 // scenario then ran against the first one's data root, and its assertions were
 // about state no one had created. A child process is the isolation that holds on
@@ -71,7 +71,7 @@ function scriptedFetchSource(models, script) {
 function runScenario({ label, models, script, calls }) {
   const dataRoot = mkdtempSync(join(tmpdir(), 'career-ops-429-'));
   const driver = join(dataRoot, 'drive.ts');
-  const runnerUrl = pathToFileURL(join(ROOT, 'openrouter-runner.ts')).href;
+  const runnerUrl = pathToFileURL(join(ROOT, 'packages/cli/src/commands/evaluation/openrouter-runner.ts')).href;
   const blacklistFile = join(dataRoot, 'data', 'model-blacklist.json');
   try {
     writeFileSync(driver, `

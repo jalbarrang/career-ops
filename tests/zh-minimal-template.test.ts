@@ -5,7 +5,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { listTemplates, resolveTemplate, validateTemplate } from '../cv-templates.ts';
+import { listTemplates, resolveTemplate, validateTemplate } from '../packages/cli/src/commands/cv/cv-templates.ts';
 import { chromium } from 'playwright';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -56,7 +56,7 @@ test('Chinese Minimal renders a complete mixed-language payload', () => {
     skills: [{ category: '工程能力', items: ['TypeScript', 'FastAPI', 'Docker'] }],
   }));
 
-  execFileSync(process.execPath, ['build-cv-html.ts', input, output, TEMPLATE], { cwd: ROOT });
+  execFileSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', input, output, TEMPLATE], { cwd: ROOT });
   const rendered = readFileSync(output, 'utf8');
   assert.match(rendered, /<html lang="zh-CN">/);
   assert.match(rendered, /测试候选人/);
@@ -97,7 +97,7 @@ test('Chinese Minimal preserves mixed-language and job order in PDF text extract
     certifications: [],
     skills: [{ category: '工具', items: ['CRM', 'AI agent'] }],
   }));
-  execFileSync(process.execPath, ['build-cv-html.ts', input, output, TEMPLATE], { cwd: ROOT });
+  execFileSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', input, output, TEMPLATE], { cwd: ROOT });
 
   const browser = await chromium.launch({ headless: true });
   try {
@@ -141,7 +141,7 @@ test('Chinese Minimal keeps long mixed-language contacts inside the A4 page', {
     experience: [{ company: '示例科技有限公司', role: '工程师', dates: '2025 至今', bullets: ['交付生产系统。'] }],
     projects: [], education: [], certifications: [], skills: [],
   }));
-  execFileSync(process.execPath, ['build-cv-html.ts', input, output, TEMPLATE], { cwd: ROOT });
+  execFileSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', input, output, TEMPLATE], { cwd: ROOT });
 
   const browser = await chromium.launch({ headless: true });
   try {

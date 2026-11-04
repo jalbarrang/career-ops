@@ -15,9 +15,9 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ROOT, rmSync } from './helpers.ts';
-import { resolveColumns, parseTrackerRow, trackerRowIdentity } from '../tracker-parse.ts';
+import { resolveColumns, parseTrackerRow, trackerRowIdentity } from '../packages/core/src/tracker/tracker-parse.ts';
 
-const SCRIPT = join(ROOT, 'set-status.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/tracker/set-status.ts');
 const HEADER = [
   '# Applications',
   '',

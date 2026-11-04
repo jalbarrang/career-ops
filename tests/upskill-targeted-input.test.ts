@@ -1,5 +1,5 @@
 // tests/upskill-targeted-input.test.ts — regression coverage for the local-file
-// branch of `upskill.ts --url-text` (#2810 follow-up).
+// branch of `packages/cli/src/commands/insights/upskill.ts --url-text` (#2810 follow-up).
 //
 // `existsSync(p)` is TRUE for a directory, so the readFileSync that followed it
 // threw EISDIR — from inside an async IIFE with no catch, which means the
@@ -31,7 +31,7 @@ const sandbox = mkdtempSync(join(tmpdir(), 'co-upskill-input-'));
 
 /** Run the targeted CLI against one path. @returns {{code:number, stdout:string, stderr:string}} */
 function runTargeted(path) {
-  const res = spawnSync(NODE, [join(ROOT, 'upskill.ts'), '--url-text', path], {
+  const res = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/insights/upskill.ts'), '--url-text', path], {
     cwd: ROOT, encoding: 'utf-8', timeout: 60000, stdio: ['pipe', 'pipe', 'pipe'],
   });
   return { code: res.status, stdout: res.stdout || '', stderr: res.stderr || '' };

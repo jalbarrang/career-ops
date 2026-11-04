@@ -7,7 +7,7 @@ import {
   resolveUpdateCommitBranch,
   skippedBranchCommitNotice,
   updateCommitCommand,
-} from '../update-system.ts';
+} from '../packages/cli/src/commands/platform/update-system.ts';
 
 console.log('\n🧪 Testing updater branch recovery...');
 

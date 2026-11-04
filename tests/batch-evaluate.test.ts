@@ -1,5 +1,5 @@
 import { pass, fail, rmSync, ROOT } from './helpers.ts';
-import { processPipelineBatch, processOffer, PATHS } from '../batch-evaluate-gemini.ts';
+import { processPipelineBatch, processOffer, PATHS } from '../packages/cli/src/commands/evaluation/batch-evaluate-gemini.ts';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -18,11 +18,11 @@ async function testProcessOffer() {
     PATHS.reports = reportsDir;
     PATHS.trackerAdditions = additionsDir;
     
-    // reserve-report-num.ts respects these env vars
+    // packages/cli/src/commands/tracker/reserve-report-num.ts respects these env vars
     process.env.CAREER_OPS_REPORTS_DIR = reportsDir;
     process.env.CAREER_OPS_TRACKER = join(work, 'applications.md');
 
-    // Create a dummy applications.md to satisfy reserve-report-num.ts
+    // Create a dummy applications.md to satisfy packages/cli/src/commands/tracker/reserve-report-num.ts
     mkdirSync(work, { recursive: true });
     import('fs').then(fs => fs.writeFileSync(join(work, 'applications.md'), '# Applications Tracker\n\n| # | Date | Company | Role | Score | Status | PDF | Report | Notes |\n|---|------|---------|------|-------|--------|-----|--------|-------|\n'));
 

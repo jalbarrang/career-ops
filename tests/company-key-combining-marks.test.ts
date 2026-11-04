@@ -27,8 +27,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const { companyKey, parseTrackerInterviewRows } =
-  await import(pathToFileURL(join(ROOT, 'rejection-latency.ts')).href);
-const { normalizeTextKey } = await import(pathToFileURL(join(ROOT, 'tracker-parse.ts')).href);
+  await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/outreach/rejection-latency.ts')).href);
+const { normalizeTextKey } = await import(pathToFileURL(join(ROOT, 'packages/core/src/tracker/tracker-parse.ts')).href);
 
 test('a Devanagari name keeps its vowel signs', () => {
   const key = companyKey('कंपनी लिमिटेड');
@@ -151,13 +151,13 @@ test('companyKey stays a delegation, not a reimplementation', () => {
 });
 
 test('and no local regex in this file strips marks from an identity', () => {
-  // Scoped to this file on purpose. fingerprint-core.ts and detect-reposts.ts
+  // Scoped to this file on purpose. packages/core/src/scanning/fingerprint-core.ts and packages/cli/src/commands/insights/detect-reposts.ts
   // carry the same `[^\p{L}\p{N}]` alphabet, but they fingerprint TITLES for
   // repost detection rather than keying an identity, and detect-reposts folds
   // accents deliberately with a documented fallback. That is a separate
   // question with a separate answer, so it is not asserted here — widening this
   // check to the repo would couple this fix to that decision.
-  const src = readFileSync(join(ROOT, 'rejection-latency.ts'), 'utf-8');
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/outreach/rejection-latency.ts'), 'utf-8');
   const offenders = src.split('\n').filter((l) => !/^\s*(\/\/|\*)/.test(l) && /\[\^\\p\{L\}\\p\{N\}\]/.test(l));
   assert.deepEqual(offenders, [], `a mark-stripping alphabet came back:\n${offenders.join('\n')}`);
 });

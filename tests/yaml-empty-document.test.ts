@@ -4,7 +4,7 @@
 // js-yaml 5 throws "expected a document, but the input is empty" for empty and
 // comment-only text, where js-yaml 4 returned undefined. Web Explore writes a
 // comment-only portals.yml when no filters are set, so every first-run Explore
-// died in scan-ats-full.ts before reaching a board.
+// died in packages/cli/src/commands/scanning/scan-ats-full.ts before reaching a board.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
-import { loadYaml } from '../lib/yaml-document.ts';
+import { loadYaml } from '../packages/core/src/kernel/yaml-document.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const COMMENT_ONLY = '# Filters for Riverbend Labs\n# title_filter:\n#   positive: []\n';
@@ -48,7 +48,7 @@ test('scan-ats-full sweeps with a comment-only portals.yml', (t) => {
   mkdirSync(join(dir, 'data', 'cache', 'ats-companies'), { recursive: true });
   // An empty cached directory means no board is fetched, so the run stays offline.
   writeFileSync(join(dir, 'data', 'cache', 'ats-companies', 'greenhouse.json'), '[]');
-  const result = spawnSync(process.execPath, [join(ROOT, 'scan-ats-full.ts'), '--ats', 'greenhouse', '--dry-run', '--json'], {
+  const result = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/scanning/scan-ats-full.ts'), '--ats', 'greenhouse', '--dry-run', '--json'], {
     cwd: dir,
     encoding: 'utf8',
     timeout: 60_000,
@@ -65,7 +65,7 @@ test('doctor flags a profile.yml and portals.yml that hold only comments', (t) =
   writeFileSync(join(dir, 'cv.md'), '# Dana Okafor\n\nPlatform engineer.\n');
   writeFileSync(join(dir, 'config', 'profile.yml'), COMMENT_ONLY);
   writeFileSync(join(dir, 'portals.yml'), COMMENT_ONLY);
-  const result = spawnSync(process.execPath, [join(ROOT, 'doctor.ts'), '--target', dir, '--json'], {
+  const result = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), '--target', dir, '--json'], {
     cwd: dir,
     encoding: 'utf8',
     timeout: 30_000,
@@ -87,7 +87,7 @@ const DIRECT_LOAD = [
 test('no shipped script calls js-yaml load directly', () => {
   const tracked = execFileSync('git', ['-C', ROOT, 'ls-files', '-z', '--', '*.ts', '*.js'], { encoding: 'utf8' })
     .split('\0')
-    .filter((p) => p && !p.startsWith('tests/') && !p.startsWith('web/') && !p.startsWith('fork/') && p !== 'test-all.ts' && p !== 'lib/yaml-document.ts');
+    .filter((p) => p && !p.startsWith('tests/') && !p.startsWith('apps/web/') && !p.startsWith('fork/') && p !== 'test-all.ts' && p !== 'packages/core/src/kernel/yaml-document.ts');
   assert.ok(tracked.length > 50, `only ${tracked.length} tracked scripts found`);
   const offenders = tracked.filter((p) => {
     const text = readFileSync(join(ROOT, p), 'utf8');

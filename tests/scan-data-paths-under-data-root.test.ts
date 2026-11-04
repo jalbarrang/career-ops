@@ -1,16 +1,16 @@
 // tests/scan-data-paths-under-data-root.test.ts — the scanners' User Layer data
 // follows the configured data root, not the shell's working directory (#3510).
 //
-// scan.ts anchored some of its data paths to DATA_ROOT (SCAN_HISTORY_PATH,
+// packages/core/src/scanning/scan.ts anchored some of its data paths to DATA_ROOT (SCAN_HISTORY_PATH,
 // PIPELINE_PATH, PORTALS_PATH, APPLICATIONS_PATH) and left others as bare
 // relative strings resolved against process.cwd() (blacklist, scan-runs,
 // portal-health), with the sibling scanners carrying their own cwd-relative
-// copies of paths they then WROTE to through scan.ts's anchored ones. One
+// copies of paths they then WROTE to through packages/core/src/scanning/scan.ts's anchored ones. One
 // command, one dataset, two destinations.
 //
 // Nothing failed loudly, which is what made it worth a test: a wrong-but-writable
 // path is silently accepted. The sharpest case is the blacklist — AGENTS.md
-// documents data/blacklist.md as respected by scan.ts, and a user with a data
+// documents data/blacklist.md as respected by packages/core/src/scanning/scan.ts, and a user with a data
 // root got an empty list with no indication their do-not-apply companies had
 // been let through.
 //
@@ -43,8 +43,8 @@ function inChild(snippet) {
   }).trim();
 }
 
-const scanUrl = JSON.stringify(pathToFileURL(join(ROOT, 'scan.ts')).href);
-const atsUrl = JSON.stringify(pathToFileURL(join(ROOT, 'scan-ats-full.ts')).href);
+const scanUrl = JSON.stringify(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
+const atsUrl = JSON.stringify(pathToFileURL(join(ROOT, 'packages/cli/src/commands/scanning/scan-ats-full.ts')).href);
 
 const blacklistRow = (company) =>
   `| Company | Since | Scope | Reason |\n|---|---|---|---|\n| ${company} | 2026-01-01 | company | fixture |\n`;
@@ -61,7 +61,7 @@ try {
     ? pass('loadBlacklist() reads the data root’s blacklist, not the cwd’s')
     : fail(`loadBlacklist() read the wrong file — saw [${seen}], expected [realco] (#3510)`);
 
-  // 2. scan-runs.tsv is written where stats.ts:36 reads it. A writer and a
+  // 2. scan-runs.tsv is written where packages/core/src/insights/stats.ts:36 reads it. A writer and a
   //    reader naming different files is not a lost row, it is a wrong number.
   inChild(`
     const m = await import(${scanUrl});
@@ -70,7 +70,7 @@ try {
   const runsAtRoot = join(dataRoot, 'data', 'scan-runs.tsv');
   const runsAtCwd = join(decoyCwd, 'data', 'scan-runs.tsv');
   existsSync(runsAtRoot) && !existsSync(runsAtCwd)
-    ? pass('appendScanRunSummary() writes under the data root, where stats.ts reads')
+    ? pass('appendScanRunSummary() writes under the data root, where packages/core/src/insights/stats.ts reads')
     : fail(`scan-runs.tsv landed wrong — root:${existsSync(runsAtRoot)} cwd:${existsSync(runsAtCwd)} (#3510)`);
 
   // 3. The ATS sweep's resume checkpoint. Reading the cwd's copy means a
@@ -101,21 +101,21 @@ try {
   // itself instead of aborting the checks below.
   typeof paths.pipeline === 'string' && typeof paths.portals === 'string'
     && paths.pipeline.startsWith(dataRoot) && paths.portals.startsWith(dataRoot)
-    ? pass('scan.ts exports pipeline/portals paths anchored to the data root')
-    : fail(`scan.ts does not export pipeline/portals paths under the data root: ${shared}`);
+    ? pass('packages/core/src/scanning/scan.ts exports pipeline/portals paths anchored to the data root')
+    : fail(`packages/core/src/scanning/scan.ts does not export pipeline/portals paths under the data root: ${shared}`);
 
-  // 5. scan-interamt.ts must not scan the internet just because it was
+  // 5. packages/cli/src/commands/scanning/scan-interamt.ts must not scan the internet just because it was
   //    imported. It called main() unguarded, so importing it drove a live
   //    browser scan and appended the results to the user's pipeline.
-  const interamtSrc = readFileSync(join(ROOT, 'scan-interamt.ts'), 'utf-8');
+  const interamtSrc = readFileSync(join(ROOT, 'packages/cli/src/commands/scanning/scan-interamt.ts'), 'utf-8');
   /isMainModule\(import\.meta\.url\)/.test(interamtSrc)
-    ? pass('scan-interamt.ts runs its scan behind a main guard, like its siblings')
-    : fail('scan-interamt.ts calls main() at module scope — importing it starts a live scan (#3510)');
+    ? pass('packages/cli/src/commands/scanning/scan-interamt.ts runs its scan behind a main guard, like its siblings')
+    : fail('packages/cli/src/commands/scanning/scan-interamt.ts calls main() at module scope — importing it starts a live scan (#3510)');
 
   // 6. No scanner may reintroduce a bare-relative user-data path. The behavioral
   //    checks above cover today's constants; this covers the next one added.
   const offenders = [];
-  for (const file of ['scan.ts', 'scan-ats-full.ts', 'scan-interamt.ts', 'scan-hn.ts']) {
+  for (const file of ['packages/core/src/scanning/scan.ts', 'packages/cli/src/commands/scanning/scan-ats-full.ts', 'packages/cli/src/commands/scanning/scan-interamt.ts', 'packages/cli/src/commands/scanning/scan-hn.ts']) {
     const src = readFileSync(join(ROOT, file), 'utf-8');
     for (const m of src.matchAll(/^(?:export )?const\s+(\w+)\s*=\s*'((?:data|output)\/[^']*|portals\.yml)'/gm)) {
       offenders.push(`${file}: ${m[1]} = '${m[2]}'`);

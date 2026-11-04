@@ -11,7 +11,7 @@
 // What makes it expensive rather than annoying: the trigger is a YAML typo, the
 // most likely reason a hand-edited config does not parse and exactly when the
 // file most needs not to be replaced; and config/plugins.yml is a USER path in
-// update-system.ts, so there is no copy to restore from.
+// packages/cli/src/commands/platform/update-system.ts, so there is no copy to restore from.
 //
 // Tested through parsePluginConfig rather than the CLI. setEnabled resolves its
 // path from the SCRIPT's directory, so a CLI-level test would have to write to
@@ -26,7 +26,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const { parsePluginConfig } = await import(pathToFileURL(join(ROOT, 'plugins.ts')).href);
+const { parsePluginConfig } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/platform/plugins.ts')).href);
 
 const FILE = '/somewhere/config/plugins.yml';
 
@@ -122,7 +122,7 @@ test('valid YAML that is not a mapping is refused too', () => {
 
 // ── doctor reports it, rather than reading it as "nothing enabled" ──────────
 //
-// The same swallow lived in doctor.ts's readPluginConfigSync, which returned
+// The same swallow lived in packages/cli/src/commands/platform/doctor.ts's readPluginConfigSync, which returned
 // {} on a parse error. An unreadable config and a config with nothing enabled
 // produced the same empty object, so the one tool whose job is to say what is
 // wrong answered "off" for every plugin the user had switched on — and said
@@ -139,7 +139,7 @@ import { tmpdir } from 'node:os';
 // An earlier version of this helper passed the env var and read the target
 // correctly on my machine and not on CI's.
 function doctorJson(dir) {
-  const r = spawnSync(process.execPath, [join(ROOT, 'doctor.ts'), '--json', '--target', dir], {
+  const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), '--json', '--target', dir], {
     cwd: dir, encoding: 'utf-8', timeout: 60_000,
     env: { ...process.env, CAREER_OPS_ROOT: dir },
   });

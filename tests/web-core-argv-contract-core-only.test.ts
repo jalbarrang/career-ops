@@ -1,4 +1,4 @@
-// The updater ships tests/ without web/. Keep the core-only behavior covered
+// The updater ships tests/ without apps/web/. Keep the core-only behavior covered
 // independently from the full checkout's argv probes.
 import { pass, fail, ROOT, NODE, run, lastRunFailure } from './helpers.ts';
 import { tmpdir } from 'os';
@@ -26,7 +26,7 @@ const out = run(NODE, ['--input-type=module', '--eval', probe], {
   env: { ...process.env, CAREER_OPS_WEB_ARGV_CONTRACT_STATIC_ONLY: '1' },
 });
 if (out?.includes('core-only static check skipped cleanly')) {
-  pass('web argv static contract skips cleanly when the updater omits web/ (#4165)');
+  pass('web argv static contract skips cleanly when the updater omits apps/web/ (#4165)');
 } else {
   const detail = lastRunFailure();
   fail(

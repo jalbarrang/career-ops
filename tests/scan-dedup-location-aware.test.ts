@@ -39,7 +39,7 @@ import { mkdtempSync, writeFileSync, readFileSync, existsSync, mkdirSync } from 
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { execFileSync } from 'child_process';
-import { companyRoleDedupKey, collectSeenCompanyRoles, loadSeenCompanyRoles } from '../scan.ts';
+import { companyRoleDedupKey, collectSeenCompanyRoles, loadSeenCompanyRoles } from '../packages/core/src/scanning/scan.ts';
 
 console.log('\nscan.ts — opt-in location-aware company+role dedupe');
 
@@ -239,7 +239,7 @@ const BARE = companyRoleDedupKey(CO, ROLE);
 //
 // Which cells count as labeled is an ALLOW-LIST of the four labels the two
 // writers actually emit (`posted:`/`trust:`/`note:` from formatPipelineOffer,
-// `rank:` from rank-pipeline.ts's appendRankAnnotation), not the shape
+// `rank:` from packages/cli/src/commands/pipeline/rank-pipeline.ts's appendRankAnnotation), not the shape
 // "any word, then a colon" (#3751 review). Locations are free text and
 // routinely take that shape — the `Remote: …` rows below are copied from live
 // Neo4j postings in the reporter's own data/pipeline.md, where the broad
@@ -265,7 +265,7 @@ const BARE = companyRoleDedupKey(CO, ROLE);
     ['- [ ] https://ex.com/p/7 | Acme Corp | Product Designer | note: curated list',
       null, 'labeled `note:` segment in the 4th cell is not a location'],
     ['- [ ] https://ex.com/p/8 | Acme Corp | ML Engineer | rank: 4.2/5 — Strong match',
-      null, 'labeled `rank:` segment (rank-pipeline.ts) in the 4th cell is not a location'],
+      null, 'labeled `rank:` segment (packages/cli/src/commands/pipeline/rank-pipeline.ts) in the 4th cell is not a location'],
     // …and the live shapes the broad pattern swallowed. These ARE locations.
     ['- [ ] https://ex.com/p/9 | Acme Corp | Graph Data Scientist | Remote: EMEA',
       'Remote: EMEA', 'a `Remote: EMEA` cell is a location, not metadata'],
@@ -370,7 +370,7 @@ tracked_companies:
       script: tests/fixtures/three-city-board.ts
 `);
 
-    const scan = () => execFileSync(NODE, [join(ROOT, 'scan.ts')], {
+    const scan = () => execFileSync(NODE, [join(ROOT, 'packages/core/src/scanning/scan.ts')], {
       cwd: dir,
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_PORTALS: portals },
       encoding: 'utf-8',
@@ -441,7 +441,7 @@ tracked_companies:
       script: ${script}
 `);
 
-    const scan = (relist) => execFileSync(NODE, [join(ROOT, 'scan.ts')], {
+    const scan = (relist) => execFileSync(NODE, [join(ROOT, 'packages/core/src/scanning/scan.ts')], {
       cwd: dir,
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_PORTALS: portals, FIXTURE_RELIST: relist },
       encoding: 'utf-8',

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { pass, fail, results } from '../helpers.ts';
-import rippling from '../../providers/rippling.ts';
+import rippling from '../../packages/core/src/scanning/providers/rippling.ts';
 
 const entry = { name: 'Fixture', careers_url: 'https://ats.rippling.com/fixture/jobs' };
 

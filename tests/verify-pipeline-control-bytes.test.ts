@@ -1,5 +1,5 @@
 // tests/verify-pipeline-control-bytes.test.ts — Check 16 (#3892), end to end
-// through the real verify-pipeline.ts process.
+// through the real packages/cli/src/commands/platform/verify-pipeline.ts process.
 //
 // Stripping at the cell sanitizer stops NEW control bytes entering the tracker;
 // it can do nothing about the ones already written. This is the other half:
@@ -37,7 +37,7 @@ try {
   const runVp = () => {
     const env = { ...process.env, CAREER_OPS_TRACKER: tracker, CAREER_OPS_REPORTS: reports, CAREER_OPS_PORTALS: join(tmp, 'no-portals.yml') };
     try {
-      const stdout = execFileSync(NODE, [join(ROOT, 'verify-pipeline.ts')], { cwd: ROOT, env, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 60_000 });
+      const stdout = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/verify-pipeline.ts')], { cwd: ROOT, env, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 60_000 });
       return { stdout, status: 0 };
     } catch (err) {
       return { stdout: typeof err.stdout === 'string' ? err.stdout : '', status: err.status ?? 1 };

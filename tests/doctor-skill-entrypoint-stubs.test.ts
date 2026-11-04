@@ -1,9 +1,9 @@
-// tests/doctor-skill-entrypoint-stubs.test.ts — doctor.ts's skill-entrypoint
+// tests/doctor-skill-entrypoint-stubs.test.ts — packages/cli/src/commands/platform/doctor.ts's skill-entrypoint
 // stub warning (career-ops#4589).
 //
 // A checkout without symlink support (core.symlinks=false) writes each per-CLI
 // SKILL.md entrypoint as a regular file holding only the symlink target text.
-// update-system.ts apply repairs that, but returns early on an install that is
+// packages/cli/src/commands/platform/update-system.ts apply repairs that, but returns early on an install that is
 // already up to date, so a fresh Windows clone never reaches the repair and the
 // CLI just loads an empty skill. This pins the doctor check that says so.
 import { pass, fail, NODE, ROOT } from './helpers.ts';
@@ -14,7 +14,7 @@ import { dirname, join } from 'path';
 
 console.log('\ndoctor.ts — skill entrypoint stubs');
 
-const DOCTOR = join(ROOT, 'doctor.ts');
+const DOCTOR = join(ROOT, 'packages/cli/src/commands/platform/doctor.ts');
 const POINTER = '../../../.agents/skills/career-ops/SKILL.md';
 const CLAUDE = '.claude/skills/career-ops/SKILL.md';
 const OPENCODE = '.opencode/skills/career-ops/SKILL.md';
@@ -62,12 +62,12 @@ function skillWarning(state) {
     } else {
       fail(`remedy missing from warning: ${JSON.stringify(warning)}`);
     }
-    if (warning && warning.indexOf('materializeSkillEntrypoints') < warning.indexOf('update-system.ts')) {
+    if (warning && warning.indexOf('materializeSkillEntrypoints') < warning.indexOf('packages/cli/src/commands/platform/update-system.ts')) {
       pass('direct materialization is listed before apply, which no-ops on an up-to-date clone');
     } else {
       fail(`apply listed before materialization: ${JSON.stringify(warning)}`);
     }
-    if (warning && warning.includes(join(dir, 'update-system.ts')) && warning.includes(join(dir, 'scaffolder', 'bin', 'skill-entrypoints.ts'))) {
+    if (warning && warning.includes(join(dir, 'packages/cli/src/commands/platform/update-system.ts')) && warning.includes(join(dir, 'scaffolder', 'bin', 'skill-entrypoints.ts'))) {
       pass('both commands are built from the checked root, not the current directory');
     } else {
       fail(`remedy commands are not rooted at the checked checkout: ${JSON.stringify(warning)}`);

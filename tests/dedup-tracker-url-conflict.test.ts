@@ -1,12 +1,12 @@
 // tests/dedup-tracker-url-conflict.test.ts — a posting-URL conflict blocks dedup (#4562).
 //
-// dedup-tracker.ts clustered rows on company + role alone, so two rows naming
+// packages/cli/src/commands/tracker/dedup-tracker.ts clustered rows on company + role alone, so two rows naming
 // the same role at one company but pointing at two DIFFERENT live postings were
-// merged and the lower-scored one deleted. merge-tracker.ts already treats two
+// merged and the lower-scored one deleted. packages/cli/src/commands/tracker/merge-tracker.ts already treats two
 // present-and-different posting URLs as proof the rows are distinct (#1524,
-// #2009); dedup now asks the same question through the same url-key.ts rule.
+// #2009); dedup now asks the same question through the same packages/core/src/kernel/url-key.ts rule.
 //
-// Drives the REAL dedup-tracker.ts CLI against a temp tracker via the
+// Drives the REAL packages/cli/src/commands/tracker/dedup-tracker.ts CLI against a temp tracker via the
 // CAREER_OPS_TRACKER hook, because the deletion is what loses data — asserting
 // on the rows left in the tracker is what proves the guard.
 import { pass, fail, rmSync } from './helpers.ts';
@@ -18,7 +18,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const DEDUP = join(HERE, '..', 'dedup-tracker.ts');
+const DEDUP = join(HERE, '..', 'packages/cli/src/commands/tracker/dedup-tracker.ts');
 const ok = (name, fn) => { try { fn(); pass(name); } catch (e) { fail(`${name} — ${e.message}`); } };
 
 const HEADER_URL = '| # | Date | Company | Role | Score | Status | PDF | Report | Notes | URL |';

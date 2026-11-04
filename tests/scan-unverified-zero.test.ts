@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { makeHttpCtx } from '../providers/_http.ts';
-import { computeConsecutiveFailures, emptyTargetStatus } from '../scan.ts';
+import { makeHttpCtx } from '../packages/core/src/scanning/providers/_http.ts';
+import { computeConsecutiveFailures, emptyTargetStatus } from '../packages/core/src/scanning/scan.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 function observedContext() {
@@ -82,7 +82,7 @@ test('scan records a swallowed first-page HTTP failure as unverified_zero', () =
     ].join('\n'));
     const preload = join(dataRoot, 'stub-provider.ts');
     writeFileSync(preload, [
-      `import provider from ${JSON.stringify(new URL('../providers/builtin.ts', import.meta.url).href)};`,
+      `import provider from ${JSON.stringify(new URL('../packages/core/src/scanning/providers/builtin.ts', import.meta.url).href)};`,
       `globalThis.fetch = async () => new Response('unavailable', { status: 503 });`,
       `provider.fetch = async (_entry, ctx) => {`,
       `  try { await ctx.fetchJson('https://builtin.com/jobs', { redirect: 'error' }); } catch {}`,
@@ -90,7 +90,7 @@ test('scan records a swallowed first-page HTTP failure as unverified_zero', () =
       `};`,
     ].join('\n'));
     const result = spawnSync(process.execPath, [
-      '--import', pathToFileURL(preload).href, fileURLToPath(new URL('../scan.ts', import.meta.url)), '--json', '--quiet',
+      '--import', pathToFileURL(preload).href, fileURLToPath(new URL('../packages/core/src/scanning/scan.ts', import.meta.url)), '--json', '--quiet',
     ], {
       cwd: dataRoot,
       env: { ...process.env, CAREER_OPS_ROOT: dataRoot, CAREER_OPS_PORTALS: join(dataRoot, 'portals.yml') },

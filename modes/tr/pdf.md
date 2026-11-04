@@ -20,7 +20,7 @@
 14. Şablon (template) + kişiselleştirilmiş içerik kullanarak tam HTML oluştur.
 15. `config/profile.yml` dosyasından `name` değerini ve JD'den şirket adını oku → kabuk komut enjeksiyonunu ve geçersiz dosya adlarını önlemek için her ikisini de yalnızca alfanümerik karakterler ve kısa çizgi (`[a-z0-9-]+`) içerecek şekilde küçük harfe (kebab-case) dönüştürerek sanitize et (örn. "John Doe" → `{candidate}`, "Acme Corp." → `{company}`).
 16. HTML'i `output/cv-{candidate}-{company}.html` dosyasına yaz (geçici - temp - bir dizine DEĞİL — kaydedilen HTML, kontrol panelindeki `D` kısayol tuşunun yeniden oluşturma yaparken kullandığı asıl kaynaktır; bu nedenle geçici dizin temizliğinden sağ çıkmalıdır).
-17. Yürüt (Execute): Sanitize edilmiş her iki dosya adı parçasını kullanarak çalıştır: `bun generate-pdf.ts output/cv-{candidate}-{company}.html output/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf --format={letter|a4} --report={report number}` — buradaki `{report number}`, takipçi (tracker) tablosundaki `#` sütunu DEĞİL, rapor dosya adı/bağlantısındaki NNN'dir (örn. `reports/008-acme-….md` için `008`). Başvurunun bir raporu varsa (veya olacaksa) bunu aktar; kontrol panelinin doğrudan aynı PDF'i açıp yeniden oluşturabilmesi için PDF↔rapor bağlantısını `data/pdf-index.tsv` içine kaydeder. Yalnızca takipçi girişi olmayan tek seferlik (one-off) CV'ler için bu argümanı dahil etme.
+17. Yürüt (Execute): Sanitize edilmiş her iki dosya adı parçasını kullanarak çalıştır: `career-ops generate-pdf output/cv-{candidate}-{company}.html output/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf --format={letter|a4} --report={report number}` — buradaki `{report number}`, takipçi (tracker) tablosundaki `#` sütunu DEĞİL, rapor dosya adı/bağlantısındaki NNN'dir (örn. `reports/008-acme-….md` için `008`). Başvurunun bir raporu varsa (veya olacaksa) bunu aktar; kontrol panelinin doğrudan aynı PDF'i açıp yeniden oluşturabilmesi için PDF↔rapor bağlantısını `data/pdf-index.tsv` içine kaydeder. Yalnızca takipçi girişi olmayan tek seferlik (one-off) CV'ler için bu argümanı dahil etme.
 18. Report: PDF dosya yolu, sayfa sayısı, anahtar kelime kapsama (coverage) yüzdesi.
 
 ## ATS Kuralları (temiz ayrıştırma)
@@ -215,7 +215,7 @@ Kullanıcı "evet" derse, slug modunda `modes/cover.md` dosyasından tam ön yaz
 4. Varsa her türlü eksiği/boşluğu (gap) ortaya çıkar (Adım 5)
 5. Dört temel soruyu sor: neden (why) / sorunlar (problems) / yaklaşım (approach) / üslup (tone) (Adım 6)
 6. Sohbette (chat) taslağı çıkar, onay bekle (Adım 7-8)
-7. `bun generate-cover-letter.ts` üzerinden ön yazı PDF'i üret (Adım 9)
+7. `career-ops generate-cover-letter` üzerinden ön yazı PDF'i üret (Adım 9)
 8. Her iki PDF dosya yolunu (path) da rapora (Report) dahil et
 
 Yukarıdaki etkileşimli adımlardan geçmeden ön yazı PDF'ini otomatik (auto-generate) OLUŞTURMA.

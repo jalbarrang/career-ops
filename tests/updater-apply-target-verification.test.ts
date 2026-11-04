@@ -1,7 +1,7 @@
 /**
  * updater-apply-target-verification.test.ts — apply() must verify its target (#3052).
  *
- * Two structural gaps in `update-system.ts apply()`, both readable straight
+ * Two structural gaps in `packages/cli/src/commands/platform/update-system.ts apply()`, both readable straight
  * off the code before this change:
  *
  *   1. apply() never compared versions. `compareVersions()` has exactly two
@@ -33,7 +33,7 @@ import {
   pinRefToCommit, pinInheritedTarget, versionAtRef, downgradeRefusal,
   isComparableVersion, targetIdentityRefusal, refusalMessage,
   authoritativeShaFromRefBody, refspecForTarget, locallyModifiedSystemFiles, pathFullyPreserved,
-} from '../update-system.ts';
+} from '../packages/cli/src/commands/platform/update-system.ts';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -73,13 +73,13 @@ console.log('\n🧪 Testing that apply() verifies its update target (#3052)...')
   const { dir, g, ctx, quietCtx } = makeRepo('co-3052-pin-');
 
   writeFixture(dir, 'VERSION', '2.0.0\n');
-  writeFixture(dir, 'update-system.ts', '// v2\n');
+  writeFixture(dir, 'packages/cli/src/commands/platform/update-system.ts', '// v2\n');
   g('add', '-A');
   g('commit', '-qm', 'v2');
   const older = g('rev-parse', 'HEAD');
 
   writeFixture(dir, 'VERSION', '2.1.0\n');
-  writeFixture(dir, 'update-system.ts', '// v2.1\n');
+  writeFixture(dir, 'packages/cli/src/commands/platform/update-system.ts', '// v2.1\n');
   g('add', '-A');
   g('commit', '-qm', 'v2.1');
   const newer = g('rev-parse', 'HEAD');
@@ -103,8 +103,8 @@ console.log('\n🧪 Testing that apply() verifies its update target (#3052)...')
   // name the tree the run started with. This is what the dozen unpinned reads
   // inside apply() could not promise.
   setFetchHead(dir, older);
-  const afterMove = g('show', `${pinned}:update-system.ts`);
-  const unpinnedAfterMove = g('show', 'FETCH_HEAD:update-system.ts');
+  const afterMove = g('show', `${pinned}:packages/cli/src/commands/platform/update-system.ts`);
+  const unpinnedAfterMove = g('show', 'FETCH_HEAD:packages/cli/src/commands/platform/update-system.ts');
   if (afterMove.includes('v2.1')) {
     pass('a read through the pinned SHA still sees the original tree after FETCH_HEAD moves');
   } else {
@@ -525,11 +525,11 @@ console.log('\n🧪 Testing that apply() verifies its update target (#3052)...')
 // added to apply() that reaches for the pseudo-ref again, or a guard that drifts
 // below the first checkout and therefore stops being fail-closed.
 {
-  const source = readFileSync(join(REPO_ROOT, 'update-system.ts'), 'utf-8');
+  const source = readFileSync(join(REPO_ROOT, 'packages/cli/src/commands/platform/update-system.ts'), 'utf-8');
   const start = source.indexOf('async function apply() {');
   const end = source.indexOf('\nfunction rollback(', start);
   if (start === -1 || end === -1) {
-    fail('could not locate apply() in update-system.ts — update this test');
+    fail('could not locate apply() in packages/cli/src/commands/platform/update-system.ts — update this test');
   } else {
     // Blank out comments and string bodies are kept: FETCH_HEAD only matters as
     // real code, and a comment mentioning it is not a read.
@@ -616,7 +616,7 @@ console.log('\n🧪 Testing that apply() verifies its update target (#3052)...')
 // detection and checkout. This covers reporting without invoking apply()'s network,
 // dependency installation, or self-reexec side effects.
 {
-  const source = readFileSync(join(REPO_ROOT, 'update-system.ts'), 'utf8');
+  const source = readFileSync(join(REPO_ROOT, 'packages/cli/src/commands/platform/update-system.ts'), 'utf8');
   const start = source.indexOf("    if (preservedSet.has('VERSION')) {");
   const end = source.indexOf('    console.log(' + '\x60Updated ', start);
   if (start < 0 || end < 0) {

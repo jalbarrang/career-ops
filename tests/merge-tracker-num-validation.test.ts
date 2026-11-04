@@ -8,8 +8,8 @@
 // a num — headed, headerless tab, headerless pipe — and all three had it.
 //
 // The other half of this suite is the regression the obvious fix causes.
-// `reserve-report-num.ts` returns a zero-padded 3-digit string (`padStart(3,
-// '0')`), and both the batch prompt and web/src/lib/run-prompts.ts hand that
+// `packages/cli/src/commands/tracker/reserve-report-num.ts` returns a zero-padded 3-digit string (`padStart(3,
+// '0')`), and both the batch prompt and apps/web/src/lib/run-prompts.ts hand that
 // straight to the `num` cell — so `035` is the canonical shape of every report
 // under 100. A `/^[1-9]\d*$/` validator rejects it and silently drops those
 // evaluations, which is strictly worse than the bug being fixed.
@@ -56,7 +56,7 @@ function mergeOne(shape, num) {
     writeFileSync(join(adds, 'a.tsv'), shapes[shape](num));
     let out = '';
     try {
-      out = execFileSync(NODE, [join(ROOT, 'merge-tracker.ts')], {
+      out = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts')], {
         encoding: 'utf-8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'],
         env: { ...process.env, CAREER_OPS_TRACKER: tracker, CAREER_OPS_ADDITIONS: adds, CAREER_OPS_BATCH_STATE: isolatedBatchStatePath(adds) },
       });
@@ -86,7 +86,7 @@ for (const shape of Object.keys(shapes)) {
     if (row && new RegExp(`^\\|\\s*${want}\\s*\\|`).test(row)) {
       pass(`${shape}: accepts num "${text}" as ${want}`);
     } else {
-      fail(`${shape}: num "${text}" did not merge as ${want} — reserve-report-num.ts pads to 3 digits, so this is the canonical shape below 100. row: ${row ?? '(none)'} | ${out.trim().split('\n').pop()}`);
+      fail(`${shape}: num "${text}" did not merge as ${want} — packages/cli/src/commands/tracker/reserve-report-num.ts pads to 3 digits, so this is the canonical shape below 100. row: ${row ?? '(none)'} | ${out.trim().split('\n').pop()}`);
     }
   }
 }

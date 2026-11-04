@@ -3,7 +3,7 @@
 // regardless of markdown bold wrapping or contraction, and must never
 // misclassify an asterisk-bulleted line as a heading (#4273).
 //
-// Before this fix, jd-skill-gap.ts's REQUIREMENT_HEADER_RE required a
+// Before this fix, packages/cli/src/commands/evaluation/jd-skill-gap.ts's REQUIREMENT_HEADER_RE required a
 // markdown heading (`#{0,6}`) or nothing at all before the keyword phrase,
 // so a bolded heading with no `#` — "**What We're Looking For**" — never
 // matched, and the whole requirements section silently scanned zero skills.
@@ -17,7 +17,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ROOT } from './helpers.ts';
 
-const { extractJdSkills } = await import(pathToFileURL(join(ROOT, 'jd-skill-gap.ts')).href);
+const { extractJdSkills } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/evaluation/jd-skill-gap.ts')).href);
 
 // Every case below shares this bullet list; the presence/absence of these
 // three names IS the measurement — a passing extraction returns exactly them.

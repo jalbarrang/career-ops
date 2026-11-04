@@ -38,7 +38,7 @@
         "rule": "side-tab",
         "value": "*",
         "files": [
-          "web/src/app.css"
+          "apps/web/src/app.css"
         ],
         "createdAt": "2026-11-03T02:17:06.838Z",
         "reason": "Ported stylesheet: the only side border is .report-prose blockquote's 3px left rule — standard Markdown quote typography carried over from the Next app's globals.css, not a card accent."
@@ -47,7 +47,7 @@
         "rule": "side-tab",
         "value": "*",
         "files": [
-          "web/src/components/followups/followups-view.svelte"
+          "apps/web/src/components/followups/followups-view.svelte"
         ],
         "createdAt": "2026-11-03T02:19:20.833Z",
         "reason": "Ported verbatim from the Next app's followups-view.tsx: the border-l-4 is the narrative card's severity accent, not a decorative card tab."

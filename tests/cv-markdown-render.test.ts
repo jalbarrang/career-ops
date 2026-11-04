@@ -36,7 +36,7 @@ function run(input, extra = []) {
   const inPath = join(dir, 'in.json');
   const outPath = join(dir, 'nested', 'out.md');
   writeFileSync(inPath, JSON.stringify(input));
-  const r = spawnSync(process.execPath, ['build-cv-html.ts', inPath, '--markdown', outPath, ...extra], { cwd: ROOT, encoding: 'utf8' });
+  const r = spawnSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', inPath, '--markdown', outPath, ...extra], { cwd: ROOT, encoding: 'utf8' });
   return { r, outPath, dir };
 }
 
@@ -66,7 +66,7 @@ test('--markdown without an output path fails with usage', () => {
   const dir = mkdtempSync(join(tmpdir(), 'cv-md-'));
   const inPath = join(dir, 'in.json');
   writeFileSync(inPath, JSON.stringify(payload));
-  const r = spawnSync(process.execPath, ['build-cv-html.ts', inPath, '--markdown'], { cwd: ROOT, encoding: 'utf8' });
+  const r = spawnSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', inPath, '--markdown'], { cwd: ROOT, encoding: 'utf8' });
   assert.ok(exitedNonZero(r), describeSpawn(r, 'expected a non-zero exit'));
   assert.match(r.stderr, /--markdown <output\.md>/);
 });
@@ -98,7 +98,7 @@ test('--markdown refuses to overwrite the input file', () => {
   const original = JSON.stringify(payload);
   writeFileSync(inPath, original);
   const alias = join(dir, '.', 'in.json');
-  const r = spawnSync(process.execPath, ['build-cv-html.ts', inPath, '--markdown', alias], { cwd: ROOT, encoding: 'utf8' });
+  const r = spawnSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', inPath, '--markdown', alias], { cwd: ROOT, encoding: 'utf8' });
   assert.ok(exitedNonZero(r), describeSpawn(r, 'expected a non-zero exit'));
   assert.match(r.stderr, /Output path is the input file/);
   assert.equal(readFileSync(inPath, 'utf8'), original);

@@ -2,7 +2,7 @@
 // NEW USER, not a failed command.
 //
 // Eleven analysis scripts read the same tracker. Ten reported "no data yet" and
-// exited 0; analyze-patterns.ts exited 1 for the same condition, which breaks
+// exited 0; packages/cli/src/commands/insights/analyze-patterns.ts exited 1 for the same condition, which breaks
 // `&&` chaining and makes the batch runners treat a fresh install as a broken
 // command.
 //
@@ -34,10 +34,10 @@ const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 // it reads the story bank rather than the tracker, so "empty tracker" is not a
 // condition it has an opinion about.
 const ANALYSIS_SCRIPTS = [
-  'stats.ts', 'upskill.ts', 'salary-gap.ts', 'process-quality.ts',
-  'rejection-latency.ts', 'detect-reposts.ts', 'company-history.ts',
-  'calibrate.ts', 'funnel-velocity.ts', 'tracker-sync-check.ts',
-  'analyze-patterns.ts',
+  'packages/core/src/insights/stats.ts', 'packages/cli/src/commands/insights/upskill.ts', 'packages/cli/src/commands/insights/salary-gap.ts', 'packages/cli/src/commands/outreach/process-quality.ts',
+  'packages/cli/src/commands/outreach/rejection-latency.ts', 'packages/cli/src/commands/insights/detect-reposts.ts', 'packages/cli/src/commands/insights/company-history.ts',
+  'packages/cli/src/commands/insights/calibrate.ts', 'packages/core/src/insights/funnel-velocity.ts', 'packages/cli/src/commands/tracker/tracker-sync-check.ts',
+  'packages/cli/src/commands/insights/analyze-patterns.ts',
 ];
 
 function emptyButValid() {
@@ -109,7 +109,7 @@ test('a real failure still exits non-zero', () => {
     mkdirSync(join(dir, 'data'), { recursive: true });
     // A directory where the tracker file belongs: unreadable, not empty.
     mkdirSync(join(dir, 'data', 'applications.md'), { recursive: true });
-    const r = spawnSync(process.execPath, [join(ROOT, 'analyze-patterns.ts'), '--summary'], {
+    const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/insights/analyze-patterns.ts'), '--summary'], {
       cwd: dir, encoding: 'utf-8', timeout: 60_000,
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_DATA_DIR: '' },
     });

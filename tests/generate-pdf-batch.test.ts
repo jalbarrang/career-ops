@@ -23,7 +23,7 @@ import {
   rmSync,
   writeFileSync,
 } from 'fs';
-import { join } from 'path';
+import {dirname, join } from 'path';
 import { tmpdir } from 'os';
 import { pass, fail, linkRepoPackage, ownRootEnv, ROOT, NODE, SANDBOX_DATA_ROOT } from './helpers.ts';
 
@@ -34,42 +34,57 @@ mkdirSync(outputRoot, { recursive: true });
 // realpathSync, not the raw mkdtemp path: Node resolves both `import.meta.url`
 // and a module's node_modules walk from a file's REALPATH, while
 // `process.argv[1]` keeps whatever spelling the caller used. On a checkout with
-// a symlinked output/ the two disagree, so generate-pdf.ts's `isMain` guard is
+// a symlinked output/ the two disagree, so packages/cli/src/commands/cv/generate-pdf.ts's `isMain` guard is
 // false and the spawned script exits 0 having done nothing at all -- assertions
 // then fail against empty output rather than against behaviour (#3165).
 const sandbox = realpathSync(mkdtempSync(join(outputRoot, 'batch-test-')));
-const script = join(sandbox, 'generate-pdf.ts');
+const script = join(sandbox, 'packages/cli/src/commands/cv/generate-pdf.ts');
 const launchesFile = join(sandbox, '.launches');
 const pageClosesFile = join(sandbox, '.pagecloses');
 const contextClosesFile = join(sandbox, '.contextcloses');
 mkdirSync(join(sandbox, 'data'), { recursive: true });
 writeFileSync(join(sandbox, 'data', 'pdf-index.tsv'), '', 'utf-8');
 
-copyFileSync(join(ROOT, 'generate-pdf.ts'), script);
-copyFileSync(join(ROOT, 'theme-style.ts'), join(sandbox, 'theme-style.ts'));
-copyFileSync(join(ROOT, 'cv-experience-order.ts'), join(sandbox, 'cv-experience-order.ts'));
-copyFileSync(join(ROOT, 'tracker-utils.ts'), join(sandbox, 'tracker-utils.ts'));
-copyFileSync(join(ROOT, 'tracker-parse.ts'), join(sandbox, 'tracker-parse.ts'));
-copyFileSync(join(ROOT, 'tracker-aliases.json'), join(sandbox, 'tracker-aliases.json'));
-copyFileSync(join(ROOT, 'pipeline-lock.ts'), join(sandbox, 'pipeline-lock.ts'));
+mkdirSync(dirname(script), { recursive: true });
+copyFileSync(join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts'), script);
+mkdirSync(dirname(join(sandbox, 'packages/cli/src/commands/cv/theme-style.ts')), { recursive: true });
+copyFileSync(join(ROOT, 'packages/cli/src/commands/cv/theme-style.ts'), join(sandbox, 'packages/cli/src/commands/cv/theme-style.ts'));
+mkdirSync(dirname(join(sandbox, 'packages/core/src/cv/cv-experience-order.ts')), { recursive: true });
+copyFileSync(join(ROOT, 'packages/core/src/cv/cv-experience-order.ts'), join(sandbox, 'packages/core/src/cv/cv-experience-order.ts'));
+mkdirSync(dirname(join(sandbox, 'packages/core/src/tracker/tracker-utils.ts')), { recursive: true });
+copyFileSync(join(ROOT, 'packages/core/src/tracker/tracker-utils.ts'), join(sandbox, 'packages/core/src/tracker/tracker-utils.ts'));
+mkdirSync(dirname(join(sandbox, 'packages/core/src/tracker/tracker-parse.ts')), { recursive: true });
+copyFileSync(join(ROOT, 'packages/core/src/tracker/tracker-parse.ts'), join(sandbox, 'packages/core/src/tracker/tracker-parse.ts'));
+mkdirSync(dirname(join(sandbox, 'packages/core/src/tracker/tracker-aliases.json')), { recursive: true });
+copyFileSync(join(ROOT, 'packages/core/src/tracker/tracker-aliases.json'), join(sandbox, 'packages/core/src/tracker/tracker-aliases.json'));
+mkdirSync(dirname(join(sandbox, 'packages/core/src/kernel/pipeline-lock.ts')), { recursive: true });
+copyFileSync(join(ROOT, 'packages/core/src/kernel/pipeline-lock.ts'), join(sandbox, 'packages/core/src/kernel/pipeline-lock.ts'));
+mkdirSync(dirname(join(sandbox, 'packages/core/src/kernel/repo-root.ts')), { recursive: true });
+copyFileSync(join(ROOT, 'packages/core/src/kernel/repo-root.ts'), join(sandbox, 'packages/core/src/kernel/repo-root.ts'));
 // ...and it strips the optional sections that rendered as a bare header via
-// ./cv-sections-core.ts (#3986), another local sibling this sandbox needs.
-copyFileSync(join(ROOT, 'cv-sections-core.ts'), join(sandbox, 'cv-sections-core.ts'));
-// generate-pdf.ts resolves user-layer paths via path-resolver.ts
+// packages/core/src/cv/cv-sections-core.ts (#3986), another local sibling this sandbox needs.
+mkdirSync(dirname(join(sandbox, 'packages/core/src/cv/cv-sections-core.ts')), { recursive: true });
+copyFileSync(join(ROOT, 'packages/core/src/cv/cv-sections-core.ts'), join(sandbox, 'packages/core/src/cv/cv-sections-core.ts'));
+// packages/cli/src/commands/cv/generate-pdf.ts resolves user-layer paths via packages/core/src/kernel/path-resolver.ts
 // (CAREER_OPS_ROOT), so the fixture carries that too.
-copyFileSync(join(ROOT, 'path-resolver.ts'), join(sandbox, 'path-resolver.ts'));
-// generate-pdf.ts's main-guard lives in lib/is-main-module.ts (#3170). Without
+mkdirSync(dirname(join(sandbox, 'packages/core/src/kernel/path-resolver.ts')), { recursive: true });
+copyFileSync(join(ROOT, 'packages/core/src/kernel/path-resolver.ts'), join(sandbox, 'packages/core/src/kernel/path-resolver.ts'));
+// packages/cli/src/commands/cv/generate-pdf.ts's main-guard lives in packages/core/src/kernel/is-main-module.ts (#3170). Without
 // it the copy dies with ERR_MODULE_NOT_FOUND before parsing an argument.
 mkdirSync(join(sandbox, 'lib'), { recursive: true });
-copyFileSync(join(ROOT, 'lib', 'is-main-module.ts'), join(sandbox, 'lib', 'is-main-module.ts'));
-// lib/page-format.ts owns the paper size generate-pdf.ts imports at module
+mkdirSync(dirname(join(sandbox, 'packages/core/src/kernel/is-main-module.ts')), { recursive: true });
+copyFileSync(join(ROOT, 'packages/core/src/kernel/is-main-module.ts'), join(sandbox, 'packages/core/src/kernel/is-main-module.ts'));
+// packages/core/src/cv/page-format.ts owns the paper size packages/cli/src/commands/cv/generate-pdf.ts imports at module
 // scope, so the copy needs it for the same reason.
-copyFileSync(join(ROOT, 'lib', 'page-format.ts'), join(sandbox, 'lib', 'page-format.ts'));
-// pipeline-lock.ts runs the shared lock protocol from lib/dir-lock.ts (#5358).
-copyFileSync(join(ROOT, 'lib', 'dir-lock.ts'), join(sandbox, 'lib', 'dir-lock.ts'));
-copyFileSync(join(ROOT, 'lib', 'yaml-document.ts'), join(sandbox, 'lib', 'yaml-document.ts'));
+mkdirSync(dirname(join(sandbox, 'packages/core/src/cv/page-format.ts')), { recursive: true });
+copyFileSync(join(ROOT, 'packages/core/src/cv/page-format.ts'), join(sandbox, 'packages/core/src/cv/page-format.ts'));
+// packages/core/src/kernel/pipeline-lock.ts runs the shared lock protocol from packages/core/src/kernel/dir-lock.ts (#5358).
+mkdirSync(dirname(join(sandbox, 'packages/core/src/kernel/dir-lock.ts')), { recursive: true });
+copyFileSync(join(ROOT, 'packages/core/src/kernel/dir-lock.ts'), join(sandbox, 'packages/core/src/kernel/dir-lock.ts'));
+mkdirSync(dirname(join(sandbox, 'packages/core/src/kernel/yaml-document.ts')), { recursive: true });
+copyFileSync(join(ROOT, 'packages/core/src/kernel/yaml-document.ts'), join(sandbox, 'packages/core/src/kernel/yaml-document.ts'));
 
-// theme-style.ts and tracker-utils.ts both `import * as yaml from 'js-yaml'`,
+// packages/cli/src/commands/cv/theme-style.ts and packages/core/src/tracker/tracker-utils.ts both `import * as yaml from 'js-yaml'`,
 // which resolves by walking up into the repo's node_modules -- from the
 // sandbox's REALPATH, so a checkout with a symlinked output/ never reaches it
 // and every spawned generate-pdf dies before parsing argv (#3165). Link the
@@ -278,7 +293,7 @@ try {
   // An explicit token map still wins, and {} deliberately disables the theme.
   const directRunner = join(sandbox, 'render-themed.ts');
   writeFileSync(directRunner, `
-import { renderHtmlToPdf } from './generate-pdf.ts';
+import { renderHtmlToPdf } from './packages/cli/src/commands/cv/generate-pdf.ts';
 const [outputPath, root, tokens] = process.argv.slice(2);
 await renderHtmlToPdf(${JSON.stringify(htmlDoc('Solo CV'))}, outputPath, {
   workspaceRoot: root,

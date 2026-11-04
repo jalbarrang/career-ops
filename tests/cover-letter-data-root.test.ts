@@ -1,15 +1,15 @@
 // tests/cover-letter-data-root.test.ts: with the data root outside the
 // checkout, the cover letter PDF lands in the data root (#4314).
 //
-// generate-cover-letter.ts anchored OUTPUT_ROOT to its own directory, while
-// the PDF guard in generate-pdf.ts bounds every write by the tracker
+// packages/cli/src/commands/cv/generate-cover-letter.ts anchored OUTPUT_ROOT to its own directory, while
+// the PDF guard in packages/cli/src/commands/cv/generate-pdf.ts bounds every write by the tracker
 // workspace, which is the data root (#4389). With CAREER_OPS_ROOT set the two
 // could not both be satisfied: `--out output/x.pdf` resolved into
 // <checkout>/output and the render refused it, and an absolute path under the
 // data root was refused by the cover letter's own guard first. No cover letter
 // could be produced at all.
 //
-// Siblings: the CV side of generate-pdf.ts is covered under an external data
+// Siblings: the CV side of packages/cli/src/commands/cv/generate-pdf.ts is covered under an external data
 // root by tests/writer-scripts-data-root.test.ts, and doctor's code-layer
 // checks by tests/doctor-code-root-checks.test.ts.
 //
@@ -37,7 +37,7 @@ const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const PROBE = `cover-data-root-probe-${process.pid}.pdf`;
 
 function fixture() {
-  // realpathSync because generate-pdf.ts compares canonical paths, and on
+  // realpathSync because packages/cli/src/commands/cv/generate-pdf.ts compares canonical paths, and on
   // macOS the temp dir is reached through a symlink (/var -> /private/var).
   const dataRoot = realpathSync(mkdtempSync(join(tmpdir(), 'career-ops-coverroot-')));
   const decoyCwd = realpathSync(mkdtempSync(join(tmpdir(), 'career-ops-covercwd-')));
@@ -89,7 +89,7 @@ test('the cover letter resolves output/ under the data root, not the checkout or
   const f = fixture();
   try {
     const got = runChild(`
-      const { safeOutputPath } = await load('generate-cover-letter.ts');
+      const { safeOutputPath } = await load('packages/cli/src/commands/cv/generate-cover-letter.ts');
       const attempt = (raw) => {
         try { return { path: safeOutputPath(raw) }; } catch (err) { return { refused: err.message }; }
       };
@@ -114,9 +114,9 @@ test('the cover letter PDF renders into the data root through the generate-pdf g
   const f = fixture();
   try {
     const got = runChild(`
-      const { safeOutputPath } = await load('generate-cover-letter.ts');
-      const { renderHtmlToPdf } = await load('generate-pdf.ts');
-      // The same two steps generate-cover-letter.ts main() runs after its
+      const { safeOutputPath } = await load('packages/cli/src/commands/cv/generate-cover-letter.ts');
+      const { renderHtmlToPdf } = await load('packages/cli/src/commands/cv/generate-pdf.ts');
+      // The same two steps packages/cli/src/commands/cv/generate-cover-letter.ts main() runs after its
       // fact gate: safeOutputPath() on --out, then renderHtmlToPdf().
       const target = safeOutputPath('output/' + probe);
       const stubBrowser = async () => ({

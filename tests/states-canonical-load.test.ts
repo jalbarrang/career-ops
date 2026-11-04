@@ -5,12 +5,12 @@ import { mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { pass, fail, ROOT } from './helpers.ts';
-import { SCRATCH_PREFIX } from '../lib/scratch-dirs.ts';
+import { SCRATCH_PREFIX } from '../packages/core/src/kernel/scratch-dirs.ts';
 
 console.log('\nstates — canonical load from states.yml');
 
 const { loadCanonicalStates } = await import(
-  pathToFileURL(join(ROOT, 'tracker-utils.ts')).href
+  pathToFileURL(join(ROOT, 'packages/core/src/tracker/tracker-utils.ts')).href
 );
 
 const STATES_FILE = join(ROOT, 'templates/states.yml');

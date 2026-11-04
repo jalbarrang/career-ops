@@ -18,7 +18,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { validateCvSectionOrder, sectionKey } from '../generate-pdf.ts';
+import { validateCvSectionOrder, sectionKey } from '../packages/cli/src/commands/cv/generate-pdf.ts';
 
 const html = titles => titles.map(t => `<div class="section-title">${t}</div>`).join('\n');
 const cvMd = '# CV\n\n## Perfil Profesional\n\n## Formación\n\n## Competencias\n\n## Experiencia Profesional\n';

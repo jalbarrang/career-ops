@@ -13,7 +13,7 @@ import { pathToFileURL } from 'url';
 console.log('\ncli-flags — value-taking flags in both forms');
 
 try {
-  const { flagValue, hasFlag } = await import(pathToFileURL(join(ROOT, 'lib/cli-flags.ts')).href);
+  const { flagValue, hasFlag } = await import(pathToFileURL(join(ROOT, 'packages/core/src/kernel/cli-flags.ts')).href);
 
   const check = (label, actual, expected) => {
     if (actual === expected) pass(label);
@@ -62,10 +62,10 @@ try {
   check('hasFlag on a non-array is false', hasFlag(null, '--only'), false);
 
   // validateFlags — the unrecognized-flag / --help shape hand-rolled
-  // identically by scan-ats-full.ts (#1633/#1635), reply-watch.ts
-  // (#2743/#2745) and dedup-tracker.ts (#2744/#2746), consolidated here for
-  // #2775 and reused as-is by scan.ts's own fix (#2270).
-  const { validateFlags } = await import(pathToFileURL(join(ROOT, 'lib/cli-flags.ts')).href);
+  // identically by packages/cli/src/commands/scanning/scan-ats-full.ts (#1633/#1635), packages/cli/src/commands/outreach/reply-watch.ts
+  // (#2743/#2745) and packages/cli/src/commands/tracker/dedup-tracker.ts (#2744/#2746), consolidated here for
+  // #2775 and reused as-is by packages/core/src/scanning/scan.ts's own fix (#2270).
+  const { validateFlags } = await import(pathToFileURL(join(ROOT, 'packages/core/src/kernel/cli-flags.ts')).href);
 
   // The all-valid path never calls process.exit, so it is safe to call
   // in-process and assert it simply returns.
@@ -84,7 +84,7 @@ try {
 
   // Everything that exits the process is spawned in a child process — a
   // direct in-process exit would kill this test runner too.
-  const cliFlagsUrl = JSON.stringify(pathToFileURL(join(ROOT, 'lib/cli-flags.ts')).href);
+  const cliFlagsUrl = JSON.stringify(pathToFileURL(join(ROOT, 'packages/core/src/kernel/cli-flags.ts')).href);
   const runValidate = (args, knownFlags, usage, options) => {
     const script = `
       const { validateFlags } = await import(${cliFlagsUrl});
@@ -223,7 +223,7 @@ try {
 
   {
     // The guard that keeps this OPT-IN: without requireOperand the behaviour is
-    // unchanged, so callers with richer validation of their own (scan.ts tells
+    // unchanged, so callers with richer validation of their own (packages/core/src/scanning/scan.ts tells
     // a missing value from a zero, a negative, a non-finite and a repeat) keep
     // reaching it.
     const r = runValidate(['--since'], ['--since', '--help', '-h'], 'USAGE-TEXT', { valueFlags: ['--since'] });

@@ -1,5 +1,5 @@
 /**
- * tests/discover-ats.test.ts — Systematic test suite for discover-ats.ts
+ * tests/discover-ats.test.ts — Systematic test suite for packages/cli/src/commands/scanning/discover-ats.ts
  *
  * Tests the pure, network-free functions with inline fixtures:
  * - deriveSlug (lowercasing, punctuation, edge cases)
@@ -35,8 +35,8 @@ import {
   resolveCompany,
   resolveWorkday,
   partitionBlacklisted,
-} from '../discover-ats.ts';
-import { parseBlacklist } from '../scan.ts';
+} from '../packages/cli/src/commands/scanning/discover-ats.ts';
+import { parseBlacklist } from '../packages/core/src/scanning/scan.ts';
 import * as yaml from 'js-yaml';
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'fs';
 import { join, dirname } from 'path';
@@ -456,7 +456,7 @@ ok('mixed 404/503 → still unknown, absence not established', /status unknown/i
 // `302 → www.bamboohr.com`, which redirect:'error' (#1440) turns into a bare
 // `TypeError: fetch failed` — the same SHAPE as a timeout, so it was reported
 // as an unknown status with advice to re-run. It is deterministic: the same
-// probe redirects again, forever. providers/_http.ts already said so for the
+// probe redirects again, forever. packages/core/src/scanning/providers/_http.ts already said so for the
 // retry layer; this pins the user-facing half to the same verdict.
 //
 // The cause message is hardcoded, not imported, for the same reason
@@ -517,7 +517,7 @@ ok('refused redirect + 503 → still unknown, the 503 vendor never answered',
 
 // Guard, the direction that costs a user real time. A DNS failure reaches this
 // code as the SAME bare TypeError with no status; only err.cause distinguishes
-// it. Widening the predicate in providers/_http.ts to accept any cause leaves
+// it. Widening the predicate in packages/core/src/scanning/providers/_http.ts to accept any cause leaves
 // every assertion above green while turning a network hiccup into "your slug is
 // wrong" — measured, not hypothetical: that mutation reddens --only _http and
 // leaves --only discover-ats at 149/0. This is the case that closes it.
@@ -633,7 +633,7 @@ ok('wrong-typed workday hint → field dropped', !('workday' in wrongType.compan
 // ============================================================================
 console.log('\n--- 7. CLI behavior ---');
 
-const scriptPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'discover-ats.ts');
+const scriptPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/cli/src/commands/scanning/discover-ats.ts');
 
 // --self-test exits 0
 try {

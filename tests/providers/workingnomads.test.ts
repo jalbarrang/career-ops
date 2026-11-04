@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — workingnomads');
 
 try {
-  const workingnomadsModule = await import(pathToFileURL(join(ROOT, 'providers/workingnomads.ts')).href);
+  const workingnomadsModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/workingnomads.ts')).href);
   const workingnomads = workingnomadsModule.default;
 
   if (workingnomads.id === 'workingnomads') pass('workingnomads.id is "workingnomads"');

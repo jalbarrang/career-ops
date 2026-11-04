@@ -18,7 +18,7 @@
 // is validated before it can reach the API URL.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveAtsApi, checkLivenessViaApi, classifyWorkablePosting } from '../liveness-api.ts';
+import { resolveAtsApi, checkLivenessViaApi, classifyWorkablePosting } from '../packages/core/src/liveness/liveness-api.ts';
 
 const FULL = 'https://apply.workable.com/acme-corp/j/ABC12345';
 const SHORT = 'https://apply.workable.com/j/ABC12345';

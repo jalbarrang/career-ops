@@ -23,7 +23,7 @@ function trackerRoot(t) {
 }
 
 function query(root, args) {
-  return spawnSync(process.execPath, [join(ROOT, 'tracker.ts'), 'query', ...args], {
+  return spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/tracker/tracker.ts'), 'query', ...args], {
     env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_DATA_DIR: root, CAREER_OPS_TRACKER: '', CAREER_OPS_TRACKER_DB: '' },
     encoding: 'utf8',
     timeout: 20_000,

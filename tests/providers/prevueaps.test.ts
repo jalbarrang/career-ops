@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — prevueaps');
 
 try {
-  const prevueapsModule = await import(pathToFileURL(join(ROOT, 'providers/prevueaps.ts')).href);
+  const prevueapsModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/prevueaps.ts')).href);
   const prevueaps = prevueapsModule.default;
   const { parsePrevueapsResponse, extractDomainId } = prevueapsModule;
 

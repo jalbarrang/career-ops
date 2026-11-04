@@ -13,11 +13,11 @@ import { pass, fail, ROOT, captureConsoleErrors } from '../helpers.ts';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { spawnSync } from 'child_process';
-import { buildPostingAgeFilter, buildPostedDateFilter } from '../../scan.ts';
+import { buildPostingAgeFilter, buildPostedDateFilter } from '../../packages/core/src/scanning/scan.ts';
 
 console.log('\nProvider — workday multi-location placeholders');
 
-const workdayModule = await import(pathToFileURL(join(ROOT, 'providers/workday.ts')).href);
+const workdayModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/workday.ts')).href);
 const workday = workdayModule.default;
 const { isMultiLocationPlaceholder, locationsFromDetail, postedAtFromDetail } = workdayModule;
 
@@ -220,7 +220,7 @@ for (const [label, doc, want] of [
 // zoneless date-time in the machine's local zone and an in-process TZ change is
 // not reliably picked up once the engine has cached the zone.
 {
-  const script = `import { postedAtFromDetail } from '${pathToFileURL(join(ROOT, 'providers/workday.ts')).href}';
+  const script = `import { postedAtFromDetail } from '${pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/workday.ts')).href}';
 process.stdout.write(JSON.stringify([
   postedAtFromDetail({ jobPostingInfo: { startDate: '2026-09-04' } }),
   postedAtFromDetail({ jobPostingInfo: { startDate: '2026-09-04T08:30:00Z' } }),
@@ -383,7 +383,7 @@ for (const [label, detailImpl] of [
     }
     detailRequests++;
     const err = new Error('service unavailable');
-    err.status = 503; // retryable — isRetryableError() in providers/_http.ts
+    err.status = 503; // retryable — isRetryableError() in packages/core/src/scanning/providers/_http.ts
     throw err;
   })));
   if (detailRequests <= 200) pass(`retries count against the cap: ${detailRequests} detail requests, not 800`);
@@ -523,7 +523,7 @@ for (const [label, detailImpl] of [
 // Background: parsePostedOn returns `undefined` for "Posted 30+ Days Ago" (the
 // label is unbounded, so no usable date can be derived from it). Without
 // enrichment the posting carries no `postedAt` and passes any age-based filter
-// in scan.ts — the "don't penalize missing data" rule is a fallback for
+// in packages/core/src/scanning/scan.ts — the "don't penalize missing data" rule is a fallback for
 // IGNORANCE, not a policy of inclusion. Once startDate is fetched from the
 // detail document, the real date is available and filters apply correctly.
 //
@@ -613,7 +613,7 @@ for (const [label, detailImpl] of [
   }
 
   // (d) Pin the downstream consequence explicitly so the tradeoff is recorded
-  // rather than implied. The real filters from scan.ts are used here, not stubs.
+  // rather than implied. The real filters from packages/core/src/scanning/scan.ts are used here, not stubs.
   //
   // The "undated passes" rule is a fallback for ignorance: a posting with no
   // postedAt is not penalized because the scanner does not know its date. Once
@@ -639,7 +639,7 @@ for (const [label, detailImpl] of [
     } else {
       fail('buildPostingAgeFilter(30) rejected an undated posting — that breaks the "undated passes" contract');
     }
-    // Confirm via buildPostedDateFilter too, since scan.ts can use either.
+    // Confirm via buildPostedDateFilter too, since packages/core/src/scanning/scan.ts can use either.
     const cutoffDate = new Date(NOW_MS - 30 * 86_400_000).toISOString().split('T')[0];
     const dateFilter = buildPostedDateFilter(cutoffDate, null);
     if (!dateFilter(OLD_DATE_MS)) {

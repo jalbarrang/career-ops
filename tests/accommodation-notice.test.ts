@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import * as yaml from 'js-yaml';
 import { pass, fail, ROOT } from './helpers.ts';
-import { extractRows, checkFreshness } from '../check-table-freshness.ts';
+import { extractRows, checkFreshness } from '../packages/cli/src/commands/platform/check-table-freshness.ts';
 
 console.log('\nAccommodation-notice signal (#5449, jurisdiction lens #2026)');
 

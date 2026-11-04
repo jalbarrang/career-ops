@@ -104,6 +104,7 @@ if (dispatchBlock && runWorker) {
   try {
     const batch = join(work, 'batch');
     mkdirSync(batch);
+    mkdirSync(dirname(join(batch, 'batch-runner.sh')), { recursive: true });
     copyFileSync(join(ROOT, 'batch/batch-runner.sh'), join(batch, 'batch-runner.sh'));
     writeFileSync(join(batch, 'batch-prompt.md'), 'Test prompt');
     writeFileSync(join(batch, 'batch-input.tsv'), 'id\turl\tsource\tnotes\n1\thttps://jobs.fabrikam.example/1\ttest\t\n');

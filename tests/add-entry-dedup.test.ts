@@ -1,6 +1,6 @@
 // tests/add-entry-dedup.test.ts — articleDigestHasEntry must not false-positive on prefix of existing entry
 import { pass, fail } from './helpers.ts';
-import { articleDigestHasEntry, applyAdd } from '../add-entry.ts';
+import { articleDigestHasEntry, applyAdd } from '../packages/cli/src/commands/cv/add-entry.ts';
 
 console.log('\nadd-entry.ts — dedup key prefix false positive prevention');
 

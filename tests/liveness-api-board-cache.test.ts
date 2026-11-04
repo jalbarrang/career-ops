@@ -1,7 +1,7 @@
 // tests/liveness-api-board-cache.test.ts — Ashby's posting API is the whole
 // board, so checking N postings on one board used to download that board N
 // times in a row. checkLivenessViaApi takes a per-run `boardCache`, and
-// check-liveness.ts passes one.
+// packages/cli/src/commands/liveness/check-liveness.ts passes one.
 //
 // Run: bun test tests/liveness-api-board-cache.test.ts
 
@@ -12,7 +12,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { checkLivenessViaApi } from '../liveness-api.ts';
+import { checkLivenessViaApi } from '../packages/core/src/liveness/liveness-api.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const LIVE = '11111111-1111-4111-8111-111111111111';
@@ -95,7 +95,7 @@ test('check-liveness fetches a shared Ashby board once per run', () => {
     ].join('\n'));
     const out = execFileSync(process.execPath, [
       '--import', pathToFileURL(preload).href,
-      join(ROOT, 'check-liveness.ts'), '--no-record',
+      join(ROOT, 'packages/cli/src/commands/liveness/check-liveness.ts'), '--no-record',
       `https://jobs.ashbyhq.com/acme/${LIVE}`,
       `https://jobs.ashbyhq.com/acme/${GONE}`,
       `https://jobs.ashbyhq.com/acme/${OTHER}`,

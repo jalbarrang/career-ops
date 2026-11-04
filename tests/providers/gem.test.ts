@@ -1,5 +1,5 @@
 // tests/providers/gem.test.ts — direct provider-contract tests.
-// Covers the id/detect/fetch contract scan.ts calls: careers_url detection,
+// Covers the id/detect/fetch contract packages/core/src/scanning/scan.ts calls: careers_url detection,
 // the JobBoardList → ExternalJobPostingQuery two-call shape (list, then a
 // SINGLE batched detail POST for postedAt), extId-based URL construction,
 // location folding (name + Remote), postedAt conversion from
@@ -12,7 +12,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — gem');
 
 try {
-  const gemModule = await import(pathToFileURL(join(ROOT, 'providers/gem.ts')).href);
+  const gemModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/gem.ts')).href);
   const gem = gemModule.default;
   const { parseRestResponse } = gemModule;
 
@@ -304,7 +304,7 @@ try {
   // is folded into the location unless the name already says it. Expected
   // names come from the shared helper, not literals — CLDR spellings can shift
   // between Node versions.
-  const { countryNameFromIso } = await import(pathToFileURL(join(ROOT, 'providers/_country.ts')).href);
+  const { countryNameFromIso } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_country.ts')).href);
   const uk = countryNameFromIso('GBR');
   const us = countryNameFromIso('USA');
   let isoCall = 0;

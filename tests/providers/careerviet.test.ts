@@ -1,5 +1,5 @@
 // tests/providers/careerviet.test.ts — provider-contract tests for the
-// CareerViet board-wide HTML listing (providers/careerviet.ts).
+// CareerViet board-wide HTML listing (packages/core/src/scanning/providers/careerviet.ts).
 //
 // The fixtures reproduce shapes measured on the live board on 2026-08-26, and
 // each one exists because it decides the parser's design:
@@ -40,7 +40,7 @@ const CARD_MINIMAL = `
 const PAGE = `<html><body><div class="jobs-side-list">${CARD_FULL}${CARD_MINIMAL}</div></body></html>`;
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/careerviet.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/careerviet.ts')).href);
   const careerviet = mod.default;
   const { parseListingPage, buildListUrl, citySegment, visibleText, parsePostedAt, assertParsedSomething } = mod;
 

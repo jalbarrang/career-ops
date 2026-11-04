@@ -9,16 +9,16 @@ import { pathToFileURL } from 'url';
 
 console.log('\ntitle-fit.ts — free banded title/profile overlap hint (#3260)');
 
-// update-system.ts ships tests/ but never web/ (#3269), so this suite also runs
-// on installs that have no web/, where the import threw and test-all counted
+// packages/cli/src/commands/platform/update-system.ts ships tests/ but never apps/web/ (#3269), so this suite also runs
+// on installs that have no apps/web/, where the import threw and test-all counted
 // the missing module as a failure. Same three branches as
-// tests/profile-keywords-parity.test.ts: an absent web/ skips, but a module
-// missing under a present web/ is a move and fails.
-const TITLE_FIT = join(ROOT, 'web', 'src', 'lib', 'title-fit.ts');
-if (!existsSync(join(ROOT, 'web', 'src'))) {
-  warn('web/ not present in this checkout — skipping the title-fit checks');
+// tests/profile-keywords-parity.test.ts: an absent apps/web/ skips, but a module
+// missing under a present apps/web/ is a move and fails.
+const TITLE_FIT = join(ROOT, 'apps/web', 'src', 'lib', 'title-fit.ts');
+if (!existsSync(join(ROOT, 'apps/web', 'src'))) {
+  warn('apps/web/ not present in this checkout — skipping the title-fit checks');
 } else if (!existsSync(TITLE_FIT)) {
-  fail('web/ exists but web/src/lib/title-fit.ts is missing — the title-fit checks cannot run (moved?)');
+  fail('apps/web/ exists but apps/web/src/lib/title-fit.ts is missing — the title-fit checks cannot run (moved?)');
 } else {
   try {
     const m = await import(pathToFileURL(TITLE_FIT).href);

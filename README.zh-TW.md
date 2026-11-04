@@ -161,7 +161,7 @@ career-ops 對求職者永久免費。這些公司贊助了本專案：
 
 ## career-ops 不做的事
 
-- **自動送出申請。** 它為每個欄位起草答案；你審閱，然後點擊送出。腳本從不發出 POST（`prepare-application.ts`）。
+- **自動送出申請。** 它為每個欄位起草答案；你審閱，然後點擊送出。腳本從不發出 POST（`packages/cli/src/commands/evaluation/prepare-application.ts`）。
 - **寄送郵件。** 只寫草稿。整個程式碼庫裡沒有任何郵件寄送模組。
 - **回傳資料。** 沒有遙測，沒有我們的後端。你的履歷只從你的機器送往你選擇的 AI 供應商，不去任何別的地方。唯一的公開紀錄就是這個儲存庫：`HIRED.md` 和它的 issue。
 - **催你申請低於 4.0/5 的職缺。** 它會告訴你別申請。你可以不聽，它會明說。
@@ -177,7 +177,7 @@ career-ops 對求職者永久免費。這些公司贊助了本專案：
 | **ATS PDF 產生**         | ATS 可讀的履歷，根據你自己的經歷、針對每份職缺描述客製，採用 Space Grotesk + DM Sans 設計                                                  |
 | **求職信產生器**         | 基於調查的求職信：關鍵字呼應、四個互動式角度提問（為什麼／問題／方法／語氣）、在對話中審核草稿，以及透過與履歷相同的 HTML + Playwright 流程產生 A4 PDF。每次評估自動起草；用 `/career-ops cover` 依需求完成並產生 |
 | **履歷之外**             | 企業調查（[`deep`](modes/deep.md)）揭示 AI 策略、近期動向、工程文化，以及你的履歷應該採取的角度。聯絡人探索（[`contacto`](modes/contacto.md)）找出值得聯絡的招募主管、招募人員或團隊成員，並草擬一則不超過 300 字元、針對聯絡人類型調整過的 LinkedIn 訊息。正式申請郵件草稿（[`email`](modes/email.md)）把已評估的報告或貼上的職缺描述變成主旨、內文和附件清單，不寄送、不送出、不點擊任何內容。申請讓你排進隊伍，調查讓你獲得對話。 |
-| **模式分析**             | 拒信模式與各 ATS 管道的推進率（`analyze-patterns.ts`）、整個求職週期的漏斗統計（`stats.ts`）、重複刊登偵測，重複刊登可能是幽靈職缺的跡象（`detect-reposts.ts`） |
+| **模式分析**             | 拒信模式與各 ATS 管道的推進率（`packages/cli/src/commands/insights/analyze-patterns.ts`）、整個求職週期的漏斗統計（`packages/core/src/insights/stats.ts`）、重複刊登偵測，重複刊登可能是幽靈職缺的跡象（`packages/cli/src/commands/insights/detect-reposts.ts`） |
 
 <details>
 <summary><b>它還能做的所有事</b></summary>
@@ -194,8 +194,8 @@ career-ops 對求職者永久免費。這些公司贊助了本專案：
 | **Dashboard TUI**        | 在終端機裡瀏覽、篩選和排序你的流程                                                                                                        |
 | **流程完整性**           | 自動合併、去重、狀態正規化、健康檢查                                                                                                      |
 | **面試套件**             | 按時間區塊安排的準備計畫、附回饋的練習、面試後檢討（[`interview/`](modes/interview/README.md)），以及企業警訊偵測器（[`interview-redflag`](modes/interview-redflag.md)） |
-| **Offer 階段**           | 合約閱讀助手：逐條款解讀加上給律師的問題清單（[`offer-prep`](modes/offer-prep.md)），以及期望／公告／實際薪資差距分析器（`salary-gap.ts`）   |
-| **跟進與回覆**           | 跟進節奏計算器與預設提醒（`followup-cadence.ts`、`followup-seed.ts`）；把雇主回覆歸類為追蹤紀錄更新（[`reply-watch`](modes/reply-watch.md)） |
+| **Offer 階段**           | 合約閱讀助手：逐條款解讀加上給律師的問題清單（[`offer-prep`](modes/offer-prep.md)），以及期望／公告／實際薪資差距分析器（`packages/cli/src/commands/insights/salary-gap.ts`）   |
+| **跟進與回覆**           | 跟進節奏計算器與預設提醒（`packages/core/src/outreach/followup-cadence.ts`、`packages/core/src/outreach/followup-seed.ts`）；把雇主回覆歸類為追蹤紀錄更新（[`reply-watch`](modes/reply-watch.md)） |
 | **外掛系統**             | 可選整合（Gmail、Notion、Apify + 社群註冊表），預設關閉；見 [docs/PLUGINS.md](docs/PLUGINS.md)                                              |
 
 </details>
@@ -459,9 +459,9 @@ cp .env.example .env
 bun install
 
 # 3. Evaluate a job description
-bun gemini-eval.ts "We are looking for a Senior AI Engineer..."
-bun gemini-eval.ts --file ./jds/my-job.txt
-bun agent-inbox.ts add "..."   # queue a request for the next session
+bun packages/cli/src/commands/evaluation/gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun packages/cli/src/commands/evaluation/gemini-eval.ts --file ./jds/my-job.txt
+bun packages/cli/src/commands/platform/agent-inbox.ts add "..."   # queue a request for the next session
 bun run gemini:eval -- "JD text here"
 ```
 
@@ -482,10 +482,10 @@ bun run gemini:eval -- "JD text here"
 
 **搜尋的求職網站：** 55+ 個供應商模組涵蓋 ATS API、整站資料來源、XML/RSS 來源、markdown 來源和本機解析器。完整表格見[支援的求職網站](docs/SUPPORTED_JOB_BOARDS.md)。
 
-預設情況下 `bun scan.ts`（即 `bun run scan`）信任每個 ATS 資料來源回傳的內容。有些企業在職缺關閉後仍會把過期職缺留在公開 API 裡，這些過期項目可能會混進 `pipeline.md`。加上 `--verify` 可以在 API 階段之後啟動 Playwright，在過期職缺進入流程之前把它們剔除：
+預設情況下 `bun packages/core/src/scanning/scan.ts`（即 `bun run scan`）信任每個 ATS 資料來源回傳的內容。有些企業在職缺關閉後仍會把過期職缺留在公開 API 裡，這些過期項目可能會混進 `pipeline.md`。加上 `--verify` 可以在 API 階段之後啟動 Playwright，在過期職缺進入流程之前把它們剔除：
 
 ```bash
-bun scan.ts --verify          # zero-token discovery + Playwright liveness check
+bun packages/core/src/scanning/scan.ts --verify          # zero-token discovery + Playwright liveness check
 ```
 
 驗證是循序執行的，而且只針對新職缺（去重之後），所以成本是有上限的。
@@ -501,7 +501,7 @@ bun run build:dashboard   # optional: build the standalone binary
 
 功能：10 個篩選分頁、8 種排序模式、分組／平鋪檢視、延遲載入預覽、行內狀態修改。
 
-還有一個**實驗性的 Web UI**（alpha 版，選用：除非你主動啟動，否則不會執行任何東西）：見 [`web/README.md`](web/README.md)。
+還有一個**實驗性的 Web UI**（alpha 版，選用：除非你主動啟動，否則不會執行任何東西）：見 [`apps/web/README.md`](apps/web/README.md)。
 
 ## 專案結構
 
@@ -558,9 +558,9 @@ career-ops/
 
 - **覆寫追蹤檔：** 你也可以設定 `CAREER_OPS_TRACKER` 直接覆寫申請追蹤檔的路徑。
 - **寫入：** 所有寫入操作（如合併）都以 `{DATA_ROOT}/data/applications.md` 為標準目標。
-- **掃描器設定：** `portals.yml` 在 `{DATA_ROOT}/portals.yml` 讀取和驗證，所以 `bun validate-portals.ts` 檢查的正是 `scan.ts` 讀取的那個檔案。
+- **掃描器設定：** `portals.yml` 在 `{DATA_ROOT}/portals.yml` 讀取和驗證，所以 `bun packages/cli/src/commands/scanning/validate-portals.ts` 檢查的正是 `packages/core/src/scanning/scan.ts` 讀取的那個檔案。
 - **產生的文件：** 客製履歷和求職信寫入 `{DATA_ROOT}/output/`，把它們連結到報告的 PDF 清單位於 `{DATA_ROOT}/data/pdf-index.tsv`。在未設定 `CAREER_OPS_TRACKER` 時，限定這些寫入範圍的追蹤工作區是資料根目錄，而不是程式碼的 checkout。
-- **追蹤檔覆寫下的 PDF：** `generate-pdf.ts` 會先解析 `CAREER_OPS_TRACKER`，再推導工作區，所以設定了覆寫時，工作區就是存放該追蹤檔的資料夾（如果追蹤檔位於 `data/` 資料夾中，則是它的上一層資料夾）。這時履歷的 HTML 和每個 PDF 都必須位於該工作區內，清單也會移到它的 `data/pdf-index.tsv`。求職信仍以 `{DATA_ROOT}/output/` 為目標，所以當該資料夾不在追蹤檔的工作區內時，求職信會被拒絕寫入。
+- **追蹤檔覆寫下的 PDF：** `packages/cli/src/commands/cv/generate-pdf.ts` 會先解析 `CAREER_OPS_TRACKER`，再推導工作區，所以設定了覆寫時，工作區就是存放該追蹤檔的資料夾（如果追蹤檔位於 `data/` 資料夾中，則是它的上一層資料夾）。這時履歷的 HTML 和每個 PDF 都必須位於該工作區內，清單也會移到它的 `data/pdf-index.tsv`。求職信仍以 `{DATA_ROOT}/output/` 為目標，所以當該資料夾不在追蹤檔的工作區內時，求職信會被拒絕寫入。
 - **程式碼層維持不動：** `node_modules/`、`providers/`、`modes/` 以及腳本本身一律相對於儲存庫解析，從不相對於資料根目錄。
 
 Go 版儀表板 TUI、Node.js 腳本和 AI 代理模式都會自動遵循這個解析層級。
@@ -619,7 +619,7 @@ Go 版儀表板 TUI、Node.js 腳本和 AI 代理模式都會自動遵循這個�
 career-ops（[career-ops.org](https://career-ops.org)，也稱 **careerops**） 是一個開源的 AI 求職工具，在你的 AI 程式碼 CLI（Claude Code、Codex、OpenCode 等）裡於本機執行，把每一個決定都留給你。它依你的履歷評估職缺、產生適配 ATS 的 PDF、找出該聯絡的對象，並在一個地方追蹤所有進度：最終決定權永遠在你手上。它是 [CareerOps 宣言](https://career-ops.org/manifesto)的第一個參考實作。
 
 **客製化履歷會捏造內容嗎？**
-不應該，提示詞裡也這麼寫：只改寫，絕不捏造。`generate-pdf` 會擋下數字或事實在你的資料來源中找不到的履歷，除非你傳入 `--skip-fact-check`。`pdf` 模式還會執行 `cv-title-check.ts`：它依公司和日期，把客製化履歷中的每個職稱與 cv.md 中同一份工作的職稱比對，有不同就請你決定保留還是改回。它只提醒、不阻擋，因為調整職稱的寫法有時是你自己的選擇。目前還沒有任何檢查評判改寫：[#1411](https://github.com/career-ops-hq/career-ops/issues/1411)（不通過即阻止的真實性檢查）在追蹤這一點。在此之前，每份履歷送出前都請自己讀一遍。[法律聲明](LEGAL_DISCLAIMER.md) 用更長的篇幅說了同樣的話。
+不應該，提示詞裡也這麼寫：只改寫，絕不捏造。`generate-pdf` 會擋下數字或事實在你的資料來源中找不到的履歷，除非你傳入 `--skip-fact-check`。`pdf` 模式還會執行 `packages/cli/src/commands/cv/cv-title-check.ts`：它依公司和日期，把客製化履歷中的每個職稱與 cv.md 中同一份工作的職稱比對，有不同就請你決定保留還是改回。它只提醒、不阻擋，因為調整職稱的寫法有時是你自己的選擇。目前還沒有任何檢查評判改寫：[#1411](https://github.com/career-ops-hq/career-ops/issues/1411)（不通過即阻止的真實性檢查）在追蹤這一點。在此之前，每份履歷送出前都請自己讀一遍。[法律聲明](LEGAL_DISCLAIMER.md) 用更長的篇幅說了同樣的話。
 
 **我可以免費執行 career-ops，或改用較便宜／本機的模型嗎？**
 可以。career-ops 不綁定特定 CLI，也能跑在免費與本機模型上（OpenRouter 的免費模型、Ollama，或任何相容 OpenAI 的端點），所以你不必被付費訂閱綁住。完整設定見 [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md)。

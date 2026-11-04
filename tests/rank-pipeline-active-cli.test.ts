@@ -29,7 +29,7 @@ test('CAREER_OPS_CLI picks the ranking CLI when several are installed', {
       PATH: `${join(root, 'bin')}:${process.env.PATH}`,
       RANK_CALL: join(root, 'call.txt'),
     };
-    execFileSync(process.execPath, [join(ROOT, 'rank-pipeline.ts'), '--dry-run'], { env, cwd: root });
+    execFileSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/pipeline/rank-pipeline.ts'), '--dry-run'], { env, cwd: root });
     assert.equal(readFileSync(env.RANK_CALL, 'utf8'), 'opencode run');
   } finally {
     rmSync(root, { recursive: true, force: true });

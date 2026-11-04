@@ -7,7 +7,7 @@ console.log('\nProvider — remotive');
 
 
 try {
-  const remotiveModule = await import(pathToFileURL(join(ROOT, 'providers/remotive.ts')).href);
+  const remotiveModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/remotive.ts')).href);
   const remotive = remotiveModule.default;
 
   if (remotive.id === 'remotive') pass('remotive.id is "remotive"');

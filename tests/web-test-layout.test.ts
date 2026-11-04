@@ -1,23 +1,23 @@
-// tests/web-test-layout.test.ts — freezes web/'s test DISCOVERY contract (#2360).
+// tests/web-test-layout.test.ts — freezes apps/web/'s test DISCOVERY contract (#2360).
 //
-// web/ used to carry two conventions at once: suites under web/tests/ plus two
-// hand-enumerated at the web root, listed by name in web/package.json's `test`
+// apps/web/ used to carry two conventions at once: suites under apps/web/tests/ plus two
+// hand-enumerated at the web root, listed by name in apps/web/package.json's `test`
 // script. A suite missing from that list never ran and the runner still exited
 // 0. #1440, the parent issue, named that failure mode directly — "the runner
 // should also fail hard if the glob matches zero files, so a path typo can't
-// silently turn CI green" — and removed it from the root suite. web/ kept it,
+// silently turn CI green" — and removed it from the root suite. apps/web/ kept it,
 // and it nearly cost two suites for real during #2182, where either side of a
 // package.json conflict would have dropped them with CI green.
 //
-// This guard lives in the ROOT suite, not web/tests/, deliberately:
+// This guard lives in the ROOT suite, not apps/web/tests/, deliberately:
 //   1. .github/workflows/test.yml runs test-all.ts on every PR with no paths
 //      filter and is a required check. web-ci.yml is informative by design —
 //      "a red here never blocks a core merge" — so it cannot be the enforcer.
-//   2. A guard inside web/tests/ would be discovered by the very glob it
+//   2. A guard inside apps/web/tests/ would be discovered by the very glob it
 //      validates: if the glob breaks, the guard silently stops running too.
 // Same reach-into-web/ pattern as test-all.ts's 55.3c/55.3d freezes (#2369).
 //
-// ONE responsibility: web/'s suites must be reachable by what `bun test`
+// ONE responsibility: apps/web/'s suites must be reachable by what `bun test`
 // actually runs. Every assertion below is a facet of that — including the
 // engines floor, which is checked because it is the runtime the suites need,
 // not as general toolchain policy.
@@ -27,16 +27,16 @@
 import { pass, fail, ROOT, walkFiles } from './helpers.ts';
 import { join, relative, sep } from 'path';
 import { readFileSync, existsSync } from 'fs';
-import { BUN_MIN } from '../lib/bun-floor.ts';
+import { BUN_MIN } from '../packages/core/src/kernel/bun-floor.ts';
 
 console.log('\nweb/ test discovery contract (#2360)');
 
-const WEB = join(ROOT, 'web');
+const WEB = join(ROOT, 'apps/web');
 const WEB_PKG = join(WEB, 'package.json');
 
 // `bun test` discovers recursively with no CLI glob to expand, so the binding
-// constraint on web/'s floor is the Bun release the suites are developed and
-// tested against — the same number lib/bun-floor.ts states once for the whole
+// constraint on apps/web/'s floor is the Bun release the suites are developed and
+// tested against — the same number packages/core/src/kernel/bun-floor.ts states once for the whole
 // repository. vite's own node engines are unrelated and no longer consulted.
 const RUNNER_FLOOR = BUN_MIN.split('.').map(Number);
 
@@ -136,27 +136,27 @@ function floorOf(range) {
   return floor;
 }
 
-// web/ is NOT in update-system.ts's SYSTEM_PATHS but tests/ is, so this file
-// ships to end users whose checkout has no web/ at all. The invariant is
-// conditional ("if web/ exists, its suites are reachable") and vacuously true
+// apps/web/ is NOT in packages/cli/src/commands/platform/update-system.ts's SYSTEM_PATHS but tests/ is, so this file
+// ships to end users whose checkout has no apps/web/ at all. The invariant is
+// conditional ("if apps/web/ exists, its suites are reachable") and vacuously true
 // there — but say so out loud rather than skipping in silence.
 if (!existsSync(WEB_PKG)) {
-  pass('web/ is not present in this checkout — discovery contract not applicable');
+  pass('apps/web/ is not present in this checkout — discovery contract not applicable');
 } else {
-  // ── Given: what is on disk, and what web/package.json claims to run ──
+  // ── Given: what is on disk, and what apps/web/package.json claims to run ──
 
   // Anything a contributor would reasonably expect to be run: the sanctioned
   // {module}.test.{ext} and the legacy test-{module}.{ext}. Non-.ts
   // extensions are caught on purpose so a suite written in another shape is
   // named here instead of sitting in the tree looking like coverage.
   const TEST_FILE = /(?:\.test\.(?:mjs|js|ts|tsx)|^test-.*\.(?:mjs|js|ts|tsx))$/;
-  // Scoped to what web/ TRACKS (#3890): walkFiles enumerates the index now, so
+  // Scoped to what apps/web/ TRACKS (#3890): walkFiles enumerates the index now, so
   // `node_modules`, `.next`, `out`, `dist` and `coverage` drop out because git
   // does not track them, not because this file remembered to list them. That
   // list was also the narrowing hazard — an unlisted generated directory put a
   // built copy of every suite under the contract, and a suite added under a
   // listed one silently left it. node_modules mattered for speed too: a
-  // populated web/node_modules is ~400 MB (see test-all.ts's copy-exclusion
+  // populated apps/web/node_modules is ~400 MB (see test-all.ts's copy-exclusion
   // note), and the index never walks into it at all.
   const found = walkFiles(WEB, TEST_FILE)
     .map((p) => relative(WEB, p).split(sep).join('/'));
@@ -178,10 +178,10 @@ if (!existsSync(WEB_PKG)) {
   // ── Every suite sits where the glob can see it, under the right name ──
   scenario('where web suites live', () => {
     if (misplaced.length === 0) {
-      pass(`all ${found.length} web suites live under web/tests/ as {module}.test.ts`);
+      pass(`all ${found.length} web suites live under apps/web/tests/ as {module}.test.ts`);
     } else {
       fail(`web suites outside the discovered layout (#2360): ${misplaced.join(', ')}`
-        + ' — web tests live at web/tests/{dir}/{module}.test.ts mirroring web/src/,'
+        + ' — web tests live at apps/web/tests/{dir}/{module}.test.ts mirroring apps/web/src/,'
         + " and must end in .test.ts for `bun test` discovery to reach them");
     }
   });
@@ -189,9 +189,9 @@ if (!existsSync(WEB_PKG)) {
   // ── The script discovers by pattern; it never lists suites by name ──
   scenario('that the test script names no suites', () => {
     if (enumerated.length === 0) {
-      pass('web/package.json test script enumerates no suites by name');
+      pass('apps/web/package.json test script enumerates no suites by name');
     } else {
-      fail(`web/package.json test script names suites explicitly (#2360): ${enumerated.join(', ')}`
+      fail(`apps/web/package.json test script names suites explicitly (#2360): ${enumerated.join(', ')}`
         + ' — a suite missing from a hand-maintained list never runs and `bun test` still exits 0;'
         + ' rely on automatic discovery under tests/ instead');
     }
@@ -206,7 +206,7 @@ if (!existsSync(WEB_PKG)) {
     if (runner === 'bun') {
       pass('web test script runs the Bun test runner');
     } else {
-      fail(`web/package.json test script does not run \`bun test\` (#2360, found ${JSON.stringify(script)})`
+      fail(`apps/web/package.json test script does not run \`bun test\` (#2360, found ${JSON.stringify(script)})`
         + " — the suites are for Bun to discover; any other runner would exit 0 having run nothing");
     }
     for (const pattern of patterns) {
@@ -224,7 +224,7 @@ if (!existsSync(WEB_PKG)) {
     if (found.length > 0) {
       pass(`web test discovery is non-empty (${found.length} suites on disk)`);
     } else {
-      fail('no web test suites found under web/ (#2360, #1440) — an empty glob exits 0,'
+      fail('no web test suites found under apps/web/ (#2360, #1440) — an empty glob exits 0,'
         + ' so zero web coverage would look identical to a green run');
     }
   });
@@ -285,7 +285,7 @@ if (!existsSync(WEB_PKG)) {
     const declaredFloor = floorOf(engines);
     const required = RUNNER_FLOOR.join('.');
     if (!declaredFloor) {
-      fail(`web/package.json declares no verifiable engines.bun floor (#2360, got ${JSON.stringify(engines)})`
+      fail(`apps/web/package.json declares no verifiable engines.bun floor (#2360, got ${JSON.stringify(engines)})`
         + ` — the suites need >=${required}. State it as a single`
         + ` \`>=<version>\` lower bound (an upper bound may follow); \`||\` alternatives are refused`
         + ' because they can admit an older Bun than the first term suggests');

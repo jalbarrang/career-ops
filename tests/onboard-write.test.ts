@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 import * as yaml from 'js-yaml';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SCRIPT = join(ROOT, 'onboard-write.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/profile/onboard-write.ts');
 const TEMPLATE = yaml.load(readFileSync(join(ROOT, 'templates', 'portals.example.yml'), 'utf8'));
 
 const FICTIONAL_EMAIL = ['avery.quinn', 'example.test'].join('@');
@@ -344,12 +344,12 @@ test('AGENTS.md onboarding calls the writer and builds the finish from doctor', 
   const agents = readFileSync(join(ROOT, 'AGENTS.md'), 'utf8');
   const first = agents.split('### First Run')[1].split('### Personalization')[0];
   const steps23 = first.split('#### Step 2')[1].split('#### Step 4')[0];
-  assert.match(steps23, /bun onboard-write\.ts --answers/);
+  assert.match(steps23, /career-ops onboard-write --answers/);
   assert.match(steps23, /do not edit `portals\.yml`[^.]*afterward/i);
   assert.match(steps23, /rerun with `--force --only/);
   assert.match(first.split('#### Step 2')[1].split('#### Step 3')[0], /salary target range and its currency/i);
   const step6 = first.split('#### Step 6')[1];
-  assert.match(step6, /bun doctor\.ts/);
+  assert.match(step6, /career-ops doctor/);
   assert.match(step6, /only[^.]*fail/i);
   assert.match(step6, /playwright install chromium/);
 });

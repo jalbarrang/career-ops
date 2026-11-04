@@ -2,7 +2,7 @@
 // the developer's shell must not reach the suite.
 //
 // The override outranks CAREER_OPS_ROOT, and fixtures pin only the root. With
-// the variable inherited, `bun test-all.ts` ran normalize-statuses.ts against
+// the variable inherited, `bun test-all.ts` ran packages/cli/src/commands/tracker/normalize-statuses.ts against
 // the developer's own tracker: a `**Applied**` cell there came back as
 // `Applied`, with an applications.md.bak left next to it.
 //
@@ -25,7 +25,7 @@ const ROW = '| 1 | 2026-01-01 | Acme Widgets | Coordinator | 4.0/5 | **Applied**
 const dir = mkdtempSync(join(tmpdir(), 'co-inherited-tracker-'));
 try {
   // "The developer's" tracker: outside the fixture root, with a cell that
-  // normalize-statuses.ts would rewrite if it were pointed at this file.
+  // packages/cli/src/commands/tracker/normalize-statuses.ts would rewrite if it were pointed at this file.
   const outside = join(dir, 'theirs');
   mkdirSync(outside);
   const inherited = join(outside, 'applications.md');
@@ -63,7 +63,7 @@ try {
   }
 
   // Control: the writer did run, and on the fixture. Without this the check
-  // above would also pass if normalize-statuses.ts had done nothing at all.
+  // above would also pass if packages/cli/src/commands/tracker/normalize-statuses.ts had done nothing at all.
   const fixtureAfter = readFileSync(fixtureTracker, 'utf-8');
   if (fixtureAfter.includes('| Applied |') && !fixtureAfter.includes('**Applied**')) {
     pass('the writer normalised the fixture tracker instead (control)');

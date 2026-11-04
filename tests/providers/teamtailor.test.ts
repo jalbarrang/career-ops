@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — teamtailor');
 
 try {
-  const teamtailorModule = await import(pathToFileURL(join(ROOT, 'providers/teamtailor.ts')).href);
+  const teamtailorModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/teamtailor.ts')).href);
   const teamtailor = teamtailorModule.default;
   const { parseTeamtailorFeed } = teamtailorModule;
 

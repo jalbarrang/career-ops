@@ -7,10 +7,10 @@
 // a defect on its own — it is three different situations that look identical at
 // the call site:
 //
-//   1. the caller runs its OWN, richer validation (scan.ts's requireValue()
+//   1. the caller runs its OWN, richer validation (packages/core/src/scanning/scan.ts's requireValue()
 //      separates no-value / zero / negative / non-finite / out-of-range; the
 //      generic message would collapse five diagnostics into one line),
-//   2. requireOperand would be WRONG for that flag (contacts.ts's --vcf takes
+//   2. requireOperand would be WRONG for that flag (packages/cli/src/commands/outreach/contacts.ts's --vcf takes
 //      an optional operand — `--vcf` alone means the default path), or
 //   3. nothing validates it at all, and the script answers from a default.
 //
@@ -27,13 +27,13 @@
 // its value, or fell back to a default, and the script answered at exit 0 for
 // inputs nobody asked for. `requireOperand` is deliberately opt-in — several
 // callers already say more than a generic message can, and firing first would
-// replace their diagnostics with one line (see lib/cli-flags.ts).
+// replace their diagnostics with one line (see packages/core/src/kernel/cli-flags.ts).
 //
 // Opt-in is the right default and also the whole problem: it re-opens silently.
 // A new script wires up validateFlags with `valueFlags`, forgets the option,
 // and nothing fails — it just inherits the bug, exactly as before #3087. There
 // is no signal at the call site that anything is missing. Two such callers were
-// already in the tree when #3092 audited it (fix-slugs.ts, upskill.ts) and
+// already in the tree when #3092 audited it (packages/cli/src/commands/scanning/fix-slugs.ts, packages/cli/src/commands/insights/upskill.ts) and
 // neither appeared in that audit's list.
 //
 // So the rule is enforced where it can go red rather than restated where it can
@@ -41,14 +41,14 @@
 //
 // WHAT THIS DELIBERATELY DOES NOT CHECK: where the call sits. Both shapes in the
 // tree are correct and the difference is not stylistic. A script nothing imports
-// validates at module top level (contacts.ts, rejection-latency.ts,
-// batch-tailor.ts; test-all.ts spawns those as subprocesses). A module that IS
+// validates at module top level (packages/cli/src/commands/outreach/contacts.ts, packages/cli/src/commands/outreach/rejection-latency.ts,
+// packages/cli/src/commands/cv/batch-tailor.ts; test-all.ts spawns those as subprocesses). A module that IS
 // imported in-process validates inside its main-module guard
-// (`isMainModule(import.meta.url)`, lib/is-main-module.ts) — followup-cadence.ts
+// (`isMainModule(import.meta.url)`, packages/core/src/kernel/is-main-module.ts) — packages/core/src/outreach/followup-cadence.ts
 // (#3196) reads the argv of whatever process imported it otherwise, so a
 // top-level validator would exit(1) on the TEST RUNNER's flags and take the
-// suite down with it. Same for upskill.ts and check-table-freshness.ts; scan.ts
-// and archive-posting.ts validate inside the function that parses argv.
+// suite down with it. Same for packages/cli/src/commands/insights/upskill.ts and packages/cli/src/commands/platform/check-table-freshness.ts; packages/core/src/scanning/scan.ts
+// and packages/cli/src/commands/evaluation/archive-posting.ts validate inside the function that parses argv.
 //
 // The invariant is "a declared value flag is validated", not "validated in one
 // particular place", so the classifier below reads the call's ARGUMENTS and
@@ -148,19 +148,19 @@ console.log('\nvalidateFlags — every value-taking caller handles a missing ope
 // Together those make the number monotonic downward. It may go down; it may not
 // go up without someone saying so out loud.
 const OWN_GUARD = new Map([
-  ['scan.ts',
-    'requireValue() (scan.ts) + the shared parseSinceDays(): distinguishes a missing value from a zero, ' +
+  ['packages/core/src/scanning/scan.ts',
+    'requireValue() (packages/core/src/scanning/scan.ts) + the shared parseSinceDays(): distinguishes a missing value from a zero, ' +
     'a negative, a non-finite, an out-of-range cutoff and a repeated flag — five diagnostics one generic line would replace.'],
-  ['rejection-latency.ts',
+  ['packages/cli/src/commands/outreach/rejection-latency.ts',
     'argValue() rejects missing, empty AND `--`-prefixed values, and exits 2 (not 1) — its documented exit code for a usage error.'],
-  ['scan-ats-full.ts',
+  ['packages/cli/src/commands/scanning/scan-ats-full.ts',
     'valueOf() only accepts a next token that is not `--`-prefixed, and parseSinceDays()/the seed-source check reject the malformed rest.'],
-  ['check-table-freshness.ts',
+  ['packages/cli/src/commands/platform/check-table-freshness.ts',
     'parseDate()/parsePositiveInt() validate the operand SHAPE, naming the expected format ("expected YYYY-MM-DD", "a positive integer").'],
-  ['contacts.ts',
-    '--vcf takes an OPTIONAL operand — `bun contacts.ts --vcf` means the default output/contacts.vcf. requireOperand would break that call.'],
+  ['packages/cli/src/commands/outreach/contacts.ts',
+    '--vcf takes an OPTIONAL operand — `career-ops contacts --vcf` means the default output/contacts.vcf. requireOperand would break that call.'],
   // Not in #3092's audit, found by this sweep: a guard that predates it.
-  ['fix-slugs.ts',
+  ['packages/cli/src/commands/scanning/fix-slugs.ts',
     'a hand-rolled --file check BEFORE validateFlags, covering more than requireOperand does: `--file=` (empty) and `--file -h` (single-dash next token) are rejected too.'],
 ]);
 
@@ -188,9 +188,9 @@ function sourceFiles() {
   return out
     .split('\0')
     .filter((p) => p && p.endsWith('.ts'))
-    // lib/cli-flags.ts DEFINES validateFlags; tests exercise it directly,
+    // packages/core/src/kernel/cli-flags.ts DEFINES validateFlags; tests exercise it directly,
     // including the deliberately unguarded form.
-    .filter((p) => p !== 'lib/cli-flags.ts')
+    .filter((p) => p !== 'packages/core/src/kernel/cli-flags.ts')
     .filter((p) => !p.startsWith('tests/') && !basename(p).endsWith('.test.ts') && p !== 'test-all.ts')
     .map((p) => join(ROOT, p));
 }
@@ -309,7 +309,7 @@ function scanCalls(text) {
   while ((m = re.exec(text)) !== null) {
     const idx = m.index;
     if (inComment(text, idx)) continue;
-    // The declaration in lib/cli-flags.ts is out of scope by path, but a
+    // The declaration in packages/core/src/kernel/cli-flags.ts is out of scope by path, but a
     // re-export or a local wrapper must not read as a call either.
     if (/\bfunction\s+$/.test(text.slice(Math.max(0, idx - 24), idx))) continue;
     const args = callArgs(text, idx + m[0].length - 1);
@@ -374,7 +374,7 @@ if (scanned.length < 50) {
 } else if (offenders.length > 0) {
   fail(
     `validateFlags caller(s) declaring valueFlags without requireOperand, and not documented as running their own `
-    + `validator: ${offenders.join(', ')} — pass \`requireOperand: true\` (lib/cli-flags.ts, #3087) if nothing else `
+    + `validator: ${offenders.join(', ')} — pass \`requireOperand: true\` (packages/core/src/kernel/cli-flags.ts, #3087) if nothing else `
     + 'checks the operand there. If something does, add the file to OWN_GUARD in '
     + 'tests/validate-flags-value-operand.test.ts naming that validator, and raise MAX_OWN_GUARD in the same diff',
   );
@@ -448,8 +448,8 @@ if (misread.length === 0) {
 // Placement is not part of the rule. The five shapes below are the ones in the
 // tree — and choosing between them is a correctness decision about whether the
 // module gets imported in-process, not a style one (see the header). A future
-// edit that started reading position would fail followup-cadence.ts and
-// upskill.ts, which validate inside `isMain` because they must.
+// edit that started reading position would fail packages/core/src/outreach/followup-cadence.ts and
+// packages/cli/src/commands/insights/upskill.ts, which validate inside `isMain` because they must.
 //
 // Each fixture is the SHAPE THAT HAS CONSEQUENCES (noSharedGuard), not the
 // harmless one: a position-sensitive scanner would degrade a wrapped call to
@@ -459,8 +459,8 @@ const PLACEMENTS = [
   ['top level', 'validateFlags(args, K, U, { valueFlags: V });'],
   ['isMain guard', 'if (isMain) {\n  const args = process.argv.slice(2);\n  validateFlags(args, K, U, { valueFlags: V });\n}'],
   // The two real spellings of the same guard: a named `isMain` const
-  // (upskill.ts) and the call inline (followup-cadence.ts,
-  // check-table-freshness.ts). Both go through lib/is-main-module.ts — the
+  // (packages/cli/src/commands/insights/upskill.ts) and the call inline (packages/core/src/outreach/followup-cadence.ts,
+  // packages/cli/src/commands/platform/check-table-freshness.ts). Both go through packages/core/src/kernel/is-main-module.ts — the
   // older hand-rolled `process.argv[1]` comparison is banned repo-wide by
   // tests/main-guard-convention.test.ts (#3170), including inside a string
   // literal like this one, so quoting it here would fail that test.
@@ -479,7 +479,7 @@ if (misplaced.length === 0) {
 // reading those as argument-less calls is harmless only until one of them
 // quotes a full call.
 const PROSE = [
-  '// Handled via lib/cli-flags.ts\'s validateFlags() (#2775), which also rejects unknown flags.',
+  '// Handled via packages/core/src/kernel/cli-flags.ts\'s validateFlags() (#2775), which also rejects unknown flags.',
   '/*\n * validateFlags(args, K, U, { valueFlags: V }) is the shape to copy.\n */',
   '/**\n * The unrecognized-flag check inside\n * validateFlags(args, KNOWN_FLAGS, USAGE, { valueFlags: VALUE_FLAGS })\n * runs before --help.\n */',
 ];

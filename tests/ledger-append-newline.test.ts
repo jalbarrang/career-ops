@@ -7,7 +7,7 @@
 // line: the old row's last cell grew by the new row's first cell, and the new
 // row never existed. Every reader skips a malformed line quietly, so the loss
 // was invisible (a posting seen again as new, a status transition missing from
-// the funnel). agent-inbox.ts and assessment-log.ts already start such an
+// the funnel). packages/cli/src/commands/platform/agent-inbox.ts and packages/cli/src/commands/insights/assessment-log.ts already start such an
 // append on a fresh line; the other ledgers now do the same.
 import { pass, fail, ROOT, NODE, rmSync } from './helpers.ts';
 import assert from 'node:assert';
@@ -39,7 +39,7 @@ try {
   ok('appendLedgerRows closes an unterminated last row first', () => {
     const f = join(root, 'plain.tsv');
     writeFileSync(f, 'a\tb\nc\td');
-    node(`import { appendLedgerRows } from '${href('tracker-utils.ts')}'; appendLedgerRows(${JSON.stringify(f)}, 'e\\tf\\n');`);
+    node(`import { appendLedgerRows } from '${href('packages/core/src/tracker/tracker-utils.ts')}'; appendLedgerRows(${JSON.stringify(f)}, 'e\\tf\\n');`);
     assert.equal(readFileSync(f, 'utf-8'), 'a\tb\nc\td\ne\tf\n');
   });
 
@@ -53,7 +53,7 @@ try {
     for (const [label, [before, after]] of Object.entries(cases)) {
       const f = join(root, `${label}.tsv`);
       if (before !== null) writeFileSync(f, before);
-      node(`import { appendLedgerRows } from '${href('tracker-utils.ts')}'; appendLedgerRows(${JSON.stringify(f)}, 'x\\n');`);
+      node(`import { appendLedgerRows } from '${href('packages/core/src/tracker/tracker-utils.ts')}'; appendLedgerRows(${JSON.stringify(f)}, 'x\\n');`);
       assert.equal(readFileSync(f, 'utf-8'), after, label);
     }
   });
@@ -62,7 +62,7 @@ try {
     const f = join(dataDir, 'scan-history.tsv');
     writeFileSync(f, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\tlocation\n'
       + 'https://boards.greenhouse.io/acme/jobs/1\t2026-09-01\tgreenhouse\tEngineer\tAcme\tadded\tRemote');
-    node(`import { appendToScanHistory } from '${href('scan.ts')}';
+    node(`import { appendToScanHistory } from '${href('packages/core/src/scanning/scan.ts')}';
       await appendToScanHistory([{ url: 'https://boards.greenhouse.io/beta/jobs/2', source: 'greenhouse', title: 'Dev', company: 'Beta', location: 'Berlin' }], '2026-10-10', 'added');`);
     const rows = lines(readFileSync(f, 'utf-8')).slice(1).map(l => l.split('\t'));
     assert.equal(rows.length, 2, 'two data rows, not one fused row');
@@ -77,7 +77,7 @@ try {
       + '| 1 | 2026-01-01 | Acme | Engineer | 4.0/5 | Evaluated | ❌ | — | n |\n');
     const log = join(dataDir, 'status-log.tsv');
     writeFileSync(log, '7\t2026-01-05\t-\tEvaluated\tcorrection\t');
-    const r = spawnSync(NODE, [join(ROOT, 'set-status.ts'), '--row', '1', 'Applied'], {
+    const r = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/set-status.ts'), '--row', '1', 'Applied'], {
       cwd: root, encoding: 'utf-8', env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_TRACKER: '' },
     });
     assert.equal(r.status, 0, r.stderr);
@@ -90,7 +90,7 @@ try {
   ok('scan-runs and portal-health: the new row lands on its own line', () => {
     const runs = join(dataDir, 'scan-runs.tsv');
     const health = join(dataDir, 'portal-health.tsv');
-    node(`import { SCAN_RUNS_HEADER, appendScanRunSummary, appendPortalHealth } from '${href('scan.ts')}';
+    node(`import { SCAN_RUNS_HEADER, appendScanRunSummary, appendPortalHealth } from '${href('packages/core/src/scanning/scan.ts')}';
       import { writeFileSync } from 'node:fs';
       writeFileSync(${JSON.stringify(runs)}, SCAN_RUNS_HEADER + '2026-07-01T00:00:00Z\\tcompleted');
       appendScanRunSummary({ timestamp: '2026-07-02T00:00:00Z', companies: 1, boards: 1, found: 1, newAdded: 1 }, ${JSON.stringify(runs)});
@@ -106,7 +106,7 @@ try {
     const f = join(dataDir, 'coverage-misses.tsv');
     writeFileSync(f, 'date\turl\tcompany\ttitle\tgap\tfix\tnote\n'
       + '2026-07-01\thttps://a.example/jobs/1\tAcme\tEngineer\tfilter\t-\tn');
-    node(`import { appendMiss } from '${href('coverage-check.ts')}';
+    node(`import { appendMiss } from '${href('packages/cli/src/commands/pipeline/coverage-check.ts')}';
       appendMiss(${JSON.stringify(f)}, { url: 'https://b.example/jobs/2', company: 'Beta', title: 'Dev' }, { gap: 'filter', fix: '-' }, 'n', '2026-10-10');`);
     const rows = lines(readFileSync(f, 'utf-8')).slice(1).map(l => l.split('\t'));
     assert.equal(rows.length, 2, 'two data rows, not one fused row');

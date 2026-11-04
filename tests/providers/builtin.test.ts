@@ -41,7 +41,7 @@ function mockCtx(pages) {
 }
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/builtin.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/builtin.ts')).href);
   const bi = mod.default;
   const { parseListPage, readConfig } = mod;
 
@@ -348,7 +348,7 @@ try {
     fail(`parsePostedAt: ${['Yesterday', 'Reposted 3 Days Ago', '2 Hours Ago', '30+ Days Ago', 'An Hour Ago'].map((t) => parsePostedAt(t, NOW)).join(',')}`);
   }
   if (parsePostedAt('Whenever', NOW) === undefined && parsePostedAt(null, NOW) === undefined) {
-    pass('parsePostedAt() returns undefined for unrecognised text (scan.ts then treats it as "no date" and passes)');
+    pass('parsePostedAt() returns undefined for unrecognised text (packages/core/src/scanning/scan.ts then treats it as "no date" and passes)');
   } else {
     fail('parsePostedAt() should return undefined for unparseable badges');
   }

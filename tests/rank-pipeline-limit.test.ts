@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT } from './helpers.ts';
-import { selectBatch, LIMIT_CEILING } from '../rank-pipeline.ts';
+import { selectBatch, LIMIT_CEILING } from '../packages/cli/src/commands/pipeline/rank-pipeline.ts';
 
 for (const args of [
   ...['0', '-1', 'nope', 'Infinity', '1.5', '1e2', '', '9007199254740992', ' 1', '1 '].map(limit => [`--limit=${limit}`]),
@@ -23,7 +23,7 @@ for (const args of [
     writeFileSync(pipeline, original);
     // Node is an offline CLI stand-in on every platform. If validation falls
     // through, its -p invocation fails on the rank prompt instead of spending tokens.
-    const result = spawnSync(process.execPath, [join(ROOT, 'rank-pipeline.ts'), '--cli', process.execPath, ...args], {
+    const result = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/pipeline/rank-pipeline.ts'), '--cli', process.execPath, ...args], {
       env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_DATA_DIR: root },
       encoding: 'utf8', timeout: 15_000,
     });

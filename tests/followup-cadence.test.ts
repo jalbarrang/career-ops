@@ -20,7 +20,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_CADENCE_PROFILE = join(ROOT, 'tests', 'fixtures', 'profile-default-cadence.yml');
 const CUSTOM_CADENCE_PROFILE = join(ROOT, 'tests', 'fixtures', 'profile-custom-cadence.yml');
 
-// Pin the cadence source BEFORE followup-cadence.ts is evaluated. Its
+// Pin the cadence source BEFORE packages/core/src/outreach/followup-cadence.ts is evaluated. Its
 // module-level `CADENCE = resolveCadenceConfig()` reads CAREER_OPS_PROFILE at
 // import time and otherwise falls back to the USER's config/profile.yml — so
 // on a machine where the user customized followup_cadence, assertions written
@@ -33,7 +33,7 @@ const CUSTOM_CADENCE_PROFILE = join(ROOT, 'tests', 'fixtures', 'profile-custom-c
 // The pin is scoped to the import and restored in a finally, so it is live for
 // exactly the statement that needs it. As a standalone script it died with the
 // process; discovered suites share ONE process, so leaving it set leaked this
-// fixture forward — providers/_profile-keywords.ts reads CAREER_OPS_PROFILE at
+// fixture forward — packages/core/src/scanning/providers/_profile-keywords.ts reads CAREER_OPS_PROFILE at
 // module scope, and three provider suites then read this cadence fixture
 // instead of the profile their own tmpdir had just written (#3306).
 //
@@ -48,7 +48,7 @@ process.env.CAREER_OPS_PROFILE = DEFAULT_CADENCE_PROFILE;
 
 let cadence;
 try {
-  cadence = await import('../followup-cadence.ts');
+  cadence = await import('../packages/core/src/outreach/followup-cadence.ts');
 } finally {
   if (PRIOR_PROFILE_ENV === undefined) delete process.env.CAREER_OPS_PROFILE;
   else process.env.CAREER_OPS_PROFILE = PRIOR_PROFILE_ENV;
@@ -179,7 +179,7 @@ eq(
   [],
 );
 
-// analyzeFromContent (#2123): the content-based core exported so stats.ts
+// analyzeFromContent (#2123): the content-based core exported so packages/core/src/insights/stats.ts
 // can reuse the exact same cadence math for its own cold-classification
 // wiring, instead of re-deriving applied_max_followups/cadence rules there.
 const trackerMd = [
@@ -287,7 +287,7 @@ eq(
 // `isCrossReferencedMention` skips an apply-date that is cited ABOUT ANOTHER
 // ROW (`see #12, applied 2026-09-01`). A `#` preceded by a requisition label
 // is the row's own req number, not a row reference, and REQ_LABELLED_HASH_RE
-// shares tracker-parse.ts's label vocabulary so the two never disagree. The
+// shares packages/core/src/tracker/tracker-parse.ts's label vocabulary so the two never disagree. The
 // `r_` label was missing from that list (PR #4267 review), so
 // `R_#1311 Applied 2026-09-01` lost its own applied date while the equivalent
 // `req #1311` kept it.

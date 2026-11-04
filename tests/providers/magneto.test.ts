@@ -1,10 +1,10 @@
-// tests/providers/magneto.test.ts: Magneto365 provider (providers/magneto.ts).
+// tests/providers/magneto.test.ts: Magneto365 provider (packages/core/src/scanning/providers/magneto.ts).
 // Offline only. The fixture reproduces the markup measured on
 // www.magneto365.com/co/trabajos/buscar/tecnologia on 2026-10-23 (class names
 // shortened); titles and companies are fictional.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import provider, { buildPageUrl, parseCards, resolveListUrl } from '../../providers/magneto.ts';
+import provider, { buildPageUrl, parseCards, resolveListUrl } from '../../packages/core/src/scanning/providers/magneto.ts';
 
 const BASE = 'https://www.magneto365.com/co/trabajos/buscar/tecnologia';
 

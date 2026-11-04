@@ -21,34 +21,34 @@ const copyIntoFixture = (relativePath) => {
 };
 
 for (const relativePath of [
-  'ollama-eval.ts',
-  'profile-language.ts',
-  'reserve-report-num.ts',
-  'tracker-aliases.json',
-  'tracker-parse.ts',
-  'tracker-utils.ts',
+  'packages/cli/src/commands/evaluation/ollama-eval.ts',
+  'packages/core/src/profile/profile-language.ts',
+  'packages/cli/src/commands/tracker/reserve-report-num.ts',
+  'packages/core/src/tracker/tracker-aliases.json',
+  'packages/core/src/tracker/tracker-parse.ts',
+  'packages/core/src/tracker/tracker-utils.ts',
   // tracker-utils imports the shared lock-contention helpers (#2777 fix):
   // a fixture that carries tracker-utils has to carry its import too.
-  'pipeline-lock.ts',
-  // ...which runs the shared lock protocol from lib/dir-lock.ts (#5358).
-  'lib/dir-lock.ts',
-  'lib/yaml-document.ts',
+  'packages/core/src/kernel/pipeline-lock.ts',
+  // ...which runs the shared lock protocol from packages/core/src/kernel/dir-lock.ts (#5358).
+  'packages/core/src/kernel/dir-lock.ts',
+  'packages/core/src/kernel/yaml-document.ts',
   // ollama-eval/reserve-report-num resolve user-layer paths via
-  // path-resolver.ts (CAREER_OPS_ROOT), so the fixture carries that too.
-  'path-resolver.ts',
-  'lib/context-budget.ts',
+  // packages/core/src/kernel/path-resolver.ts (CAREER_OPS_ROOT), so the fixture carries that too.
+  'packages/core/src/kernel/path-resolver.ts',
+  'packages/core/src/kernel/context-budget.ts',
   // ollama-eval builds its tracker-addition row with the shared helpers
   // (#3796), so the fixture has to carry the module they were consolidated
-  // into -- same reason pipeline-lock.ts is on this list.
-  'lib/tracker-addition.ts',
-  // reserve-report-num.ts's main-guard comes from lib/is-main-module.ts
+  // into -- same reason packages/core/src/kernel/pipeline-lock.ts is on this list.
+  'packages/core/src/tracker/tracker-addition.ts',
+  // packages/cli/src/commands/tracker/reserve-report-num.ts's main-guard comes from packages/core/src/kernel/is-main-module.ts
   // (#3170), so a fixture that carries it has to carry the helper too.
-  'lib/is-main-module.ts',
+  'packages/core/src/kernel/is-main-module.ts',
   // ollama-eval dates its report with localToday() rather than the UTC day,
   // so the fixture has to carry that helper for the module to load at all.
-  'lib/local-today.ts',
-  'utils/token-tracker.ts',
-]) {
+  'packages/core/src/kernel/local-today.ts',
+  'packages/core/src/kernel/token-tracker.ts',
+'packages/core/src/kernel/repo-root.ts',]) {
   copyIntoFixture(relativePath);
 }
 
@@ -115,7 +115,7 @@ try {
   const result = await new Promise((resolve) => {
     execFile(
       NODE,
-      [join(fixtureRoot, 'ollama-eval.ts'), '--url', `http://127.0.0.1:${port}`, '--no-save', 'On-site role.'],
+      [join(fixtureRoot, 'packages/cli/src/commands/evaluation/ollama-eval.ts'), '--url', `http://127.0.0.1:${port}`, '--no-save', 'On-site role.'],
       // The fixture is its own data root; without this the evaluator reads
       // the profile from the root the suite pins, not the one written above.
       { timeout: 30000, env: ownRootEnv() },

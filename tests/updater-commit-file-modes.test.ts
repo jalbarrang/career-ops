@@ -20,9 +20,9 @@
 
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import {dirname, join } from 'path';
 import { pass, fail, sealProcessGitEnv } from './helpers.ts';
-import { gitIn, gitRawIn, stagedPathsOutside } from '../update-system.ts';
+import { gitIn, gitRawIn, stagedPathsOutside } from '../packages/cli/src/commands/platform/update-system.ts';
 
 // A throwaway repo pinned to core.fileMode=false, which is what makes the bug
 // reachable. On a filesystem that records the executable bit this setting is what
@@ -109,24 +109,26 @@ console.log('\n🧪 Testing update-commit file-mode preservation...');
 // ── 4-6. stagedPathsOutside: the guard that keeps #915 bug 2 fixed ─────
 {
   const { dir, g, raw } = makeRepo();
-  mkdirSync(join(dir, 'providers'));
-  writeFileSync(join(dir, 'providers/acme.ts'), 'x\n');
-  writeFileSync(join(dir, 'scan.ts'), 'x\n');
+  mkdirSync(join(dir, 'packages/core/src/scanning/providers'), { recursive: true });
+  writeFileSync(join(dir, 'packages/core/src/scanning/providers/acme.ts'), 'x\n');
+  mkdirSync(dirname(join(dir, 'packages/core/src/scanning/scan.ts')), { recursive: true });
+  writeFileSync(join(dir, 'packages/core/src/scanning/scan.ts'), 'x\n');
   writeFileSync(join(dir, 'cv.md'), 'personal\n');
   g('add', '-A');
   g('commit', '-qm', 'base');
 
   // Only update-owned paths staged.
-  writeFileSync(join(dir, 'providers/acme.ts'), 'updated\n');
-  writeFileSync(join(dir, 'scan.ts'), 'updated\n');
-  g('add', 'providers/acme.ts', 'scan.ts');
+  writeFileSync(join(dir, 'packages/core/src/scanning/providers/acme.ts'), 'updated\n');
+  mkdirSync(dirname(join(dir, 'packages/core/src/scanning/scan.ts')), { recursive: true });
+  writeFileSync(join(dir, 'packages/core/src/scanning/scan.ts'), 'updated\n');
+  g('add', 'packages/core/src/scanning/providers/acme.ts', 'packages/core/src/scanning/scan.ts');
 
-  const clean = stagedPathsOutside(['providers/', 'scan.ts'], [], raw);
+  const clean = stagedPathsOutside(['packages/core/src/scanning/providers/', 'packages/core/src/scanning/scan.ts'], [], raw);
   if (clean.length === 0) pass('stagedPathsOutside: update-owned paths only → safe to commit the index');
   else fail(`expected none outside, got [${clean}]`);
 
-  const dirCovered = stagedPathsOutside(['providers/'], [], raw);
-  if (dirCovered.length === 1 && dirCovered[0] === 'scan.ts') {
+  const dirCovered = stagedPathsOutside(['packages/core/src/scanning/providers/'], [], raw);
+  if (dirCovered.length === 1 && dirCovered[0] === 'packages/core/src/scanning/scan.ts') {
     pass('stagedPathsOutside: a directory entry covers files beneath it');
   } else {
     fail(`directory coverage wrong, got [${dirCovered}]`);
@@ -137,7 +139,7 @@ console.log('\n🧪 Testing update-commit file-mode preservation...');
   writeFileSync(join(dir, 'cv.md'), 'user edit\n');
   g('add', 'cv.md');
 
-  const withUser = stagedPathsOutside(['providers/', 'scan.ts'], [], raw);
+  const withUser = stagedPathsOutside(['packages/core/src/scanning/providers/', 'packages/core/src/scanning/scan.ts'], [], raw);
   if (withUser.includes('cv.md')) {
     pass('stagedPathsOutside: an unrelated staged file is reported, forcing the scoped commit');
   } else {
@@ -149,20 +151,21 @@ console.log('\n🧪 Testing update-commit file-mode preservation...');
 
 // ── 7. Path names are preserved exactly (raised in PR review) ──────────
 // A staged path with a leading space must NOT be normalised into a different
-// one. Trimming would turn ` scan.ts` into `scan.ts`, match the owned entry,
+// one. Trimming would turn ` packages/core/src/scanning/scan.ts` into `packages/core/src/scanning/scan.ts`, match the owned entry,
 // and silently sweep a user's file into the update commit — #915 bug 2
 // reintroduced through the guard that exists to preserve it.
 {
   const { dir, g, raw } = makeRepo();
-  writeFileSync(join(dir, 'scan.ts'), 'x\n');
+  mkdirSync(dirname(join(dir, 'packages/core/src/scanning/scan.ts')), { recursive: true });
+  writeFileSync(join(dir, 'packages/core/src/scanning/scan.ts'), 'x\n');
   g('add', '-A');
   g('commit', '-qm', 'base');
 
-  writeFileSync(join(dir, ' scan.ts'), 'user file, leading space\n');
-  g('add', '--', ' scan.ts');
+  writeFileSync(join(dir, ' leading-space.ts'), 'user file, leading space\n');
+  g('add', '--', ' leading-space.ts');
 
-  const outside = stagedPathsOutside(['scan.ts'], [], raw);
-  if (outside.includes(' scan.ts')) {
+  const outside = stagedPathsOutside(['packages/core/src/scanning/scan.ts'], [], raw);
+  if (outside.includes(' leading-space.ts')) {
     pass('stagedPathsOutside: a leading-space path is not normalised into an owned one');
   } else {
     fail(`leading-space path mangled or matched; got ${JSON.stringify(outside)}`);
@@ -189,7 +192,7 @@ console.log('\n🧪 Testing update-commit file-mode preservation...');
 // #2337 leaves system files this install modified locally alone, expressed as
 // `:(exclude)<path>` pathspecs. Those pathspecs match no staged path, so handing
 // them to the guard as owned entries left the enclosing owned directory
-// (`providers/`) still claiming the preserved file — the guard reported nothing
+// (`packages/core/src/scanning/providers/`) still claiming the preserved file — the guard reported nothing
 // unrelated, the bare index commit was selected, and the content the user asked
 // to keep went into it under "chore: auto-update system files". That is #915
 // bug 2 back, through the guard that exists to prevent it.
@@ -199,21 +202,23 @@ console.log('\n🧪 Testing update-commit file-mode preservation...');
 // 12 demonstrate a fix rather than describe an absence.
 {
   const { dir, g, raw } = makeRepo();
-  mkdirSync(join(dir, 'providers'));
-  writeFileSync(join(dir, 'providers/acme.ts'), 'local provider v1\n');
-  writeFileSync(join(dir, 'providers/greenhouse.ts'), 'upstream v1\n');
+  mkdirSync(join(dir, 'packages/core/src/scanning/providers'), { recursive: true });
+  writeFileSync(join(dir, 'packages/core/src/scanning/providers/acme.ts'), 'local provider v1\n');
+  mkdirSync(dirname(join(dir, 'packages/core/src/scanning/providers/greenhouse.ts')), { recursive: true });
+  writeFileSync(join(dir, 'packages/core/src/scanning/providers/greenhouse.ts'), 'upstream v1\n');
   g('add', '-A');
   g('commit', '-qm', 'base');
 
   // The user's local edit to the preserved file, already staged when the update
   // runs; plus a genuine update to another file under the same owned directory.
-  writeFileSync(join(dir, 'providers/acme.ts'), 'user local edit\n');
-  writeFileSync(join(dir, 'providers/greenhouse.ts'), 'upstream v2\n');
-  g('add', 'providers/acme.ts', 'providers/greenhouse.ts');
+  writeFileSync(join(dir, 'packages/core/src/scanning/providers/acme.ts'), 'user local edit\n');
+  mkdirSync(dirname(join(dir, 'packages/core/src/scanning/providers/greenhouse.ts')), { recursive: true });
+  writeFileSync(join(dir, 'packages/core/src/scanning/providers/greenhouse.ts'), 'upstream v2\n');
+  g('add', 'packages/core/src/scanning/providers/acme.ts', 'packages/core/src/scanning/providers/greenhouse.ts');
 
   // Exactly how apply() builds them.
-  const updated = ['providers/'];
-  const preservedPaths = ['providers/acme.ts'];
+  const updated = ['packages/core/src/scanning/providers/'];
+  const preservedPaths = ['packages/core/src/scanning/providers/acme.ts'];
   const preserveSpecs = preservedPaths.map((f) => `:(exclude)${f}`);
   const pathsToStage = [...updated, ...preserveSpecs];
 
@@ -226,7 +231,7 @@ console.log('\n🧪 Testing update-commit file-mode preservation...');
 
   const ownedPaths = pathsToStage.filter((spec) => !spec.startsWith(':(exclude)'));
   const fixed = stagedPathsOutside(ownedPaths, preservedPaths, raw);
-  if (fixed.includes('providers/acme.ts')) {
+  if (fixed.includes('packages/core/src/scanning/providers/acme.ts')) {
     pass('stagedPathsOutside: a staged preserved file is unrelated despite its owned parent directory');
   } else {
     fail(`preserved file not reported, got [${fixed}]`);
@@ -238,7 +243,7 @@ console.log('\n🧪 Testing update-commit file-mode preservation...');
   g('commit', '-qm', 'chore: auto-update system files to v9.9.9', ...(usedIndexCommit ? [] : ['--', ...pathsToStage]));
   const committed = g('show', '--name-only', '--format=', 'HEAD').split('\n').map(s => s.trim()).filter(Boolean);
 
-  if (!usedIndexCommit && committed.includes('providers/greenhouse.ts') && !committed.includes('providers/acme.ts')) {
+  if (!usedIndexCommit && committed.includes('packages/core/src/scanning/providers/greenhouse.ts') && !committed.includes('packages/core/src/scanning/providers/acme.ts')) {
     pass('path-scoped commit is selected, and the preserved file stays out of the update commit');
   } else {
     fail(`usedIndexCommit=${usedIndexCommit}, committed [${committed}]`);

@@ -1,6 +1,6 @@
-// tests/cv-sync-check-runs.test.ts — regression coverage for cv-sync-check.ts starting up.
+// tests/cv-sync-check-runs.test.ts — regression coverage for packages/cli/src/commands/cv/cv-sync-check.ts starting up.
 //
-// Why this exists: cv-sync-check.ts referenced an undefined `projectRoot`, so it
+// Why this exists: packages/cli/src/commands/cv/cv-sync-check.ts referenced an undefined `projectRoot`, so it
 // crashed with a ReferenceError before running a single check. test-all.ts asserts
 // `expectExit: 1` for this script ("fails without cv.md (normal in repo)"), and an
 // uncaught ReferenceError ALSO exits 1 — so the crash was indistinguishable from the
@@ -19,7 +19,7 @@ const work = mkdtempSync(join(tmpdir(), 'cops-cvsync-'));
 try {
   // Empty data root: no cv.md, no config/profile.yml. The script is EXPECTED to
   // exit 1 here — that is a clean, reported failure, not a crash.
-  const res = spawnSync(NODE, [join(ROOT, 'cv-sync-check.ts')], {
+  const res = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/cv-sync-check.ts')], {
     encoding: 'utf-8',
     timeout: 30000,
     env: { ...process.env, CAREER_OPS_ROOT: work },
@@ -29,7 +29,7 @@ try {
   const stderr = res.stderr || '';
 
   if (/ReferenceError/.test(stderr)) {
-    fail(`cv-sync-check.ts crashed with a ReferenceError: ${stderr.split('\n').find(l => l.includes('ReferenceError'))}`);
+    fail(`packages/cli/src/commands/cv/cv-sync-check.ts crashed with a ReferenceError: ${stderr.split('\n').find(l => l.includes('ReferenceError'))}`);
   } else {
     pass('no ReferenceError on startup');
   }

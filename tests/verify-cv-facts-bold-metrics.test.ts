@@ -1,5 +1,5 @@
 import { pass, fail } from './helpers.ts';
-import { metricClaims, stripMarkup } from '../verify-cv-facts.ts';
+import { metricClaims, stripMarkup } from '../packages/cli/src/commands/cv/verify-cv-facts.ts';
 
 console.log('\nBolded metrics are not invisible to the fact gate (#4085)');
 

@@ -1,7 +1,7 @@
-// tests/tracker-cwd-independence.test.ts — tracker.ts must work from any cwd
+// tests/tracker-cwd-independence.test.ts — packages/cli/src/commands/tracker/tracker.ts must work from any cwd
 // (#3508).
 //
-// templates/states.yml ships with the code, but tracker.ts referenced it as the
+// templates/states.yml ships with the code, but packages/cli/src/commands/tracker/tracker.ts referenced it as the
 // bare relative string 'templates/states.yml', which resolves against
 // process.cwd(). Every command — sync, query, history, export, delete, all of
 // which reach loadStates() — therefore failed from anywhere but the repo root,
@@ -49,12 +49,12 @@ delete childEnv.CAREER_OPS_TRACKER_DB;
 delete childEnv.CAREER_OPS_ROOT;
 delete childEnv.CAREER_OPS_DATA_DIR;
 
-/** Run tracker.ts from `work`, never from the repo root. Returns {ok, out}. */
+/** Run packages/cli/src/commands/tracker/tracker.ts from `work`, never from the repo root. Returns {ok, out}. */
 function trackerFromElsewhere(...args) {
   try {
     return {
       ok: true,
-      out: execFileSync(NODE, [join(ROOT, 'tracker.ts'), ...args], {
+      out: execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/tracker.ts'), ...args], {
         cwd: work,                       // the point of this suite
         encoding: 'utf-8',
         timeout: 30000,
@@ -69,13 +69,13 @@ function trackerFromElsewhere(...args) {
 try {
   const sync = trackerFromElsewhere('sync');
   sync.ok
-    ? pass('tracker.ts sync succeeds from a cwd outside the repo root')
-    : fail(`tracker.ts sync failed from another cwd: ${sync.out.trim().split('\n')[0]}`);
+    ? pass('packages/cli/src/commands/tracker/tracker.ts sync succeeds from a cwd outside the repo root')
+    : fail(`packages/cli/src/commands/tracker/tracker.ts sync failed from another cwd: ${sync.out.trim().split('\n')[0]}`);
 
   // The old failure was specifically a states.yml miss. Name it, so a future
   // regression is recognizable rather than just "something broke".
   /states\.yml not found/.test(sync.out)
-    ? fail('tracker.ts still resolves templates/states.yml against the cwd (#3508)')
+    ? fail('packages/cli/src/commands/tracker/tracker.ts still resolves templates/states.yml against the cwd (#3508)')
     : pass('templates/states.yml resolves from the codebase, not the cwd');
 
   existsSync(join(work, 'applications.db'))
@@ -86,7 +86,7 @@ try {
   // the row actually round-tripped rather than sync merely exiting 0.
   const query = trackerFromElsewhere('query', '--json');
   if (!query.ok) {
-    fail(`tracker.ts query failed from another cwd: ${query.out.trim().split('\n')[0]}`);
+    fail(`packages/cli/src/commands/tracker/tracker.ts query failed from another cwd: ${query.out.trim().split('\n')[0]}`);
   } else {
     let rows = null;
     try { rows = JSON.parse(query.out); } catch { /* handled below */ }

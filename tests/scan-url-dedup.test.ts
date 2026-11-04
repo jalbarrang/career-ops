@@ -29,11 +29,11 @@
 import { pass, fail, ROOT } from './helpers.ts';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
-import { collectSeenUrls } from '../scan.ts';
+import { collectSeenUrls } from '../packages/core/src/scanning/scan.ts';
 
 console.log('\nscan.ts — normalizeUrlForDedup() ignores tracking params, preserves identity');
 try {
-  const { normalizeUrlForDedup } = await import(pathToFileURL(join(ROOT, 'scan.ts')).href);
+  const { normalizeUrlForDedup } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
 
   // The reported bug: one StepStone posting, two scans, two `rltr` values.
   const SS = 'https://www.stepstone.de/stellenangebote--AI-Engineer-Berlin-Acme--12345-inline.html';
@@ -105,12 +105,12 @@ try {
     fail('empty/nullish input should be returned unchanged');
   }
 } catch (err) {
-  fail(`scan.ts normalizeUrlForDedup tests crashed: ${err && err.message}`);
+  fail(`packages/core/src/scanning/scan.ts normalizeUrlForDedup tests crashed: ${err && err.message}`);
 }
 
 console.log('\nscan.ts — collectSeenUrls() finds the URL in every documented pipeline.md shape');
 try {
-  const { normalizeUrlForDedup } = await import(pathToFileURL(join(ROOT, 'scan.ts')).href);
+  const { normalizeUrlForDedup } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
 
   // Transcribed from the docs that specify each shape, so these fail if the
   // documented format changes. Only the first leads with the URL.
@@ -121,7 +121,7 @@ try {
     // modes/pipeline.md → workflow step 2f and the "Processed" example.
     ['- [x] #143 | https://jobs.example.com/posting/2 | Acme Corp | AI PM | 4.2/5 | PDF ✅',
       'https://jobs.example.com/posting/2', 'processed entry led by a report number'],
-    // reconcile-pipeline.ts → the line it writes when moving an entry to Processed.
+    // packages/cli/src/commands/pipeline/reconcile-pipeline.ts → the line it writes when moving an entry to Processed.
     // The report link is not a URL, so the gate must not stop at the first `(`…`)`.
     ['- [x] [144](reports/144-acme-2026-01-01.md) | https://jobs.example.com/posting/3 | Acme Corp | Solutions Architect | 3.1/5 | PDF ❌',
       'https://jobs.example.com/posting/3', 'processed entry led by a report link'],
@@ -188,5 +188,5 @@ try {
     else fail(`${label} — expected [${normalizeUrlForDedup(url)}], got [${[...got].join(', ')}]`);
   }
 } catch (err) {
-  fail(`scan.ts collectSeenUrls tests crashed: ${err && err.message}`);
+  fail(`packages/core/src/scanning/scan.ts collectSeenUrls tests crashed: ${err && err.message}`);
 }

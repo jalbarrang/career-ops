@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — hiringroom');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/hiringroom.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/hiringroom.ts')).href);
   const hiringroom = mod.default;
   const { parseHiringRoomJobs } = mod;
 

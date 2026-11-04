@@ -57,7 +57,7 @@ try {
     writeFileSync(tracker, table, 'utf-8');
     const env = { ...process.env, CAREER_OPS_TRACKER: tracker, CAREER_OPS_REPORTS: reports };
     try {
-      const stdout = execFileSync(NODE, [join(ROOT, 'verify-pipeline.ts')], { cwd: ROOT, env, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 60_000 });
+      const stdout = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/verify-pipeline.ts')], { cwd: ROOT, env, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 60_000 });
       return { status: 0, stdout, stderr: '' };
     } catch (err) {
       return {

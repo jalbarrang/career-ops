@@ -25,7 +25,7 @@ import {
   gitIn,
   gitQuietIn,
   unstagedPathsOutside,
-} from '../update-system.ts';
+} from '../packages/cli/src/commands/platform/update-system.ts';
 
 // One commit on main, no remote; each test sets origin/HEAD as needed.
 function makeRepo() {
@@ -222,7 +222,7 @@ console.log('\n🧪 Testing updater branch guard (#3846)...');
     "'main'",                         // and what it is not
     'git commit -m',                  // 1. keep it here
     'git switch main',                // 2. move it
-    'bun update-system.ts rollback',// 3. undo it
+    'career-ops update-system rollback',// 3. undo it
     COMMIT_ON_BRANCH_FLAG,            // how to stop being asked
   ].filter(fragment => !notice.includes(fragment));
   if (missing.length === 0 && /NOT committed/.test(notice)) {

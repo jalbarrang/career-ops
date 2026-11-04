@@ -1,5 +1,5 @@
 import { pass, fail } from './helpers.ts';
-import { buildBudgetedPrompt, DEFAULT_MAX_TOKENS, DEFAULT_SAFETY_MARGIN } from '../lib/context-budget.ts';
+import { buildBudgetedPrompt, DEFAULT_MAX_TOKENS, DEFAULT_SAFETY_MARGIN } from '../packages/core/src/kernel/context-budget.ts';
 
 const cases = [["MiniMax-M3", 1000000], ["MiniMax-M2.7", 204800]];
 for (const [modelName, contextWindow] of cases) {

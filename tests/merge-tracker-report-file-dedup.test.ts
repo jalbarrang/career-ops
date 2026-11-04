@@ -2,7 +2,7 @@
 // on disk is unambiguous proof of identity, even when company/role fuzzy
 // matching (tier 1's #912 guard) would refuse the match on its own.
 //
-// Drives the REAL merge-tracker.ts CLI end-to-end (same harness as
+// Drives the REAL packages/cli/src/commands/tracker/merge-tracker.ts CLI end-to-end (same harness as
 // tests/merge-tracker-url-dedup.test.ts) — the merge path is where the bug
 // lived, so asserting on the resulting tracker rows is what actually proves
 // the fix.
@@ -15,7 +15,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const MERGE = join(HERE, '..', 'merge-tracker.ts');
+const MERGE = join(HERE, '..', 'packages/cli/src/commands/tracker/merge-tracker.ts');
 const ok = (name, fn) => { try { fn(); pass(name); } catch (e) { fail(`${name} — ${e.message}`); } };
 
 const HEADER = '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |';
@@ -125,7 +125,7 @@ ok('the report-file tier does not stat every existing row\'s report', () => {
     writeFileSync(counter, [
       "import { createRequire, syncBuiltinESMExports } from 'node:module';",
       "// The CJS exports object, not the ESM default import: on Bun those are different",
-      "// objects and only this one backs the named imports merge-tracker.ts uses.",
+      "// objects and only this one backs the named imports packages/cli/src/commands/tracker/merge-tracker.ts uses.",
       "const fs = createRequire(import.meta.url)('node:fs');",
       // Values come from the environment, never spliced into this source.
       'const dirs = JSON.parse(process.env.COUNT_STAT_DIRS);',

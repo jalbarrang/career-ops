@@ -28,7 +28,7 @@ ok('Step 4b exists', has('## Step 4b — Resolve the tailored CV'),
   'the step that decides which document supplies experience fields is gone');
 
 ok('Step 4b resolves the bundle by computing its path',
-  has('application-artifacts.ts --report'),
+  has('career-ops application-artifacts --report'),
   'the deterministic resolver is unnamed, so the step has to guess at a location');
 
 ok('Step 4b still knows about the flat-layout manifest', has('data/pdf-index.tsv'),
@@ -39,7 +39,7 @@ ok('Step 4b still knows about the flat-layout manifest', has('data/pdf-index.tsv
 // document-kind column data/pdf-index.tsv does not have, and claimed a cover
 // letter for one report is a separate row when the writer replaces the row.
 ok('Step 4b claims no document-kind column', !has('whose `kind` is `cv`'),
-  'generate-pdf.ts writes no kind column, so that lookup cannot succeed');
+  'packages/cli/src/commands/cv/generate-pdf.ts writes no kind column, so that lookup cannot succeed');
 
 ok('Step 4b does not claim a cover letter gets its own manifest row',
   !has('a cover letter for the same report is its own'),

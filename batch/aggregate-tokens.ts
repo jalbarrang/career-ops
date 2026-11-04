@@ -5,8 +5,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { estimateCost } from '../utils/token-tracker.ts';
-import { isMainModule } from '../lib/is-main-module.ts';
+import { estimateCost } from '../packages/core/src/kernel/token-tracker.ts';
+import { isMainModule } from '../packages/core/src/kernel/is-main-module.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');

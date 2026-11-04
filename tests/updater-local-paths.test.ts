@@ -4,7 +4,7 @@
  *
  * A fork that keeps its own files (a nightly runner, an .mcp.json, a
  * .gitattributes) has no supported way to say "this file is mine": the only
- * lever is USER_PATHS, which lives inside update-system.ts — the very file
+ * lever is USER_PATHS, which lives inside packages/cli/src/commands/platform/update-system.ts — the very file
  * `apply` overwrites and git re-merges on every sync. The declaration file
  * moves that statement OUT of the system layer.
  *
@@ -16,7 +16,7 @@
 import { mkdtempSync, mkdirSync, writeFileSync, copyFileSync, rmSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import {dirname, join } from 'path';
 import { ROOT, pass, fail } from './helpers.ts';
 import {
   LOCAL_PATHS_FILE,
@@ -25,7 +25,7 @@ import {
   localUserPaths,
   effectiveUserPaths,
   userLayerViolations,
-} from '../update-system.ts';
+} from '../packages/cli/src/commands/platform/update-system.ts';
 
 /** A throwaway root with an optional declaration file already written. */
 function makeRoot(contents) {
@@ -112,14 +112,14 @@ console.log('\n🧪 Local user-paths declaration file (#2421)\n');
 {
   let threw = null;
   try {
-    localUserPaths(root('merge-tracker.ts\n'));
+    localUserPaths(root('packages/cli/src/commands/tracker/merge-tracker.ts\n'));
   } catch (err) {
     threw = err;
   }
-  if (threw && threw.message.includes('merge-tracker.ts')) {
+  if (threw && threw.message.includes('packages/cli/src/commands/tracker/merge-tracker.ts')) {
     pass('declaring a SYSTEM_PATHS entry throws and names the path');
   } else {
-    fail(`#6 expected a throw naming merge-tracker.ts, got ${threw ? threw.message : 'no throw'}`);
+    fail(`#6 expected a throw naming packages/cli/src/commands/tracker/merge-tracker.ts, got ${threw ? threw.message : 'no throw'}`);
   }
 }
 
@@ -148,7 +148,7 @@ console.log('\n🧪 Local user-paths declaration file (#2421)\n');
   const collisions = [
     ['modes/', 'a system-directory ancestor'],
     ['modes', 'the same ancestor without its directory marker'],
-    ['merge-tracker.ts/child', 'a child below a system file'],
+    ['packages/cli/src/commands/tracker/merge-tracker.ts/child', 'a child below a system file'],
     ['te\u017Fts/', 'a Unicode case-folded alias of a system directory'],
   ];
   const survivors = [];
@@ -262,7 +262,7 @@ console.log('\n🧪 Local user-paths declaration file (#2421)\n');
 
 // ── 10/11. End-to-end: the coverage guard honours the declaration ──
 //    This is the half of #2421 that bites second. Even with the safety check
-//    fixed, `validate-system-paths-coverage.ts` fails the whole suite on any
+//    fixed, `packages/cli/src/commands/platform/validate-system-paths-coverage.ts` fails the whole suite on any
 //    tracked file that is in neither array — so a fork keeping its own file
 //    still has to edit update-system.ts. Both halves have to move together.
 //
@@ -288,7 +288,8 @@ console.log('\n🧪 Local user-paths declaration file (#2421)\n');
   g('config', 'core.hooksPath', join(dir, 'no-such-hooks'));
 
   mkdirSync(join(dir, 'lib'), { recursive: true });
-  for (const f of ['validate-system-paths-coverage.ts', 'update-system.ts', 'lib/update-manifest.ts']) {
+  for (const f of ['packages/cli/src/commands/platform/validate-system-paths-coverage.ts', 'packages/cli/src/commands/platform/update-system.ts', 'packages/core/src/platform/update-manifest.ts', 'packages/core/src/kernel/repo-root.ts']) {
+    mkdirSync(dirname(join(dir, f)), { recursive: true });
     copyFileSync(join(ROOT, f), join(dir, f));
   }
   // A fork-local file upstream has never heard of — the reported case.
@@ -297,7 +298,7 @@ console.log('\n🧪 Local user-paths declaration file (#2421)\n');
   g('commit', '-qm', 'base');
 
   const runGuard = () =>
-    spawnSync(process.execPath, [join(dir, 'validate-system-paths-coverage.ts')], {
+    spawnSync(process.execPath, [join(dir, 'packages/cli/src/commands/platform/validate-system-paths-coverage.ts')], {
       cwd: dir,
       encoding: 'utf-8',
       env,
@@ -414,7 +415,7 @@ console.log('\n🧪 Local user-paths declaration file (#2421)\n');
 // ── 19. Non-canonical spellings of a system path are refused ──
 //
 // userLayerViolations() compares against git's changed-path format, which is
-// always canonical. A declaration written as `./merge-tracker.ts` is never
+// always canonical. A declaration written as `packages/cli/src/commands/tracker/merge-tracker.ts` is never
 // recognised as the file it names when the safety check runs. The declaration
 // silently protects nothing and the updater overwrites the file — the exact
 // data loss #2421 exists to prevent, reachable from a plausible typo.
@@ -424,7 +425,7 @@ console.log('\n🧪 Local user-paths declaration file (#2421)\n');
 // disagreeing with what git reports.
 {
   const nonCanonical = [
-    ['./merge-tracker.ts', 'a leading ./'],
+    ['packages/cli/src/commands/tracker/merge-tracker.ts', 'a leading ./'],
     ['batch/./batch-runner.sh', 'an interior . segment'],
     ['batch//batch-runner.sh', 'a repeated separator'],
     ['batch\\batch-runner.sh', 'a backslash separator'],

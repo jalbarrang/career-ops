@@ -29,11 +29,11 @@ import { appendFileSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFil
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { acquirePipelineLock } from '../pipeline-lock.ts';
+import { acquirePipelineLock } from '../packages/core/src/kernel/pipeline-lock.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
-// scan.ts resolves CAREER_OPS_SCAN_HISTORY ONCE, at module evaluation, so the
+// packages/core/src/scanning/scan.ts resolves CAREER_OPS_SCAN_HISTORY ONCE, at module evaluation, so the
 // sandbox has to be pointed at before the import below — not after. Getting
 // this backwards is how a module ends up reading the developer's real
 // data/scan-history.tsv while the test believes it is hermetic.
@@ -41,18 +41,18 @@ const sandbox = mkdtempSync(join(tmpdir(), 'liveness-record-'));
 const historyPath = join(sandbox, 'scan-history.tsv');
 process.env.CAREER_OPS_SCAN_HISTORY = historyPath;
 
-const { planExpiredHistoryRows } = await import('../liveness-core.ts');
-const { normalizeUrlForDedup, shouldDedupScanHistoryRow } = await import('../scan.ts');
-// web/ is not in every checkout, and an unguarded import of it crashes the whole
+const { planExpiredHistoryRows } = await import('../packages/core/src/liveness/liveness-core.ts');
+const { normalizeUrlForDedup, shouldDedupScanHistoryRow } = await import('../packages/core/src/scanning/scan.ts');
+// apps/web/ is not in every checkout, and an unguarded import of it crashes the whole
 // suite there rather than skipping one case (#3269). The core half of this file
-// does not need web/ at all; only the end-to-end feed assertion does.
-const WEB_SRC = join(ROOT, 'web', 'src');
+// does not need apps/web/ at all; only the end-to-end feed assertion does.
+const WEB_SRC = join(ROOT, 'apps/web', 'src');
 const WEB_WHATS_NEW = join(WEB_SRC, 'lib', 'whats-new.ts');
 const HAS_WEB = existsSync(WEB_SRC);
 const { collectWhatsNew } = HAS_WEB
   ? await import(pathToFileURL(WEB_WHATS_NEW).href)
   : { collectWhatsNew: null };
-const { recordingEnabled, recordExpiredVerdicts } = await import('../check-liveness.ts');
+const { recordingEnabled, recordExpiredVerdicts } = await import('../packages/cli/src/commands/liveness/check-liveness.ts');
 
 const HEADER = 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\tlocation';
 const DEAD = 'https://boards.example.com/acme/jobs/1';
@@ -79,7 +79,7 @@ test('--no-record is parsed as a flag, not as a URL to check', () => {
   // and a read-only spot check turns into a live fetch of the string
   // "--no-record". With no real URLs left the script must print usage and
   // exit 1, touching nothing.
-  const out = spawnSync(process.execPath, [join(ROOT, 'check-liveness.ts'), '--no-record'], {
+  const out = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/liveness/check-liveness.ts'), '--no-record'], {
     encoding: 'utf-8',
     timeout: 20000,
   });
@@ -94,7 +94,7 @@ test('main() calls the recorder, and does not gate it behind an opt-in flag', ()
   // tests/local-today-gates.test.ts does — because a recorder that works and
   // is never called is precisely the bug being fixed, and deleting the call
   // site otherwise leaves this suite green (verified).
-  const src = readFileSync(join(ROOT, 'check-liveness.ts'), 'utf-8');
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/liveness/check-liveness.ts'), 'utf-8');
   // main() is defined after the recorder, so this slice is the CALL, never the
   // definition.
   const body = src.slice(src.indexOf('async function main('));
@@ -107,7 +107,7 @@ test('main() hands the verdict code to the recorder, from both rungs', () => {
   // nothing if the CLI drops `code` before the verdict gets there. Same
   // source-level check as the call-site test above, for the same reason:
   // driving main() needs a live fetch or a browser launch.
-  const src = readFileSync(join(ROOT, 'check-liveness.ts'), 'utf-8');
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/liveness/check-liveness.ts'), 'utf-8');
   const body = src.slice(src.indexOf('async function main('));
   assert.match(body, /verdicts\.push\(\{[^}]*\bcode\b[^}]*\}\)/, 'the pushed verdict drops its code');
   assert.match(body, /\(\{ result, reason, code \} = api\)/, 'the API rung drops the verdict code');
@@ -115,7 +115,7 @@ test('main() hands the verdict code to the recorder, from both rungs', () => {
 });
 
 test('--help documents the opt-out', () => {
-  const out = spawnSync(process.execPath, [join(ROOT, 'check-liveness.ts'), '--help'], {
+  const out = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/liveness/check-liveness.ts'), '--help'], {
     encoding: 'utf-8',
     timeout: 20000,
   });
@@ -187,8 +187,8 @@ test('a title, company or location the writer escaped is not escaped a second ti
   // and the planned row goes back through that writer. Reading the stored cell
   // raw handed it the already-escaped text, which gained one more apostrophe on
   // every record: "+1 Platform Engineer" came back as "'+1 Platform Engineer".
-  const { formatScanHistoryRow } = await import('../scan.ts');
-  const { parseScanHistoryLine } = await import('../lib/scan-history-columns.ts');
+  const { formatScanHistoryRow } = await import('../packages/core/src/scanning/scan.ts');
+  const { parseScanHistoryLine } = await import('../packages/core/src/scanning/scan-history-columns.ts');
   const offer = { url: DEAD, source: 'greenhouse', title: '+1 Platform Engineer', company: '@Home Health', location: '-Remote' };
   const [row] = plan([HEADER, formatScanHistoryRow(offer, '2026-09-01')], [{ url: DEAD, result: 'expired' }]);
   const rewritten = parseScanHistoryLine(formatScanHistoryRow(row, '2026-09-04', 'skipped_expired'));
@@ -257,7 +257,7 @@ test('an empty or absent history plans nothing', () => {
 
 // ── 3. The posting stops resurfacing (writer + reader, end to end) ─────────
 
-test('a re-confirmed dead posting stops resurfacing in the web feed', { skip: HAS_WEB ? false : 'web/ not present in this checkout' }, async () => {
+test('a re-confirmed dead posting stops resurfacing in the web feed', { skip: HAS_WEB ? false : 'apps/web/ not present in this checkout' }, async () => {
   // The whats-new route's own row predicate: cols are
   // url, first_seen, portal, title, company, status, location.
   const toOffer = (c) => {
@@ -335,7 +335,7 @@ test('the history read happens inside the lock, so a concurrent scan cannot caus
   try {
     const proc = execFile(
       process.execPath,
-      ['--input-type=module', '-e', child, pathToFileURL(join(ROOT, 'check-liveness.ts')).href, marker],
+      ['--input-type=module', '-e', child, pathToFileURL(join(ROOT, 'packages/cli/src/commands/liveness/check-liveness.ts')).href, marker],
       { env: { ...process.env, CAREER_OPS_SCAN_HISTORY: historyFixture }, encoding: 'utf-8' },
     );
     const finished = new Promise((resolve, reject) => {

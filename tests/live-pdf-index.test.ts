@@ -1,7 +1,7 @@
 /**
  * livePdfIndex: a row in data/pdf-index.tsv records that a PDF was generated,
  * not that it still exists (#4777). This is the one place that decides which
- * rows are still backed by a file, so merge-tracker.ts and sync-pdf-flags.ts
+ * rows are still backed by a file, so packages/cli/src/commands/tracker/merge-tracker.ts and packages/cli/src/commands/tracker/sync-pdf-flags.ts
  * cannot disagree about it.
  */
 
@@ -11,7 +11,7 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node
 import { join, basename } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { livePdfIndex } from '../find.ts';
+import { livePdfIndex } from '../packages/cli/src/commands/pipeline/find.ts';
 
 // The workspace root follows CAREER_OPS_TRACKER, so a stray value from the
 // environment would move the fixture's root out from under these tests.
@@ -138,7 +138,7 @@ test('paths resolve against the workspace root generate-pdf wrote them for, even
 }));
 
 test('CAREER_OPS_TRACKER moves the workspace the paths resolve against', () => fixture(({ parent, root }) => {
-  // generate-pdf.ts writes into the workspace the tracker override names, so
+  // packages/cli/src/commands/cv/generate-pdf.ts writes into the workspace the tracker override names, so
   // that, not the script's own root, is where output/ has to be looked for.
   const external = join(parent, 'external');
   mkdirSync(join(external, 'data'), { recursive: true });

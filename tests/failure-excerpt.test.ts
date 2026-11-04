@@ -27,7 +27,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { failureExcerpt, childFailureExcerpt } from '../lib/failure-excerpt.ts';
+import { failureExcerpt, childFailureExcerpt } from '../packages/core/src/kernel/failure-excerpt.ts';
 
 // `node --test` output for a single failing assert.ok, captured verbatim on
 // node 24.20.0. Only the absolute path of the temporary suite is shortened, so

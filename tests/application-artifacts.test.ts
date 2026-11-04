@@ -4,9 +4,9 @@ import { tmpdir } from 'os';
 import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { rmSync } from './helpers.ts';
-import { applicationArtifactPaths, ensureApplicationArtifactDirs, slugifySegment, writeReuseDecision } from '../application-artifacts.ts';
-import { repoRelativeManifestPath, workspaceRelativeManifestPath } from '../generate-pdf.ts';
-import { getCareerOpsRoot } from '../path-resolver.ts';
+import { applicationArtifactPaths, ensureApplicationArtifactDirs, slugifySegment, writeReuseDecision } from '../packages/cli/src/commands/evaluation/application-artifacts.ts';
+import { repoRelativeManifestPath, workspaceRelativeManifestPath } from '../packages/cli/src/commands/cv/generate-pdf.ts';
+import { getCareerOpsRoot } from '../packages/core/src/kernel/path-resolver.ts';
 
 function expectError(label, action, pattern) {
   try {
@@ -77,7 +77,7 @@ try {
   }
 
   const cli = spawnSync(process.execPath, [
-    fileURLToPath(new URL('../application-artifacts.ts', import.meta.url)),
+    fileURLToPath(new URL('../packages/cli/src/commands/evaluation/application-artifacts.ts', import.meta.url)),
     '--report', 'bad', '--company', 'Acme', '--role', 'Engineer', '--init',
   ], { encoding: 'utf8' });
   if (cli.status === 1

@@ -6,10 +6,10 @@
 // leave the wiring reporting a clean run over a changed tracker.
 import { pass, fail, rmSync } from './helpers.ts';
 import { CHECKOUT_GUARDED_PATHS, CHECKOUT_KEY_PREFIX, GUARDED_PATHS, MARKER_FILE, UNGUARDED_USER_PATHS, describeDrift, diffSnapshots, snapshotDataRoot } from './data-root-guard.ts';
-import { USER_PATHS } from '../update-system.ts';
+import { USER_PATHS } from '../packages/cli/src/commands/platform/update-system.ts';
 import { mkdirSync, mkdtempSync, realpathSync, symlinkSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import { dirname, join } from 'path';
 
 console.log('\ndata-root guard — a snapshot sees every change to the user layer');
 
@@ -30,7 +30,8 @@ try {
   writeFileSync(join(dataRoot, 'cv.md'), 'cv\n');
   writeFileSync(join(dataRoot, 'config', 'profile.yml'), 'name: x\n');
   // Not user layer: a change here is none of the guard's business.
-  writeFileSync(join(dataRoot, 'scan.ts'), '// code\n');
+  mkdirSync(dirname(join(dataRoot, 'packages/core/src/scanning/scan.ts')), { recursive: true });
+  writeFileSync(join(dataRoot, 'packages/core/src/scanning/scan.ts'), '// code\n');
 
   const snap = () => snapshotDataRoot(dataRoot, codeRoot);
   const before = snap();
@@ -38,7 +39,7 @@ try {
   check(
     ['data/applications.md', 'data/follow-ups.md', 'data/outcomes/posting.pdf',
       'reports/001-acme-2026-01-01.md', 'cv.md', 'config/profile.yml'].every((p) => before.has(p))
-      && !before.has('scan.ts') && !before.has(MARKER_FILE),
+      && !before.has('packages/core/src/scanning/scan.ts') && !before.has(MARKER_FILE),
     'a snapshot covers the user layer at any depth, and nothing else',
     [...before.keys()],
   );
@@ -49,7 +50,8 @@ try {
   rmSync(join(dataRoot, 'data', 'follow-ups.md'));
   writeFileSync(join(dataRoot, 'data', 'assessments.tsv'), 'row\n');
   writeFileSync(join(codeRoot, MARKER_FILE), '/tmp/gone\n');
-  writeFileSync(join(dataRoot, 'scan.ts'), '// edited code\n');
+  mkdirSync(dirname(join(dataRoot, 'packages/core/src/scanning/scan.ts')), { recursive: true });
+  writeFileSync(join(dataRoot, 'packages/core/src/scanning/scan.ts'), '// edited code\n');
   const drift = diffSnapshots(before, snap());
   check(
     JSON.stringify(drift) === JSON.stringify([
@@ -142,7 +144,8 @@ try {
     writeFileSync(join(checkout, '.claude', 'hooks', 'pre.sh'), '#!/bin/sh\n');
     // Beside them, not user layer: no business of the guard's.
     writeFileSync(join(checkout, '.claude', 'settings.local.json'), '{}\n');
-    writeFileSync(join(checkout, 'scan.ts'), '// code\n');
+    mkdirSync(dirname(join(checkout, 'packages/core/src/scanning/scan.ts')), { recursive: true });
+    writeFileSync(join(checkout, 'packages/core/src/scanning/scan.ts'), '// code\n');
 
     // The common layout: the checkout is its own data root.
     const same = () => snapshotDataRoot(checkout, checkout);
@@ -151,7 +154,7 @@ try {
       'opencode.json', '.claude/settings.json', '.claude/hooks/pre.sh'];
     check(
       expected.every((p) => sameBefore.has(p))
-        && !sameBefore.has('.claude/settings.local.json') && !sameBefore.has('scan.ts'),
+        && !sameBefore.has('.claude/settings.local.json') && !sameBefore.has('packages/core/src/scanning/scan.ts'),
       'a snapshot covers the user files resolved from the checkout, and nothing beside them',
       [...sameBefore.keys()],
     );
@@ -229,7 +232,7 @@ try {
 
   // GUARDED_PATHS calls itself the content half of USER_PATHS. Held to that
   // here, in both directions, because a comment does not notice the next
-  // edit: a user-layer path added to update-system.ts and to neither list
+  // edit: a user-layer path added to packages/cli/src/commands/platform/update-system.ts and to neither list
   // would be a place to write unseen, in the module whose job is to see.
   const userPaths = USER_PATHS.map((p) => p.replace(/\/$/, ''));
   const unguarded = Object.keys(UNGUARDED_USER_PATHS);

@@ -2,7 +2,7 @@
 // umbrella #2026: relocation purchasing-power comparison in salary-gap.ts.
 //
 // Two integration paths, both exercised against the REAL CLI binary (not just
-// the pure functions, which already have inline coverage in salary-gap.ts's
+// the pure functions, which already have inline coverage in packages/cli/src/commands/insights/salary-gap.ts's
 // own --self-test):
 //
 //   1. Ad hoc mode (`--relocation --gross ... --posting-location ...`) — what
@@ -30,7 +30,7 @@ import { fileURLToPath } from 'node:url';
 import { describeSpawn, exitedNonZero } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const SCRIPT = join(ROOT, 'salary-gap.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/insights/salary-gap.ts');
 const readFile = (rel) => readFileSync(join(ROOT, rel), 'utf-8');
 
 function run(args, env = {}) {
@@ -116,7 +116,7 @@ test('ad hoc --relocation mode with --currency omitted entirely is treated as UN
 // ── CodeRabbit finding #2 (#4696): matchJurisdiction false positives. The
 //    pure-function cases (word-boundary, case-sensitive abbreviations, and
 //    the foreign-context city-name disambiguation) are covered exhaustively
-//    in salary-gap.ts's own --self-test; this is one end-to-end check that
+//    in packages/cli/src/commands/insights/salary-gap.ts's own --self-test; this is one end-to-end check that
 //    the fix is actually wired into the ad hoc CLI path, not just the
 //    exported function. ──
 
@@ -149,7 +149,7 @@ test('ad hoc --relocation mode with no resolvable jurisdiction reports a reason,
 test('ad hoc --relocation mode requires --gross and --posting-location (usage error, not a silent default)', () => {
   const r = run(['--relocation', '--posting-location', 'Halifax, NS']);
   assert.ok(exitedNonZero(r), describeSpawn(r, 'missing --gross must fail, not silently proceed'));
-  assert.match(r.stderr, /Usage: bun salary-gap\.ts --relocation/);
+  assert.match(r.stderr, /Usage: career-ops salary-gap --relocation/);
 });
 
 // ── #4696 CodeRabbit CWE-78 finding: --posting-location-file reads the
@@ -282,7 +282,7 @@ test('ad hoc --relocation mode: --posting-location-file= with an empty operand i
 //    unseeded Canadian province/territory. One end-to-end check that the
 //    fix (templates/jurisdiction-relocation-tax.yml-independent blocking
 //    markers) is wired into the ad hoc CLI path; the exhaustive pure-function
-//    cases live in salary-gap.ts's own --self-test. ──
+//    cases live in packages/cli/src/commands/insights/salary-gap.ts's own --self-test. ──
 
 test('ad hoc --relocation mode: "Hamilton, Quebec" never false-matches CA-ON (unseeded province blocks the weak city alias)', () => {
   withTempFile('Hamilton, Quebec', (file) => {
@@ -420,7 +420,7 @@ test('documented base64-decode pattern round-trips a non-ASCII JD location (acce
     ]);
     assert.equal(r.status, 0, describeSpawn(r, `exit 0 expected, got ${r.status}`));
     const out = JSON.parse(r.stdout);
-    assert.equal(out.inputs.postingLocation, rawLocation, 'the non-ASCII location reaches salary-gap.ts byte-for-byte');
+    assert.equal(out.inputs.postingLocation, rawLocation, 'the non-ASCII location reaches packages/cli/src/commands/insights/salary-gap.ts byte-for-byte');
   } finally {
     rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   }
@@ -630,7 +630,7 @@ test('--summary mode renders the relocation line with the not-financial-advice c
 test('modes/oferta.md Block G carries Signal 17 and its Risk Summary row', () => {
   const oferta = readFile('modes/oferta.md') + readFile('modes/oferta-signals/17-relocation-purchasing-power.md');
   assert.match(oferta, /\*\*17\. Relocation Purchasing Power\*\*/, 'Signal 17 heading present');
-  assert.match(oferta, /bun salary-gap\.ts --relocation --gross/, 'Signal 17 instructs running the real CLI, not hand-computing the arithmetic');
+  assert.match(oferta, /career-ops salary-gap --relocation --gross/, 'Signal 17 instructs running the real CLI, not hand-computing the arithmetic');
   assert.match(oferta, /Not financial or tax advice|not financial or tax advice/i, 'Signal 17 carries the not-financial/tax-advice disclaimer');
   // The end bound is searched from the section start, as in test-all.ts's
   // #2892 check: a block placed before Risk Summary that shows its own

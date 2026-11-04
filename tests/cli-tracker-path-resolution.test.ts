@@ -1,8 +1,8 @@
 /**
  * tests/cli-tracker-path-resolution.test.ts
  *
- * Asserts that CLI tools (scan.ts, reply-watch.ts, linkedin-join.ts,
- * paste-reply.ts, rejection-latency.ts) resolve their tracker and data paths
+ * Asserts that CLI tools (packages/core/src/scanning/scan.ts, packages/cli/src/commands/outreach/reply-watch.ts, packages/cli/src/commands/outreach/linkedin-join.ts,
+ * packages/cli/src/commands/outreach/paste-reply.ts, packages/cli/src/commands/outreach/rejection-latency.ts) resolve their tracker and data paths
  * via resolveTrackerPath(DATA_ROOT) rather than hardcoding 'data/applications.md'
  * or anchoring to the code repository (__dirname).
  */
@@ -12,7 +12,7 @@ import { mkdtempSync, writeFileSync, readFileSync, mkdirSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { execFileSync } from 'child_process';
-import { canonicalizeTrackerPath } from '../path-resolver.ts';
+import { canonicalizeTrackerPath } from '../packages/core/src/kernel/path-resolver.ts';
 
 console.log('\nCLI tracker path resolution — CAREER_OPS_TRACKER & CAREER_OPS_DATA_DIR support');
 
@@ -49,92 +49,92 @@ try {
   const flatTrackerFile = join(flatTrackerDir, 'applications.md');
   writeFileSync(flatTrackerFile, TRACKER_HEADER);
 
-  // 1. scan.ts respects CAREER_OPS_TRACKER
+  // 1. packages/core/src/scanning/scan.ts respects CAREER_OPS_TRACKER
   try {
     const res = evalModule(
-      "import { APPLICATIONS_PATH } from './scan.ts'; console.log(JSON.stringify({ path: APPLICATIONS_PATH }));",
+      "import { APPLICATIONS_PATH } from './packages/core/src/scanning/scan.ts'; console.log(JSON.stringify({ path: APPLICATIONS_PATH }));",
       { CAREER_OPS_TRACKER: customTracker }
     );
     if (res.path === canonicalizeTrackerPath(customTracker)) {
-      pass('scan.ts: APPLICATIONS_PATH respects CAREER_OPS_TRACKER');
+      pass('packages/core/src/scanning/scan.ts: APPLICATIONS_PATH respects CAREER_OPS_TRACKER');
     } else {
-      fail(`scan.ts: expected ${customTracker}, got ${res.path}`);
+      fail(`packages/core/src/scanning/scan.ts: expected ${customTracker}, got ${res.path}`);
     }
   } catch (err) {
-    fail(`scan.ts CAREER_OPS_TRACKER test failed: ${err.message}`);
+    fail(`packages/core/src/scanning/scan.ts CAREER_OPS_TRACKER test failed: ${err.message}`);
   }
 
-  // 2. scan.ts honors flat root layout under CAREER_OPS_DATA_DIR
+  // 2. packages/core/src/scanning/scan.ts honors flat root layout under CAREER_OPS_DATA_DIR
   try {
     const res = evalModule(
-      "import { APPLICATIONS_PATH } from './scan.ts'; console.log(JSON.stringify({ path: APPLICATIONS_PATH }));",
+      "import { APPLICATIONS_PATH } from './packages/core/src/scanning/scan.ts'; console.log(JSON.stringify({ path: APPLICATIONS_PATH }));",
       { CAREER_OPS_TRACKER: null, CAREER_OPS_DATA_DIR: flatTrackerDir }
     );
     if (res.path === canonicalizeTrackerPath(flatTrackerFile)) {
-      pass('scan.ts: APPLICATIONS_PATH resolves flat applications.md under CAREER_OPS_DATA_DIR');
+      pass('packages/core/src/scanning/scan.ts: APPLICATIONS_PATH resolves flat applications.md under CAREER_OPS_DATA_DIR');
     } else {
-      fail(`scan.ts: expected flat tracker ${flatTrackerFile}, got ${res.path}`);
+      fail(`packages/core/src/scanning/scan.ts: expected flat tracker ${flatTrackerFile}, got ${res.path}`);
     }
   } catch (err) {
-    fail(`scan.ts flat layout test failed: ${err.message}`);
+    fail(`packages/core/src/scanning/scan.ts flat layout test failed: ${err.message}`);
   }
 
-  // 3. reply-watch.ts respects CAREER_OPS_TRACKER
+  // 3. packages/cli/src/commands/outreach/reply-watch.ts respects CAREER_OPS_TRACKER
   try {
     const res = evalModule(
-      "import { APPS_FILE } from './reply-watch.ts'; console.log(JSON.stringify({ path: APPS_FILE }));",
+      "import { APPS_FILE } from './packages/cli/src/commands/outreach/reply-watch.ts'; console.log(JSON.stringify({ path: APPS_FILE }));",
       { CAREER_OPS_TRACKER: customTracker }
     );
     if (res.path === canonicalizeTrackerPath(customTracker)) {
-      pass('reply-watch.ts: APPS_FILE respects CAREER_OPS_TRACKER');
+      pass('packages/cli/src/commands/outreach/reply-watch.ts: APPS_FILE respects CAREER_OPS_TRACKER');
     } else {
-      fail(`reply-watch.ts: expected ${customTracker}, got ${res.path}`);
+      fail(`packages/cli/src/commands/outreach/reply-watch.ts: expected ${customTracker}, got ${res.path}`);
     }
   } catch (err) {
-    fail(`reply-watch.ts CAREER_OPS_TRACKER test failed: ${err.message}`);
+    fail(`packages/cli/src/commands/outreach/reply-watch.ts CAREER_OPS_TRACKER test failed: ${err.message}`);
   }
 
-  // 4. reply-watch.ts resolves flat applications.md under CAREER_OPS_DATA_DIR and anchors candidates/followups to DATA_ROOT
+  // 4. packages/cli/src/commands/outreach/reply-watch.ts resolves flat applications.md under CAREER_OPS_DATA_DIR and anchors candidates/followups to DATA_ROOT
   try {
     const res = evalModule(
-      "import { APPS_FILE, DEFAULT_CANDIDATES_PATH, FOLLOWUPS_FILE } from './reply-watch.ts'; console.log(JSON.stringify({ apps: APPS_FILE, candidates: DEFAULT_CANDIDATES_PATH, followups: FOLLOWUPS_FILE }));",
+      "import { APPS_FILE, DEFAULT_CANDIDATES_PATH, FOLLOWUPS_FILE } from './packages/cli/src/commands/outreach/reply-watch.ts'; console.log(JSON.stringify({ apps: APPS_FILE, candidates: DEFAULT_CANDIDATES_PATH, followups: FOLLOWUPS_FILE }));",
       { CAREER_OPS_TRACKER: null, CAREER_OPS_DATA_DIR: flatTrackerDir }
     );
     const expectedApps = canonicalizeTrackerPath(flatTrackerFile);
     const expectedCandidates = join(flatTrackerDir, 'data', 'reply-candidates.json');
     const expectedFollowups = join(flatTrackerDir, 'data', 'follow-ups.md');
     if (res.apps === expectedApps && res.candidates === expectedCandidates && res.followups === expectedFollowups) {
-      pass('reply-watch.ts: resolves flat tracker and anchors candidates/followups to CAREER_OPS_DATA_DIR');
+      pass('packages/cli/src/commands/outreach/reply-watch.ts: resolves flat tracker and anchors candidates/followups to CAREER_OPS_DATA_DIR');
     } else {
-      fail(`reply-watch.ts: mismatch under CAREER_OPS_DATA_DIR: ${JSON.stringify(res)}`);
+      fail(`packages/cli/src/commands/outreach/reply-watch.ts: mismatch under CAREER_OPS_DATA_DIR: ${JSON.stringify(res)}`);
     }
   } catch (err) {
-    fail(`reply-watch.ts flat layout test failed: ${err.message}`);
+    fail(`packages/cli/src/commands/outreach/reply-watch.ts flat layout test failed: ${err.message}`);
   }
 
-  // 5. linkedin-join.ts respects CAREER_OPS_TRACKER and flat layout
+  // 5. packages/cli/src/commands/outreach/linkedin-join.ts respects CAREER_OPS_TRACKER and flat layout
   try {
     const resTracker = evalModule(
-      "import { TRACKER_PATH } from './linkedin-join.ts'; console.log(JSON.stringify({ path: TRACKER_PATH }));",
+      "import { TRACKER_PATH } from './packages/cli/src/commands/outreach/linkedin-join.ts'; console.log(JSON.stringify({ path: TRACKER_PATH }));",
       { CAREER_OPS_TRACKER: customTracker }
     );
     const resFlat = evalModule(
-      "import { TRACKER_PATH } from './linkedin-join.ts'; console.log(JSON.stringify({ path: TRACKER_PATH }));",
+      "import { TRACKER_PATH } from './packages/cli/src/commands/outreach/linkedin-join.ts'; console.log(JSON.stringify({ path: TRACKER_PATH }));",
       { CAREER_OPS_TRACKER: null, CAREER_OPS_DATA_DIR: flatTrackerDir }
     );
     if (
       resTracker.path === canonicalizeTrackerPath(customTracker) &&
       resFlat.path === canonicalizeTrackerPath(flatTrackerFile)
     ) {
-      pass('linkedin-join.ts: TRACKER_PATH respects CAREER_OPS_TRACKER and flat CAREER_OPS_DATA_DIR');
+      pass('packages/cli/src/commands/outreach/linkedin-join.ts: TRACKER_PATH respects CAREER_OPS_TRACKER and flat CAREER_OPS_DATA_DIR');
     } else {
-      fail(`linkedin-join.ts: TRACKER_PATH mismatch (tracker: ${resTracker.path}, flat: ${resFlat.path})`);
+      fail(`packages/cli/src/commands/outreach/linkedin-join.ts: TRACKER_PATH mismatch (tracker: ${resTracker.path}, flat: ${resFlat.path})`);
     }
   } catch (err) {
-    fail(`linkedin-join.ts TRACKER_PATH test failed: ${err.message}`);
+    fail(`packages/cli/src/commands/outreach/linkedin-join.ts TRACKER_PATH test failed: ${err.message}`);
   }
 
-  // 6. linkedin-join.ts drives execution down the path that reads the tracker
+  // 6. packages/cli/src/commands/outreach/linkedin-join.ts drives execution down the path that reads the tracker
   try {
     const connectionsCsv = join(tmp, 'Connections.csv');
     writeFileSync(
@@ -143,7 +143,7 @@ try {
     );
 
     const cliOut = execFileSync(NODE, [
-      'linkedin-join.ts',
+      'packages/cli/src/commands/outreach/linkedin-join.ts',
       '--tracker-only',
       '--csv', connectionsCsv,
     ], {
@@ -155,34 +155,34 @@ try {
     const data = JSON.parse(cliOut);
     const matchedTarget = Array.isArray(data.targets) && data.targets.some(t => t.company && /acme/i.test(t.company));
     if (matchedTarget) {
-      pass('linkedin-join.ts: CLI reads targets from custom tracker and finds connection match');
+      pass('packages/cli/src/commands/outreach/linkedin-join.ts: CLI reads targets from custom tracker and finds connection match');
     } else {
-      fail(`linkedin-join.ts: expected target Acme Corp in CLI output: ${cliOut}`);
+      fail(`packages/cli/src/commands/outreach/linkedin-join.ts: expected target Acme Corp in CLI output: ${cliOut}`);
     }
   } catch (err) {
-    fail(`linkedin-join.ts CLI execution test failed: ${err.message}`);
+    fail(`packages/cli/src/commands/outreach/linkedin-join.ts CLI execution test failed: ${err.message}`);
   }
 
-  // 7. paste-reply.ts anchors CANDIDATES_PATH to DATA_ROOT
+  // 7. packages/cli/src/commands/outreach/paste-reply.ts anchors CANDIDATES_PATH to DATA_ROOT
   try {
     const res = evalModule(
-      "import { CANDIDATES_PATH } from './paste-reply.ts'; console.log(JSON.stringify({ path: CANDIDATES_PATH }));",
+      "import { CANDIDATES_PATH } from './packages/cli/src/commands/outreach/paste-reply.ts'; console.log(JSON.stringify({ path: CANDIDATES_PATH }));",
       { CAREER_OPS_REPLY_CANDIDATES: null, CAREER_OPS_DATA_DIR: flatTrackerDir }
     );
     const expectedCandidates = join(flatTrackerDir, 'data', 'reply-candidates.json');
     if (res.path === expectedCandidates) {
-      pass('paste-reply.ts: CANDIDATES_PATH anchors to CAREER_OPS_DATA_DIR');
+      pass('packages/cli/src/commands/outreach/paste-reply.ts: CANDIDATES_PATH anchors to CAREER_OPS_DATA_DIR');
     } else {
-      fail(`paste-reply.ts: expected ${expectedCandidates}, got ${res.path}`);
+      fail(`packages/cli/src/commands/outreach/paste-reply.ts: expected ${expectedCandidates}, got ${res.path}`);
     }
   } catch (err) {
-    fail(`paste-reply.ts CANDIDATES_PATH test failed: ${err.message}`);
+    fail(`packages/cli/src/commands/outreach/paste-reply.ts CANDIDATES_PATH test failed: ${err.message}`);
   }
 
-  // 8. paste-reply.ts appends candidate to DATA_ROOT default path
+  // 8. packages/cli/src/commands/outreach/paste-reply.ts appends candidate to DATA_ROOT default path
   try {
     const appendTestScript = `
-    import { appendCandidate, CANDIDATES_PATH } from './paste-reply.ts';
+    import { appendCandidate, CANDIDATES_PATH } from './packages/cli/src/commands/outreach/paste-reply.ts';
     await appendCandidate({
       message_id: 'test-cli-msg',
       subject: 'Interview Confirmation',
@@ -198,37 +198,37 @@ try {
     const writtenFile = join(flatTrackerDir, 'data', 'reply-candidates.json');
     const writtenContent = readFileSync(writtenFile, 'utf-8');
     if (writtenContent.includes('test-cli-msg') && writtenContent.includes('talent@acme.com')) {
-      pass('paste-reply.ts: appendCandidate writes to CAREER_OPS_DATA_DIR target');
+      pass('packages/cli/src/commands/outreach/paste-reply.ts: appendCandidate writes to CAREER_OPS_DATA_DIR target');
     } else {
-      fail(`paste-reply.ts: candidate not written to ${writtenFile}`);
+      fail(`packages/cli/src/commands/outreach/paste-reply.ts: candidate not written to ${writtenFile}`);
     }
   } catch (err) {
-    fail(`paste-reply.ts appendCandidate test failed: ${err.message}`);
+    fail(`packages/cli/src/commands/outreach/paste-reply.ts appendCandidate test failed: ${err.message}`);
   }
 
-  // 9. rejection-latency.ts DEFAULT_TRACKER_PATH respects CAREER_OPS_TRACKER & flat layout
+  // 9. packages/cli/src/commands/outreach/rejection-latency.ts DEFAULT_TRACKER_PATH respects CAREER_OPS_TRACKER & flat layout
   try {
     const resTracker = evalModule(
-      "import { DEFAULT_TRACKER_PATH } from './rejection-latency.ts'; console.log(JSON.stringify({ path: DEFAULT_TRACKER_PATH }));",
+      "import { DEFAULT_TRACKER_PATH } from './packages/cli/src/commands/outreach/rejection-latency.ts'; console.log(JSON.stringify({ path: DEFAULT_TRACKER_PATH }));",
       { CAREER_OPS_TRACKER: customTracker }
     );
     const resFlat = evalModule(
-      "import { DEFAULT_TRACKER_PATH } from './rejection-latency.ts'; console.log(JSON.stringify({ path: DEFAULT_TRACKER_PATH }));",
+      "import { DEFAULT_TRACKER_PATH } from './packages/cli/src/commands/outreach/rejection-latency.ts'; console.log(JSON.stringify({ path: DEFAULT_TRACKER_PATH }));",
       { CAREER_OPS_TRACKER: null, CAREER_OPS_DATA_DIR: flatTrackerDir }
     );
     if (
       resTracker.path === canonicalizeTrackerPath(customTracker) &&
       resFlat.path === canonicalizeTrackerPath(flatTrackerFile)
     ) {
-      pass('rejection-latency.ts: DEFAULT_TRACKER_PATH respects CAREER_OPS_TRACKER and flat CAREER_OPS_DATA_DIR');
+      pass('packages/cli/src/commands/outreach/rejection-latency.ts: DEFAULT_TRACKER_PATH respects CAREER_OPS_TRACKER and flat CAREER_OPS_DATA_DIR');
     } else {
-      fail(`rejection-latency.ts: DEFAULT_TRACKER_PATH mismatch (tracker: ${resTracker.path}, flat: ${resFlat.path})`);
+      fail(`packages/cli/src/commands/outreach/rejection-latency.ts: DEFAULT_TRACKER_PATH mismatch (tracker: ${resTracker.path}, flat: ${resFlat.path})`);
     }
   } catch (err) {
-    fail(`rejection-latency.ts DEFAULT_TRACKER_PATH test failed: ${err.message}`);
+    fail(`packages/cli/src/commands/outreach/rejection-latency.ts DEFAULT_TRACKER_PATH test failed: ${err.message}`);
   }
 
-  // 10. rejection-latency.ts CLI loads and evaluates tracker from CAREER_OPS_TRACKER
+  // 10. packages/cli/src/commands/outreach/rejection-latency.ts CLI loads and evaluates tracker from CAREER_OPS_TRACKER
   try {
     const activeInterviews = join(tmp, 'active-interviews.md');
     writeFileSync(
@@ -237,7 +237,7 @@ try {
     );
 
     const cliOut = execFileSync(NODE, [
-      'rejection-latency.ts',
+      'packages/cli/src/commands/outreach/rejection-latency.ts',
       '--file', activeInterviews,
       '--today', '2026-07-01',
     ], {
@@ -248,12 +248,12 @@ try {
 
     const parsed = JSON.parse(cliOut);
     if (parsed && Array.isArray(parsed.flags) && parsed.flags.some(f => f.company === 'Acme Corp')) {
-      pass('rejection-latency.ts: CLI evaluates overdue interview from custom tracker');
+      pass('packages/cli/src/commands/outreach/rejection-latency.ts: CLI evaluates overdue interview from custom tracker');
     } else {
-      fail(`rejection-latency.ts: expected flag for Acme Corp: ${cliOut}`);
+      fail(`packages/cli/src/commands/outreach/rejection-latency.ts: expected flag for Acme Corp: ${cliOut}`);
     }
   } catch (err) {
-    fail(`rejection-latency.ts CLI execution test failed: ${err.message}`);
+    fail(`packages/cli/src/commands/outreach/rejection-latency.ts CLI execution test failed: ${err.message}`);
   }
 } finally {
   rmSync(tmp, { recursive: true, force: true });

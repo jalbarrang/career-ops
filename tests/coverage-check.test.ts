@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { pass, fail, rmSync } from './helpers.ts';
-import { atsFromUrl, careersUrlFor, companyKey, findTrackedEntry, diagnose, appendMiss, loadDatasets } from '../coverage-check.ts';
+import { atsFromUrl, careersUrlFor, companyKey, findTrackedEntry, diagnose, appendMiss, loadDatasets } from '../packages/cli/src/commands/pipeline/coverage-check.ts';
 
 console.log('\ncoverage-check.ts — coverage-miss diagnosis');
 

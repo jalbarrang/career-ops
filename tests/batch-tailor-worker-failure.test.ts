@@ -33,7 +33,7 @@ cp.spawnSync = (command, args) => {
 };
 require('node:module').syncBuiltinESMExports();
 `);
-      const result = spawnSync(process.execPath, ['--require', stub, 'batch-tailor.ts'], {
+      const result = spawnSync(process.execPath, ['--require', stub, 'packages/cli/src/commands/cv/batch-tailor.ts'], {
         cwd: new URL('..', import.meta.url), encoding: 'utf8',
         env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_BATCH_STATE: state },
       });

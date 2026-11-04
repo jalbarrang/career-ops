@@ -2,8 +2,8 @@
 
 <!-- ============================================================
      THIS FILE IS YOURS. Copy it to `modes/_brief.md` and fill in the placeholders.
-     Onboarding can copy it with `bun doctor.ts --json --init-templates`.
-     It is USER LAYER — never auto-updated by `bun update-system.ts`.
+     Onboarding can copy it with `career-ops doctor --json --init-templates`.
+     It is USER LAYER — never auto-updated by `career-ops update-system`.
 
      PURPOSE: Compact context for first-pass triage agents
      (`modes/triage.md`). It replaces reading the full evaluation

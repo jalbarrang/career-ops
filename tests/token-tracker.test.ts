@@ -1,6 +1,6 @@
 // tests/token-tracker.test.ts — token tracking & cost estimation unit tests
 import { pass, fail } from './helpers.ts';
-import { estimateCost, TokenAccumulator, formatBreakdown } from '../utils/token-tracker.ts';
+import { estimateCost, TokenAccumulator, formatBreakdown } from '../packages/core/src/kernel/token-tracker.ts';
 import { parseTokenVal } from '../batch/aggregate-tokens.ts';
 
 console.log('\ntoken-tracker.ts & aggregate-tokens.ts unit tests');

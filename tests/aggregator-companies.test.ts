@@ -15,10 +15,10 @@ import { tmpdir } from 'os';
 import { pass, fail, ROOT } from './helpers.ts';
 import {
   parseScanHistory, detectReposts, loadAggregatorCompanies, companyKey,
-} from '../detect-reposts.ts';
+} from '../packages/cli/src/commands/insights/detect-reposts.ts';
 import {
   computePostingChurn, buildCompanyCards, isAggregatorCompany,
-} from '../company-history.ts';
+} from '../packages/cli/src/commands/insights/company-history.ts';
 
 console.log('\naggregator companies — skipped, and visibly skipped');
 

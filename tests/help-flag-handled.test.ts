@@ -4,10 +4,10 @@
 // Six scripts did not recognise the flag, and an unrecognised flag was simply
 // discarded — so `--help` fell through to the analysis and the script RAN:
 //
-//   calibrate.ts --help              printed a full calibration report
-//   salary-gap.ts --help             printed JSON
-//   tracker-sync-check.ts --help     printed JSON
-//   story-provenance-check.ts --help printed JSON
+//   packages/cli/src/commands/insights/calibrate.ts --help              printed a full calibration report
+//   packages/cli/src/commands/insights/salary-gap.ts --help             printed JSON
+//   packages/cli/src/commands/tracker/tracker-sync-check.ts --help     printed JSON
+//   packages/cli/src/commands/interview/story-provenance-check.ts --help printed JSON
 //
 // Nothing errored, which is the problem: the user asked what the flags are and
 // got output that answers a different question, with no sign the flag was never
@@ -25,14 +25,14 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { trackedFiles } from '../lib/source-files.ts';
+import { trackedFiles } from '../packages/core/src/kernel/source-files.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
 const FIXED = [
-  'calibrate.ts', 'salary-gap.ts', 'tracker-sync-check.ts',
-  'story-provenance-check.ts', 'negotiation-roi.ts', 'jd-skill-gap.ts',
+  'packages/cli/src/commands/insights/calibrate.ts', 'packages/cli/src/commands/insights/salary-gap.ts', 'packages/cli/src/commands/tracker/tracker-sync-check.ts',
+  'packages/cli/src/commands/interview/story-provenance-check.ts', 'packages/cli/src/commands/insights/negotiation-roi.ts', 'packages/cli/src/commands/evaluation/jd-skill-gap.ts',
 ];
 
 // ── Isolation ───────────────────────────────────────────────────────────────
@@ -175,17 +175,17 @@ test('-h is accepted wherever --help is, and suppresses the same work', () => {
 // Each of these has the same defect the six fixed here had: an unrecognised
 // flag is discarded, so `--help` falls through and the script runs.
 const KNOWN_WITHOUT_HELP = new Set([
-  'batch-evaluate-gemini.ts', 'cv-templates.ts', 'fetch-jd.ts',
-  'generate-cover-letter.ts', 'generate-pdf.ts', 'intake.ts',
-  'match-star.ts', 'openrouter-runner.ts', 'plugins.ts',
-  'seed-fixture.ts',
-  'validate-plugin-registry.ts', 'validate-untrusted-content-coverage.ts',
-  // generate-latex.ts and verify-portals.ts were here and have since been
+  'packages/cli/src/commands/evaluation/batch-evaluate-gemini.ts', 'packages/cli/src/commands/cv/cv-templates.ts', 'packages/cli/src/commands/scanning/fetch-jd.ts',
+  'packages/cli/src/commands/cv/generate-cover-letter.ts', 'packages/cli/src/commands/cv/generate-pdf.ts', 'packages/cli/src/commands/profile/intake.ts',
+  'packages/cli/src/commands/interview/match-star.ts', 'packages/cli/src/commands/evaluation/openrouter-runner.ts', 'packages/cli/src/commands/platform/plugins.ts',
+  'packages/cli/src/commands/platform/seed-fixture.ts',
+  'packages/cli/src/commands/platform/validate-plugin-registry.ts', 'packages/cli/src/commands/platform/validate-untrusted-content-coverage.ts',
+  // packages/cli/src/commands/cv/generate-latex.ts and packages/core/src/scanning/verify-portals.ts were here and have since been
   // fixed upstream; the ratchet's other end caught that on the rebase and
   // required their removal, which is the half of it that keeps the list from
   // quietly rotting into a description of nothing.
   //
-  // normalize-statuses.ts, scan-hn.ts and scan-interamt.ts left the same way
+  // packages/cli/src/commands/tracker/normalize-statuses.ts, packages/cli/src/commands/scanning/scan-hn.ts and packages/cli/src/commands/scanning/scan-interamt.ts left the same way
   // on this rebase: all three gained KNOWN_FLAGS containing '--help' between
   // 2026-09-30 and 2026-10-03, from other contributors.
 
@@ -196,12 +196,12 @@ const KNOWN_WITHOUT_HELP = new Set([
   // instead of turning it into a seven-script fix; the ratchet's rule is
   // unchanged and the list may only get shorter from here.
   //
-  // keyword-match.ts is the one worth a second look: it PRINTS usage for
+  // packages/cli/src/commands/evaluation/keyword-match.ts is the one worth a second look: it PRINTS usage for
   // `--help`, which reads as handled, but only because the flag falls through
   // to its "report file not found" path — so it exits 1 and would run the
   // comparison if a file by that name existed.
   'batch/aggregate-tokens.ts',
-  'keyword-match.ts',
+  'packages/cli/src/commands/evaluation/keyword-match.ts',
   'plugins/h1b-sponsor/install-h1b-index.ts',
   'plugins/h1b-sponsor/token.ts',
 
@@ -212,12 +212,12 @@ const KNOWN_WITHOUT_HELP = new Set([
   //
   // These two are the only additions; the list is net SHORTER than before this
   // change, which is the direction the ratchet allows. The three root-level
-  // CLIs the same scan surfaced (cv-title-check.ts, scan-dayforce.ts,
-  // sync-pdf-flags.ts) are user-facing and were FIXED in this PR rather than
+  // CLIs the same scan surfaced (packages/cli/src/commands/cv/cv-title-check.ts, packages/cli/src/commands/scanning/scan-dayforce.ts,
+  // packages/cli/src/commands/tracker/sync-pdf-flags.ts) are user-facing and were FIXED in this PR rather than
   // listed, because listing them is what turns this into a description of
   // nothing.
   '.github/scripts/sponsors.ts',
-  'web/scripts/scheduled-jobs-runner.ts',
+  'apps/web/scripts/scheduled-jobs-runner.ts',
 ]);
 
 /**
@@ -270,7 +270,7 @@ function helpFlagFindings(root) {
     if (/(^|\/)tests\//.test(rel)) continue;
     if (/-tests\.ts$|(^|\/)test-|(^|\/)playwright/.test(rel)) continue;
     const code = codeOnly(readFileSync(abs, 'utf-8'));
-    // The CLI test reads code too. lib/is-main-module.ts documents the call in
+    // The CLI test reads code too. packages/core/src/kernel/is-main-module.ts documents the call in
     // its own JSDoc, so a raw substring match classified the helper that defines
     // the guard as a CLI that forgot one.
     if (!code.includes('isMainModule(import.meta.url)')) continue;   // not a CLI

@@ -19,7 +19,11 @@ import (
 func markedCheckout(t *testing.T, depth int) (root, deepest string) {
 	t.Helper()
 	root = t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, repoRootMarker), []byte("// marker\n"), 0o644); err != nil {
+	marker := filepath.Join(root, repoRootMarker)
+	if err := os.MkdirAll(filepath.Dir(marker), 0o755); err != nil {
+		t.Fatalf("mkdir marker dir: %v", err)
+	}
+	if err := os.WriteFile(marker, []byte("// marker\n"), 0o644); err != nil {
 		t.Fatalf("write marker: %v", err)
 	}
 	deepest = root

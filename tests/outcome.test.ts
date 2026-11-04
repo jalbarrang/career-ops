@@ -1,12 +1,12 @@
-// tests/outcome.test.ts — Unit test suite for outcome.ts (#1722).
+// tests/outcome.test.ts — Unit test suite for packages/cli/src/commands/tracker/outcome.ts (#1722).
 import { pass, fail, NODE, ROOT } from './helpers.ts';
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, mkdtempSync, realpathSync, symlinkSync, utimesSync } from 'fs';
 import { join, win32 as win32Path, posix as posixPath } from 'path';
 import { tmpdir } from 'os';
 import { execFileSync } from 'child_process';
-import { pathIsInside } from '../tracker-utils.ts';
+import { pathIsInside } from '../packages/core/src/tracker/tracker-utils.ts';
 
-const OUTCOME_SCRIPT = join(ROOT, 'outcome.ts');
+const OUTCOME_SCRIPT = join(ROOT, 'packages/cli/src/commands/tracker/outcome.ts');
 
 console.log('\noutcome.ts — outcome recording & archiving');
 
@@ -38,7 +38,7 @@ try {
 
   // Test 1: Help command
   const helpOut = execFileSync(NODE, [OUTCOME_SCRIPT, '--help'], { encoding: 'utf-8' });
-  check('outcome.ts --help returns usage info', helpOut.includes('Usage: bun outcome.ts'));
+  check('packages/cli/src/commands/tracker/outcome.ts --help returns usage info', helpOut.includes('Usage: career-ops outcome'));
 
   // Test 2: Invalid outcome type
   try {
@@ -340,8 +340,8 @@ try {
   }
 
   // Test 17: Windows UNC path containment (CodeRabbit finding on PR #2911).
-  // This calls the actual pathIsInside() from tracker-utils.ts — the same
-  // function outcome.ts's --clean-output uses at runtime (it already existed
+  // This calls the actual pathIsInside() from packages/core/src/tracker/tracker-utils.ts — the same
+  // function packages/cli/src/commands/tracker/outcome.ts's --clean-output uses at runtime (it already existed
   // there for lock-directory validation; #2911 reused rather than duplicated
   // it) — passing path.win32/path.posix explicitly so the Windows and POSIX
   // branches are both exercised deterministically regardless of which OS runs

@@ -18,7 +18,7 @@ import { tmpdir } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
 import { ROOT, rmSync } from './helpers.ts';
 import { buildCtx, runHook, mergeProviderPlugins } from '../plugins/_engine.ts';
-import { getCareerOpsRoot } from '../path-resolver.ts';
+import { getCareerOpsRoot } from '../packages/core/src/kernel/path-resolver.ts';
 
 const manifest = { id: 'ctx-demo', allowedHosts: [], requiredEnv: [], optionalEnv: [], allowsLocalhost: false };
 

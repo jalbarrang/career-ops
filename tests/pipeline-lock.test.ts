@@ -13,7 +13,7 @@
  *      the same lock stale can have the second one's rmSync delete the first
  *      one's freshly created lock, after which both believe they hold it.
  *   3. Fresh-install robustness — the lock must not throw ENOENT when the
- *      parent data/ directory does not exist yet (plugins.ts's cmdRun calls
+ *      parent data/ directory does not exist yet (packages/cli/src/commands/platform/plugins.ts's cmdRun calls
  *      appendToPipeline with no directory pre-creation).
  */
 
@@ -25,13 +25,13 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Worker } from 'node:worker_threads';
 import { spawn } from 'node:child_process';
-import { tryAcquireDirLockSync } from '../lib/dir-lock.ts';
+import { tryAcquireDirLockSync } from '../packages/core/src/kernel/dir-lock.ts';
 import {
   acquirePipelineLock, LockTimeoutError, OWNERLESS_GRACE_MS,
   lockRecoveryVerdict, RECOVER_STALE, RECOVER_VANISHED, RECOVER_LIVE,
   createLockWaitPolicy,
-} from '../pipeline-lock.ts';
-import { collectSourceFiles } from '../lib/source-files.ts';
+} from '../packages/core/src/kernel/pipeline-lock.ts';
+import { collectSourceFiles } from '../packages/core/src/kernel/source-files.ts';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const SELF = fileURLToPath(import.meta.url);
@@ -101,7 +101,7 @@ async function churnLockInWorker(lockDir, everyMs) {
     workerData: {
       lockDir,
       everyMs,
-      trackerUtilsUrl: pathToFileURL(join(dirname(fileURLToPath(import.meta.url)), '..', 'tracker-utils.ts')).href,
+      trackerUtilsUrl: pathToFileURL(join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/core/src/tracker/tracker-utils.ts')).href,
     },
   });
   await new Promise((resolve, reject) => {
@@ -186,7 +186,7 @@ test('acquirePipelineLock: configurable timing — the contention timeout is not
 test('acquirePipelineLock: creates a missing parent data/ directory instead of throwing ENOENT (fresh install)', async () => {
   const root = mkdtempSync(join(tmpdir(), 'career-ops-pipeline-lock-fresh-'));
   try {
-    // No data/ directory at all — the plugins.ts cmdRun path.
+    // No data/ directory at all — the packages/cli/src/commands/platform/plugins.ts cmdRun path.
     const p = join(root, 'data', 'pipeline.md');
     assert.equal(existsSync(dirname(p)), false);
     const lock = await acquirePipelineLock(p, { timeoutMs: 300, retryMs: 20 });
@@ -500,7 +500,7 @@ test('acquirePipelineLock: a lock that keeps changing hands does not time out a 
     const startedAt = Date.now();
     // The old absolute deadline killed this caller at 150ms with
     // LockTimeoutError even though the lock was healthy and briskly shared —
-    // which for agent-inbox.ts meant its request was silently dropped. The
+    // which for packages/cli/src/commands/platform/agent-inbox.ts meant its request was silently dropped. The
     // timeout is for a WEDGED holder, not for losing the retry lottery.
     const lock = await acquirePipelineLock(p, { timeoutMs: 150, retryMs: 15 });
     const elapsed = Date.now() - startedAt;
@@ -795,11 +795,11 @@ test('createLockWaitPolicy: a hardDeadline that is not a number is refused, not 
 });
 
 test('no lock module re-derives the wait ceiling — the policy holds the only copy (#3895)', () => {
-  const policyModule = join(REPO_ROOT, 'lib', 'dir-lock.ts');
+  const policyModule = join(REPO_ROOT, 'packages/core/src/kernel/dir-lock.ts');
   // The web's copy of the policy module is the policy, not a re-derivation of
   // it, for exactly as long as it is byte-identical (#5358). A drifted copy is
   // scanned like any other file.
-  const webMirror = join(REPO_ROOT, 'web', 'src', 'lib', 'core', 'dir-lock.ts');
+  const webMirror = join(REPO_ROOT, 'apps/web', 'src', 'lib', 'core', 'dir-lock.ts');
   const mirrorIsPolicy = existsSync(webMirror) && readFileSync(webMirror).equals(readFileSync(policyModule));
   const sources = collectSourceFiles(REPO_ROOT)
     .filter((f) => f !== SELF && f !== policyModule && !(mirrorIsPolicy && f === webMirror));
@@ -1006,7 +1006,7 @@ test('createLockWaitPolicy: a re-armed per-holder window still sleeps a full jit
 // ── #4537: the ownerless grace floor must be reachable from the environment ──
 //
 // Its three siblings all read it, and
-// followup-seed.ts layers a second set on top. This one is a bare constant,
+// packages/core/src/outreach/followup-seed.ts layers a second set on top. This one is a bare constant,
 // so the single window whose budget process startup spends is the one window a
 // caller cannot widen. followup-seed-tests.ts test 16 backdates a lock 100ms
 // into that 1s floor and then hands the rest to execFileSync plus Node startup;
@@ -1036,7 +1036,7 @@ for (const [label, value] of [
     const prior = process.env.CAREER_OPS_OWNERLESS_GRACE_MS;
     process.env.CAREER_OPS_OWNERLESS_GRACE_MS = value;
     try {
-      const lock = await import(`../lib/dir-lock.ts?grace-bad-${label.replace(/\s/g, '-')}`);
+      const lock = await import(`../packages/core/src/kernel/dir-lock.ts?grace-bad-${label.replace(/\s/g, '-')}`);
       assert.equal(
         lock.OWNERLESS_GRACE_MS, 1_000,
         `${label} is not a floor, so the 1000ms default must stand`,
@@ -1062,7 +1062,7 @@ test('a valid CAREER_OPS_OWNERLESS_GRACE_MS is still honored (control)', async (
   const prior = process.env.CAREER_OPS_OWNERLESS_GRACE_MS;
   process.env.CAREER_OPS_OWNERLESS_GRACE_MS = '2500';
   try {
-    const lock = await import('../lib/dir-lock.ts?grace-good');
+    const lock = await import('../apps/web/src/lib/core/dir-lock.ts?grace-good');
     assert.equal(lock.OWNERLESS_GRACE_MS, 2_500, 'a finite positive override must reach the floor');
   } finally {
     if (prior === undefined) delete process.env.CAREER_OPS_OWNERLESS_GRACE_MS;
@@ -1075,7 +1075,7 @@ test('the ownerless grace floor honors CAREER_OPS_OWNERLESS_GRACE_MS', async () 
   const prior = process.env.CAREER_OPS_OWNERLESS_GRACE_MS;
   process.env.CAREER_OPS_OWNERLESS_GRACE_MS = '30000';
   try {
-    const lock = await import('../lib/dir-lock.ts?grace-env');
+    const lock = await import('../apps/web/src/lib/core/dir-lock.ts?grace-env');
     const dir = join(root, 'x.lock');
     mkdirSync(dir, { recursive: true });
     backdate(dir, 5_000); // ownerless and 5s old: past the 1s default floor

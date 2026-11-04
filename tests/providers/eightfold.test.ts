@@ -37,7 +37,7 @@ function mockCtx(pages) {
 }
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/eightfold.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/eightfold.ts')).href);
   const ef = mod.default;
   const { resolveTenant, buildApiUrl, buildJobUrl, parseEightfoldResponse } = mod;
 
@@ -288,7 +288,7 @@ try {
     fail(`max_pages: ${capped.calls.length} requests, ${cappedJobs.length} jobs (expected 4 / 40)`);
   }
 
-  // ctx.maxPages is verify-portals.ts's health-probe hint — it must narrow further.
+  // ctx.maxPages is packages/core/src/scanning/verify-portals.ts's health-probe hint — it must narrow further.
   const probe = mockCtx(bigPages);
   await ef.fetch({ name: 'Big', careers_url: 'https://big.eightfold.ai/careers' }, { ...probe.ctx, maxPages: 1 });
   if (probe.calls.length === 1) {
@@ -511,7 +511,7 @@ try {
 
   // A PCSX probe that 404s means PCSX is simply not there, so the v2 403 is the
   // real story (a WAF or datacenter-IP block). Surfacing the probe's 404 instead
-  // read as "board gone" to dead-boards.ts, which skips a board after 3 misses.
+  // read as "board gone" to packages/core/src/scanning/dead-boards.ts, which skips a board after 3 misses.
   {
     const { ctx } = recording((c) => {
       if (c.url.includes('/api/apply/v2/jobs')) throw httpErr(403, 'Forbidden');

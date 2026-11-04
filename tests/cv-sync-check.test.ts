@@ -1,6 +1,6 @@
 // tests/cv-sync-check.test.ts — the setup validator has to reach its checks.
 //
-// cv-sync-check.ts threw a ReferenceError at module scope (#3440): the
+// packages/cli/src/commands/cv/cv-sync-check.ts threw a ReferenceError at module scope (#3440): the
 // CODE_ROOT/DATA_ROOT split left three `join(projectRoot, …)` call sites naming
 // an identifier that no longer existed, so `bun run sync-check` died before the
 // first check and printed a stack instead of a report.
@@ -9,7 +9,7 @@
 // script exits 1 when cv.md is missing — which is normal in this repo — and
 // exits 1 on a ReferenceError too. test-all.ts's own entry says as much:
 //
-//   { name: 'cv-sync-check.ts', expectExit: 1, allowFail: true }
+//   { name: 'packages/cli/src/commands/cv/cv-sync-check.ts', expectExit: 1, allowFail: true }
 //
 // (`expectExit` is not read by the runner at all; `allowFail` was doing the
 // work, and it excused everything.) So this asserts what an exit code cannot:
@@ -30,7 +30,7 @@ const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
 /** Run the validator against a throwaway DATA root, leaving the repo alone. */
 function runAgainst(dataRoot) {
-  const r = spawnSync(process.execPath, [join(ROOT, 'cv-sync-check.ts')], {
+  const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/cv/cv-sync-check.ts')], {
     cwd: ROOT,
     encoding: 'utf-8',
     timeout: 30_000,
@@ -117,7 +117,7 @@ test('the shipped prompt files raise no hardcoded-metric warning', () => {
 });
 
 test('a candidate metric is flagged and a time window is not', async () => {
-  const { hardcodedMetrics } = await import('../cv-sync-check.ts');
+  const { hardcodedMetrics } = await import('../packages/cli/src/commands/cv/cv-sync-check.ts');
   const found = (line) => hardcodedMetrics(line).map(m => m.match);
   assert.deepEqual(found('Saved 170+ hours of manual review'), ['170+ hours']);
   assert.deepEqual(found('Wrote 300+ tests for the billing service'), ['300+ tests']);
@@ -129,7 +129,7 @@ test('a candidate metric is flagged and a time window is not', async () => {
 });
 
 test('importing the module runs no checks', async () => {
-  const r = spawnSync(process.execPath, ['--input-type=module', '-e', `await import(${JSON.stringify(pathToFileURL(join(ROOT, 'cv-sync-check.ts')).href)}); console.log('imported');`], {
+  const r = spawnSync(process.execPath, ['--input-type=module', '-e', `await import(${JSON.stringify(pathToFileURL(join(ROOT, 'packages/cli/src/commands/cv/cv-sync-check.ts')).href)}); console.log('imported');`], {
     cwd: ROOT,
     encoding: 'utf-8',
     timeout: 30_000,

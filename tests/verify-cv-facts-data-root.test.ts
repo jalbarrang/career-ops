@@ -1,7 +1,7 @@
 // tests/verify-cv-facts-data-root.test.ts — the fabrication gate has to read
 // the user's actual cv.md.
 //
-// verify-cv-facts.ts enforces the Source-of-Truth Boundary rule AGENTS.md
+// packages/cli/src/commands/cv/verify-cv-facts.ts enforces the Source-of-Truth Boundary rule AGENTS.md
 // states as "Keywords get reformulated, never fabricated": every metric-like
 // claim in a generated CV must appear in a primary source file. Its defaults
 // resolved neither the sources nor its config from the user's data root:
@@ -64,7 +64,7 @@ const cleanup = (f) => {
 };
 
 function run(f, args = []) {
-  const r = spawnSync(process.execPath, [join(ROOT, 'verify-cv-facts.ts'), join(f.dataRoot, 'generated.md'), ...args], {
+  const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/cv/verify-cv-facts.ts'), join(f.dataRoot, 'generated.md'), ...args], {
     cwd: f.decoyCwd, encoding: 'utf-8', timeout: 60_000,
     env: { ...process.env, CAREER_OPS_ROOT: f.dataRoot, CAREER_OPS_DATA_DIR: '' },
   });

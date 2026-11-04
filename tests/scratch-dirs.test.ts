@@ -21,8 +21,8 @@ import { pass, fail, warn, ROOT } from './helpers.ts';
 import {
   SCRATCH_PREFIX, SCRATCH_OWNER_FILE, MIN_SCRATCH_AGE_MS, MAX_SCRATCH_AGE_MS, isScratchDir,
   sweepScratchDirs, markScratchOwner, scratchOwnerAlive,
-} from '../lib/scratch-dirs.ts';
-import { collectSourceFiles } from '../lib/source-files.ts';
+} from '../packages/core/src/kernel/scratch-dirs.ts';
+import { collectSourceFiles } from '../packages/core/src/kernel/source-files.ts';
 import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
@@ -255,7 +255,7 @@ const age = (dir, ms = MIN_SCRATCH_AGE_MS * 2) => {
 {
   // `isScratchDir` tests a NAME, and a file can carry the prefix too. Excluding
   // one from the walk would drop it from the syntax gate — a check passing by
-  // not running, which is the failure `lib/source-files.ts` exists to remove.
+  // not running, which is the failure `packages/core/src/kernel/source-files.ts` exists to remove.
   // Only a directory can hold a copy of the repository.
   const dir = mkdtempSync(join(tmpdir(), 'co-scratch-file-'));
   try {
@@ -422,6 +422,6 @@ const age = (dir, ms = MIN_SCRATCH_AGE_MS * 2) => {
   } else if (outside.length === 0) {
     pass(`every temp directory test code creates in the repository root carries the scratch prefix (${calls} calls)`);
   } else {
-    fail(`temp directory in the repository root without the scratch prefix — use SCRATCH_PREFIX from lib/scratch-dirs.ts, or tmpdir():\n    ${outside.join('\n    ')}`);
+    fail(`temp directory in the repository root without the scratch prefix — use SCRATCH_PREFIX from packages/core/src/kernel/scratch-dirs.ts, or tmpdir():\n    ${outside.join('\n    ')}`);
   }
 }

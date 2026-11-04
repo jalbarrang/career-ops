@@ -9,13 +9,13 @@
  * "fatal: not a git repository", and check still reported up-to-date or
  * update-available, offering an update apply could never install.
  *
- * Same fixture model as the nested test: update-system.ts is self-loading by
+ * Same fixture model as the nested test: packages/cli/src/commands/platform/update-system.ts is self-loading by
  * contract (#1706), so it and VERSION are a faithful copy of that install.
  * GIT_CEILING_DIRECTORIES stops git from walking above the fixture, so the
  * test holds even when the temp directory sits inside some repository.
  */
 
-import { mkdtempSync, copyFileSync, existsSync, realpathSync } from 'fs';
+import {mkdirSync, mkdtempSync, copyFileSync, existsSync, realpathSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { tmpdir } from 'os';
 import { dirname, join } from 'path';
@@ -25,13 +25,15 @@ console.log('\n🧪 Testing updater on an install that is not a git checkout...'
 
 function makeFixture() {
   const dir = realpathSync(mkdtempSync(join(tmpdir(), 'co-nogit-')));
-  copyFileSync(join(ROOT, 'update-system.ts'), join(dir, 'update-system.ts'));
+  mkdirSync(dirname(join(dir, 'packages/cli/src/commands/platform/update-system.ts')), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/cli/src/commands/platform/update-system.ts'), join(dir, 'packages/cli/src/commands/platform/update-system.ts'));
+  mkdirSync(dirname(join(dir, 'VERSION')), { recursive: true });
   copyFileSync(join(ROOT, 'VERSION'), join(dir, 'VERSION'));
   return dir;
 }
 
 function runUpdater(dir, ...args) {
-  return spawnSync(NODE, ['update-system.ts', ...args], {
+  return spawnSync(NODE, ['packages/cli/src/commands/platform/update-system.ts', ...args], {
     cwd: dir,
     encoding: 'utf-8',
     timeout: 60000,

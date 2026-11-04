@@ -12,9 +12,9 @@
 import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 import { pass, fail, makeUpdaterRepo } from './helpers.ts';
-import { planSystemCheckout, checkoutSystemPathsBatched } from '../update-system.ts';
+import { planSystemCheckout, checkoutSystemPathsBatched } from '../packages/cli/src/commands/platform/update-system.ts';
 
-// update-system.ts's ARGV_BUDGET: what one git call may put on the command line.
+// packages/cli/src/commands/platform/update-system.ts's ARGV_BUDGET: what one git call may put on the command line.
 const ARGV_BUDGET = 8000;
 
 const fixtures = [];

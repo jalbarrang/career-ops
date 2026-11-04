@@ -12,7 +12,7 @@ import {
   validateTemplate,
   resolveTemplate,
   loadProfileDefault,
-} from '../cv-templates.ts';
+} from '../packages/cli/src/commands/cv/cv-templates.ts';
 
 test('prettify: kebab to Title Case', () => {
   assert.equal(prettify('executive-authority'), 'Executive Authority');

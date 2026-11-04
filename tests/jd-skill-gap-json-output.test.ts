@@ -1,7 +1,7 @@
 // tests/jd-skill-gap-json-output.test.ts — the JSON branch of jd-skill-gap's
 // CLI.
 //
-// jd-skill-gap.ts --self-test covers the pure functions, but the CLI's output
+// packages/cli/src/commands/evaluation/jd-skill-gap.ts --self-test covers the pure functions, but the CLI's output
 // branches live inside the `process.argv[1] === import.meta.url` guard, so no
 // in-file assertion can reach them. That gap is why the missing `lowConfidence`
 // key survived: diagnoseExtraction() was called only inside the --summary
@@ -39,7 +39,7 @@ try {
     // resolved from the data root rather than the working directory, so the
     // fixture has to be pointed at as the data root for the CLI to find it.
     // cwd is kept so the rest of this test's behaviour is unchanged.
-    const out = run(NODE, [join(ROOT, 'jd-skill-gap.ts'), fixture], {
+    const out = run(NODE, [join(ROOT, 'packages/cli/src/commands/evaluation/jd-skill-gap.ts'), fixture], {
       cwd: dir,
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_DATA_DIR: '' },
     });

@@ -5,14 +5,14 @@
 // in isolation: that templates/cv-template.cjk.tex, read as a static file, contains
 // fontspec/xeCJK/\setCJKmainfont; and that validateLatexContent() makes the right
 // call against hand-built .tex strings. Neither of those actually runs
-// build-cv-latex.ts --template=cjk with a real CJK payload, so neither proves the
+// packages/cli/src/commands/cv/build-cv-latex.ts --template=cjk with a real CJK payload, so neither proves the
 // template-selection flag and the generator are actually wired together for a real
 // user — a bug in resolveTemplate()'s --template=cjk plumbing, or in how
-// build-cv-latex.ts escapes CJK text, would pass both existing checks and still
+// packages/cli/src/commands/cv/build-cv-latex.ts escapes CJK text, would pass both existing checks and still
 // break this path end to end.
 //
 // Follows the run()/pass()/fail() convention tests/cv-latex-bullet-bold.test.ts
-// uses for the same builder (build-cv-latex.ts has no exports to unit test
+// uses for the same builder (packages/cli/src/commands/cv/build-cv-latex.ts has no exports to unit test
 // directly — CLI end-to-end is the only way in).
 import { pass, fail, ROOT, NODE, run, lastRunFailure } from './helpers.ts';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } from 'fs';
@@ -59,11 +59,11 @@ try {
   const output = join(dir, 'cjk.tex');
   writeFileSync(input, JSON.stringify(PAYLOAD), 'utf-8');
 
-  if (run(NODE, [join(ROOT, 'build-cv-latex.ts'), input, output, '--template=cjk']) === null) {
+  if (run(NODE, [join(ROOT, 'packages/cli/src/commands/cv/build-cv-latex.ts'), input, output, '--template=cjk']) === null) {
     const f = lastRunFailure();
-    fail(`build-cv-latex.ts --template=cjk crashed (exit ${f?.status}) - ${(f?.stderr || '').trim().split('\n').pop()}`);
+    fail(`packages/cli/src/commands/cv/build-cv-latex.ts --template=cjk crashed (exit ${f?.status}) - ${(f?.stderr || '').trim().split('\n').pop()}`);
   } else if (!existsSync(output)) {
-    fail('build-cv-latex.ts --template=cjk exited 0 but wrote no output file');
+    fail('packages/cli/src/commands/cv/build-cv-latex.ts --template=cjk exited 0 but wrote no output file');
   } else {
     const tex = readFileSync(output, 'utf-8');
 
@@ -104,7 +104,7 @@ try {
     // produced, fed through validateLatexContent() with engine='tectonic', must
     // validate clean — proof generation and validation agree end to end, not
     // just in isolation against hand-built fixtures.
-    const { validateLatexContent } = await import(new URL('../generate-latex.ts', import.meta.url).href);
+    const { validateLatexContent } = await import(new URL('../packages/cli/src/commands/cv/generate-latex.ts', import.meta.url).href);
     const { issues } = validateLatexContent(tex, false, 'tectonic');
     if (issues.length === 0) {
       pass('generated CJK .tex validates clean under validateLatexContent(engine=tectonic)');

@@ -21,7 +21,7 @@ short message; otherwise run the LinkedIn power move below.
 ## LinkedIn power move (default)
 
 0. **Check for a warm lead before searching cold (#4691).** Before any
-   WebSearch, run `bun contact-lookup.ts --company "{company}" --summary`
+   WebSearch, run `career-ops contact-lookup --company "{company}" --summary`
    against `data/contacts.tsv`. This is the saved-contacts phonebook —
    written by a prior `contacto` run or by `add` from an earlier,
    *different-role* application — and a real prior relationship there beats
@@ -133,7 +133,7 @@ short message; otherwise run the LinkedIn power move below.
    the person's existing line in place if they are already there — match by
    name+company, the same key the vCard UID uses. NEVER save without the
    candidate confirming first. Saved contacts export to the phone with
-   `bun contacts.ts --vcf` (vCard). A target that came from step 0 (an
+   `career-ops contacts --vcf` (vCard). A target that came from step 0 (an
    existing row) gets its `type` cell UPDATED to `internal-referral` in
    place rather than appended as a new line, but **only once the candidate
    has confirmed a real prior relationship with this specific person** --
@@ -147,7 +147,7 @@ short message; otherwise run the LinkedIn power move below.
    `peer`/`recruiter` outreach instead, not an `internal-referral` one.
 
    When the contact comes from a pasted recruiter/interviewer reply, run
-   `bun contact-extract.ts --file <email.txt>` instead. It reuses the reply
+   `career-ops contact-extract --file <email.txt>` instead. It reuses the reply
    matcher, confirms before writing, and updates an existing name+company row;
    it never sends a message or changes tracker status.
 

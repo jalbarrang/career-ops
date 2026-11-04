@@ -61,7 +61,7 @@ try {
   const success = spawnSync(
     NODE,
     [
-      join(ROOT, 'set-status.ts'),
+      join(ROOT, 'packages/cli/src/commands/tracker/set-status.ts'),
       '--row',
       '1',
       'Interview',
@@ -120,7 +120,7 @@ try {
   const failure = spawnSync(
     NODE,
     [
-      join(ROOT, 'set-status.ts'),
+      join(ROOT, 'packages/cli/src/commands/tracker/set-status.ts'),
       '--row',
       '1',
       'NotARealStatus',

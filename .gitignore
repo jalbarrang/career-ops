@@ -317,5 +317,5 @@ data/interview-prep/
 .career-ops.env
 **/.career-ops.env
 .next/
-web/.next/
-web/out/
+apps/web/.next/
+apps/web/out/

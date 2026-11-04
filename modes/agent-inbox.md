@@ -13,17 +13,17 @@ Queued items are *intents* for the agent to action and the user to review.
 ## Queue a request
 
 ```bash
-bun agent-inbox.ts add "evaluate https://acme.com/jobs/42"
-bun agent-inbox.ts add "draft a follow-up for application #7"
-bun agent-inbox.ts add "run a scan and triage anything new"
+career-ops agent-inbox add "evaluate https://acme.com/jobs/42"
+career-ops agent-inbox add "draft a follow-up for application #7"
+career-ops agent-inbox add "run a scan and triage anything new"
 ```
 
 ## Inspect / resolve
 
 ```bash
-bun agent-inbox.ts list            # pending items
-bun agent-inbox.ts list --all      # include resolved items
-bun agent-inbox.ts resolve 1 --expect "Acme" --result "scored 4.3 — report 012"
+career-ops agent-inbox list            # pending items
+career-ops agent-inbox list --all      # include resolved items
+career-ops agent-inbox resolve 1 --expect "Acme" --result "scored 4.3 — report 012"
 ```
 
 **Item numbers are stable file positions, not positions in the pending list.**
@@ -52,7 +52,7 @@ wrong row" into an error instead of a plausible-looking wrong result line.
 2. Run each **unchecked** item top-to-bottom by routing it to the right mode
    (a URL → `auto-pipeline`; "follow-up" → `followup`; "scan" → `scan`; etc.).
 3. After each, mark it `[x]` and append `→ result: <one line>` — either by hand
-   or with `bun agent-inbox.ts resolve <n> --expect "<distinctive words from
+   or with `career-ops agent-inbox resolve <n> --expect "<distinctive words from
    the item>" --result "..."`. Pass `--expect` every time: this is a provenance
    log, and a result stamped onto the wrong item is worse than no result.
 4. Items that need **live user input** (a mock interview, a pasted transcript, a

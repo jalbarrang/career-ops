@@ -13,7 +13,7 @@ import { pathToFileURL } from 'node:url';
 import { rmSync, ROOT } from './helpers.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
-const PLUGINS_CLI = join(ROOT, 'plugins.ts');
+const PLUGINS_CLI = join(ROOT, 'packages/cli/src/commands/platform/plugins.ts');
 const NOTION_KEYS = ['NOTION_ACCESS_TOKEN', 'NOTION_PARENT_PAGE_ID'];
 
 function sandbox(prefix) {
@@ -79,7 +79,7 @@ test('scan preloads .env from the data root instead of the caller cwd', () => {
   const dataRoot = sandbox('career-ops-scan-env-data-');
   // Bun loads .env files from the working directory itself, before the script
   // runs, so a `.env` in the caller's cwd is already in process.env when
-  // scan.ts starts. The property below — scan.ts's own data-root .env wins —
+  // packages/core/src/scanning/scan.ts starts. The property below — packages/core/src/scanning/scan.ts's own data-root .env wins —
   // cannot be isolated from that, and dotenv (correctly) never overrides a
   // variable that is already set. The Node path still asserts it.
   if (process.versions.bun) {
@@ -93,7 +93,7 @@ test('scan preloads .env from the data root instead of the caller cwd', () => {
     writeFileSync(join(callerRoot, '.env'), `${key}=from-caller-cwd\n`);
     const env = { ...process.env, CAREER_OPS_ROOT: dataRoot };
     delete env[key];
-    const scanUrl = pathToFileURL(join(ROOT, 'scan.ts')).href;
+    const scanUrl = pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href;
     const result = spawnSync(
       process.execPath,
       ['--input-type=module', '-e', `await import(${JSON.stringify(scanUrl)}); process.stdout.write(process.env[${JSON.stringify(key)}] || '');`],

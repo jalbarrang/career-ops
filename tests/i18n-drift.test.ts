@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { extractHeadings, compareStructure, discoverLangs, checkLang, formatReport, toJSON } from '../i18n-drift.ts';
+import { extractHeadings, compareStructure, discoverLangs, checkLang, formatReport, toJSON } from '../packages/cli/src/commands/platform/i18n-drift.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -32,16 +32,26 @@ function linkForTest(t, target, path, directory = false) {
 }
 
 function installCLI(root) {
-  copyFileSync(join(ROOT, 'i18n-drift.ts'), join(root, 'i18n-drift.ts'));
-  mkdirSync(join(root, 'lib'), { recursive: true });
-  for (const name of ['is-main-module.ts', 'source-files.ts', 'scratch-dirs.ts', 'walk-tree.ts']) {
-    const source = join(ROOT, 'lib', name);
-    if (existsSync(source)) copyFileSync(source, join(root, 'lib', name));
+  const script = join(root, 'packages/cli/src/commands/platform/i18n-drift.ts');
+  mkdirSync(dirname(script), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/cli/src/commands/platform/i18n-drift.ts'), script);
+  // The script's static imports, plus the modules they pull in.
+  for (const file of [
+    'is-main-module.ts',
+    'source-files.ts',
+    'scratch-dirs.ts',
+    'walk-tree.ts',
+    'repo-root.ts',
+  ]) {
+    const source = join(ROOT, 'packages/core/src/kernel', file);
+    const target = join(root, 'packages/core/src/kernel', file);
+    mkdirSync(dirname(target), { recursive: true });
+    copyFileSync(source, target);
   }
 }
 
 function runCLI(root, args, cwd = root) {
-  const result = spawnSync(process.execPath, [join(root, 'i18n-drift.ts'), ...args], {
+  const result = spawnSync(process.execPath, [join(root, 'packages/cli/src/commands/platform/i18n-drift.ts'), ...args], {
     cwd, encoding: 'utf8', timeout: 15_000,
   });
   assert.equal(result.error, undefined, result.error?.message);
@@ -338,7 +348,7 @@ test('CLI help works without a modes directory, while a normal run reports the m
   installCLI(root);
   const help = runCLI(root, ['--help']);
   assert.equal(help.status, 0, describeSpawn(help));
-  assert.match(help.stdout, /i18n-drift\.ts/);
+  assert.match(help.stdout, /career-ops i18n-drift/);
   assert.match(help.stdout, /--lang/);
   const result = runCLI(root, []);
   assert.equal(result.status, 1);

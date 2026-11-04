@@ -18,7 +18,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } from 'fs
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { pass, fail } from './helpers.ts';
-import { withFollowupsLock } from '../followup-seed.ts';
+import { withFollowupsLock } from '../packages/core/src/outreach/followup-seed.ts';
 
 console.log('\n🔗 withFollowupsLock — the lock other codebases have to share');
 

@@ -4,20 +4,21 @@
 // This suite used to lift each evaluator's private copy out of its source and
 // evaluate it standalone, because four copies existed and the evaluators run on
 // import (arg parse + network) so the helper could not be imported. The copies
-// have since been consolidated into lib/tracker-addition.ts
+// have since been consolidated into packages/core/src/tracker/tracker-addition.ts
 // (career-ops-hq/career-ops#3796), so the behaviour half is a plain import.
 //
 // The discovery half stays, inverted: rather than sweeping for copies to test,
 // it now asserts there are none. A fifth evaluator that grows its own
 // normalizedTrackerScore is caught the day it lands, which is what kept
-// `gemini-eval.ts`'s concatenating version alive next to a sibling that had
+// `packages/cli/src/commands/evaluation/gemini-eval.ts`'s concatenating version alive next to a sibling that had
 // been immune to the same input the whole time.
 import { readdirSync, readFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { listTree } from '../packages/core/src/kernel/walk-tree.ts';
+import { dirname, join, relative, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { pass, fail } from './helpers.ts';
-import { looksLikeScoreCell } from '../tracker-parse.ts';
-import { normalizedTrackerScore } from '../lib/tracker-addition.ts';
+import { looksLikeScoreCell } from '../packages/core/src/tracker/tracker-parse.ts';
+import { normalizedTrackerScore } from '../packages/core/src/tracker/tracker-addition.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -85,7 +86,7 @@ if (problems.length === 0) {
 // ── Single-sourcing (#3796) ────────────────────────────────────────────────
 // Discovery by definition, as before, but the answer must now be zero. Scanning
 // root and lib/ covers where an evaluator or a helper module would put one.
-const HOME = 'lib/tracker-addition.ts';
+const HOME = 'packages/core/src/tracker/tracker-addition.ts';
 const SHARED = ['tsvSafe', 'slugifyCompany', 'isPostingUrl', 'normalizedTrackerScore'];
 // Declarations AND function-valued bindings. Matching only `function NAME(`
 // missed the shape a re-added copy is most likely to take today --
@@ -97,10 +98,10 @@ const defRe = (name) => new RegExp(
   'm',
 );
 
-const scanned = [
-  ...readdirSync(ROOT).filter(n => n.endsWith('.ts')),
-  ...readdirSync(join(ROOT, 'lib')).filter(n => n.endsWith('.ts')).map(n => `lib/${n}`),
-].filter(rel => rel !== HOME);
+// The engine tree: every script and module a score cell can be built in.
+const scanned = listTree(join(ROOT, 'packages'), { match: /\.ts$/ })
+  .map((abs) => relative(ROOT, abs).split(sep).join('/'))
+  .filter(rel => rel !== HOME);
 
 const rogue = [];
 for (const rel of scanned) {

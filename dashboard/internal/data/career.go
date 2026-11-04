@@ -59,7 +59,10 @@ func resolveReportPath(careerOpsPath, trackerPath, link string) string {
 // repoRootMarker identifies a career-ops checkout. path-resolver.ts is chosen
 // because that file IS the Node implementation of this same resolution, so the
 // two cannot disagree about which directory is the root.
-const repoRootMarker = "path-resolver.ts"
+// The checkout marker: a path only a career-ops checkout has. It moved from
+// the repository root into the kernel package in the monorepo split, so the
+// root of a checkout is the ancestor that holds it.
+var repoRootMarker = filepath.Join("packages", "core", "src", "kernel", "path-resolver.ts")
 
 // ancestorWithMarker returns the first directory at or above `start` that holds
 // the marker, or "" when there is none.

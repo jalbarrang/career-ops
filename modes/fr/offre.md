@@ -103,7 +103,7 @@ Inclure aussi :
 
 Sauvegarder l'evaluation complete dans `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
-- `{###}` = prochain numero sequentiel (3 chiffres, zero-padded). Pour l'allouer de maniere atomique et eviter les conditions de concurrence, vous devez executer `bun reserve-report-num.ts` pour reserver le numero (stdout renvoie `{###}`), ecrire le rapport, puis executer `bun reserve-report-num.ts --release {###}` pour liberer le sentinel.
+- `{###}` = prochain numero sequentiel (3 chiffres, zero-padded). Pour l'allouer de maniere atomique et eviter les conditions de concurrence, vous devez executer `career-ops reserve-report-num` pour reserver le numero (stdout renvoie `{###}`), ecrire le rapport, puis executer `career-ops reserve-report-num --release {###}` pour liberer le sentinel.
 - `{company-slug}` = nom d'entreprise en minuscules, sans espaces (utiliser des tirets)
 - `{YYYY-MM-DD}` = date du jour
 
@@ -154,7 +154,7 @@ Les libelles de l'en-tete (`**Date:**`, `**Archetype:**`, `**Score:**`, `**URL:*
 
 ### 2. Enregistrer dans le tracker
 
-**TOUJOURS** enregistrer dans le tracker. Ecrire un TSV (regle 9 de `_shared.md`) et le fusionner avec `bun merge-tracker.ts` ; ne jamais ecrire une ligne directement dans `data/applications.md`. Champs :
+**TOUJOURS** enregistrer dans le tracker. Ecrire un TSV (regle 9 de `_shared.md`) et le fusionner avec `career-ops merge-tracker` ; ne jamais ecrire une ligne directement dans `data/applications.md`. Champs :
 - Prochain numero sequentiel
 - Date du jour
 - Entreprise

@@ -159,7 +159,7 @@ Saat pertama kali dijalankan, semua itu akan ditanyakan langsung lewat obrolan (
 
 ## Apa yang tidak akan dilakukan career-ops
 
-- **Mengirim lamaran secara otomatis (*auto-submit*).** Alat ini membuatkan draf jawaban untuk setiap kolom; Anda yang meninjau dan menekan tombol Submit. Skripnya tidak pernah melakukan request POST (`prepare-application.ts`).
+- **Mengirim lamaran secara otomatis (*auto-submit*).** Alat ini membuatkan draf jawaban untuk setiap kolom; Anda yang meninjau dan menekan tombol Submit. Skripnya tidak pernah melakukan request POST (`packages/cli/src/commands/evaluation/prepare-application.ts`).
 - **Mengirim email.** Hanya sebatas draf. Tidak ada mekanisme pengiriman email sama sekali di dalam *codebase* ini.
 - **Mengirim data diam-diam (*phone home*).** Tanpa telemetri, tanpa *backend* dari pihak kami. CV Anda hanya dikirim dari komputer Anda langsung ke penyedia AI yang Anda pilih, tidak ke tempat lain. Satu-satunya catatan publik adalah repositori ini: `HIRED.md` beserta *issue*-nya.
 - **Mendorong Anda melamar di bawah skor 4.0/5.** Sistem akan menyarankan Anda untuk tidak melamar. Anda tetap bisa memilih untuk melanjutkannya, dan sistem akan mencatatnya demikian.
@@ -175,7 +175,7 @@ Alat ini menyusun ulang kalimat di CV Anda, tetapi pantang mengarang bebas. Peng
 | **Pembuatan PDF Ramah ATS** | CV yang mudah dibaca mesin ATS dan disesuaikan dengan setiap JD berdasarkan pengalaman asli Anda, menggunakan desain font Space Grotesk + DM Sans |
 | **Generator Cover Letter** | *Cover letter* berbasis riset dengan pencocokan kata kunci (*keyword mirroring*), empat pilihan sudut pandang interaktif (alasan/masalah/pendekatan/nada bicara), tahap persetujuan draf di ruang *chat*, dan ekspor PDF ukuran A4 lewat *pipeline* HTML + Playwright yang sama dengan CV. Otomatis membuat draf di setiap evaluasi; lengkapi dan cetak kapan saja lewat `/career-ops cover` |
 | **Lebih dari Sekadar CV** | Riset perusahaan ([`deep`](modes/deep.md)) menggali strategi AI, langkah bisnis terbaru, budaya *engineering*, dan sudut pandang yang sebaiknya ditonjolkan dari profil Anda. Pencarian kontak ([`contacto`](modes/contacto.md)) mengidentifikasi *hiring manager*, rekruter, atau rekan setim yang tepat untuk dihubungi sekaligus menyiapkan draf pesan LinkedIn ≤300 karakter yang disesuaikan dengan tipe kontaknya. Draf email lamaran formal ([`email`](modes/email.md)) mengubah laporan evaluasi atau teks JD menjadi baris subjek, isi email, dan daftar periksa lampiran tanpa mengirim, mengajukan, atau mengeklik apa pun. Lamaran memasukkan Anda ke dalam antrean; riset membuka peluang percakapan. |
-| **Analisis Pola** | Pola penolakan dan rasio lolos per kanal ATS (`analyze-patterns.ts`), statistik *funnel* keseluruhan (`stats.ts`), serta deteksi *repost* yang bisa menjadi indikasi lowongan hantu / *ghost job* (`detect-reposts.ts`) |
+| **Analisis Pola** | Pola penolakan dan rasio lolos per kanal ATS (`packages/cli/src/commands/insights/analyze-patterns.ts`), statistik *funnel* keseluruhan (`packages/core/src/insights/stats.ts`), serta deteksi *repost* yang bisa menjadi indikasi lowongan hantu / *ghost job* (`packages/cli/src/commands/insights/detect-reposts.ts`) |
 
 <details>
 <summary><b>Semua kemampuan lainnya</b></summary>
@@ -192,8 +192,8 @@ Alat ini menyusun ulang kalimat di CV Anda, tetapi pantang mengarang bebas. Peng
 | **Dashboard TUI** | Antarmuka terminal (TUI) untuk menjelajahi, memfilter, dan mengurutkan *pipeline* lamaran Anda |
 | **Integritas Pipeline** | Penggabungan (*merge*) otomatis, penghapusan duplikat, normalisasi status, dan pemeriksaan kesehatan data |
 | **Rangkaian Wawancara** | Rencana persiapan berbasis blok waktu, sesi latihan interaktif lengkap dengan umpan balik, evaluasi pasca-wawancara ([`interview/`](modes/interview/README.md)), serta pendeteksi tanda bahaya (*red-flag*) perusahaan ([`interview-redflag`](modes/interview-redflag.md)) |
-| **Tahap Offer** | Pendamping pembacaan kontrak kerja -- membedah pasal demi pasal beserta daftar pertanyaan untuk dikonsultasikan ke pengacara ([`offer-prep`](modes/offer-prep.md)) -- dan penganalisis selisih gaji antara ekspektasi, iklan lowongan, dan tawaran aktual (`salary-gap.ts`) |
-| **Follow-up & Balasan** | Kalkulator ritme *follow-up* dan pengingat terjadwal (`followup-cadence.ts`, `followup-seed.ts`); dapat dinonaktifkan dengan mengatur `follow_ups.enabled: false` di `config/profile.yml`; klasifikasi balasan perusahaan untuk memperbarui *tracker* ([`reply-watch`](modes/reply-watch.md)) |
+| **Tahap Offer** | Pendamping pembacaan kontrak kerja -- membedah pasal demi pasal beserta daftar pertanyaan untuk dikonsultasikan ke pengacara ([`offer-prep`](modes/offer-prep.md)) -- dan penganalisis selisih gaji antara ekspektasi, iklan lowongan, dan tawaran aktual (`packages/cli/src/commands/insights/salary-gap.ts`) |
+| **Follow-up & Balasan** | Kalkulator ritme *follow-up* dan pengingat terjadwal (`packages/core/src/outreach/followup-cadence.ts`, `packages/core/src/outreach/followup-seed.ts`); dapat dinonaktifkan dengan mengatur `follow_ups.enabled: false` di `config/profile.yml`; klasifikasi balasan perusahaan untuk memperbarui *tracker* ([`reply-watch`](modes/reply-watch.md)) |
 | **Sistem Plugin** | Integrasi opsional (Gmail, Notion, Apify + registri komunitas), nonaktif secara bawaan -- lihat [docs/PLUGINS.md](docs/PLUGINS.md) |
 
 </details>
@@ -254,7 +254,7 @@ claude   # atau codex / opencode / qwen / agy / grok
 
 ### Memindai melalui *outbound proxy*
 
-Fungsi `fetch()` bawaan Node mungkin mengabaikan variabel `HTTP_PROXY`, `HTTPS_PROXY`, dan `NO_PROXY` di dalam *sandbox* yang hanya mengizinkan koneksi lewat *proxy*. Request ke penyedia layanan dapat memanfaatkan variabel-variabel tersebut dengan menjalankan `CAREER_OPS_TRUST_PROXY_EGRESS=1 bun scan.ts`. Cara ini menggunakan *proxy dispatcher* yang hanya berlaku per request; request lain yang tidak berkaitan tidak akan terpengaruh, dan tujuan yang tercantum di `NO_PROXY` tetap diperiksa oleh mekanisme perlindungan alamat privat lokal.
+Fungsi `fetch()` bawaan Node mungkin mengabaikan variabel `HTTP_PROXY`, `HTTPS_PROXY`, dan `NO_PROXY` di dalam *sandbox* yang hanya mengizinkan koneksi lewat *proxy*. Request ke penyedia layanan dapat memanfaatkan variabel-variabel tersebut dengan menjalankan `CAREER_OPS_TRUST_PROXY_EGRESS=1 bun packages/core/src/scanning/scan.ts`. Cara ini menggunakan *proxy dispatcher* yang hanya berlaku per request; request lain yang tidak berkaitan tidak akan terpengaruh, dan tujuan yang tercantum di `NO_PROXY` tetap diperiksa oleh mekanisme perlindungan alamat privat lokal.
 
 Aktifkan *flag* ini **hanya jika *proxy* yang dikonfigurasi memang memblokir koneksi ke alamat privat, *loopback*, dan metadata**. Saat *proxy* melakukan resolusi alamat tujuan dari jarak jauh (*remote*), career-ops tidak dapat memverifikasi alamat akhir tersebut secara lokal; pihak *proxy*-lah yang harus menegakkan batas perlindungan SSRF tersebut. Tanpa pengaturan kepercayaan eksplisit ini, request ke penyedia layanan akan tetap menggunakan jalur transportasi langsung seperti biasa, dan jika terjadi kegagalan DNS, pesan error akan menyebutkan konfigurasi *proxy* yang diperlukan. URL *proxy* yang memuat kredensial wajib menggunakan HTTPS; *proxy* HTTP tanpa kredensial tetap didukung. Instalasi yang sudah ada akan tetap menggunakan jalur langsung setelah pembaruan sistem; variabel *environment* *proxy* saja tidak cukup untuk mengaktifkannya. Sebelum mengaktifkan *flag* ini, jalankan `bun install` di direktori career-ops untuk menginstal dependensi tambahan `undici`. Modul ini hanya dimuat ketika *flag* diaktifkan beserta *proxy* yang terkonfigurasi, sehingga pemindaian langsung tetap berfungsi normal meskipun dependensi tersebut belum terinstal.
 
@@ -462,9 +462,9 @@ cp .env.example .env
 bun install
 
 # 3. Evaluasi deskripsi pekerjaan (JD)
-bun gemini-eval.ts "We are looking for a Senior AI Engineer..."
-bun gemini-eval.ts --file ./jds/my-job.txt
-bun agent-inbox.ts add "..."   # antrekan permintaan untuk sesi berikutnya
+bun packages/cli/src/commands/evaluation/gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun packages/cli/src/commands/evaluation/gemini-eval.ts --file ./jds/my-job.txt
+bun packages/cli/src/commands/platform/agent-inbox.ts add "..."   # antrekan permintaan untuk sesi berikutnya
 bun run gemini:eval -- "Teks JD di sini"
 ```
 
@@ -487,10 +487,10 @@ Pemindai lowongan hadir dengan **100+ perusahaan** yang siap dipindai dan **35+ 
 
 Jaga daftarnya tetap mutakhir: `portals.yml` dirancang untuk terus hidup dan berkembang, bukan sekadar file yang diatur satu kali di awal. Lihat [Menjaga portals.yml tetap mutakhir](docs/KEEPING_PORTALS_LIVE.md) untuk aturan praktis yang menambahkan perusahaan baru secara otomatis serta perintah untuk memvalidasi file setiap kali ada perubahan.
 
-Secara bawaan, `bun scan.ts` (atau `bun run scan`) mempercayai apa pun yang dikembalikan oleh masing-masing *feed* ATS. Beberapa perusahaan terkadang membiarkan lowongan lama tetap berada di API publik mereka meskipun posisinya sudah ditutup, sehingga lowongan kedaluwarsa tersebut bisa bocor ke dalam `pipeline.md`. Tambahkan *flag* `--verify` untuk menjalankan Playwright setelah pemindaian API selesai dan membuang lowongan yang sudah kedaluwarsa sebelum masuk ke *pipeline*:
+Secara bawaan, `bun packages/core/src/scanning/scan.ts` (atau `bun run scan`) mempercayai apa pun yang dikembalikan oleh masing-masing *feed* ATS. Beberapa perusahaan terkadang membiarkan lowongan lama tetap berada di API publik mereka meskipun posisinya sudah ditutup, sehingga lowongan kedaluwarsa tersebut bisa bocor ke dalam `pipeline.md`. Tambahkan *flag* `--verify` untuk menjalankan Playwright setelah pemindaian API selesai dan membuang lowongan yang sudah kedaluwarsa sebelum masuk ke *pipeline*:
 
 ```bash
-bun scan.ts --verify          # penemuan nol-token + pengecekan keaktifan via Playwright
+bun packages/core/src/scanning/scan.ts --verify          # penemuan nol-token + pengecekan keaktifan via Playwright
 ```
 
 Proses verifikasi ini berjalan secara berurutan dan hanya memeriksa lowongan baru (setelah penghapusan duplikat), sehingga beban kerjanya tetap terkendali.
@@ -506,7 +506,7 @@ bun run build:dashboard   # opsional: build binary mandiri (standalone)
 
 Fitur: 10 tab filter, 8 mode pengurutan, tampilan berkelompok/rata (*grouped/flat*), pratinjau *lazy-load*, serta pengubahan status langsung dari daftar (*inline*).
 
-Tersedia juga **UI web eksperimental** (masih berstatus *alpha* dan bersifat *opt-in*: tidak ada yang berjalan kecuali Anda menyalakannya sendiri): lihat [`web/README.md`](web/README.md).
+Tersedia juga **UI web eksperimental** (masih berstatus *alpha* dan bersifat *opt-in*: tidak ada yang berjalan kecuali Anda menyalakannya sendiri): lihat [`apps/web/README.md`](apps/web/README.md).
 
 ## Struktur Proyek
 
@@ -563,9 +563,9 @@ Setelah lokasi ditentukan, semua file pengguna akan dibaca dan ditulis secara re
 
 - **Override Tracker:** Anda juga bisa mengatur `CAREER_OPS_TRACKER` untuk mengubah lokasi file *tracker* lamaran secara langsung.
 - **Operasi Tulis:** Semua operasi penulisan (seperti penggabungan data/*merge*) secara baku diarahkan ke `{DATA_ROOT}/data/applications.md`.
-- **Konfigurasi Pemindai:** `portals.yml` dibaca dan divalidasi di `{DATA_ROOT}/portals.yml`, sehingga `bun validate-portals.ts` memeriksa file yang sama persis dengan yang dibaca oleh `scan.ts`.
+- **Konfigurasi Pemindai:** `portals.yml` dibaca dan divalidasi di `{DATA_ROOT}/portals.yml`, sehingga `bun packages/cli/src/commands/scanning/validate-portals.ts` memeriksa file yang sama persis dengan yang dibaca oleh `packages/core/src/scanning/scan.ts`.
 - **Dokumen yang Dihasilkan:** CV dan *cover letter* yang telah disesuaikan ditulis ke dalam `{DATA_ROOT}/output/`, sedangkan manifes PDF yang menghubungkannya dengan laporan evaluasi tersimpan di `{DATA_ROOT}/data/pdf-index.tsv`. Selama `CAREER_OPS_TRACKER` tidak diatur, *workspace tracker* yang membatasi area penulisan file-file tersebut adalah *data root*, bukan folder kode repositori.
-- **PDF di bawah Override Tracker:** `generate-pdf.ts` memeriksa `CAREER_OPS_TRACKER` terlebih dahulu sebelum menentukan *workspace*. Jadi ketika *override* diaktifkan, *workspace*-nya adalah folder tempat *tracker* tersebut berada (atau satu folder di atasnya apabila *tracker* berada di dalam folder `data/`). File HTML CV beserta seluruh PDF harus berada di dalam *workspace* tersebut, dan lokasi manifesnya berpindah ke `data/pdf-index.tsv` di *workspace* itu. *Cover letter* tetap menargetkan `{DATA_ROOT}/output/`, sehingga pembuatannya akan ditolak apabila folder tersebut berada di luar *workspace tracker*.
+- **PDF di bawah Override Tracker:** `packages/cli/src/commands/cv/generate-pdf.ts` memeriksa `CAREER_OPS_TRACKER` terlebih dahulu sebelum menentukan *workspace*. Jadi ketika *override* diaktifkan, *workspace*-nya adalah folder tempat *tracker* tersebut berada (atau satu folder di atasnya apabila *tracker* berada di dalam folder `data/`). File HTML CV beserta seluruh PDF harus berada di dalam *workspace* tersebut, dan lokasi manifesnya berpindah ke `data/pdf-index.tsv` di *workspace* itu. *Cover letter* tetap menargetkan `{DATA_ROOT}/output/`, sehingga pembuatannya akan ditolak apabila folder tersebut berada di luar *workspace tracker*.
 - **Lapisan Kode Tetap di Tempatnya:** `node_modules/`, `providers/`, `modes/`, dan skrip-skripnya sendiri selalu mengacu pada repositori, tidak pernah berpindah ke *data root*.
 
 Dashboard TUI Go, skrip Node.js, dan semua mode agen AI secara otomatis mematuhi hierarki penentuan lokasi ini.
@@ -624,7 +624,7 @@ Dashboard TUI Go, skrip Node.js, dan semua mode agen AI secara otomatis mematuhi
 career-ops ([career-ops.org](https://career-ops.org), juga dikenal sebagai **careerops**) adalah alat pencarian kerja AI *open-source* yang berjalan secara lokal di dalam AI coding CLI Anda (Claude Code, Codex, OpenCode, dan lainnya) serta menyerahkan setiap keputusan sepenuhnya kepada Anda. Alat ini mengevaluasi lowongan kerja terhadap CV Anda, membuatkan PDF ramah ATS yang disesuaikan, menemukan kontak yang tepat untuk dihubungi, dan melacak semuanya di satu tempat: keputusan akhir selalu ada di tangan Anda. Proyek ini adalah implementasi referensi pertama dari [Manifesto CareerOps](https://career-ops.org/manifesto).
 
 **Apakah CV yang disesuaikan bisa mengarang hal yang tidak nyata?**
-Tidak boleh, dan *prompt*-nya secara tegas menginstruksikan demikian: susun ulang kalimatnya, jangan pernah mengarang bebas. Skrip `generate-pdf` akan memblokir pembuatan CV jika ada angka atau fakta yang tidak ditemukan di dalam sumber data Anda, kecuali jika Anda menyertakan *flag* `--skip-fact-check`. Mode `pdf` juga menjalankan `cv-title-check.ts`, yang membandingkan setiap nama jabatan di CV yang disesuaikan dengan nama jabatan yang tertulis di cv.md untuk pekerjaan yang sama (dicocokkan berdasarkan perusahaan dan tanggal), lalu menanyakan apakah Anda ingin mempertahankan atau mengembalikan setiap nama jabatan yang berbeda. Pemeriksaan ini hanya memberi peringatan, tidak memblokir, karena membingkai ulang nama jabatan terkadang memang keputusan Anda. Belum ada yang menilai perubahan gaya bahasa: *issue* [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (pemeriksaan keakuratan berbasis *fail-closed*) melacak hal tersebut. Sampai saat itu, pastikan Anda selalu membaca setiap CV sebelum mengirimkannya. [Penafian Hukum (Legal Disclaimer)](LEGAL_DISCLAIMER.md) menjelaskan hal yang sama secara lebih rinci.
+Tidak boleh, dan *prompt*-nya secara tegas menginstruksikan demikian: susun ulang kalimatnya, jangan pernah mengarang bebas. Skrip `generate-pdf` akan memblokir pembuatan CV jika ada angka atau fakta yang tidak ditemukan di dalam sumber data Anda, kecuali jika Anda menyertakan *flag* `--skip-fact-check`. Mode `pdf` juga menjalankan `packages/cli/src/commands/cv/cv-title-check.ts`, yang membandingkan setiap nama jabatan di CV yang disesuaikan dengan nama jabatan yang tertulis di cv.md untuk pekerjaan yang sama (dicocokkan berdasarkan perusahaan dan tanggal), lalu menanyakan apakah Anda ingin mempertahankan atau mengembalikan setiap nama jabatan yang berbeda. Pemeriksaan ini hanya memberi peringatan, tidak memblokir, karena membingkai ulang nama jabatan terkadang memang keputusan Anda. Belum ada yang menilai perubahan gaya bahasa: *issue* [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (pemeriksaan keakuratan berbasis *fail-closed*) melacak hal tersebut. Sampai saat itu, pastikan Anda selalu membaca setiap CV sebelum mengirimkannya. [Penafian Hukum (Legal Disclaimer)](LEGAL_DISCLAIMER.md) menjelaskan hal yang sama secara lebih rinci.
 
 **Bisakah saya menjalankan career-ops secara gratis, atau dengan model lokal / yang lebih murah?**
 Bisa. career-ops bersifat CLI-agnostik dan dapat berjalan di atas model gratis maupun lokal (model gratis di OpenRouter, Ollama, atau *endpoint* apa pun yang kompatibel dengan OpenAI), sehingga Anda tidak terikat pada langganan berbayar. Lihat [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md) untuk panduan lengkapnya.

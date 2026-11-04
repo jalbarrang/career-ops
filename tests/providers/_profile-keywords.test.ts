@@ -11,7 +11,7 @@ console.log('\nProvider helper — _profile-keywords');
 // throws after mkdtempSync used to skip the rmSync and leave the dir in tmp.
 let tmp;
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/_profile-keywords.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_profile-keywords.ts')).href);
   const { profileTargetKeywords, resolveProfileKeywords } = mod;
 
   const profile = {

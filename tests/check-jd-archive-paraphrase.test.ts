@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { checkJdArchive } from '../check-jd-archive.ts';
+import { checkJdArchive } from '../packages/core/src/evaluation/check-jd-archive.ts';
 
 const PARAPHRASE_REPORT = [
   '# Evaluation: Acme - Director of Marketing',
@@ -62,7 +62,7 @@ const PDF_POINTER_REPORT = [
   '',
   '## Job Description (archived verbatim)',
   '',
-  'See jds/042-2026-01-15_acme_director.pdf for the full archive (archive-posting.ts --report=42).',
+  'See jds/042-2026-01-15_acme_director.pdf for the full archive (packages/cli/src/commands/evaluation/archive-posting.ts --report=42).',
   '',
   '## Machine Summary',
   '',
@@ -80,7 +80,7 @@ test('a PDF pointer with no capture on disk is flagged, and passes once the capt
   }
 });
 
-import { mapTrackerCaptureLinks } from '../check-jd-archive.ts';
+import { mapTrackerCaptureLinks } from '../packages/core/src/evaluation/check-jd-archive.ts';
 
 test('a tracker capture link cannot escape the data root', () => {
   const dir = mkdtempSync(join(tmpdir(), 'jd-traversal-'));

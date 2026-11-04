@@ -2,7 +2,7 @@
 // reads and writes to the data root, not the checkout (#5346).
 //
 // With CAREER_OPS_ROOT / CAREER_OPS_DATA_DIR / a .career-ops-data marker, the
-// scripts resolve user files through path-resolver.ts, but an interactive
+// scripts resolve user files through packages/core/src/kernel/path-resolver.ts, but an interactive
 // agent resolves them from what the docs tell it. Two docs told it the
 // checkout:
 //
@@ -10,7 +10,7 @@
 //     PROJECT_ROOT, so profile.yml, _profile.md and _custom.md were read from
 //     the checkout and, being "(if exists)", skipped without a word;
 //   - AGENTS.md and modes/_shared.md put tracker TSVs at a bare
-//     `batch/tracker-additions/`, while merge-tracker.ts reads
+//     `batch/tracker-additions/`, while packages/cli/src/commands/tracker/merge-tracker.ts reads
 //     <dataRoot>/batch/tracker-additions. The row never merged, and both
 //     merge-tracker and verify-pipeline reported nothing pending.
 //
@@ -41,9 +41,9 @@ function routingRule(text) {
   return rule;
 }
 
-test('the router derives DATA_ROOT with path-resolver.ts precedence', () => {
+test('the router derives DATA_ROOT with packages/core/src/kernel/path-resolver.ts precedence', () => {
   const text = read(ROUTER);
-  for (const token of ['`DATA_ROOT`', '`CAREER_OPS_ROOT`', '`CAREER_OPS_DATA_DIR`', '.career-ops-data', 'path-resolver.ts']) {
+  for (const token of ['`DATA_ROOT`', '`CAREER_OPS_ROOT`', '`CAREER_OPS_DATA_DIR`', '.career-ops-data', 'packages/core/src/kernel/path-resolver.ts']) {
     assert.ok(text.includes(token), `${ROUTER} does not mention ${token}`);
   }
 });
@@ -99,7 +99,7 @@ test('a TSV written where AGENTS.md says merges under a configured data root', (
       'num\tdate\tcompany\trole\tstatus\tscore\tpdf\treport\tnotes\n' +
       '901\t2026-10-16\tExample Co\tEngineer\tEvaluated\t4.0/5\t❌\t—\tsynthetic\n');
 
-    const r = spawnSync(process.execPath, [join(ROOT, 'merge-tracker.ts')], {
+    const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts')], {
       cwd: ROOT, encoding: 'utf-8', timeout: 60_000,
       env: {
         ...process.env,

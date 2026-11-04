@@ -52,10 +52,10 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { pass, fail } from './helpers.ts';
-import { trustsEnvTargetRef } from '../update-system.ts';
+import { trustsEnvTargetRef } from '../packages/cli/src/commands/platform/update-system.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const UPDATE_SYSTEM_SRC = readFileSync(join(__dirname, '..', 'update-system.ts'), 'utf-8');
+const UPDATE_SYSTEM_SRC = readFileSync(join(__dirname, '..', 'packages/cli/src/commands/platform/update-system.ts'), 'utf-8');
 
 console.log('\n🧪 Testing that CAREER_OPS_UPDATE_REEXEC=1 alone cannot bypass channel resolution...');
 

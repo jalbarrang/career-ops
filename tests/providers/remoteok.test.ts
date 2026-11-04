@@ -2,7 +2,7 @@
 // RemoteOK is a board-wide aggregator feed: no detect(), a fixed FEED_URL, and
 // an API quirk — index 0 of the returned array is a {last_updated, legal}
 // metadata object, not a job. These tests pin the id/fetch contract that
-// scan.ts relies on, with a deterministic mock ctx (no network).
+// packages/core/src/scanning/scan.ts relies on, with a deterministic mock ctx (no network).
 import { pass, fail, ROOT } from '../helpers.ts';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
@@ -10,7 +10,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — remoteok');
 
 try {
-  const remoteokModule = await import(pathToFileURL(join(ROOT, 'providers/remoteok.ts')).href);
+  const remoteokModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/remoteok.ts')).href);
   const remoteok = remoteokModule.default;
 
   if (remoteok.id === 'remoteok') pass('remoteok.id is "remoteok"');

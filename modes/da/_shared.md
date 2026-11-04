@@ -195,7 +195,7 @@ I danske opslag og forhandlinger optræder visse termer, som ikke findes på EN/
 
 0. **Ansøgning (følgebrev):** Hvis formularen tillader det, så inkludér ALTID én. PDF i samme visuelle design som CV'et. Citater fra opslaget mappet til proof points. Maks. 1 side.
 1. Læs `cv.md` og `article-digest.md` (hvis den findes), før et opslag evalueres
-1b. **Første evaluering i hver session:** Kør `bun cv-sync-check.ts` via Bash. Ved advarsler, informér kandidaten
+1b. **Første evaluering i hver session:** Kør `career-ops cv-sync-check` via Bash. Ved advarsler, informér kandidaten
 2. Detektér rollens arketype og tilpas framingen
 3. Citér eksakte linjer fra CV'et ved matching
 4. Brug WebSearch til løn- og virksomhedsdata
@@ -204,7 +204,7 @@ I danske opslag og forhandlinger optræder visse termer, som ikke findes på EN/
 7. Vær direkte og konkret -- ingen smøren
 8. Naturligt tech-dansk til genererede tekster. Korte sætninger, aktive verber, undgå passiv. Oversæt ikke tekniske termer med tvang (stack, pipeline, deployment, embedding)
 8b. **Case-study-URL'er i PDF'ens Professional Summary:** Hvis PDF'en nævner case studies eller demoer, SKAL URL'erne optræde i det første afsnit (Professional Summary). Rekrutterere læser ofte kun summary. Alle URL'er i HTML med `white-space: nowrap`
-9. **Tracker-poster som TSV** -- rediger ALDRIG applications.md direkte for nye tilføjelser. Skriv TSV i `batch/tracker-additions/`, `merge-tracker.ts` håndterer sammenfletningen. Skriv først en række med **kolonnenavne** og derunder præcis én datarække (se AGENTS.md, "TSV Format for Tracker Additions"). Navnerækken er det, der lader `merge-tracker.ts` slå felterne op på NAVN i stedet for at gætte, hvilken kolonne der er score, og hvilken der er status
+9. **Tracker-poster som TSV** -- rediger ALDRIG applications.md direkte for nye tilføjelser. Skriv TSV i `batch/tracker-additions/`, `packages/cli/src/commands/tracker/merge-tracker.ts` håndterer sammenfletningen. Skriv først en række med **kolonnenavne** og derunder præcis én datarække (se AGENTS.md, "TSV Format for Tracker Additions"). Navnerækken er det, der lader `packages/cli/src/commands/tracker/merge-tracker.ts` slå felterne op på NAVN i stedet for at gætte, hvilken kolonne der er score, og hvilken der er status
 10. **`**URL:**` i hver report-header** -- mellem Score og PDF
 
 ### Værktøjer
@@ -216,5 +216,5 @@ I danske opslag og forhandlinger optræder visse termer, som ikke findes på EN/
 | Playwright | Tjek om opslag er aktive (browser_navigate + browser_snapshot), udtræk opslag fra SPAs. **KRITISK: ALDRIG 2+ agenter parallelt med Playwright -- de deler den samme browser-instans** |
 | Read | cv.md, article-digest.md, cv-template.html |
 | Write | Midlertidig HTML til PDF, reports .md, TSV-filer til trackeren i `batch/tracker-additions/` (aldrig `applications.md` direkte) |
-| Edit | Rettelser i rapporter og andet genereret indhold. Aldrig tracker-tabellen: nye rækker tilføjes som TSV og flettes med `bun merge-tracker.ts`, ændringer af status og noter går gennem `bun set-status.ts` |
-| Bash | `bun generate-pdf.ts`, `bun merge-tracker.ts`, `bun set-status.ts` |
+| Edit | Rettelser i rapporter og andet genereret indhold. Aldrig tracker-tabellen: nye rækker tilføjes som TSV og flettes med `career-ops merge-tracker`, ændringer af status og noter går gennem `career-ops set-status` |
+| Bash | `career-ops generate-pdf`, `career-ops merge-tracker`, `career-ops set-status` |

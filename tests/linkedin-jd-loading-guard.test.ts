@@ -70,7 +70,7 @@ test('missing JD holds the original input before writes and pasted recovery does
 test('default entrypoints load the guard before their generic navigation or fallback chain', () => {
   const sweep = section(pipeline, '## Liveness sweep', '## Pre-screen gate');
   const exclusion = sweep.indexOf('excluding LinkedIn URLs');
-  assert.ok(exclusion >= 0 && exclusion < sweep.indexOf('bun check-liveness.ts'));
+  assert.ok(exclusion >= 0 && exclusion < sweep.indexOf('career-ops check-liveness'));
   for (const [text, start, end, navigation] of [
     [auto, '## Step 0 — Extract JD', '## Step 0.5', '**Priority order:**'],
     [oferta, '## Liveness gate', '## Blacklist gate', '1. Get the page content:'],

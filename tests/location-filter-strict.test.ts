@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildLocationFilter } from '../scan.ts';
+import { buildLocationFilter } from '../packages/core/src/scanning/scan.ts';
 
 test('location_filter.strict fails closed on empty locations without changing the default', () => {
   const lenient = buildLocationFilter({ allow: ['puerto rico', 'san juan'] });
@@ -26,7 +26,7 @@ test('strict:true with no restricting tier is inert; block-only strict fails clo
 });
 
 test('block_hard-only strict also fails closed on empty locations (CodeRabbit, #4033)', () => {
-  // block_hard is a separate restricting tier from block (scan.ts:519,524) —
+  // block_hard is a separate restricting tier from block (packages/core/src/scanning/scan.ts:519,524) —
   // always_allow cannot override it, unlike block. A config using only
   // block_hard must fail closed under strict the same way block-only does.
   const strictBlockHardOnly = buildLocationFilter({ block_hard: ['india'], strict: true });

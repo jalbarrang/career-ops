@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { pass, fail, results } from '../helpers.ts';
-import himalayas from '../../providers/himalayas.ts';
+import himalayas from '../../packages/core/src/scanning/providers/himalayas.ts';
 
 async function check(name, run) {
   try {

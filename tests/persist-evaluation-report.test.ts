@@ -1,4 +1,4 @@
-// persist-evaluation-report.ts writes the report and the headed addition.
+// packages/cli/src/commands/evaluation/persist-evaluation-report.ts writes the report and the headed addition.
 // It does not reserve a number and it does not merge the tracker.
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -7,12 +7,12 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, w
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { trackerTsvLine as coreLine } from "../lib/tracker-addition.ts";
-import { writeEvaluationArtifacts } from "../persist-evaluation-report.ts";
+import { trackerTsvLine as coreLine } from "../packages/core/src/tracker/tracker-addition.ts";
+import { writeEvaluationArtifacts } from "../packages/cli/src/commands/evaluation/persist-evaluation-report.ts";
 import { describeSpawn, exitedNonZero } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const SCRIPT = join(ROOT, "persist-evaluation-report.ts");
+const SCRIPT = join(ROOT, "packages/cli/src/commands/evaluation/persist-evaluation-report.ts");
 
 const ROW = {
   num: "035",
@@ -67,12 +67,12 @@ test("persist-evaluation-report -h matches --help", () => {
   assert.equal(short.stdout, long.stdout);
 });
 test("tracker addition builders in lib and web agree", async (t) => {
-  // web/ is excluded from core-only installs (#3269). Skip rather than crash.
-  if (!existsSync(join(ROOT, "web", "src"))) {
-    t.skip("web/ not present");
+  // apps/web/ is excluded from core-only installs (#3269). Skip rather than crash.
+  if (!existsSync(join(ROOT, "apps/web", "src"))) {
+    t.skip("apps/web/ not present");
     return;
   }
-  const { trackerTsvLine: webLine } = await import("../web/src/lib/report-persist.ts");
+  const { trackerTsvLine: webLine } = await import("../apps/web/src/lib/report-persist.ts");
   const rows = [
     ROW,
     { ...ROW, via: "Hays", url: "https://example.com/jobs/2" },

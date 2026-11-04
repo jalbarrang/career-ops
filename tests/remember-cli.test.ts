@@ -2,7 +2,7 @@
 // the ranker both use it.
 //
 // Nothing wrote CAREER_OPS_CLI, so doctor fell back to claude even where claude
-// was not installed, and rank-pipeline.ts ran the first CLI on PATH instead of
+// was not installed, and packages/cli/src/commands/pipeline/rank-pipeline.ts ran the first CLI on PATH instead of
 // the one the user set up in.
 
 import { test } from 'node:test';
@@ -35,20 +35,20 @@ function node(dir, args, extra) {
 test('remember-cli writes CAREER_OPS_CLI to the data root .env and keeps other lines', (t) => {
   const dir = sandbox(t);
   writeFileSync(join(dir, '.env'), 'OPENROUTER_MODEL=example/model\nCAREER_OPS_CLI=claude\n');
-  const result = node(dir, [join(ROOT, 'remember-cli.ts'), 'grok']);
+  const result = node(dir, [join(ROOT, 'packages/cli/src/commands/platform/remember-cli.ts'), 'grok']);
   assert.equal(result.status, 0, result.stderr);
   assert.equal(readFileSync(join(dir, '.env'), 'utf8'), 'OPENROUTER_MODEL=example/model\nCAREER_OPS_CLI=grok\n');
 });
 
 test('remember-cli creates .env when there is none', (t) => {
   const dir = sandbox(t);
-  assert.equal(node(dir, [join(ROOT, 'remember-cli.ts'), 'codex']).status, 0);
+  assert.equal(node(dir, [join(ROOT, 'packages/cli/src/commands/platform/remember-cli.ts'), 'codex']).status, 0);
   assert.equal(readFileSync(join(dir, '.env'), 'utf8'), 'CAREER_OPS_CLI=codex\n');
 });
 
 test('remember-cli refuses an unknown CLI and writes nothing', (t) => {
   const dir = sandbox(t);
-  const result = node(dir, [join(ROOT, 'remember-cli.ts'), 'not-a-cli']);
+  const result = node(dir, [join(ROOT, 'packages/cli/src/commands/platform/remember-cli.ts'), 'not-a-cli']);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /not-a-cli/);
   assert.equal(existsSync(join(dir, '.env')), false);
@@ -60,15 +60,15 @@ test('remember-cli keeps the .env file mode', {
   const dir = sandbox(t);
   writeFileSync(join(dir, '.env'), 'EXAMPLE_API_KEY=fake\n', { mode: 0o600 });
   chmodSync(join(dir, '.env'), 0o600);
-  assert.equal(node(dir, [join(ROOT, 'remember-cli.ts'), 'codex']).status, 0);
+  assert.equal(node(dir, [join(ROOT, 'packages/cli/src/commands/platform/remember-cli.ts'), 'codex']).status, 0);
   assert.equal(statSync(join(dir, '.env')).mode & 0o777, 0o600);
   assert.equal(readFileSync(join(dir, '.env'), 'utf8'), 'EXAMPLE_API_KEY=fake\nCAREER_OPS_CLI=codex\n');
 });
 
 test('doctor reports the remembered CLI', (t) => {
   const dir = sandbox(t);
-  node(dir, [join(ROOT, 'remember-cli.ts'), 'grok']);
-  const result = node(dir, [join(ROOT, 'doctor.ts'), '--json', '--target', dir]);
+  node(dir, [join(ROOT, 'packages/cli/src/commands/platform/remember-cli.ts'), 'grok']);
+  const result = node(dir, [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), '--json', '--target', dir]);
   const state = JSON.parse(result.stdout);
   assert.equal(state.active_cli, 'grok');
 });
@@ -88,9 +88,9 @@ for (const [remembered, bin, call] of [['opencode', 'opencode', 'opencode run'],
         + `console.log('[{"id":0,"score":3,"reason":"Fixture match"}]');\n`);
       chmodSync(binary, 0o755);
     }
-    node(dir, [join(ROOT, 'remember-cli.ts'), remembered]);
+    node(dir, [join(ROOT, 'packages/cli/src/commands/platform/remember-cli.ts'), remembered]);
     const callFile = join(dir, 'call.txt');
-    const result = node(dir, [join(ROOT, 'rank-pipeline.ts'), '--dry-run'], {
+    const result = node(dir, [join(ROOT, 'packages/cli/src/commands/pipeline/rank-pipeline.ts'), '--dry-run'], {
       PATH: `${join(dir, 'bin')}:${process.env.PATH}`,
       RANK_CALL: callFile,
     });

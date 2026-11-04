@@ -193,7 +193,7 @@ In deutschen Stellenanzeigen und Vertragsverhandlungen tauchen Begriffe auf, die
 
 0. **Anschreiben:** Wenn das Formular die Möglichkeit bietet, ein Anschreiben anzuhängen oder zu schreiben, IMMER eines mitliefern. PDF im selben visuellen Design wie der Lebenslauf erzeugen. Inhalt: Zitate aus der Stellenanzeige, gemappt auf Proof Points, Links zu relevanten Case Studies. Maximal 1 Seite.
 1. `cv.md` und `article-digest.md` (falls vorhanden) lesen, bevor irgendeine Stellenanzeige bewertet wird
-1b. **Bei der ersten Bewertung jeder Session:** `bun cv-sync-check.ts` per Bash ausführen. Bei Warnungen den Kandidaten informieren, bevor weitergearbeitet wird
+1b. **Bei der ersten Bewertung jeder Session:** `career-ops cv-sync-check` per Bash ausführen. Bei Warnungen den Kandidaten informieren, bevor weitergearbeitet wird
 2. Den Rollen-Archetyp erkennen und das Framing anpassen
 3. Beim Matching exakte Zeilen aus dem Lebenslauf zitieren
 4. WebSearch für Vergütungs- und Firmendaten nutzen
@@ -202,7 +202,7 @@ In deutschen Stellenanzeigen und Vertragsverhandlungen tauchen Begriffe auf, die
 7. Direkt und konkret sein — keine Floskeln
 8. Beim Erzeugen deutscher Texte (PDF-Summaries, Bullets, LinkedIn-Nachrichten, STAR-Stories): natürliches Tech-Deutsch, keine wörtliche Übersetzung. Kurze Sätze, aktive Verben, Passiv vermeiden. Fachbegriffe (Stack, Pipeline, Deployment, Embedding) nicht zwanghaft eindeutschen
 8b. **Case-Study-URLs in der PDF Professional Summary:** Wenn das PDF Case Studies oder Demos erwähnt, MÜSSEN die URLs schon im ersten Absatz (Professional Summary) auftauchen. Recruiter lesen oft nur die Summary. Alle URLs im HTML mit `white-space: nowrap`
-9. **Tracker-Einträge als TSV** — `applications.md` NIEMALS direkt für neue Einträge editieren. TSV in `batch/tracker-additions/` schreiben, `merge-tracker.ts` übernimmt das Mergen. Zuerst eine Zeile mit den **Spaltennamen**, darunter genau eine Datenzeile (siehe AGENTS.md, „TSV Format for Tracker Additions"). Erst die Namenszeile lässt `merge-tracker.ts` die Felder über den NAMEN auflösen, statt zu raten, welche Spalte score und welche status ist
+9. **Tracker-Einträge als TSV** — `applications.md` NIEMALS direkt für neue Einträge editieren. TSV in `batch/tracker-additions/` schreiben, `packages/cli/src/commands/tracker/merge-tracker.ts` übernimmt das Mergen. Zuerst eine Zeile mit den **Spaltennamen**, darunter genau eine Datenzeile (siehe AGENTS.md, „TSV Format for Tracker Additions"). Erst die Namenszeile lässt `packages/cli/src/commands/tracker/merge-tracker.ts` die Felder über den NAMEN auflösen, statt zu raten, welche Spalte score und welche status ist
 10. **`**URL:**` in jedem Report-Header** — zwischen Score und PDF
 
 ### Tools
@@ -214,5 +214,5 @@ In deutschen Stellenanzeigen und Vertragsverhandlungen tauchen Begriffe auf, die
 | Playwright | Prüfen, ob Stellenanzeigen noch aktiv sind (browser_navigate + browser_snapshot), Stellenanzeigen aus SPAs extrahieren. **KRITISCH: NIEMALS 2+ Agenten parallel mit Playwright starten — sie teilen sich eine Browser-Instanz** |
 | Read | cv.md, article-digest.md, cv-template.html |
 | Write | Temporäres HTML für PDF, Reports .md, TSV-Dateien für den Tracker in `batch/tracker-additions/` (niemals `applications.md` direkt) |
-| Edit | Korrekturen an Reports und anderen generierten Inhalten. Nie die Tracker-Tabelle: neue Zeilen kommen als TSV hinzu und werden mit `bun merge-tracker.ts` zusammengeführt, Status- und Notizänderungen laufen über `bun set-status.ts` |
-| Bash | `bun generate-pdf.ts`, `bun merge-tracker.ts`, `bun set-status.ts` |
+| Edit | Korrekturen an Reports und anderen generierten Inhalten. Nie die Tracker-Tabelle: neue Zeilen kommen als TSV hinzu und werden mit `career-ops merge-tracker` zusammengeführt, Status- und Notizänderungen laufen über `career-ops set-status` |
+| Bash | `career-ops generate-pdf`, `career-ops merge-tracker`, `career-ops set-status` |

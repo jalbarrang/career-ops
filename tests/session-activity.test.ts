@@ -1,7 +1,7 @@
 // tests/session-activity.test.ts — advisory in-progress claims for concurrent
-// sessions (#4532), mirroring reserve-report-num.ts's own test conventions.
+// sessions (#4532), mirroring packages/cli/src/commands/tracker/reserve-report-num.ts's own test conventions.
 //
-// This module never blocks or throws on collision (see session-activity.ts's
+// This module never blocks or throws on collision (see packages/core/src/platform/session-activity.ts's
 // header) — it only answers honestly so a caller can warn instead of silently
 // duplicating another session's work. These tests exercise the module
 // directly (no CLI spawn needed, unlike reserve-report-num's --help test)
@@ -18,7 +18,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import {
   checkActivity, claimActivity, releaseActivity, gcStaleActivity, describeActiveOwner,
-} from '../session-activity.ts';
+} from '../packages/core/src/platform/session-activity.ts';
 
 // Every test gets its own scratch dir passed as `activityDir`, so nothing here
 // ever touches the real repo's .career-ops-locks/.

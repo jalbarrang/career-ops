@@ -46,11 +46,11 @@
 
 import { mkdtempSync, writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import {dirname, join } from 'path';
 import { pass, fail, rmSync, ROOT, hermeticGitRunner } from './helpers.ts';
-import { gitIn, systemTreeDiffers, driftPathspecExcludingSkillEntrypoints } from '../update-system.ts';
+import { gitIn, systemTreeDiffers, driftPathspecExcludingSkillEntrypoints } from '../packages/cli/src/commands/platform/update-system.ts';
 
-const SYSTEM_PATHS = ['scan.ts', '.agents/', '.claude/skills/', 'scaffolder/'];
+const SYSTEM_PATHS = ['packages/core/src/scanning/scan.ts', '.agents/', '.claude/skills/', 'scaffolder/'];
 const ENTRYPOINT_PATH = '.claude/skills/career-ops/SKILL.md';
 const SKILL_ENTRYPOINTS = [{ path: ENTRYPOINT_PATH }];
 const POINTER_TEXT = '../../../.agents/skills/career-ops/SKILL.md';
@@ -80,7 +80,8 @@ function makeOrigin() {
   sealFixtureRepo(dir, g);
   mkdirSync(join(dir, '.agents/skills/career-ops'), { recursive: true });
   mkdirSync(join(dir, 'scaffolder/bin'), { recursive: true });
-  writeFileSync(join(dir, 'scan.ts'), '// scan v1\n');
+  mkdirSync(dirname(join(dir, 'packages/core/src/scanning/scan.ts')), { recursive: true });
+  writeFileSync(join(dir, 'packages/core/src/scanning/scan.ts'), '// scan v1\n');
   writeFileSync(join(dir, '.agents/skills/career-ops/SKILL.md'), 'canonical skill content v1\n');
   writeFileSync(join(dir, 'scaffolder/bin/skill-entrypoints.ts'), '// entrypoints v1\n');
   g('add', '-A');
@@ -226,7 +227,7 @@ console.log('\n🧪 Testing updater drift detection over materialized skill entr
 
 // ── 5. An empty skillEntrypoints list is a no-op ───────────────────────────
 {
-  const base = ['scan.ts', 'modes/'];
+  const base = ['packages/core/src/scanning/scan.ts', 'modes/'];
   const result = driftPathspecExcludingSkillEntrypoints(base, []);
   if (result.length === base.length && result.every((p, i) => p === base[i])) {
     pass('an empty skillEntrypoints list leaves the pathspec unchanged');
@@ -237,7 +238,7 @@ console.log('\n🧪 Testing updater drift detection over materialized skill entr
 
 // ── 6. Multiple entrypoints each get their own exclude pathspec ───────────
 {
-  const base = ['scan.ts'];
+  const base = ['packages/core/src/scanning/scan.ts'];
   const entrypoints = [{ path: 'a/SKILL.md' }, { path: 'b/SKILL.md' }];
   const result = driftPathspecExcludingSkillEntrypoints(base, entrypoints);
   if (result.length === 3 && result.includes(':(exclude)a/SKILL.md') && result.includes(':(exclude)b/SKILL.md')) {
@@ -260,7 +261,7 @@ console.log('\n🧪 Testing updater drift detection over materialized skill entr
 //    repo's existing convention for call-site guards it cannot otherwise
 //    exercise (see e.g. updater-migration-tests.ts's source-pattern checks).
 {
-  const source = readFileSync(join(ROOT, 'update-system.ts'), 'utf-8');
+  const source = readFileSync(join(ROOT, 'packages/cli/src/commands/platform/update-system.ts'), 'utf-8');
   // Anchored on the exact call this file's own doc comment (top) and PR
   // description cite: systemTreeDiffers's first argument must be the
   // filtered pathspec, not the raw SYSTEM_PATHS list.

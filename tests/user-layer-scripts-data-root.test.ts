@@ -1,4 +1,4 @@
-// User Layer paths in batch-tailor.ts, cv-templates.ts and openrouter-runner.ts
+// User Layer paths in packages/cli/src/commands/cv/batch-tailor.ts, packages/cli/src/commands/cv/cv-templates.ts and packages/cli/src/commands/evaluation/openrouter-runner.ts
 // must follow the data root (getCareerOpsRoot(): CAREER_OPS_ROOT /
 // CAREER_OPS_DATA_DIR > .career-ops-data marker > repo root), while System
 // Layer paths (batch/, templates/) stay on the code checkout.
@@ -112,11 +112,11 @@ function run(f, script, args, env, input) {
   return { ...result, output: `${result.stdout ?? ''}${result.stderr ?? ''}` };
 }
 
-// ── batch-tailor.ts ─────────────────────────────────────────────────────────
+// ── packages/cli/src/commands/cv/batch-tailor.ts ─────────────────────────────────────────────────────────
 
 for (const mode of MODES) {
-  test(`batch-tailor.ts reads reports/ from the data root (${mode})`, (t) => {
-    const f = fixture(t, 'batch-tailor.ts');
+  test(`packages/cli/src/commands/cv/batch-tailor.ts reads reports/ from the data root (${mode})`, (t) => {
+    const f = fixture(t, 'packages/cli/src/commands/cv/batch-tailor.ts');
     // batch/ is System Layer: the default state file stays on the code root.
     write(join(f.code, 'batch', 'batch-state.tsv'),
       'id\turl\tstatus\tstarted_at\tcompleted_at\treport_num\tscore\terror\tretries\n'
@@ -132,7 +132,7 @@ for (const mode of MODES) {
     for (const key of Object.keys(env)) if (key.toUpperCase() === 'PATH') delete env[key];
     env.PATH = join(f.dir, 'empty-bin');
 
-    const result = run(f, 'batch-tailor.ts', ['--min-score', '4.0'], env);
+    const result = run(f, 'packages/cli/src/commands/cv/batch-tailor.ts', ['--min-score', '4.0'], env);
     assert.equal(result.status, 1, result.output);
     assert.ok(result.output.includes(`Report: ${report}`),
       `expected the data-root report to be handed to the worker:\n${result.output}`);
@@ -140,12 +140,12 @@ for (const mode of MODES) {
   });
 }
 
-// ── cv-templates.ts ─────────────────────────────────────────────────────────
+// ── packages/cli/src/commands/cv/cv-templates.ts ─────────────────────────────────────────────────────────
 
 const CV_TEMPLATE = '<h1>{{NAME}}</h1>{{EXPERIENCE}}{{EDUCATION}}\n';
 
 function cvTemplatesFixture(t) {
-  const f = fixture(t, 'cv-templates.ts', { nodeModules: true });
+  const f = fixture(t, 'packages/cli/src/commands/cv/cv-templates.ts', { nodeModules: true });
   // templates/ is System Layer and must still come from the code root.
   for (const name of ['cv-template.html', 'cv-template.fancy.html', 'cv-template.plain.html', 'cv-template.bold.html']) {
     write(join(f.code, 'templates', name), CV_TEMPLATE);
@@ -156,31 +156,31 @@ function cvTemplatesFixture(t) {
 }
 
 for (const mode of MODES) {
-  test(`cv-templates.ts reads config/profile.yml from the data root (${mode})`, (t) => {
+  test(`packages/cli/src/commands/cv/cv-templates.ts reads config/profile.yml from the data root (${mode})`, (t) => {
     const f = cvTemplatesFixture(t);
-    const result = run(f, 'cv-templates.ts', ['resolve', 'cv'], envFor(mode, f));
+    const result = run(f, 'packages/cli/src/commands/cv/cv-templates.ts', ['resolve', 'cv'], envFor(mode, f));
     assert.equal(result.status, 0, result.output);
     assert.equal(result.stdout.trim(), join(f.code, 'templates', 'cv-template.fancy.html'),
       'expected the data-root profile default, resolved against the code-root templates/');
   });
 }
 
-test('cv-templates.ts: CAREER_OPS_PROFILE still overrides the data-root profile', (t) => {
+test('packages/cli/src/commands/cv/cv-templates.ts: CAREER_OPS_PROFILE still overrides the data-root profile', (t) => {
   const f = cvTemplatesFixture(t);
   const override = join(f.dir, 'override-profile.yml');
   write(override, 'cv:\n  template: bold\n');
-  const result = run(f, 'cv-templates.ts', ['resolve', 'cv'],
+  const result = run(f, 'packages/cli/src/commands/cv/cv-templates.ts', ['resolve', 'cv'],
     envFor('CAREER_OPS_ROOT', f, { CAREER_OPS_PROFILE: override }));
   assert.equal(result.status, 0, result.output);
   assert.equal(result.stdout.trim(), join(f.code, 'templates', 'cv-template.bold.html'));
 });
 
-// ── openrouter-runner.ts ────────────────────────────────────────────────────
+// ── packages/cli/src/commands/evaluation/openrouter-runner.ts ────────────────────────────────────────────────────
 
 for (const mode of MODES) {
-  test(`openrouter-runner.ts reads reports/ and the model blacklist from the data root (${mode})`, (t) => {
-    // tracker-parse.ts reads its alias table at import time.
-    const f = fixture(t, 'openrouter-runner.ts', { nodeModules: true, assets: ['tracker-aliases.json'] });
+  test(`packages/cli/src/commands/evaluation/openrouter-runner.ts reads reports/ and the model blacklist from the data root (${mode})`, (t) => {
+    // packages/core/src/tracker/tracker-parse.ts reads its alias table at import time.
+    const f = fixture(t, 'packages/cli/src/commands/evaluation/openrouter-runner.ts', { nodeModules: true, assets: ['packages/core/src/tracker/tracker-aliases.json'] });
     write(join(f.data, 'data', 'model-blacklist.json'), JSON.stringify(['a/one:free', 'b/two:free']));
     write(join(f.code, 'data', 'model-blacklist.json'),
       JSON.stringify(['d/1:free', 'd/2:free', 'd/3:free', 'd/4:free', 'd/5:free'])); // decoy
@@ -189,7 +189,7 @@ for (const mode of MODES) {
     // free-model fetch that would otherwise run first.
     write(join(f.data, 'reports', '009-fabrikam-2026-01-01.md'), '# Fabrikam\n\n**Score:** 2.0/5\n');
 
-    const result = run(f, 'openrouter-runner.ts', ['apply', '9'],
+    const result = run(f, 'packages/cli/src/commands/evaluation/openrouter-runner.ts', ['apply', '9'],
       envFor(mode, f, { CAREER_OPS_MODEL: 'test/pinned:free' }), 'no\n');
     assert.equal(result.status, 0, result.output);
     assert.doesNotMatch(result.output, /Report not found/, `apply looked for reports/ off the code root:\n${result.output}`);
@@ -205,8 +205,8 @@ for (const mode of MODES) {
 // reserve/release call sites offline. Pin their arguments at the source level
 // instead: the allocator's own tests call it directly and would stay green if
 // either call site drifted back to the code root.
-test('openrouter-runner.ts reserves and releases report numbers under DATA_ROOT', () => {
-  const src = readFileSync(join(ROOT, 'openrouter-runner.ts'), 'utf-8');
+test('packages/cli/src/commands/evaluation/openrouter-runner.ts reserves and releases report numbers under DATA_ROOT', () => {
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/evaluation/openrouter-runner.ts'), 'utf-8');
   const reserve = src.match(/reserveReportNumbers\(\s*1\s*,\s*\{([^}]*)\}/);
   assert.ok(reserve, 'reserveReportNumbers(1, { ... }) call not found');
   assert.match(reserve[1], /rootDir:\s*DATA_ROOT\b/, `reserve rootDir is not DATA_ROOT: ${reserve[1]}`);
@@ -217,5 +217,5 @@ test('openrouter-runner.ts reserves and releases report numbers under DATA_ROOT'
   assert.match(release[1], /reportsDir:\s*path\.join\(\s*DATA_ROOT\s*,\s*'reports'\s*\)/,
     `release reportsDir is not under DATA_ROOT: ${release[1]}`);
   assert.doesNotMatch(src, /path\.join\(\s*__dirname\s*,\s*'(?:reports|data)'/,
-    'openrouter-runner.ts still joins a user-layer directory onto __dirname');
+    'packages/cli/src/commands/evaluation/openrouter-runner.ts still joins a user-layer directory onto __dirname');
 });

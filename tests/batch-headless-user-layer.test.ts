@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { delimiter, join } from 'node:path';
+import {dirname, delimiter, join } from 'node:path';
 import { fail, getBash, pass, rmSync, ROOT, toBashPath } from './helpers.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
@@ -83,9 +83,14 @@ test('batch-runner.sh launches every worker with CAREER_OPS_HEADLESS=1', () => {
     chmodSync(join(dir, 'batch', 'batch-runner.sh'), 0o755);
     writeFileSync(join(dir, 'batch', 'batch-prompt.md'), 'Fixture worker prompt.\n');
     writeFileSync(join(dir, 'batch', 'batch-input.tsv'), 'id\turl\tsource\tnotes\n1\thttps://example.com/one\tfixture\t-\n');
-    writeFileSync(join(dir, 'path-resolver.ts'), read('path-resolver.ts'));
-    writeFileSync(join(dir, 'reserve-report-num.ts'), "if (!process.argv.includes('--release')) console.log('001');\n");
-    for (const name of ['merge-tracker.ts', 'reconcile-pipeline.ts', 'verify-pipeline.ts']) writeFileSync(join(dir, name), '// Not under test here.\n');
+    mkdirSync(dirname(join(dir, 'packages/core/src/kernel/path-resolver.ts')), { recursive: true });
+    writeFileSync(join(dir, 'packages/core/src/kernel/path-resolver.ts'), read('packages/core/src/kernel/path-resolver.ts'));
+    mkdirSync(dirname(join(dir, 'packages/cli/src/commands/tracker/reserve-report-num.ts')), { recursive: true });
+    writeFileSync(join(dir, 'packages/cli/src/commands/tracker/reserve-report-num.ts'), "if (!process.argv.includes('--release')) console.log('001');\n");
+    for (const name of ['packages/cli/src/commands/tracker/merge-tracker.ts', 'packages/cli/src/commands/pipeline/reconcile-pipeline.ts', 'packages/cli/src/commands/platform/verify-pipeline.ts']) {
+      mkdirSync(dirname(join(dir, name)), { recursive: true });
+      writeFileSync(join(dir, name), '// Not under test here.\n');
+    }
     writeFileSync(join(binDir, 'claude'), WORKER_STUB);
     writeFileSync(join(binDir, 'curl'), '#!/usr/bin/env bash\nexit 1\n');
     chmodSync(join(binDir, 'claude'), 0o755);

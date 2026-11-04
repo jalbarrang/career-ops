@@ -1,7 +1,7 @@
-// tests/upskill-known-skills.test.ts — unit coverage for upskill.ts's pure
+// tests/upskill-known-skills.test.ts — unit coverage for packages/cli/src/commands/insights/upskill.ts's pure
 // helpers, imported directly.
 //
-// This file is the reason upskill.ts's module tail is guarded by an isMain
+// This file is the reason packages/cli/src/commands/insights/upskill.ts's module tail is guarded by an isMain
 // check. Before that guard the tail was unconditional, so importing the module
 // re-parsed the IMPORTER's argv — and since test-all.ts imports discovered
 // suites IN-PROCESS, that argv is test-all's own. Measured by pinning isMain to
@@ -12,7 +12,7 @@
 // guard rejects a discovered suite for.
 //
 // So the helpers below, every one documented "exported for unit testing", could
-// only be asserted on from inside `upskill.ts --self-test` until the guard existed.
+// only be asserted on from inside `packages/cli/src/commands/insights/upskill.ts --self-test` until the guard existed.
 //
 // Keep this suite pure. Everything here is a string in / value out; nothing
 // reads user data, and the one filesystem assertion uses a path that is
@@ -25,7 +25,7 @@ import { load as yamlLoad } from 'js-yaml';
 console.log('\nupskill.ts known-skills helpers (import-safe module)');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'upskill.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/insights/upskill.ts')).href);
   const {
     yamlValueText,
     stripMarkdownComments,
@@ -34,7 +34,7 @@ try {
     aggregateGaps,
     computeTargetedGaps,
     parseReportGaps,
-    // Re-exported from skill-extract.ts; its own canonicalization fixtures live
+    // Re-exported from packages/core/src/evaluation/skill-extract.ts; its own canonicalization fixtures live
     // in skill-extract.test.ts. Used here only to assert what the CLI ends up
     // treating as KNOWN, which is the behaviour #2609 was about.
     extractSkills,
@@ -49,8 +49,8 @@ try {
     'yamlValueText', 'stripMarkdownComments', 'knownSkillsText', 'readOptionalText',
     'aggregateGaps', 'computeTargetedGaps', 'parseReportGaps',
   ].filter(name => typeof mod[name] !== 'function');
-  if (missing.length === 0) pass('upskill.ts imports without running its CLI; all 7 pure helpers exported');
-  else fail(`upskill.ts missing exported helper(s): ${missing.join(', ')}`);
+  if (missing.length === 0) pass('packages/cli/src/commands/insights/upskill.ts imports without running its CLI; all 7 pure helpers exported');
+  else fail(`packages/cli/src/commands/insights/upskill.ts missing exported helper(s): ${missing.join(', ')}`);
 
   // ── yamlValueText ─────────────────────────────────────────────────────────
   // The bug this exists for: a skill named in a YAML COMMENT must not become a

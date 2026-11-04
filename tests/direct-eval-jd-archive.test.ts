@@ -1,11 +1,11 @@
 // tests/direct-eval-jd-archive.test.ts — the evaluators that call a model API
 // directly write the verbatim JD archive into the report (#2789).
 //
-// gemini-eval.ts, batch-evaluate-gemini.ts and openrouter-runner.ts built
+// packages/cli/src/commands/evaluation/gemini-eval.ts, packages/cli/src/commands/evaluation/batch-evaluate-gemini.ts and packages/cli/src/commands/evaluation/openrouter-runner.ts built
 // the report from a fixed header plus the model's text. The JD text was in
-// scope in each one but never written, so check-jd-archive.ts flagged every
+// scope in each one but never written, so packages/core/src/evaluation/check-jd-archive.ts flagged every
 // report from these paths as missing-jd-archive. They now append it through
-// lib/jd-archive-section.ts, deterministically rather than by asking the model.
+// packages/core/src/evaluation/jd-archive-section.ts, deterministically rather than by asking the model.
 //
 // Each path is run for real with the model stubbed: batch-evaluate-gemini
 // through its exported processOffer, the two CLIs through a preloaded fetch
@@ -20,8 +20,8 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSyn
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { withJdArchiveSection, JD_ARCHIVE_HEADING } from '../lib/jd-archive-section.ts';
-import { hasEmbeddedJdArchive, extractStrippedJdSection } from '../check-jd-archive.ts';
+import { withJdArchiveSection, JD_ARCHIVE_HEADING } from '../packages/core/src/evaluation/jd-archive-section.ts';
+import { hasEmbeddedJdArchive, extractStrippedJdSection } from '../packages/core/src/evaluation/check-jd-archive.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -91,9 +91,9 @@ function onlyReport(dir, log) {
 
 // The validator itself, as CI and verify-pipeline run it, not just its export.
 function assertCheckPasses(dir) {
-  const r = spawnSync(process.execPath, [join(ROOT, 'check-jd-archive.ts'), '--no-tracker',
+  const r = spawnSync(process.execPath, [join(ROOT, 'packages/core/src/evaluation/check-jd-archive.ts'), '--no-tracker',
     '--reports-dir', join(dir, 'reports'), '--jds-dir', join(dir, 'jds')], { encoding: 'utf-8', timeout: 30_000 });
-  assert.equal(r.status, 0, `check-jd-archive.ts failed:\n${r.stdout}${r.stderr}`);
+  assert.equal(r.status, 0, `packages/core/src/evaluation/check-jd-archive.ts failed:\n${r.stdout}${r.stderr}`);
   assert.doesNotMatch(r.stdout, /missing-jd-archive/);
 }
 
@@ -125,7 +125,7 @@ test('batch-evaluate-gemini writes the scraped JD into the report', (t) => {
   const dir = workdir(t);
   const driver = join(dir, 'driver.ts');
   writeFileSync(driver, `
-const { processOffer, PATHS } = await import(${JSON.stringify(pathToFileURL(join(ROOT, 'batch-evaluate-gemini.ts')).href)});
+const { processOffer, PATHS } = await import(${JSON.stringify(pathToFileURL(join(ROOT, 'packages/cli/src/commands/evaluation/batch-evaluate-gemini.ts')).href)});
 PATHS.reports = ${JSON.stringify(join(dir, 'reports'))};
 PATHS.trackerAdditions = ${JSON.stringify(join(dir, 'tracker-additions'))};
 const browser = { newPage: async () => ({
@@ -150,7 +150,7 @@ test('gemini-eval writes the JD it was given into the report', (t) => {
   const jdFile = join(dir, 'jd.txt');
   writeFileSync(jdFile, JD);
   const stub = writeFetchStub(dir, `${BLOCKS}\n\n${SUMMARY}`);
-  const r = spawnSync(process.execPath, ['--import', pathToFileURL(stub).href, join(ROOT, 'gemini-eval.ts'), '--file', jdFile], {
+  const r = spawnSync(process.execPath, ['--import', pathToFileURL(stub).href, join(ROOT, 'packages/cli/src/commands/evaluation/gemini-eval.ts'), '--file', jdFile], {
     cwd: dir, encoding: 'utf-8', timeout: 90_000,
     env: envFor(dir, { GEMINI_API_KEY: 'test-key' }),
   });
@@ -165,7 +165,7 @@ test('openrouter-runner archives the pasted JD over a model-written paraphrase',
   // model that restates the posting there must not be what gets archived.
   const reply = `**Score:** 4.2/5\n\n${BLOCKS}\n\n## Job Description (archived verbatim)\n\nThis is a paraphrase of the posting, not the verbatim text.\n`;
   const stub = writeFetchStub(dir, reply);
-  const r = spawnSync(process.execPath, ['--import', pathToFileURL(stub).href, join(ROOT, 'openrouter-runner.ts'), 'evaluate', JD], {
+  const r = spawnSync(process.execPath, ['--import', pathToFileURL(stub).href, join(ROOT, 'packages/cli/src/commands/evaluation/openrouter-runner.ts'), 'evaluate', JD], {
     cwd: dir, encoding: 'utf-8', timeout: 90_000,
     env: envFor(dir, { OPENROUTER_API_KEY: 'test-key', CAREER_OPS_MODEL: 'test/model' }),
   });

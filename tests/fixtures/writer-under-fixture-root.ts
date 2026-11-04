@@ -3,9 +3,9 @@
 // a suite does, pins the fixture root given as argv[2], reports the tracker
 // that root resolves to, and runs the status normaliser through run().
 import { run, NODE } from '../helpers.ts';
-import { resolveTrackerPathForWrite } from '../../path-resolver.ts';
+import { resolveTrackerPathForWrite } from '../../packages/core/src/kernel/path-resolver.ts';
 
 const fixtureRoot = process.argv[2];
 process.env.CAREER_OPS_ROOT = fixtureRoot;
 console.log(`RESOLVED=${resolveTrackerPathForWrite(fixtureRoot)}`);
-run(NODE, ['normalize-statuses.ts']);
+run(NODE, ['packages/cli/src/commands/tracker/normalize-statuses.ts']);

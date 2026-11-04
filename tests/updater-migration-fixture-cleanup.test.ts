@@ -5,16 +5,16 @@
  * updater-migration-tests.ts gives a nested .git-less copy a tiny repository
  * of its own, so update-system's nested-install guard (#3334) lets its apply()
  * probes through. test-all runs every smoke script from ONE shared copy, and
- * that repository used to stay behind: `update-system.ts check`, later in the
+ * that repository used to stay behind: `packages/cli/src/commands/platform/update-system.ts check`, later in the
  * same matrix, then passed the guard it should have tripped and fetched
  * upstream main into the empty fixture repo - a full clone over the network,
  * killed at the 30s default on a slow connection as
- * `update-system.ts check crashed (exit null, signal SIGTERM)`.
+ * `packages/cli/src/commands/platform/update-system.ts check crashed (exit null, signal SIGTERM)`.
  *
  * The sections run the real suite from a nested copy inside a throwaway outer
  * repo (the shape of test-all's shared copy), then `check` from the SAME
  * directory, which is the order the smoke matrix runs them in. Four files are
- * enough: update-system.ts is self-loading (#1706). The suite's manifest
+ * enough: packages/cli/src/commands/platform/update-system.ts is self-loading (#1706). The suite's manifest
  * assertions fail against so sparse a copy, which is useful rather than noise:
  * it sends the suite down its failing-exit path, and the cleanup has to hold
  * there too.
@@ -25,11 +25,11 @@ import { spawnSync } from 'child_process';
 import { tmpdir } from 'os';
 import { dirname, join } from 'path';
 import { pass, fail, NODE, ROOT, rmSync, hermeticGitEnv } from './helpers.ts';
-import { gitIn } from '../update-system.ts';
+import { gitIn } from '../packages/cli/src/commands/platform/update-system.ts';
 
 console.log('\n🧪 Testing updater-migration-tests.ts fixture cleanup...');
 
-const SUITE_FILES = ['update-system.ts', 'lib/update-manifest.ts', 'updater-migration-tests.ts', 'AGENTS.md', 'VERSION'];
+const SUITE_FILES = ['packages/cli/src/commands/platform/update-system.ts', 'packages/core/src/platform/update-manifest.ts', 'updater-migration-tests.ts', 'AGENTS.md', 'VERSION'];
 
 // Every proxy variable curl and git read, pointed at a closed local port. With
 // the fixture repository leaked, `check` gets past its guard and reaches for
@@ -85,7 +85,7 @@ function spawnIn(cwd, fixtureDir, args) {
     }
 
     // ── 2. ...so `check`, run next from the same directory, trips the guard ──
-    const check = spawnIn(nested, dir, ['update-system.ts', 'check']);
+    const check = spawnIn(nested, dir, ['packages/cli/src/commands/platform/update-system.ts', 'check']);
     let status;
     try { status = JSON.parse(check.stdout).status; } catch { status = undefined; }
     if (check.status === 0 && status === 'not-a-git-toplevel') {

@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — yourator');
 
 try {
-  const youratorModule = await import(pathToFileURL(join(ROOT, 'providers/yourator.ts')).href);
+  const youratorModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/yourator.ts')).href);
   const yourator = youratorModule.default;
   const { normalizeYouratorJob, resolveYouratorUrl } = youratorModule;
 

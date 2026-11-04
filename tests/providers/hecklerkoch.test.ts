@@ -5,7 +5,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — hecklerkoch (SSR Stellenangebote parser)');
 try {
-  const hkModule = await import(pathToFileURL(join(ROOT, 'providers/hecklerkoch.ts')).href);
+  const hkModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/hecklerkoch.ts')).href);
   const hk = hkModule.default;
   const { resolveListUrl: hkListUrl, parseListing } = hkModule;
 

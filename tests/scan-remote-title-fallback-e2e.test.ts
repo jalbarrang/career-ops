@@ -14,7 +14,7 @@ const fixtures = [
   { title: 'Software Engineer', location: '5 Locations', url: 'https://fixture.wd5.myworkdayjobs.com/en-US/Careers/job/Shenzhen-China/Engineer_R3' },
 ];
 
-for (const script of ['scan.ts', 'scan-ats-full.ts']) {
+for (const script of ['packages/core/src/scanning/scan.ts', 'packages/cli/src/commands/scanning/scan-ats-full.ts']) {
   for (const flag of [undefined, true, false]) {
     test(`${script} uses shared remote-title policy ${flag}`, () => {
       const dir = mkdtempSync(join(tmpdir(), 'co-remote-policy-'));
@@ -24,19 +24,19 @@ for (const script of ['scan.ts', 'scan-ats-full.ts']) {
         writeFileSync(join(dir, 'portals.yml'), `title_filter:\n  positive: [Engineer]\nlocation_filter:\n  strict: true\n  allow: [Shenzhen]\n${flag === undefined ? '' : `  remote_title_fallback: ${flag}\n`}tracked_companies:\n  - name: Fixture\n    careers_url: https://job-boards.greenhouse.io/fixture\n`);
         const preload = join(dir, 'preload.ts');
         writeFileSync(preload, `
-import provider from ${JSON.stringify(pathToFileURL(join(root, 'providers/greenhouse.ts')).href)};
+import provider from ${JSON.stringify(pathToFileURL(join(root, 'packages/core/src/scanning/providers/greenhouse.ts')).href)};
 provider.fetchListing = undefined;
 provider.fetch = async () => ${JSON.stringify(fixtures)};
 // Fail closed if the fixture ever starts making real requests.
 globalThis.fetch = async () => { throw new Error('Unexpected network request'); };
 `);
-        const args = script === 'scan-ats-full.ts' ? ['--ats', 'greenhouse', '--include-undated', '--json'] : [];
+        const args = script === 'packages/cli/src/commands/scanning/scan-ats-full.ts' ? ['--ats', 'greenhouse', '--include-undated', '--json'] : [];
         const result = spawnSync(process.execPath, ['--import', pathToFileURL(preload).href, join(root, script), ...args], {
           cwd: dir, encoding: 'utf8', timeout: 20000,
           env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_DATA_DIR: '', CAREER_OPS_PORTALS: join(dir, 'portals.yml') },
         });
         assert.equal(result.status, 0, result.stderr || result.error?.message);
-        if (script === 'scan-ats-full.ts') assert.equal(JSON.parse(result.stdout).unreachableBoards, 0, result.stderr);
+        if (script === 'packages/cli/src/commands/scanning/scan-ats-full.ts') assert.equal(JSON.parse(result.stdout).unreachableBoards, 0, result.stderr);
         // Assert persisted output as well as successful CLI exit, not a copied predicate.
         const pipeline = readFileSync(join(dir, 'data', 'pipeline.md'), 'utf8');
         assert.equal(pipeline.includes(fixtures[0].url), flag !== false, pipeline);

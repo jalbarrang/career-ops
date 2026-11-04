@@ -70,7 +70,7 @@ async function run({ env = {}, trailingNewline = true, cleanCwd = false }) {
     const { stdout, stderr } = await new Promise((resolve) => {
       execFile(
         NODE,
-        [join(ROOT, 'ollama-eval.ts'), '--url', `http://127.0.0.1:${port}`, '--no-save',
+        [join(ROOT, 'packages/cli/src/commands/evaluation/ollama-eval.ts'), '--url', `http://127.0.0.1:${port}`, '--no-save',
          'Some job description text.'],
         { timeout: 30000, cwd, env: childEnv },
         (err, out, errOut) => resolve({ stdout: out ?? '', stderr: errOut ?? '' }),

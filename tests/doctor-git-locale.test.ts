@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { rmSync } from './helpers.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
-const doctor = fileURLToPath(new URL('../doctor.ts', import.meta.url));
+const doctor = fileURLToPath(new URL('../packages/cli/src/commands/platform/doctor.ts', import.meta.url));
 
 function run(t, scenario) {
   const dir = mkdtempSync(join(tmpdir(), 'doctor-git-locale-'));

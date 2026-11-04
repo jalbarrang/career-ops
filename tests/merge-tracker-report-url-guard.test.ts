@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const MERGE = join(dirname(fileURLToPath(import.meta.url)), '..', 'merge-tracker.ts');
+const MERGE = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/cli/src/commands/tracker/merge-tracker.ts');
 const ok = (name, fn) => { try { fn(); pass(name); } catch (e) { fail(`${name} — ${e.message}`); } };
 
 const HEADER = '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |';

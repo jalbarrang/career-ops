@@ -34,12 +34,12 @@ jobs:
 
       # Deterministic shape gate (no network).
       - name: Validate registry shape
-        run: bun validate-plugin-registry.ts
+        run: bun packages/cli/src/commands/platform/validate-plugin-registry.ts
 
       # Deep gate: clone each entry at its pinned SHA + static-validate + audit.
       # No secrets are present in this job; nothing the plugin ships is executed.
       - name: Clone + audit each registry entry
-        run: bun validate-plugin-registry.ts --deep
+        run: bun packages/cli/src/commands/platform/validate-plugin-registry.ts --deep
 
       - name: One plugin per PR
         # base_ref goes through env, never ${{ }}-spliced into the script —

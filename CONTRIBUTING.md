@@ -174,11 +174,26 @@ To propose a source (yours or anyone's): [open a source proposal](https://github
 
 ## Development
 
+### Where the code lives
+
+The repo is a Bun workspace with one dependency direction:
+
+```
+apps/web  ──►  packages/cli  ──►  packages/core
+```
+
+- `packages/core/src/<context>/` — the engine, grouped by bounded context (`kernel`, `tracker`, `pipeline`, `scanning`, `liveness`, `evaluation`, `cv`, `profile`, `interview`, `outreach`, `insights`, `platform`). Parsing rules, adapters and shared primitives belong here. A core module must not import a command or the web app.
+- `packages/cli/src/commands/<context>/` — one script per command. When other code needs its exported helpers, the script lives in core instead and keeps its `isMainModule` tail so it still runs directly.
+- `apps/web/` — the SvelteKit app. It may import the engine; nothing under `packages/` may import it.
+- `tests/` + `test-all.ts` — the integration suite. `tests/architecture-boundaries.test.ts` enforces the arrows above.
+
+Run a command as `career-ops <command>` (or `bun run <script>`; `career-ops --list` shows them all). A new runnable script needs one line in the generated catalog: run `bun scripts/regenerate-command-catalog.ts` after adding it, and the suite fails if the catalog is stale. Code that needs the checkout root calls `repoRoot()`; the user's data root is `getCareerOpsRoot()` — never rebuild either from `import.meta.url`. `ARCHITECTURE.md` has the full map.
+
 ```bash
 # Scripts
-bun run doctor                # Setup validation
-bun verify-pipeline.ts     # Health check
-bun cv-sync-check.ts        # Config check
+bun run doctor                 # Setup validation
+career-ops verify-pipeline     # Health check
+career-ops cv-sync-check       # Config check
 
 # Dashboard
 bun run build:dashboard       # go build with platform-correct binary name
@@ -209,7 +224,7 @@ A new file also collides with nobody: several contributors adding sections to
 a rebase on the rest.
 
 **Adding a scanner provider?** See
-[`providers/ADDING_A_PROVIDER.md`](providers/ADDING_A_PROVIDER.md) — the full
+[`packages/core/src/scanning/providers/ADDING_A_PROVIDER.md`](packages/core/src/scanning/providers/ADDING_A_PROVIDER.md) — the full
 contract, the mandatory guards, and what `tests/providers/{name}.test.ts`
 must cover.
 
@@ -220,7 +235,7 @@ pins a behaviour across modules is named for the behaviour instead, which is wha
 roughly half of `web/tests/` does. `web/`'s own `bun test` glob-discovers them
 either way, so no registration is needed there either — but keep them out of
 `web/src/` (Next.js scans that tree) and write them as `.ts`: the suites are
-framework-free, and `bun test` runs them without a TypeScript test loader. `web/README.md` has the detail;
+framework-free, and `bun test` runs them without a TypeScript test loader. `apps/web/README.md` has the detail;
 `tests/web-test-layout.test.ts` enforces the *discovery* half on every PR — that
 the glob reaches every suite on disk and that `web/`'s engines floor can run it.
 The naming is a convention, not a checked contract.
@@ -233,7 +248,7 @@ etc.). A green `--only` run is **not** a green suite — always run the full
 
 ### Checking translated mode structure
 
-Run `bun i18n-drift.ts --lang tr` (repeat `--lang` for several languages),
+Run `career-ops i18n-drift --lang tr` (repeat `--lang` for several languages),
 or omit `--lang` to check every locale. `--json` emits machine-readable results;
 `--summary` prints language totals. The checker runs offline with Node alone and
 reports drift without failing.

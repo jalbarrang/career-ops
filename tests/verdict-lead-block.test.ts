@@ -22,8 +22,8 @@ function readFile(path) {
   return content;
 }
 
-// The heading shape the report parser recognizes. web/src/lib/report-sections.ts
-// (imported by web/src/components/report-view.tsx) splits a body on /^##\s+(.*)$/
+// The heading shape the report parser recognizes. apps/web/src/lib/report-sections.ts
+// (imported by apps/web/src/components/report-view.tsx) splits a body on /^##\s+(.*)$/
 // and promotes a heading ending in `(lead)` or `(verdict)`. The mode contract
 // requires the language-invariant `(lead)` marker (modes/oferta.md), so this
 // guard matches `(lead)` only. `##` must be followed by whitespace, any kind
@@ -41,15 +41,15 @@ const leadHeadings = (text) => {
 // and a `(verdict)` heading are promoted by the parser and rejected here on
 // purpose, because the `(lead)` marker is the contract.
 //
-// web/ is not in update-system.ts's SYSTEM_PATHS but tests/ is, so this file
-// reaches checkouts with no web/ at all, where a static import would fail the
+// apps/web/ is not in packages/cli/src/commands/platform/update-system.ts's SYSTEM_PATHS but tests/ is, so this file
+// reaches checkouts with no apps/web/ at all, where a static import would fail the
 // whole file (#1675 / #1677). Only this check needs the parser, so only this
-// check is skipped; a parser missing under a present web/ is a move and fails.
-const WEB_REPORT_SECTIONS = join(ROOT, 'web', 'src', 'lib', 'report-sections.ts');
-if (!existsSync(join(ROOT, 'web', 'src'))) {
-  warn('web/ not present in this checkout, skipping the lead-heading parser check');
+// check is skipped; a parser missing under a present apps/web/ is a move and fails.
+const WEB_REPORT_SECTIONS = join(ROOT, 'apps/web', 'src', 'lib', 'report-sections.ts');
+if (!existsSync(join(ROOT, 'apps/web', 'src'))) {
+  warn('apps/web/ not present in this checkout, skipping the lead-heading parser check');
 } else if (!existsSync(WEB_REPORT_SECTIONS)) {
-  fail('web/ exists but web/src/lib/report-sections.ts is missing, so the lead-heading parser check cannot run (moved?)');
+  fail('apps/web/ exists but apps/web/src/lib/report-sections.ts is missing, so the lead-heading parser check cannot run (moved?)');
 } else {
   const { splitSections, isVerdictHeading } = await import(pathToFileURL(WEB_REPORT_SECTIONS).href);
   const accepted = ['## Verdict (lead)', '## Veredicto (lead)', '## 结论 (lead)', '##\tVeredicto (lead)', '##\u00a0Verdict (lead)'];
@@ -77,7 +77,7 @@ if (!existsSync(join(ROOT, 'web', 'src'))) {
 // form in prose as an example of the convention, so a
 // literal `## Verdict (lead)` entry would pass on zh, zh-TW and ru whether or
 // not those files carry a block. The `(lead)` marker is the language-invariant
-// part, and it is what cleanHeading in web/src/lib/report-sections.ts reads,
+// part, and it is what cleanHeading in apps/web/src/lib/report-sections.ts reads,
 // so this matches the marker on a heading line. A heading line is not by
 // itself proof of a real block: every one of these files also illustrates the
 // block inside a fenced example, and those examples carry heading lines too.

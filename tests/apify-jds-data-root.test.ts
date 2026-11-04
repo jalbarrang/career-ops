@@ -3,8 +3,8 @@
 //
 // With `field_map.description` set, the provider writes each posting's text to
 // `jds/{slug}-{hash}.md` and returns `local:jds/…` as the job URL. That
-// reference is read back against the data root (check-jd-archive.ts,
-// outcome.ts), but the file was written to `jds/` under process.cwd(): with
+// reference is read back against the data root (packages/core/src/evaluation/check-jd-archive.ts,
+// packages/cli/src/commands/tracker/outcome.ts), but the file was written to `jds/` under process.cwd(): with
 // the user layer outside the checkout, a scan run from the checkout left the
 // capture beside the code and a pipeline row pointing at a file the data root
 // does not have. It now resolves against ctx.dataRoot.

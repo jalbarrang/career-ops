@@ -98,7 +98,7 @@ const classify = (file, src) => {
 
 let files;
 try {
-  files = readdirSync(join(ROOT, 'providers'));
+  files = readdirSync(join(ROOT, 'packages/core/src/scanning/providers'));
 } catch (e) {
   files = null;
   fail(`cannot read providers/: ${e.message}`);
@@ -110,7 +110,7 @@ if (files) {
     if (!file.endsWith('.ts') || file.startsWith('_')) continue;
     let src;
     try {
-      src = readFileSync(join(ROOT, 'providers', file), 'utf-8');
+      src = readFileSync(join(ROOT, 'packages/core/src/scanning/providers', file), 'utf-8');
     } catch (e) {
       offenders.push(`${file} (unreadable: ${e.message})`);
       continue;

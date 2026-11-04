@@ -48,13 +48,13 @@ import {
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { pathToFileURL } from 'url';
-import { acquirePipelineLock } from '../pipeline-lock.ts';
+import { acquirePipelineLock } from '../packages/core/src/kernel/pipeline-lock.ts';
 
 import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\nagent-inbox.ts — queued requests, locking and resolve');
 const NODE = process.execPath;
-const CLI = join(ROOT, 'agent-inbox.ts');
+const CLI = join(ROOT, 'packages/cli/src/commands/platform/agent-inbox.ts');
 
 function check(name, cond, detail = '') {
   if (cond) pass(name);
@@ -106,7 +106,7 @@ export function causeOf(stderr) {
     || '(no stderr)';
 }
 
-// Run agent-inbox.ts against a provisioned queue file; returns stdout.
+// Run packages/cli/src/commands/platform/agent-inbox.ts against a provisioned queue file; returns stdout.
 function run(inbox, args, opts = {}) {
   return execFileSync(NODE, [CLI, ...args], {
     cwd: ROOT,
@@ -309,7 +309,7 @@ console.log('7. concurrent adds do not lose items (append, not rewrite)');
   check('every concurrent add exited cleanly', failedSpawn === 0, `${failedSpawn} non-zero exits`);
   for (const l of losers) {
     const cause = causeOf(l.err);
-    // Generous, because the owner record pipeline-lock.ts appends to a
+    // Generous, because the owner record packages/core/src/kernel/pipeline-lock.ts appends to a
     // LockTimeoutError is the diagnostic payload; truncating it away would
     // leave the same symptom-without-mechanism this instrumentation exists
     // to end.
@@ -529,7 +529,7 @@ console.log('9. the lock is never held by two processes at once');
   const holder = join(dir, 'hold-once.ts');
   writeFileSync(holder, `
 import { writeFileSync, existsSync } from 'node:fs';
-import { withPipelineLock } from ${JSON.stringify(pathToFileURL(join(ROOT, 'pipeline-lock.ts')).href)};
+import { withPipelineLock } from ${JSON.stringify(pathToFileURL(join(ROOT, 'packages/core/src/kernel/pipeline-lock.ts')).href)};
 const [,, target, out, id, readyFile, goFile] = process.argv;
 writeFileSync(readyFile, '1');
 // Spin on the release rather than sleeping: a timer would hand control back to

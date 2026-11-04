@@ -6,7 +6,7 @@
 #   ./cops verify
 #   ./cops pdf cv.html output/cv.pdf
 #   ./cops scan
-#   ./cops bun generate-pdf.ts cv.html output/cv.pdf
+#   ./cops bun packages/cli/src/commands/cv/generate-pdf.ts cv.html output/cv.pdf
 #   ./cops shell                     # interactive bash
 #   ./cops bash -c 'ls reports'      # bash one-liner
 #   ./cops up | down | rebuild | logs

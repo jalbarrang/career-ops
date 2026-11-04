@@ -1,7 +1,7 @@
 // tests/cover-recipient-block.test.ts — {{RECIPIENT_BLOCK}} must be fillable.
 //
 // The pack authoring contract lists {{RECIPIENT_BLOCK}} among the required
-// cover-letter slots, but generate-cover-letter.ts never filled it, so every
+// cover-letter slots, but packages/cli/src/commands/cv/generate-cover-letter.ts never filled it, so every
 // pack cover template died at substitution with
 // "Unresolved placeholders: {{RECIPIENT_BLOCK}}".
 //
@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { buildHtml } from '../generate-cover-letter.ts';
+import { buildHtml } from '../packages/cli/src/commands/cv/generate-cover-letter.ts';
 
 /** A minimal template carrying the pack's recipient slot. */
 function packTemplate() {

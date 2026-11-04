@@ -1,4 +1,4 @@
-// tests/reeval-candidates.test.ts — reeval-candidates.ts lists tracker rows
+// tests/reeval-candidates.test.ts — packages/cli/src/commands/insights/reeval-candidates.ts lists tracker rows
 // whose last evaluation predates the latest change to the candidate's primary
 // sources, and never writes anything (#5669).
 //
@@ -15,7 +15,7 @@ import { tmpdir } from 'os';
 import { join, relative, sep } from 'path';
 import { pathToFileURL } from 'url';
 import { pass, fail, rmSync, ROOT, NODE, hermeticGitEnv, describeSpawn } from './helpers.ts';
-import { walkTree } from '../lib/walk-tree.ts';
+import { walkTree } from '../packages/core/src/kernel/walk-tree.ts';
 
 const {
   computeReevalCandidates,
@@ -25,7 +25,7 @@ const {
   reportLinkTargets,
   resolveStatusFilter,
   sourceChange,
-} = await import(pathToFileURL(join(ROOT, 'reeval-candidates.ts')).href);
+} = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/insights/reeval-candidates.ts')).href);
 
 console.log('\nreeval-candidates.ts — rows scored against older candidate evidence');
 
@@ -99,7 +99,7 @@ function snapshot(dir) {
 }
 
 function runCli(dataRoot, args) {
-  return spawnSync(NODE, [join(ROOT, 'reeval-candidates.ts'), ...args], {
+  return spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/insights/reeval-candidates.ts'), ...args], {
     cwd: tmpdir(),
     encoding: 'utf-8',
     timeout: 60_000,

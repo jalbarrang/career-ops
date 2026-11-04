@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeRoleForDedup } from '../scan.ts';
+import { normalizeRoleForDedup } from '../packages/core/src/scanning/scan.ts';
 
 // German, French and Austrian boards append a gender tag whose letter order
 // varies by board, so one posting arrives as several titles.

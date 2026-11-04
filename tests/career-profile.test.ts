@@ -6,14 +6,14 @@ import { dirname, join } from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import * as yaml from 'js-yaml';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { acquirePipelineLock } from '../pipeline-lock.ts';
+import { acquirePipelineLock } from '../packages/core/src/kernel/pipeline-lock.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 // FORK: schema v2. An experience is a COMPANY with nested ROLES, so the
 // assertions reach through `experiences[i].roles[j]`. Every scenario upstream
 // covers for v1 is kept — the rules did not change, only where the facts live.
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const CLI = join(ROOT, 'career-profile.ts');
+const CLI = join(ROOT, 'packages/cli/src/commands/profile/career-profile.ts');
 const CV = `# Candidate\n\n## Experience\n### Acme — Analyst\n- Built dashboards with SQL.\n\n## Skills\n- SQL, Excel\n`;
 
 /** First role of the first company — the common single-role assertion. */

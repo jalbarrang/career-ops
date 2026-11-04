@@ -1,13 +1,13 @@
-// tests/tracker-history-ledger.test.ts — `tracker.ts history` reads the
+// tests/tracker-history-ledger.test.ts — `packages/cli/src/commands/tracker/tracker.ts history` reads the
 // transition ledger, and deleting the index loses nothing the ledger holds
 // (#5555).
 //
 // Before the fix, `history` read a status_events table that recorded only what
 // a sync happened to see: dated with the sync day, two changes between syncs
 // collapsed into one, and `rm applications.db` threw the history away while
-// data/status-log.tsv, written by set-status.ts, still had every transition.
+// data/status-log.tsv, written by packages/cli/src/commands/tracker/set-status.ts, still had every transition.
 // Now every sync rebuilds the events from the ledger (folded with
-// funnel-velocity.ts's foldObservations()), and only a status the ledger does
+// packages/core/src/insights/funnel-velocity.ts's foldObservations()), and only a status the ledger does
 // not explain — a hand edit in applications.md — is kept as an observation.
 //
 // Run:  bun test tests/tracker-history-ledger.test.ts
@@ -73,23 +73,23 @@ function run(sb, script, args) {
   return r.stdout;
 }
 
-const history = (sb) => run(sb, 'tracker.ts', ['history', '--id', '1']);
+const history = (sb) => run(sb, 'packages/cli/src/commands/tracker/tracker.ts', ['history', '--id', '1']);
 
 // The event lines of a history, without the `#1 Company — Role` heading.
 const events = (out) => out.split('\n').filter(l => l.startsWith('  ')).map(l => l.trim().replace(/\s+/g, ' '));
 
-describe('tracker.ts history: the issue\'s steps to reproduce (#5555)', SQLITE, () => {
+describe('packages/cli/src/commands/tracker/tracker.ts history: the issue\'s steps to reproduce (#5555)', SQLITE, () => {
   let sb, first, rebuilt;
   before(() => {
     sb = sandbox();
-    run(sb, 'tracker.ts', ['sync']);
+    run(sb, 'packages/cli/src/commands/tracker/tracker.ts', ['sync']);
     // Two changes with no sync between them, on days that are not the sync
     // day: a history dated by the sync, or collapsing the pair, cannot pass.
-    run(sb, 'set-status.ts', ['1', 'Applied', '--on', '2026-10-05']);
-    run(sb, 'set-status.ts', ['1', 'Interview', '--on', '2026-10-09']);
+    run(sb, 'packages/cli/src/commands/tracker/set-status.ts', ['1', 'Applied', '--on', '2026-10-05']);
+    run(sb, 'packages/cli/src/commands/tracker/set-status.ts', ['1', 'Interview', '--on', '2026-10-09']);
     first = history(sb);
     rmSync(sb.db);
-    run(sb, 'tracker.ts', ['sync']);
+    run(sb, 'packages/cli/src/commands/tracker/tracker.ts', ['sync']);
     rebuilt = history(sb);
   });
 
@@ -111,12 +111,12 @@ describe('tracker.ts history: the issue\'s steps to reproduce (#5555)', SQLITE, 
   });
 });
 
-describe('tracker.ts history: correction and retraction lines apply', SQLITE, () => {
+describe('packages/cli/src/commands/tracker/tracker.ts history: correction and retraction lines apply', SQLITE, () => {
   test('a correction redates the transition, without any change to applications.md', () => {
     const sb = sandbox();
     try {
-      run(sb, 'set-status.ts', ['1', 'Applied', '--on', '2026-10-05']);
-      run(sb, 'set-status.ts', ['1', 'Interview', '--on', '2026-10-09']);
+      run(sb, 'packages/cli/src/commands/tracker/set-status.ts', ['1', 'Applied', '--on', '2026-10-05']);
+      run(sb, 'packages/cli/src/commands/tracker/set-status.ts', ['1', 'Interview', '--on', '2026-10-09']);
       assert.deepEqual(events(history(sb)).slice(1, 2), ['2026-10-05 Applied']);
       const before = readFileSync(sb.tracker, 'utf-8');
 
@@ -137,8 +137,8 @@ describe('tracker.ts history: correction and retraction lines apply', SQLITE, ()
   test('a retraction removes the transition; the tracker\'s status is then unexplained', () => {
     const sb = sandbox();
     try {
-      run(sb, 'set-status.ts', ['1', 'Applied', '--on', '2026-10-05']);
-      run(sb, 'set-status.ts', ['1', 'Interview', '--on', '2026-10-09']);
+      run(sb, 'packages/cli/src/commands/tracker/set-status.ts', ['1', 'Applied', '--on', '2026-10-05']);
+      run(sb, 'packages/cli/src/commands/tracker/set-status.ts', ['1', 'Interview', '--on', '2026-10-09']);
       // to "-" retracts the row's latest observation: "that never happened".
       appendFileSync(sb.ledger, '1\t2026-10-10\tInterview\t-\tcorrection\t\n');
       const lines = events(history(sb));
@@ -151,22 +151,22 @@ describe('tracker.ts history: correction and retraction lines apply', SQLITE, ()
   });
 });
 
-describe('tracker.ts history: a hand edit in applications.md', SQLITE, () => {
+describe('packages/cli/src/commands/tracker/tracker.ts history: a hand edit in applications.md', SQLITE, () => {
   let sb, edited, again, withLedger, rebuilt;
   before(() => {
     sb = sandbox();
-    run(sb, 'tracker.ts', ['sync']);
+    run(sb, 'packages/cli/src/commands/tracker/tracker.ts', ['sync']);
     // A hand edit writes no ledger row; only the sync sees it.
     writeFileSync(sb.tracker, TRACKER.replace('| Evaluated |', '| Applied |'));
     edited = history(sb);
-    run(sb, 'tracker.ts', ['sync']);
+    run(sb, 'packages/cli/src/commands/tracker/tracker.ts', ['sync']);
     again = history(sb);
     // Dated today, like a real set-status run: not before the day the sync
     // saw the edit.
-    run(sb, 'set-status.ts', ['1', 'Interview']);
+    run(sb, 'packages/cli/src/commands/tracker/set-status.ts', ['1', 'Interview']);
     withLedger = history(sb);
     rmSync(sb.db);
-    run(sb, 'tracker.ts', ['sync']);
+    run(sb, 'packages/cli/src/commands/tracker/tracker.ts', ['sync']);
     rebuilt = history(sb);
   });
 
@@ -196,21 +196,21 @@ describe('tracker.ts history: a hand edit in applications.md', SQLITE, () => {
   });
 });
 
-describe('tracker.ts history: a hand edit reverted by hand to the ledger\'s state', SQLITE, () => {
+describe('packages/cli/src/commands/tracker/tracker.ts history: a hand edit reverted by hand to the ledger\'s state', SQLITE, () => {
   let sb, reverted, again;
   before(() => {
     sb = sandbox();
-    run(sb, 'set-status.ts', ['1', 'Applied', '--on', '2026-10-05']);
-    run(sb, 'set-status.ts', ['1', 'Interview', '--on', '2026-10-09']);
-    run(sb, 'tracker.ts', ['sync']);
+    run(sb, 'packages/cli/src/commands/tracker/set-status.ts', ['1', 'Applied', '--on', '2026-10-05']);
+    run(sb, 'packages/cli/src/commands/tracker/set-status.ts', ['1', 'Interview', '--on', '2026-10-09']);
+    run(sb, 'packages/cli/src/commands/tracker/tracker.ts', ['sync']);
     // Interview → Offer → Interview, both by hand: the tracker ends where the
     // ledger does, but the history must not end on Offer.
     const interview = readFileSync(sb.tracker, 'utf-8');
     writeFileSync(sb.tracker, interview.replace('| Interview |', '| Offer |'));
-    run(sb, 'tracker.ts', ['sync']);
+    run(sb, 'packages/cli/src/commands/tracker/tracker.ts', ['sync']);
     writeFileSync(sb.tracker, interview);
     reverted = history(sb);
-    run(sb, 'tracker.ts', ['sync']);
+    run(sb, 'packages/cli/src/commands/tracker/tracker.ts', ['sync']);
     again = history(sb);
   });
 
@@ -227,7 +227,7 @@ describe('tracker.ts history: a hand edit reverted by hand to the ledger\'s stat
   });
 });
 
-describe('tracker.ts history: an index written before #5555', SQLITE, () => {
+describe('packages/cli/src/commands/tracker/tracker.ts history: an index written before #5555', SQLITE, () => {
   test('its observed events are replaced where the ledger explains them and kept where it does not', async () => {
     const sb = sandbox();
     try {

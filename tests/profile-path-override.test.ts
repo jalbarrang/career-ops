@@ -1,11 +1,11 @@
 // tests/profile-path-override.test.ts — CAREER_OPS_PROFILE is honored by every
 // reader of config/profile.yml, through one resolver (#5026).
 //
-// cv-templates.ts documented the precedence: the override wins over the data
+// packages/cli/src/commands/cv/cv-templates.ts documented the precedence: the override wins over the data
 // root. The expression that implements it was then copied by hand into eight more
 // core modules (two of them with a working-directory fallback), and most other readers built the data-root path on their own and
 // never looked at the variable. One command could report the same profile as both
-// missing and fine (doctor.ts), and `scan.ts` followed the named profile while
+// missing and fine (packages/cli/src/commands/platform/doctor.ts), and `packages/core/src/scanning/scan.ts` followed the named profile while
 // the evaluators that ran next read a different one.
 //
 // Scope: the .ts modules at the repo root and under lib/, providers/ and scripts/.
@@ -14,14 +14,14 @@
 //
 // Three layers, because each catches a different way to get this wrong:
 //   1. getProfilePath() itself: the precedence, in one place.
-//   2. doctor.ts end to end: the reproduction from the issue, run for real.
+//   2. packages/cli/src/commands/platform/doctor.ts end to end: the reproduction from the issue, run for real.
 //   3. A scan of the tracked sources: a hand-built profile path is the defect
 //      class, so a new one fails here instead of surviving until someone notices
 //      two files disagree. The PENDING list names modules a later change in this
 //      series migrates; an entry that no longer matches is itself a failure, so
 //      the list cannot outlive the work it tracks.
 import { pass, fail, rmSync, ROOT, NODE } from './helpers.ts';
-import { trackedFiles } from '../lib/source-files.ts';
+import { trackedFiles } from '../packages/core/src/kernel/source-files.ts';
 import { spawnSync } from 'child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
 import { join, relative, sep } from 'path';
@@ -50,11 +50,11 @@ function restoreEnv() {
 
 try {
   // ── 1. getProfilePath() ────────────────────────────────────────────────────
-  const resolverUrl = pathToFileURL(join(ROOT, 'path-resolver.ts')).href;
+  const resolverUrl = pathToFileURL(join(ROOT, 'packages/core/src/kernel/path-resolver.ts')).href;
   const { getProfilePath, hasProfileOverride, getCareerOpsRoot } = await import(resolverUrl);
 
   if (typeof getProfilePath !== 'function') {
-    fail('path-resolver.ts exports no getProfilePath(): there is no single place the override is resolved');
+    fail('packages/core/src/kernel/path-resolver.ts exports no getProfilePath(): there is no single place the override is resolved');
   } else {
     process.env.CAREER_OPS_ROOT = dataRoot;
     process.env.CAREER_OPS_DATA_DIR = '';
@@ -127,12 +127,12 @@ try {
   }
   restoreEnv();
 
-  // ── 2. doctor.ts, the reproduction from the issue ─────────────────────────
+  // ── 2. packages/cli/src/commands/platform/doctor.ts, the reproduction from the issue ─────────────────────────
   function runDoctor(args, profileEnv) {
     const env = { ...process.env, CAREER_OPS_ROOT: dataRoot, CAREER_OPS_DATA_DIR: '' };
     if (profileEnv === undefined) delete env.CAREER_OPS_PROFILE;
     else env.CAREER_OPS_PROFILE = profileEnv;
-    const r = spawnSync(NODE, [join(ROOT, 'doctor.ts'), ...args], { cwd: scratch, encoding: 'utf-8', timeout: 60000, env });
+    const r = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), ...args], { cwd: scratch, encoding: 'utf-8', timeout: 60000, env });
     if (r.error) throw r.error;
     return args.includes('--json') ? r.stdout : `${r.stdout}${r.stderr}`;
   }
@@ -159,7 +159,7 @@ try {
     ? pass('doctor names CAREER_OPS_PROFILE and the file it points at, instead of advising a copy that would change nothing')
     : fail('doctor advice for a missing override target does not name the variable and path, or still says to copy the example');
 
-  // Only scan.ts (data root), the evaluators (cwd), openai-tailor.ts (cwd) and
+  // Only packages/core/src/scanning/scan.ts (data root), the evaluators (cwd), packages/cli/src/commands/cv/openai-tailor.ts (cwd) and
   // openrouter-runner (code root) load a .env; generate-pdf, cv-sync-check, upskill, salary-gap and the
   // rest read the process environment alone. Doctor reports what those readers
   // see, so an override set only in .env is NOT a found profile, and the advice
@@ -171,7 +171,7 @@ try {
     const env = { ...process.env, CAREER_OPS_ROOT: envRoot, CAREER_OPS_DATA_DIR: '' };
     delete env.CAREER_OPS_PROFILE;
     if (cli) env.CAREER_OPS_CLI = cli; else delete env.CAREER_OPS_CLI;
-    const r = spawnSync(NODE, [join(ROOT, 'doctor.ts'), ...args], { cwd: scratch, encoding: 'utf-8', timeout: 60000, env });
+    const r = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), ...args], { cwd: scratch, encoding: 'utf-8', timeout: 60000, env });
     if (r.error) throw r.error;
     return args.includes('--json') ? r.stdout : `${r.stdout}${r.stderr}`;
   };
@@ -199,7 +199,7 @@ try {
   }
 
   // A data-root profile that exists does not make the .env override harmless:
-  // scan.ts, the evaluators, openai-tailor.ts and openrouter-runner.ts read the file the .env names, the other readers read this one.
+  // packages/core/src/scanning/scan.ts, the evaluators, packages/cli/src/commands/cv/openai-tailor.ts and packages/cli/src/commands/evaluation/openrouter-runner.ts read the file the .env names, the other readers read this one.
   const bothRoot = join(scratch, 'both-root');
   mkdirSync(join(bothRoot, 'config'), { recursive: true });
   writeFileSync(join(bothRoot, 'config', 'profile.yml'), 'candidate:\n  full_name: Root\n', 'utf-8');
@@ -207,7 +207,7 @@ try {
   const runDoctorBoth = (args) => {
     const env = { ...process.env, CAREER_OPS_ROOT: bothRoot, CAREER_OPS_DATA_DIR: '' };
     delete env.CAREER_OPS_PROFILE;
-    const r = spawnSync(NODE, [join(ROOT, 'doctor.ts'), ...args], { cwd: scratch, encoding: 'utf-8', timeout: 60000, env });
+    const r = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), ...args], { cwd: scratch, encoding: 'utf-8', timeout: 60000, env });
     if (r.error) throw r.error;
     return args.includes('--json') ? r.stdout : `${r.stdout}${r.stderr}`;
   };
@@ -232,7 +232,7 @@ try {
     delete env.CAREER_OPS_ROOT;
     delete env.CAREER_OPS_PROFILE;
     delete env.CAREER_OPS_CLI;
-    const r = spawnSync(NODE, [join(ROOT, 'doctor.ts'), ...args], { cwd: scratch, encoding: 'utf-8', timeout: 60000, env });
+    const r = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), ...args], { cwd: scratch, encoding: 'utf-8', timeout: 60000, env });
     if (r.error) throw r.error;
     return args.includes('--json') ? r.stdout : `${r.stdout}${r.stderr}`;
   };
@@ -244,7 +244,7 @@ try {
     ? pass('doctor human output and --json both report the profile missing from the root doctor started at, not the one the .env names')
     : fail(`doctor human says profile missing=${cloneHuman} but --json says missing=${cloneJson} when the .env sets CAREER_OPS_ROOT`);
 
-  // scan.ts fixes DATA_ROOT, loads that root's .env, then reads the profile. A
+  // packages/core/src/scanning/scan.ts fixes DATA_ROOT, loads that root's .env, then reads the profile. A
   // CAREER_OPS_ROOT in the .env must not send the profile read to another root
   // than the one the rest of the scan (portals, history, the .env itself) uses.
   const scanRoot = join(scratch, 'scan-root');
@@ -258,18 +258,18 @@ try {
   delete scanEnv.CAREER_OPS_ROOT;
   delete scanEnv.CAREER_OPS_PROFILE;
   const scanRun = spawnSync(NODE, ['--input-type=module', '-e',
-    `const m = await import(${JSON.stringify(pathToFileURL(join(ROOT, 'scan.ts')).href)}); console.log(m.loadCandidateCountry());`],
+    `const m = await import(${JSON.stringify(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href)}); console.log(m.loadCandidateCountry());`],
   { cwd: scratch, encoding: 'utf-8', timeout: 60000, env: scanEnv });
   scanRun.stdout.trim() === 'Rootland'
-    ? pass('scan.ts reads the profile from the root it fixed at startup, not the one a CAREER_OPS_ROOT in that root\'s .env names')
-    : fail(`scan.ts read the profile from the wrong root: country=${JSON.stringify(scanRun.stdout.trim())} (expected Rootland); stderr: ${scanRun.stderr.slice(0, 160)}`);
+    ? pass('packages/core/src/scanning/scan.ts reads the profile from the root it fixed at startup, not the one a CAREER_OPS_ROOT in that root\'s .env names')
+    : fail(`packages/core/src/scanning/scan.ts read the profile from the wrong root: country=${JSON.stringify(scanRun.stdout.trim())} (expected Rootland); stderr: ${scanRun.stderr.slice(0, 160)}`);
 
   // checkEnvFileProfile has two guards, and each needs a case that only it catches.
   // A value exported in the shell shadows the .env, so the .env is no split: no
   // warning in either output even with a data-root profile beside it.
   const shadowOut = (args) => {
     const env = { ...process.env, CAREER_OPS_ROOT: bothRoot, CAREER_OPS_DATA_DIR: '', CAREER_OPS_PROFILE: namedProfile };
-    const r = spawnSync(NODE, [join(ROOT, 'doctor.ts'), ...args], { cwd: scratch, encoding: 'utf-8', timeout: 60000, env });
+    const r = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), ...args], { cwd: scratch, encoding: 'utf-8', timeout: 60000, env });
     if (r.error) throw r.error;
     return args.includes('--json') ? r.stdout : `${r.stdout}${r.stderr}`;
   };
@@ -313,12 +313,12 @@ try {
     : fail('doctor did not report a missing profile with the override unset');
 
   // ── 3. no hand-built profile path outside the resolver ─────────────────────
-  // web/ resolves its own root and carries its own helper; this scan is the
-  // core's. career-profile.ts reads data/career-profile.yml, a different file.
-  const EXEMPT = new Set(['path-resolver.ts', 'career-profile.ts']);
+  // apps/web/ resolves its own root and carries its own helper; this scan is the
+  // core's. packages/cli/src/commands/profile/career-profile.ts reads data/career-profile.yml, a different file.
+  const EXEMPT = new Set(['packages/core/src/kernel/path-resolver.ts', 'packages/cli/src/commands/profile/career-profile.ts', 'packages/core/src/kernel/repo-root.ts',]);
   const PENDING = new Set([]);
   const HAND_BUILT = [
-    /(?<!delete\s)process\.env\.CAREER_OPS_PROFILE(?!\s*=[^=])/,   // a read; deleting it (doctor.ts, undoing a .env load) is not a path
+    /(?<!delete\s)process\.env\.CAREER_OPS_PROFILE(?!\s*=[^=])/,   // a read; deleting it (packages/cli/src/commands/platform/doctor.ts, undoing a .env load) is not a path
     /\b(?:join|resolve)\([^\n]*['"](?:config\/)?profile\.yml['"]/,
     /(?<![=!])=\s*['"]config\/profile\.yml['"]/,
     /readFile\(['"]config\/profile\.yml/,
@@ -327,7 +327,7 @@ try {
 
   const sources = trackedFiles(ROOT, (f) => f.endsWith('.ts'))
     .map((abs) => relative(ROOT, abs).split(sep).join('/'))
-    .filter((rel) => !/^(tests|templates|web)\//.test(rel) && rel !== 'test-all.ts' && !/\.test\.ts$/.test(rel));
+    .filter((rel) => !/^(tests|templates|apps)\//.test(rel) && rel !== 'test-all.ts' && !/\.test\.ts$/.test(rel));
 
   const flagged = new Map();
   for (const rel of sources) {

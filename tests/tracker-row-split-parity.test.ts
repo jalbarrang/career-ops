@@ -6,7 +6,7 @@
 // dashboard/internal/data/career_test.go against the Go dashboard's
 // splitTrackerRow. The Go reader treated any line holding a tab as a legacy
 // tab-delimited row, so a pipe row whose notes held a tab (which
-// set-status.ts --note stores verbatim) split into two fields and vanished
+// packages/cli/src/commands/tracker/set-status.ts --note stores verbatim) split into two fields and vanished
 // from the dashboard while Node still read it. test-fixtures/ is in
 // SYSTEM_PATHS but not BOOTSTRAP_PATHS, so a bootstrap-only install has this
 // suite without the table; the Go half fails hard if it is missing.
@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { splitTrackerCells } from '../tracker-parse.ts';
+import { splitTrackerCells } from '../packages/core/src/tracker/tracker-parse.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const PARITY_FIXTURE = join(ROOT, 'test-fixtures', 'tracker-row-split-parity.json');

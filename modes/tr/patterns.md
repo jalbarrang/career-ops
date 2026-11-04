@@ -29,7 +29,7 @@ Zarifçe çıkış yap.
 Şunu çalıştır:
 
 ```bash
-bun analyze-patterns.ts
+career-ops analyze-patterns
 ```
 
 JSON çıktısını ayrıştır. Şunları içerir:

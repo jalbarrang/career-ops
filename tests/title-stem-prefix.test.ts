@@ -18,7 +18,7 @@ import { pass, fail, ROOT } from './helpers.ts';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import * as yaml from 'js-yaml';
-import { compileKeyword, buildTitleFilter } from '../scan.ts';
+import { compileKeyword, buildTitleFilter } from '../packages/core/src/scanning/scan.ts';
 
 console.log('\ntitle filter — `stem:` prefix');
 

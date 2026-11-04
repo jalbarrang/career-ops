@@ -7,7 +7,7 @@ console.log('\nProvider — themuse');
 
 
 try {
-  const museModule = await import(pathToFileURL(join(ROOT, 'providers/themuse.ts')).href);
+  const museModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/themuse.ts')).href);
   const themuse = museModule.default;
   const { normalizeMuseJob } = museModule;
 
@@ -266,7 +266,7 @@ try {
   // fetch() page 0 is NOT in the tolerant loop — a completely dead board
   // (every attempt on page 0 fails) must throw, not resolve to []. A caught
   // page-0 failure would be indistinguishable from a healthy "0 jobs today"
-  // result to scan.ts's consecutive-failure detector.
+  // result to packages/core/src/scanning/scan.ts's consecutive-failure detector.
   {
     let calls = 0;
     let threw = false;

@@ -1,16 +1,16 @@
 // tests/cv-latex-bullet-bold.test.ts — the LaTeX mirror of #1728 (#3351).
 //
 // #1728 taught the HTML path to render `**text**` as <strong>, in
-// normalizeTextForATS (generate-pdf.ts). The conversion walks every text node,
+// normalizeTextForATS (packages/cli/src/commands/cv/generate-pdf.ts). The conversion walks every text node,
 // so it already covered experience and project bullets, and cv-template.html
-// ships `.job li strong` to style them. build-cv-latex.ts had no equivalent:
+// ships `.job li strong` to style them. packages/cli/src/commands/cv/build-cv-latex.ts had no equivalent:
 // escapeLatex() leaves `*` alone because it is not a LaTeX special character,
 // so the markers reached the .tex verbatim and printed as literal asterisks —
 // the same payload emphasised in the HTML PDF and showed `**1018 KB**` in the
 // LaTeX one, with the builder reporting "valid": true and exiting 0.
 //
 // End-to-end through the real builder and the shipped template, because
-// build-cv-latex.ts exports nothing.
+// packages/cli/src/commands/cv/build-cv-latex.ts exports nothing.
 import { pass, fail, ROOT, NODE, run, lastRunFailure } from './helpers.ts';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
@@ -80,11 +80,11 @@ try {
   const output = join(dir, 'bold.tex');
   writeFileSync(input, JSON.stringify(PAYLOAD));
 
-  if (run(NODE, [join(ROOT, 'build-cv-latex.ts'), input, output]) === null) {
+  if (run(NODE, [join(ROOT, 'packages/cli/src/commands/cv/build-cv-latex.ts'), input, output]) === null) {
     const f = lastRunFailure();
-    fail(`build-cv-latex.ts crashed (exit ${f?.status}) - ${(f?.stderr || '').trim().split('\n').pop()}`);
+    fail(`packages/cli/src/commands/cv/build-cv-latex.ts crashed (exit ${f?.status}) - ${(f?.stderr || '').trim().split('\n').pop()}`);
   } else if (!existsSync(output)) {
-    fail('build-cv-latex.ts exited 0 but wrote no output file');
+    fail('packages/cli/src/commands/cv/build-cv-latex.ts exited 0 but wrote no output file');
   } else {
     const tex = readFileSync(output, 'utf-8');
 

@@ -3,7 +3,7 @@
 //
 // safeOutputPath() used basename() and always wrote output/<file>, so a
 // legitimate bundle path such as output/{NNN}-{company}-{role}/cover-letter/vNNN/
-// was flattened to output/<file> and the process still exited 0. generate-pdf.ts
+// was flattened to output/<file> and the process still exited 0. packages/cli/src/commands/cv/generate-pdf.ts
 // already keeps those nested paths; cover letters must match.
 //
 // Two directions, matching the maintainer note on #2940:
@@ -11,8 +11,8 @@
 //   2. A path that would escape output/ is rejected — not silently rewritten.
 import { resolve, join, relative, isAbsolute } from 'path';
 import { pass, fail, ROOT } from './helpers.ts';
-import { safeOutputPath } from '../generate-cover-letter.ts';
-import { getCareerOpsRoot } from '../path-resolver.ts';
+import { safeOutputPath } from '../packages/cli/src/commands/cv/generate-cover-letter.ts';
+import { getCareerOpsRoot } from '../packages/core/src/kernel/path-resolver.ts';
 
 console.log('\nCover letter --out preserves output/ subdirectories (#2940)');
 

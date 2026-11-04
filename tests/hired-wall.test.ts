@@ -11,8 +11,8 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { execFileSync } from 'child_process';
 import { pass, fail, ROOT } from './helpers.ts';
-import { parseLedger, ledgerLine, renderCard, rebuildWall, buildSvg } from '../hired-wall-build.ts';
-import { hiredRows, weeksFromScanHistory, buildIssueUrl } from '../hired-share.ts';
+import { parseLedger, ledgerLine, renderCard, rebuildWall, buildSvg } from '../packages/cli/src/commands/insights/hired-wall-build.ts';
+import { hiredRows, weeksFromScanHistory, buildIssueUrl } from '../packages/cli/src/commands/insights/hired-share.ts';
 
 console.log('\nHired Wall — ledger, cards, SVG, share flow');
 
@@ -76,7 +76,7 @@ const FIXTURE_AVATAR = join(ROOT, 'tests', 'fixtures', 'avatar-8x8.png');
   const dir = mkdtempSync(join(tmpdir(), 'hired-wall-'));
   mkdirSync(join(dir, 'docs'), { recursive: true });
   writeFileSync(join(dir, 'HIRED.md'), '# W\n\n<!-- ENTRIES -->\n\n<!-- /ENTRIES -->\n');
-  execFileSync(process.execPath, [join(ROOT, 'hired-wall-build.ts'), '--add',
+  execFileSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/insights/hired-wall-build.ts'), '--add',
     '--root', dir, '--level', 'role',
     '--role', 'Dev" --> <img onerror=x>', '--story', 'a "quoted" story --> with terminators',
     '--link', 'https://github.com/career-ops-hq/career-ops/issues/99',
@@ -97,7 +97,7 @@ const FIXTURE_AVATAR = join(ROOT, 'tests', 'fixtures', 'avatar-8x8.png');
   // A non-allowlisted link must be refused entirely.
   let refused = false;
   try {
-    execFileSync(process.execPath, [join(ROOT, 'hired-wall-build.ts'), '--add', '--root', dir,
+    execFileSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/insights/hired-wall-build.ts'), '--add', '--root', dir,
       '--level', 'role', '--role', 'X', '--link', 'https://evil.example/phish',
       '--avatar-fixture', FIXTURE_AVATAR], { stdio: 'pipe' });
   } catch { refused = true; }
@@ -122,13 +122,13 @@ const FIXTURE_AVATAR = join(ROOT, 'tests', 'fixtures', 'avatar-8x8.png');
   for (const extra of [[], ['--fetch-avatars']]) {
     let refused = false;
     try {
-      execFileSync(process.execPath, [join(ROOT, 'hired-wall-build.ts'), '--root', dir, ...extra], { stdio: 'pipe' });
+      execFileSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/insights/hired-wall-build.ts'), '--root', dir, ...extra], { stdio: 'pipe' });
     } catch { refused = true; }
     const label = ['--root', ...extra].join(' ');
     if (refused && unchanged()) pass(`no action flag (${label}) exits non-zero and writes nothing`);
     else fail(`no action flag (${label}): refused=${refused}, files unchanged=${unchanged()}`);
   }
-  execFileSync(process.execPath, [join(ROOT, 'hired-wall-build.ts'), '--rebuild', '--root', dir], { stdio: 'pipe' });
+  execFileSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/insights/hired-wall-build.ts'), '--rebuild', '--root', dir], { stdio: 'pipe' });
   if (readFileSync(join(dir, 'docs', 'hired-wall.svg'), 'utf8').startsWith('<svg')) pass('--rebuild still writes the derived surfaces');
   else fail('--rebuild did not regenerate docs/hired-wall.svg');
   rmSync(dir, { recursive: true, force: true });

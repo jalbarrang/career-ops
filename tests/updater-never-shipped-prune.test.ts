@@ -17,7 +17,7 @@
  */
 
 import { pass, fail } from './helpers.ts';
-import { wasEverShippedUpstream } from '../update-system.ts';
+import { wasEverShippedUpstream } from '../packages/cli/src/commands/platform/update-system.ts';
 
 console.log('\n🧪 Testing never-shipped vs. retired-upstream prune discrimination...');
 
@@ -54,7 +54,7 @@ const wouldPrune = (file, revList) => wasEverShippedUpstream(file, 'FETCH_HEAD',
 {
   // The real incident: a fork's own provider, spelled exactly like a shipped
   // one, absent from upstream's tree because it was never there to begin with.
-  const revList = historyContaining('providers/greenhouse.ts');
+  const revList = historyContaining('packages/core/src/scanning/providers/greenhouse.ts');
   if (wasEverShippedUpstream('providers/acme.ts', 'FETCH_HEAD', revList)) {
     fail('a provider absent from upstream history was reported as shipped — it would be pruned');
   } else {

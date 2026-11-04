@@ -7,8 +7,8 @@
  * `data/career-profile.yml` schema v2 (company -> roles) is a change inside the
  * engine, not a web-app feature: the importer writes the file, the validator
  * gates every save, and the selection code reads it. Those three files
- * (`career-profile.ts`, `lib/career-profile.ts`, `lib/profile-cv-selection.ts`)
- * plus their tests are in the updater's manifest, so `bun update-system.ts
+ * (`packages/cli/src/commands/profile/career-profile.ts`, `packages/core/src/profile/career-profile.ts`, `packages/core/src/profile/profile-cv-selection.ts`)
+ * plus their tests are in the updater's manifest, so `bun packages/cli/src/commands/platform/update-system.ts
  * apply` checks them out from upstream and the fork's versions are gone. The
  * updater does leave a `.bak` of each local edit, so nothing is lost — it is
  * just reverted.

@@ -64,7 +64,7 @@ test('a signal kill is not a decision the program made (POSIX)', () => {
     // termination with a non-zero NATIVE status and no signal, so nothing in
     // the result tells it apart from a chosen non-zero exit — exitedNonZero
     // answers true here, and cannot do better from a spawnSync result alone.
-    // web/tests/lib/server-launcher.test.ts records the same platform limit.
+    // apps/web/tests/lib/server-launcher.test.ts records the same platform limit.
     //
     // This is narrow: a `timeout:` kill still sets result.error to ETIMEDOUT on
     // every platform, which is the case these 42 assertions were actually

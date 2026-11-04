@@ -1,5 +1,5 @@
 // tests/providers/_html-entities.test.ts — direct coverage for the shared
-// entity decoder (providers/_html-entities.ts), extracted out of
+// entity decoder (packages/core/src/scanning/providers/_html-entities.ts), extracted out of
 // deutschebahn.ts / hecklerkoch.ts so the numeric-entity guard can't drift
 // out of sync between copies again (#1555). CodeRabbit asked for this as a
 // dedicated, provider-independent test for a "safety-critical" shared module.
@@ -9,7 +9,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — _html-entities (shared HTML entity decoder)');
 try {
-  const { decodeEntities } = await import(pathToFileURL(join(ROOT, 'providers/_html-entities.ts')).href);
+  const { decodeEntities } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_html-entities.ts')).href);
 
   if (decodeEntities('Program &amp; Release') === 'Program & Release') pass('decodeEntities decodes named entities (&amp;)');
   else fail(`named entity wrong: ${JSON.stringify(decodeEntities('Program &amp; Release'))}`);
@@ -42,7 +42,7 @@ try {
   else fail(`decimal/hex leak regression: ${JSON.stringify(decodeEntities('X&#1a2;Y'))}`);
 
   // ── XML 1.0 §2.2 Char: legal to construct, not legal to emit ──────
-  // Upstreamed from providers/jobvite.ts (#2623), whose private copy of this
+  // Upstreamed from packages/core/src/scanning/providers/jobvite.ts (#2623), whose private copy of this
   // decoder had grown stricter than the shared one. Everything below used to
   // decode into a job title, and from there into the tracker and every
   // generated document.

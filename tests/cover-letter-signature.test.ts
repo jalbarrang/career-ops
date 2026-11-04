@@ -9,7 +9,7 @@
 // between them, never injected into escaped content.
 import { join } from 'path';
 import { pass, fail, ROOT } from './helpers.ts';
-import { buildHtml } from '../generate-cover-letter.ts';
+import { buildHtml } from '../packages/cli/src/commands/cv/generate-cover-letter.ts';
 
 console.log('\nCover letter signature block');
 

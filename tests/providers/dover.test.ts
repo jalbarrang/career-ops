@@ -3,7 +3,7 @@
 // Dover's careers page reads a same-origin, DRF-paginated
 // `app.dover.com/api/v1/careers-page/<board-uuid>/jobs?limit=&offset=` envelope
 // (`{ count, next, previous, results }`) — see the header comment in
-// providers/dover.ts for the full shape.
+// packages/core/src/scanning/providers/dover.ts for the full shape.
 import { pass, fail, ROOT, captureConsoleErrors } from '../helpers.ts';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
@@ -31,7 +31,7 @@ const row = (id, title, extra = {}) => ({
 });
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/dover.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/dover.ts')).href);
   const dover = mod.default;
   const { parseDoverPage, resolveBoard } = mod;
 

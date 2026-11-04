@@ -16,7 +16,7 @@ const doc = (head, body) => `<!DOCTYPE html><html><head>${head}</head><body>${bo
 
 let browser;
 try {
-  const { normalizeTextForATS } = await import(pathToFileURL(join(ROOT, 'generate-pdf.ts')).href);
+  const { normalizeTextForATS } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts')).href);
   const norm = (html) => normalizeTextForATS(html);
 
   const body = norm(doc('', '<p>Led go-to-market and cross-functional work.</p>'));
@@ -55,7 +55,7 @@ try {
 
   // The fact gate reads the normalized HTML and turns tags into spaces; a span
   // edge inside "30-40%" would read as "40 %" and block a truthful CV.
-  const { verifyFacts } = await import(pathToFileURL(join(ROOT, 'verify-cv-facts.ts')).href);
+  const { verifyFacts } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/cv/verify-cv-facts.ts')).href);
   const factDir = mkdtempSync(join(tmpdir(), 'career-ops-hyphen-facts-'));
   try {
     writeFileSync(join(factDir, 'cv.md'), '# Jordan Example\n\n- Cut costs 30-40% and grew ARR by $1-2M with cross-functional, data-driven teams.\n');

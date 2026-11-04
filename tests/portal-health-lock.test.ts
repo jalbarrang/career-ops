@@ -1,4 +1,4 @@
-// tests/portal-health-lock.test.ts — portal-health-lock.ts must provide real
+// tests/portal-health-lock.test.ts — packages/core/src/kernel/portal-health-lock.ts must provide real
 // mutual exclusion for data/portal-health.tsv, including under the crash +
 // contention window that stale-lock reclamation opens.
 //
@@ -13,7 +13,7 @@ import { pass, fail } from './helpers.ts';
 import { mkdtempSync, rmSync, existsSync, mkdirSync, writeFileSync, readFileSync, utimesSync } from 'fs';
 import { join, dirname } from 'path';
 import { tmpdir } from 'os';
-import { acquirePortalHealthLock, LockTimeoutError } from '../portal-health-lock.ts';
+import { acquirePortalHealthLock, LockTimeoutError } from '../packages/core/src/kernel/portal-health-lock.ts';
 
 console.log('\nportal-health-lock.ts — ownership-verified locking');
 

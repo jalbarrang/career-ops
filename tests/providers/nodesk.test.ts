@@ -9,7 +9,7 @@ try {
   const {
     default: nodesk,
     parseNodeskFeed,
-  } = await import(pathToFileURL(join(ROOT, 'providers/nodesk.ts')).href);
+  } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/nodesk.ts')).href);
 
   if (nodesk.id === 'nodesk') {
     pass('nodesk.id is "nodesk"');

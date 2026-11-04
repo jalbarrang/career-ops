@@ -1,6 +1,6 @@
 /**
  * updater-configured-template-variant.test.ts — a user-authored named CV/
- * cover-letter template variant, created per cv-templates.ts's own naming
+ * cover-letter template variant, created per packages/cli/src/commands/cv/cv-templates.ts's own naming
  * convention (`templates/cv-template.{name}.html`, `templates/cover-letter-
  * template.{name}.html` — see its KINDS/parseFilename) and pointed at from
  * config/profile.yml (`cv.template` / `cover_letter.template`), must survive
@@ -12,7 +12,7 @@
  * real shipped variant (`cv-template.zh-minimal.html`) on shape alone. The
  * only signal that separates "my personal variant" from "a shipped variant
  * upstream has since removed, prune it" is whether config/profile.yml itself
- * names this variant as the active default — exactly what cv-templates.ts's
+ * names this variant as the active default — exactly what packages/cli/src/commands/cv/cv-templates.ts's
  * resolveTemplate() already relies on to pick it for CV generation.
  *
  * Also pins the two-cycle failure mode that makes this a genuinely distinct
@@ -43,7 +43,7 @@ import {
   snapshotConfiguredTemplateVariants,
   snapshotConfiguredTemplateVariantsAcrossProfiles,
   REEXEC_FALLBACK_FILES,
-} from '../update-system.ts';
+} from '../packages/cli/src/commands/platform/update-system.ts';
 
 console.log('\n🧪 Testing user-configured template-variant carve-out...');
 
@@ -86,9 +86,9 @@ for (const section of ['cv', 'cover_letter']) {
   }
 }
 
-if (REEXEC_FALLBACK_FILES.includes('cv-templates.ts')
-    && REEXEC_FALLBACK_FILES.includes('lib/is-main-module.ts')
-    && REEXEC_FALLBACK_FILES.includes('path-resolver.ts')) {
+if (REEXEC_FALLBACK_FILES.includes('packages/cli/src/commands/cv/cv-templates.ts')
+    && REEXEC_FALLBACK_FILES.includes('packages/core/src/kernel/is-main-module.ts')
+    && REEXEC_FALLBACK_FILES.includes('packages/core/src/kernel/path-resolver.ts')) {
   pass('self-reexec checks out configured-template loading and data-root dependencies before apply');
 } else {
   fail('self-reexec fallback omits a configured-template dependency needed before normal checkout');
@@ -154,7 +154,7 @@ if (REEXEC_FALLBACK_FILES.includes('cv-templates.ts')
   try {
     const configured = await loadConfiguredTemplateVariants({ profilePath: profile });
     if (configured.cv === 'bw' && configured.cover === 'concise') {
-      pass('apply helper resolves configured variants through cv-templates.ts lazy wiring');
+      pass('apply helper resolves configured variants through packages/cli/src/commands/cv/cv-templates.ts lazy wiring');
     } else {
       fail(`lazy wiring returned ${JSON.stringify(configured)}`);
     }

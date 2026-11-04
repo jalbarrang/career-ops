@@ -1,10 +1,10 @@
 // tests/audit-portals.test.ts — classification tests for audit-portals.ts.
 //
 // The script exists because two real coverage failures survived
-// verify-portals.ts on 2026-08-26, and each one pins a case below:
+// packages/core/src/scanning/verify-portals.ts on 2026-08-26, and each one pins a case below:
 //
 //   - twelve entries carried `enabled: true` with a careers_url no provider
-//     claims, so scan.ts skipped them silently on every run. That state must
+//     claims, so packages/core/src/scanning/scan.ts skipped them silently on every run. That state must
 //     never classify as anything but `no-provider` — it is the one verdict that
 //     means "this line in your config does literally nothing";
 //   - `Booking Holdings` pointed at the PARENT company's Workday board. It was
@@ -22,7 +22,7 @@ import { pathToFileURL } from 'url';
 console.log('\naudit-portals — board classification');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'audit-portals.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/scanning/audit-portals.ts')).href);
   const {
     classifyBoard, sampleJobs, diffAgainstBaseline, auditCompanies,
     findUnclaimedEntries, DEFAULT_SMALL_THRESHOLD, VERDICTS,
@@ -43,7 +43,7 @@ try {
   else fail(`expected no-provider to win, got ${noProvWithError.verdict}`);
 
   // The two flavours of no-provider are not equally broken, and the detail line
-  // is the only place a reader learns which one they have: scan.ts announces a
+  // is the only place a reader learns which one they have: packages/core/src/scanning/scan.ts announces a
   // websearch entry in its handoff list, and swallows one without a scan_method.
   const silentDetail = classifyBoard({ provider: null }).detail;
   const handoffDetail = classifyBoard({ provider: null, scanMethod: 'websearch' }).detail;
@@ -216,7 +216,7 @@ try {
   if (!allNames.includes('Off Co')) pass('a disabled entry is never reported as unclaimed');
   else fail('disabled entry leaked into the unclaimed buckets');
   // An enabled entry with no `name` can't be labeled in any bucket, so
-  // findUnclaimedEntries skips it silently — verify-pipeline.ts's Check 15
+  // findUnclaimedEntries skips it silently — packages/cli/src/commands/platform/verify-pipeline.ts's Check 15
   // must count it separately (as malformed) rather than as a resolved entry.
   if (unclaimed.silent.length === 1 && unclaimed.handoff.length === 1 && unclaimed.unknownProvider.length === 1) {
     pass('an enabled entry with no name is skipped, not added to any bucket');
@@ -224,7 +224,7 @@ try {
     fail(`nameless entry leaked into a bucket: silent=${unclaimed.silent.length} handoff=${unclaimed.handoff.length} unknownProvider=${unclaimed.unknownProvider.length}`);
   }
 
-  // scan.ts DOES claim a local-parser entry, so excluding local-parser here —
+  // packages/core/src/scanning/scan.ts DOES claim a local-parser entry, so excluding local-parser here —
   // the way auditCompanies() must, since it refuses to run the command — would
   // report a working parser as dead config.
   const parsed = findUnclaimedEntries(
@@ -232,7 +232,7 @@ try {
     reg,
   );
   if (parsed.silent.length === 0 && parsed.handoff.length === 0) {
-    pass('a local-parser entry counts as claimed, matching scan.ts rather than the audit');
+    pass('a local-parser entry counts as claimed, matching packages/core/src/scanning/scan.ts rather than the audit');
   } else {
     fail(`local-parser entry misreported: ${JSON.stringify(parsed)}`);
   }

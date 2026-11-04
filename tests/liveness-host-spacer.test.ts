@@ -8,7 +8,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createHostSpacer } from '../liveness-browser.ts';
+import { createHostSpacer } from '../packages/core/src/liveness/liveness-browser.ts';
 
 function clock(start = 1_000_000) {
   let t = start;

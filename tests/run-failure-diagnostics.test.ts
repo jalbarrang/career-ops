@@ -105,14 +105,14 @@ const OK_CHILD = 'console.log("OK");';
 // The helper existing is not the same as the call sites using it. Below the
 // per-file node:test path — which runDiscovered() already fixed, and which #4164
 // is refining — test-all.ts spawns ONE child for every suite under
-// web/tests/lib. That site reported the fact of failure and nothing else: just a
+// apps/web/tests/lib. That site reported the fact of failure and nothing else: just a
 // rerun command naming ~100 files. Observed twice on 2026-10-04 on
 // windows-latest, on two unrelated PRs, and neither log could say which of the
 // hundred suites broke.
 //
 // Asserted structurally because the behaviour cannot be reached without making a
 // real suite fail, and the only way to do that is to write a failing file into
-// web/tests/lib — i.e. into the developer's own checkout.
+// apps/web/tests/lib — i.e. into the developer's own checkout.
 //
 // Deliberately accepts ANY of the known output carriers rather than one
 // spelling: formatRunFailure() is what main has, #4164 adds failureExcerpt(),

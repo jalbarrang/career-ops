@@ -16,7 +16,7 @@
 //   no status, or a 404 saying anything else        -> null (the browser decides)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveAtsApi, checkLivenessViaApi, classifyNoFluffJobsPosting } from '../liveness-api.ts';
+import { resolveAtsApi, checkLivenessViaApi, classifyNoFluffJobsPosting } from '../packages/core/src/liveness/liveness-api.ts';
 
 const SLUG = 'senior-java-developer-acme-warszawa';
 const POSTING = `https://nofluffjobs.com/pl/job/${SLUG}`;

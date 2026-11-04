@@ -1,4 +1,4 @@
-// tests/cv-empty-summary.test.ts: build-cv-html.ts drops the Professional
+// tests/cv-empty-summary.test.ts: packages/cli/src/commands/cv/build-cv-html.ts drops the Professional
 // Summary block, heading and container, when the payload's summary renders no
 // text (#5019). tests/cv-optional-sections.test.ts covers the strip itself;
 // this drives the CLI from payload to written file, and checks an empty
@@ -10,7 +10,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listTemplates } from '../cv-templates.ts';
+import { listTemplates } from '../packages/cli/src/commands/cv/cv-templates.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const TEMPLATE_DIR = join(ROOT, 'templates');
@@ -46,7 +46,7 @@ function render(inputPayload, template = BASE_TEMPLATE) {
   const input = join(dir, 'input.json');
   const output = join(dir, 'output.html');
   writeFileSync(input, JSON.stringify(inputPayload));
-  execFileSync(process.execPath, ['build-cv-html.ts', input, output, template], { cwd: ROOT, encoding: 'utf8' });
+  execFileSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', input, output, template], { cwd: ROOT, encoding: 'utf8' });
   return readFileSync(output, 'utf8');
 }
 

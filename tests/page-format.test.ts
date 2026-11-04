@@ -1,10 +1,10 @@
 /**
- * page-format.test.ts — paper size has one owner (lib/page-format.ts).
+ * page-format.test.ts — paper size has one owner (packages/core/src/cv/page-format.ts).
  *
  * The size a document is laid out at and the size of the sheet it prints on used
- * to be decided in five separate places, and they disagreed. build-cv-html.ts
- * fell back to letter's 8.5in body width; generate-pdf.ts and
- * generate-cover-letter.ts each fell back to a4. A payload declaring
+ * to be decided in five separate places, and they disagreed. packages/cli/src/commands/cv/build-cv-html.ts
+ * fell back to letter's 8.5in body width; packages/cli/src/commands/cv/generate-pdf.ts and
+ * packages/cli/src/commands/cv/generate-cover-letter.ts each fell back to a4. A payload declaring
  * `page_format: "letter"` therefore rendered a letter-width CV onto an A4 sheet,
  * and modes/pdf.md had to instruct the user to "Pass the SAME value" twice by
  * hand.
@@ -23,10 +23,10 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdtempSync, mkdirSync, realpathSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import {dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ROOT, NODE, linkRepoPackage } from './helpers.ts';
-import { injectPrintPageCss } from '../generate-pdf.ts';
+import { injectPrintPageCss } from '../packages/cli/src/commands/cv/generate-pdf.ts';
 import {
   DEFAULT_PAGE_FORMAT,
   PAGE_CSS_SIZE,
@@ -34,7 +34,7 @@ import {
   PAGE_WIDTHS,
   normalizePageFormat,
   resolvePageFormat,
-} from '../lib/page-format.ts';
+} from '../packages/core/src/cv/page-format.ts';
 import { describeSpawn, exitedNonZero } from './helpers/describe-spawn.ts';
 
 /** A throwaway workspace whose config/profile.yml states `pageFormat`, or none. */
@@ -123,12 +123,12 @@ test('the owner pins its own values', () => {
 });
 
 test('the web agrees with the CLI about the sheet', async (t) => {
-  // web/src/lib/page-formats.ts keeps its own copy of these two constants, and
+  // apps/web/src/lib/page-formats.ts keeps its own copy of these two constants, and
   // wiring it to this module means loading it at runtime, so it stays out of
   // scope here. The two agree today and nothing says they still will, which is
   // the drift this file exists to stop, one boundary out. It costs two lines.
-  const webOwner = join(ROOT, 'web', 'src', 'lib', 'page-formats.ts');
-  if (!existsSync(webOwner)) return t.skip('this checkout carries no web/');
+  const webOwner = join(ROOT, 'apps/web', 'src', 'lib', 'page-formats.ts');
+  if (!existsSync(webOwner)) return t.skip('this checkout carries no apps/web/');
   const web = await import(pathToFileURL(webOwner).href);
   assert.equal(web.DEFAULT_PAGE_FORMAT, DEFAULT_PAGE_FORMAT);
   assert.deepEqual([...web.PAGE_FORMATS].sort(), [...PAGE_FORMATS].sort());
@@ -138,7 +138,7 @@ test('the web agrees with the CLI about the sheet', async (t) => {
 
 test('injectPrintPageCss: the flagless sheet comes from the profile', () => {
   // A child process, because injectPrintPageCss anchors the profile to
-  // workspaceRoot and generate-pdf.ts fixes that at import. In-process the
+  // workspaceRoot and packages/cli/src/commands/cv/generate-pdf.ts fixes that at import. In-process the
   // anchor is this checkout, so the assertion computed its expected value the
   // way the code does. It then agreed with itself: dropping the profilePath
   // option left it green on any machine carrying no config/profile.yml.
@@ -148,7 +148,7 @@ test('injectPrintPageCss: the flagless sheet comes from the profile', () => {
     const dir = workspace(declared);
     const probe = join(dir, 'probe.ts');
     writeFileSync(probe, [
-      `import { injectPrintPageCss } from ${JSON.stringify(pathToFileURL(join(ROOT, 'generate-pdf.ts')).href)};`,
+      `import { injectPrintPageCss } from ${JSON.stringify(pathToFileURL(join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts')).href)};`,
       "process.stdout.write(injectPrintPageCss('<html><head></head><body></body></html>'));",
       '',
     ].join('\n'));
@@ -168,7 +168,7 @@ test('build-cv-html: a payload with no page_format takes the profile width', () 
   const payloadPath = join(dir, 'payload.json');
   writeFileSync(payloadPath, JSON.stringify(PAYLOAD));
   const out = join(dir, 'output', 'cv.html');
-  const res = spawnSync(NODE, [join(ROOT, 'build-cv-html.ts'), payloadPath, out], {
+  const res = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/build-cv-html.ts'), payloadPath, out], {
     env: workspaceEnv(dir),
     encoding: 'utf-8',
   });
@@ -187,7 +187,7 @@ test('build-cv-html: a payload stating its own page_format outranks the profile'
   const payloadPath = join(dir, 'payload.json');
   writeFileSync(payloadPath, JSON.stringify({ ...PAYLOAD, page_format: 'letter' }));
   const out = join(dir, 'output', 'cv.html');
-  const res = spawnSync(NODE, [join(ROOT, 'build-cv-html.ts'), payloadPath, out], {
+  const res = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/build-cv-html.ts'), payloadPath, out], {
     env: workspaceEnv(dir),
     encoding: 'utf-8',
   });
@@ -202,7 +202,7 @@ test('generate-pdf: the flagless CLI takes the profile format', () => {
   // the old hardcoded `format = 'a4'` and prove nothing.
   for (const declared of ['letter', 'a4']) {
     const dir = workspace(declared);
-    const res = spawnSync(NODE, [join(ROOT, 'generate-pdf.ts'), join(dir, 'absent.html'), join(dir, 'output', 'cv.pdf')], {
+    const res = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts'), join(dir, 'absent.html'), join(dir, 'output', 'cv.pdf')], {
       env: workspaceEnv(dir),
       encoding: 'utf-8',
     });
@@ -212,7 +212,7 @@ test('generate-pdf: the flagless CLI takes the profile format', () => {
 
 test('generate-pdf: an explicit --format still outranks the profile', () => {
   const dir = workspace('a4');
-  const res = spawnSync(NODE, [join(ROOT, 'generate-pdf.ts'), join(dir, 'absent.html'), join(dir, 'output', 'cv.pdf'), '--format=letter'], {
+  const res = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts'), join(dir, 'absent.html'), join(dir, 'output', 'cv.pdf'), '--format=letter'], {
     env: workspaceEnv(dir),
     encoding: 'utf-8',
   });
@@ -221,7 +221,7 @@ test('generate-pdf: an explicit --format still outranks the profile', () => {
 
 test('generate-pdf: an unrecognized --format is still a hard error', () => {
   const dir = workspace(null);
-  const res = spawnSync(NODE, [join(ROOT, 'generate-pdf.ts'), join(dir, 'absent.html'), join(dir, 'output', 'cv.pdf'), '--format=legal'], {
+  const res = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts'), join(dir, 'absent.html'), join(dir, 'output', 'cv.pdf'), '--format=legal'], {
     env: workspaceEnv(dir),
     encoding: 'utf-8',
   });
@@ -230,8 +230,8 @@ test('generate-pdf: an unrecognized --format is still a hard error', () => {
 });
 
 /**
- * A throwaway checkout of generate-cover-letter.ts and its import closure,
- * with generate-pdf.ts replaced by a recorder.
+ * A throwaway checkout of packages/cli/src/commands/cv/generate-cover-letter.ts and its import closure,
+ * with packages/cli/src/commands/cv/generate-pdf.ts replaced by a recorder.
  *
  * The cover letter imports the renderer lazily, and that import is the one seam
  * where its page-size decision becomes observable without Chromium. CI installs
@@ -244,35 +244,44 @@ function coverSandbox() {
   // exits 0 having done nothing (#3165).
   const dir = realpathSync(mkdtempSync(join(tmpdir(), 'career-ops-cover-format-')));
   mkdirSync(join(dir, 'lib'), { recursive: true });
-  mkdirSync(join(dir, 'providers'), { recursive: true });
+  mkdirSync(join(dir, 'packages/core/src/scanning/providers'), { recursive: true });
   mkdirSync(join(dir, 'templates'), { recursive: true });
   mkdirSync(join(dir, 'output'), { recursive: true });
-  for (const f of ['generate-cover-letter.ts', 'verify-cv-facts.ts', 'cv-templates.ts', 'path-resolver.ts']) {
+  for (const f of ['packages/cli/src/commands/cv/generate-cover-letter.ts', 'packages/cli/src/commands/cv/verify-cv-facts.ts', 'packages/cli/src/commands/cv/cv-templates.ts', 'packages/core/src/kernel/path-resolver.ts']) {
+    mkdirSync(dirname(join(dir, f)), { recursive: true });
     copyFileSync(join(ROOT, f), join(dir, f));
   }
-  copyFileSync(join(ROOT, 'lib', 'is-main-module.ts'), join(dir, 'lib', 'is-main-module.ts'));
-  copyFileSync(join(ROOT, 'lib', 'yaml-document.ts'), join(dir, 'lib', 'yaml-document.ts'));
-  // cv-templates.ts decodes HTML entities when it reads a template's meta
+  mkdirSync(dirname(join(dir, 'packages/core/src/kernel/is-main-module.ts')), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/core/src/kernel/is-main-module.ts'), join(dir, 'packages/core/src/kernel/is-main-module.ts'));
+  mkdirSync(dirname(join(dir, 'packages/core/src/kernel/repo-root.ts')), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/core/src/kernel/repo-root.ts'), join(dir, 'packages/core/src/kernel/repo-root.ts'));
+  mkdirSync(dirname(join(dir, 'packages/core/src/kernel/yaml-document.ts')), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/core/src/kernel/yaml-document.ts'), join(dir, 'packages/core/src/kernel/yaml-document.ts'));
+  // packages/cli/src/commands/cv/cv-templates.ts decodes HTML entities when it reads a template's meta
   // block, so the sandbox needs this too. Without it the copied script dies at
   // module load with ERR_MODULE_NOT_FOUND and the format assertion below never
   // runs. The module imports nothing, so it closes the graph on its own.
-  copyFileSync(join(ROOT, 'providers', '_html-entities.ts'), join(dir, 'providers', '_html-entities.ts'));
-  // Same reason: cv-templates.ts reads the template manifest block and the
+  mkdirSync(dirname(join(dir, 'packages/core/src/scanning/providers/_html-entities.ts')), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/core/src/scanning/providers/_html-entities.ts'), join(dir, 'packages/core/src/scanning/providers/_html-entities.ts'));
+  // Same reason: packages/cli/src/commands/cv/cv-templates.ts reads the template manifest block and the
   // section vocabulary from here, so the sandbox dies at module load without it.
-  copyFileSync(join(ROOT, 'lib', 'template-manifest.ts'), join(dir, 'lib', 'template-manifest.ts'));
+  mkdirSync(dirname(join(dir, 'packages/core/src/cv/template-manifest.ts')), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/core/src/cv/template-manifest.ts'), join(dir, 'packages/core/src/cv/template-manifest.ts'));
   // The resolver is here so a cover letter that starts calling it fails on the
   // assertion below and not on a missing module. Resolving early is the quiet
   // form of this bug: it reads no profile path, so every letter gets the
   // project default while its CV keeps the user's configured size.
-  copyFileSync(join(ROOT, 'lib', 'page-format.ts'), join(dir, 'lib', 'page-format.ts'));
+  mkdirSync(dirname(join(dir, 'packages/core/src/cv/page-format.ts')), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/core/src/cv/page-format.ts'), join(dir, 'packages/core/src/cv/page-format.ts'));
   copyFileSync(
     join(ROOT, 'templates', 'cover-letter-template.html'),
     join(dir, 'templates', 'cover-letter-template.html'),
   );
-  // cv-templates.ts imports js-yaml, which resolves by walking up from the
+  // packages/cli/src/commands/cv/cv-templates.ts imports js-yaml, which resolves by walking up from the
   // sandbox's realpath and never reaches the repo's node_modules.
   linkRepoPackage(dir, 'js-yaml');
-  writeFileSync(join(dir, 'generate-pdf.ts'), [
+ mkdirSync(dirname(join(dir, 'packages/cli/src/commands/cv/generate-pdf.ts')), { recursive: true });
+  writeFileSync(join(dir, 'packages/cli/src/commands/cv/generate-pdf.ts'), [
     "import { writeFileSync } from 'node:fs';",
     "import { dirname, join } from 'node:path';",
     "import { fileURLToPath } from 'node:url';",
@@ -300,11 +309,11 @@ test('generate-cover-letter: the sheet is the renderer\'s to choose', () => {
   const run = (...extra) => {
     const res = spawnSync(
       NODE,
-      [join(dir, 'generate-cover-letter.ts'), '--payload', join(dir, 'payload.json'), ...extra],
+      [join(dir, 'packages/cli/src/commands/cv/generate-cover-letter.ts'), '--payload', join(dir, 'payload.json'), ...extra],
       { cwd: dir, encoding: 'utf-8' },
     );
     assert.equal(res.status, 0, res.stdout + res.stderr);
-    return JSON.parse(readFileSync(join(dir, 'render-opts.json'), 'utf-8'));
+    return JSON.parse(readFileSync(join(dir, 'packages/cli/src/commands/cv/render-opts.json'), 'utf-8'));
   };
   // Flagless, the CLI states no size, so the letter resolves the same profile
   // its CV did and lands on the same paper. A fallback of its own here is what
@@ -316,7 +325,7 @@ test('generate-cover-letter: the sheet is the renderer\'s to choose', () => {
 
 test('no renderer keeps a page-size fallback of its own', () => {
   const offenders = [];
-  for (const file of ['generate-pdf.ts', 'generate-cover-letter.ts', 'build-cv-html.ts']) {
+  for (const file of ['packages/cli/src/commands/cv/generate-pdf.ts', 'packages/cli/src/commands/cv/generate-cover-letter.ts', 'packages/cli/src/commands/cv/build-cv-html.ts']) {
     const src = readFileSync(join(ROOT, file), 'utf-8');
     for (const [i, line] of src.split('\n').entries()) {
       if (line.trimStart().startsWith('*') || line.trimStart().startsWith('//')) continue;
@@ -325,5 +334,5 @@ test('no renderer keeps a page-size fallback of its own', () => {
       }
     }
   }
-  assert.deepEqual(offenders, [], `page size belongs to lib/page-format.ts:\n${offenders.join('\n')}`);
+  assert.deepEqual(offenders, [], `page size belongs to packages/core/src/cv/page-format.ts:\n${offenders.join('\n')}`);
 });

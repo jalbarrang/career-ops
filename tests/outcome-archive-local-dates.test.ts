@@ -1,16 +1,16 @@
 // tests/outcome-archive-local-dates.test.ts — the outcome and archival path
 // dates records by the user's calendar, not by UTC's.
 //
-// lib/local-today.ts exists because "what day is it" has a wrong answer:
+// packages/core/src/kernel/local-today.ts exists because "what day is it" has a wrong answer:
 // `new Date().toISOString().slice(0, 10)` is the UTC day, so west of Greenwich
 // an evening run answers with TOMORROW. #2765 fixed followup-seed, #2932
-// set-status, #3070 the gates, and outcome.ts's today() has since been
-// converted too. archive-posting.ts and application-answers.ts were in none of
+// set-status, #3070 the gates, and packages/cli/src/commands/tracker/outcome.ts's today() has since been
+// converted too. packages/cli/src/commands/evaluation/archive-posting.ts and packages/cli/src/commands/evaluation/application-answers.ts were in none of
 // those sweeps and still read the UTC day; this file fixes those two.
 //
-// outcome.ts is covered here as a GUARD rather than a fix. It is the script that
+// packages/cli/src/commands/tracker/outcome.ts is covered here as a GUARD rather than a fix. It is the script that
 // shows why the rule matters: it writes its journal with today() and, in the same
-// invocation, spawns set-status.ts, which stamps data/status-log.tsv with
+// invocation, spawns packages/cli/src/commands/tracker/set-status.ts, which stamps data/status-log.tsv with
 // localToday(). If today() ever went back to UTC, one event would again produce
 // two records a day apart -- so the agreement between those two files is worth an
 // assertion even though both sides are correct today.
@@ -38,7 +38,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { execFileSync } from 'child_process';
 import { pass, fail, ROOT, NODE } from './helpers.ts';
-import { formatApplicationAnswersSection } from '../application-answers.ts';
+import { formatApplicationAnswersSection } from '../packages/cli/src/commands/evaluation/application-answers.ts';
 
 console.log('\noutcome + archival path — dates follow the local calendar');
 
@@ -129,7 +129,7 @@ function makeWorkspace() {
 function recordHire(tz) {
   const dir = makeWorkspace();
   const before = dayIn(tz);
-  execFileSync(NODE, [join(ROOT, 'outcome.ts'), '1', 'hired', '--json'], {
+  execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/outcome.ts'), '1', 'hired', '--json'], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
     timeout: 30_000,
@@ -156,7 +156,7 @@ function recordHire(tz) {
   return { journalDate, ledgerDate, days: before === after ? [before] : [before, after] };
 }
 
-// ── outcome.ts: one event, one date ────────────────────────────────────────
+// ── packages/cli/src/commands/tracker/outcome.ts: one event, one date ────────────────────────────────────────
 {
   const east = recordHire(EAST);
   const west = recordHire(WEST);
@@ -191,7 +191,7 @@ function recordHire(tz) {
   }
 }
 
-// ── archive-posting.ts: the capture filename ───────────────────────────────
+// ── packages/cli/src/commands/evaluation/archive-posting.ts: the capture filename ───────────────────────────────
 //
 // Asserted on the REAL filename, not on the expression that builds it.
 // `--dry-run` is documented as "preview filename without saving": it prints the
@@ -203,7 +203,7 @@ function recordHire(tz) {
 {
   const dateFromModule = (tz) => execFileSync(NODE, [
     '--input-type=module', '-e',
-    `import { localToday } from ${JSON.stringify(new URL('../lib/local-today.ts', import.meta.url).href)};`
+    `import { localToday } from ${JSON.stringify(new URL('../packages/core/src/kernel/local-today.ts', import.meta.url).href)};`
     + 'process.stdout.write(localToday());',
   ], { encoding: 'utf8', env: { ...process.env, TZ: tz }, timeout: 30_000 }).trim();
 
@@ -220,7 +220,7 @@ function recordHire(tz) {
   const captureName = (tz) => {
     const out = execFileSync(
       NODE,
-      [join(ROOT, 'archive-posting.ts'), '--dry-run', 'https://boards.greenhouse.io/openai/jobs/123'],
+      [join(ROOT, 'packages/cli/src/commands/evaluation/archive-posting.ts'), '--dry-run', 'https://boards.greenhouse.io/openai/jobs/123'],
       { encoding: 'utf8', env: { ...process.env, TZ: tz }, timeout: 30_000 },
     );
     return (out.match(/local:jds\/(\d{4}-\d{2}-\d{2})_/) || [])[1] ?? null;
@@ -246,7 +246,7 @@ function recordHire(tz) {
   }
 }
 
-// ── application-answers.ts: the default date ──────────────────────────────
+// ── packages/cli/src/commands/evaluation/application-answers.ts: the default date ──────────────────────────────
 //
 // formatApplicationAnswersSection is exported, so this one is a direct call in a
 // child pinned to each zone -- no source reading needed.
@@ -254,7 +254,7 @@ function recordHire(tz) {
   const renderedDate = (tz) => {
     const out = execFileSync(NODE, [
       '--input-type=module', '-e',
-      `import { formatApplicationAnswersSection } from ${JSON.stringify(new URL('../application-answers.ts', import.meta.url).href)};`
+      `import { formatApplicationAnswersSection } from ${JSON.stringify(new URL('../packages/cli/src/commands/evaluation/application-answers.ts', import.meta.url).href)};`
       + 'process.stdout.write(formatApplicationAnswersSection({ state: "filled" }));',
     ], { encoding: 'utf8', env: { ...process.env, TZ: tz }, timeout: 30_000 });
     return (out.match(/\d{4}-\d{2}-\d{2}/) || [])[0] ?? null;

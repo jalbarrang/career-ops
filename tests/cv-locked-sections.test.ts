@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\ncv-locked-sections (#2053)');
 
 try {
-  const { validateLockedSections } = await import(pathToFileURL(join(ROOT, 'generate-pdf.ts')).href);
+  const { validateLockedSections } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts')).href);
 
   // validateLockedSections tests
   const cvMarkdown = '# Education\n* Bachelor of Science\n* Foo University\n\n# Work Experience\n* Software Engineer\n';

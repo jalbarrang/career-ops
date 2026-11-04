@@ -1,7 +1,7 @@
 /**
- * tests/discover-new-companies.test.ts — suite for discover-new-companies.ts
+ * tests/discover-new-companies.test.ts — suite for packages/cli/src/commands/scanning/discover-new-companies.ts
  *
- * discover-new-companies.ts is a CLI script (no exported functions), so it is
+ * packages/cli/src/commands/scanning/discover-new-companies.ts is a CLI script (no exported functions), so it is
  * driven end-to-end via execFileSync against scratch fixtures — no live
  * network, no LLM. Both inputs are redirected with env overrides
  * (CAREER_OPS_SCAN_HISTORY, CAREER_OPS_PORTALS) so the real data/ directory is
@@ -46,7 +46,7 @@ function eq(label, actual, expected) {
 
 console.log('\ndiscover-new-companies.ts — scan-history → discover-ats bridge');
 
-const scriptPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'discover-new-companies.ts');
+const scriptPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/cli/src/commands/scanning/discover-new-companies.ts');
 const HEADER = 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\tlocation\n';
 const today = new Date().toISOString().slice(0, 10);
 const old = '2000-01-01';
@@ -82,7 +82,7 @@ function run(historyRows, portalsObj, args, { parse = 'json', blacklist = null }
 console.log('\n--- 1. CLI guards ---');
 
 const help = execFileSync('node', [scriptPath, '--help'], { encoding: 'utf-8', timeout: 15000 });
-ok('--help prints usage and exits 0', /Usage: bun discover-new-companies\.ts/.test(help));
+ok('--help prints usage and exits 0', /Usage: career-ops discover-new-companies/.test(help));
 
 let missingExit = 0;
 try {
@@ -280,7 +280,7 @@ console.log('\n--- 3. Filters ---');
 }
 
 {
-  // #2695: scan.ts records every title rejection as skipped_title. An
+  // #2695: packages/core/src/scanning/scan.ts records every title rejection as skipped_title. An
   // aggregator board carries many employers, so those rows name untracked
   // companies whose only postings are off-target; they are not candidates.
   const history = [
@@ -353,7 +353,7 @@ console.log('\n--- 5. Output shape ---');
 
 // ── 6. Headerless legacy history ──────────────────────────────────────────────
 // Legacy scan-history.tsv files predate the header row and are never rewritten
-// (appendToScanHistory in scan.ts). An unconditional skip of line 0 would drop
+// (appendToScanHistory in packages/core/src/scanning/scan.ts). An unconditional skip of line 0 would drop
 // the first company; the header must be detected, not assumed.
 console.log('\n--- 6. Headerless legacy history ---');
 

@@ -4,7 +4,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — collage');
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/collage.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/collage.ts')).href);
   const p = mod.default;
   if (p.id === 'collage') pass('collage.id is "collage"'); else fail('wrong provider id');
   const hit = p.detect({ name: 'Example Collage Co', api: 'https://api.collage.co/v1/positions/exampleco' });

@@ -15,7 +15,7 @@ Two things this log deliberately is not: a ranking, and a promise. Rule 4 says i
 | | |
 |---|---|
 | **Proposed by** | @eliador90, **who operates the source** (declared in the proposal) |
-| **Provider** | `providers/remotli.ts` |
+| **Provider** | `packages/core/src/scanning/providers/remotli.ts` |
 | **PR** | [#2465](https://github.com/santifer/career-ops/pull/2465) · issue [#2464](https://github.com/santifer/career-ops/issues/2464) |
 | **Merged** | 2026-08-07 |
 | **Status** | Listed |
@@ -77,7 +77,7 @@ Re-read against the written policy after a second source of the same shape asked
 | | |
 |---|---|
 | **Proposed by** | @nikitacometa, who operates none of the channels measured |
-| **Provider** | `providers/telegram-channel.ts` |
+| **Provider** | `packages/core/src/scanning/providers/telegram-channel.ts` |
 | **PR** | [#3668](https://github.com/career-ops-hq/career-ops/pull/3668) · issue [#3701](https://github.com/career-ops-hq/career-ops/issues/3701) |
 | **Merged** | 2026-09-05 |
 | **Status** | Provider listed; no channel is listed. The shipped `job_boards:` entry is a disabled template, and a channel added to the registry gets its operator declared per channel. |
@@ -102,7 +102,7 @@ The pass rate is each channel's editorial shape, not noise: @data_science_job 77
 
 **Rule 4 (operator declared).** Per channel, not per transport: the registry names the channel, and the shipped example is disabled. Indexing a channel is not endorsement of its operator.
 
-**Rule 5 (aggregation stays in core).** The provider reads one channel per entry and does no cross-source work. The one change outside the provider, `aggregator: true` in `scan.ts`, only switches off cross-employer title dedup for a feed that names itself as the company; dedup, ranking and matching stay where they were.
+**Rule 5 (aggregation stays in core).** The provider reads one channel per entry and does no cross-source work. The one change outside the provider, `aggregator: true` in `packages/core/src/scanning/scan.ts`, only switches off cross-employer title dedup for a feed that names itself as the company; dedup, ranking and matching stay where they were.
 
 **The bar for the next channel proposal**, so it is written down: measure the channel (share of posts naming an employer, share linking a vacancy page, what survives both), name its operator, and expect the provider to drop the rest. A channel below roughly a quarter passing is the channel's editorial choice, and the provider will read it correctly and emit little.
 
@@ -113,7 +113,7 @@ The pass rate is each channel's editorial shape, not noise: @data_science_job 77
 | | |
 |---|---|
 | **Proposed by** | @configurowebmax (community contributor; no affiliation with the source declared) |
-| **Provider** | `providers/computrabajo.ts` |
+| **Provider** | `packages/core/src/scanning/providers/computrabajo.ts` |
 | **PR** | [#2650](https://github.com/career-ops-hq/career-ops/pull/2650) |
 | **Merged** | pending (this PR) |
 | **Status** | Provider listed; the shipped `job_boards:` entry is `enabled: false`. |
@@ -143,7 +143,7 @@ Proposed in [#2650](https://github.com/career-ops-hq/career-ops/pull/2650) toget
 | | |
 |---|---|
 | **Proposed by** | @configurowebmax (community contributor; no affiliation with the source declared) |
-| **Provider** | `providers/magneto.ts` |
+| **Provider** | `packages/core/src/scanning/providers/magneto.ts` |
 | **PR** | [#2650](https://github.com/career-ops-hq/career-ops/pull/2650) |
 | **Merged** | pending (this PR) |
 | **Status** | Provider listed; the shipped `job_boards:` entry is `enabled: false`. |

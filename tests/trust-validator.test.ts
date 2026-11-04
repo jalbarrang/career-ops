@@ -21,10 +21,10 @@ import {
   matchesDomainList,
   companyMatchesHostname,
   classifyTrustLevel,
-} from '../providers/_trust-validator.ts';
+} from '../packages/core/src/scanning/providers/_trust-validator.ts';
 import { pass, fail } from './helpers.ts';
 
-console.log('\ntrust validation (providers/_trust-validator.ts)');
+console.log('\ntrust validation (packages/core/src/scanning/providers/_trust-validator.ts)');
 
 // ── Test runner ──────────────────────────────────────────────────────
 

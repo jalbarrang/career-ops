@@ -14,7 +14,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, rmSync, readFileSyn
 import { tmpdir } from 'node:os';
 import { join, dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listTree } from '../lib/walk-tree.ts';
+import { listTree } from '../packages/core/src/kernel/walk-tree.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const NODE = process.execPath;
@@ -63,7 +63,7 @@ function danglingLink(target, path) {
 }
 
 test('resolveInsideProject accepts a file inside the root and rejects escapes', async (t) => {
-  const { resolveInsideProject, ApplyScopeError } = await import('../apply-scope.ts');
+  const { resolveInsideProject, ApplyScopeError } = await import('../packages/cli/src/commands/platform/apply-scope.ts');
   const root = scratch();
   const outside = scratch();
   try {
@@ -103,7 +103,7 @@ test('resolveInsideProject accepts a file inside the root and rejects escapes', 
 });
 
 test('allowed roots are this checkout and the configured data root only', async () => {
-  const { projectRoot, allowedRoots } = await import('../apply-scope.ts');
+  const { projectRoot, allowedRoots } = await import('../packages/cli/src/commands/platform/apply-scope.ts');
   assert.equal(projectRoot(), ROOT);
   const previous = process.env.CAREER_OPS_ROOT;
   const previousData = process.env.CAREER_OPS_DATA_DIR;
@@ -128,7 +128,7 @@ test('allowed roots are this checkout and the configured data root only', async 
 });
 
 test('freshLaunchOptions starts a new browser and refuses an attached one', async () => {
-  const { freshLaunchOptions, ApplyScopeError, HEADED_APPLY_LAUNCH } = await import('../apply-scope.ts');
+  const { freshLaunchOptions, ApplyScopeError, HEADED_APPLY_LAUNCH } = await import('../packages/cli/src/commands/platform/apply-scope.ts');
   const fresh = freshLaunchOptions({ headless: false });
   assert.deepEqual(fresh, { headless: false });
   assert.equal(JSON.stringify(fresh).includes('remote-debugging'), false);
@@ -153,7 +153,7 @@ test('freshLaunchOptions starts a new browser and refuses an attached one', asyn
 });
 
 test('locateApplyReport reads a report inside the data root and refuses another install', async () => {
-  const { locateApplyReport, ApplyScopeError } = await import('../apply-scope.ts');
+  const { locateApplyReport, ApplyScopeError } = await import('../packages/cli/src/commands/platform/apply-scope.ts');
   const root = scratch();
   const other = scratch();
   try {
@@ -188,7 +188,7 @@ test('locateApplyReport reads a report inside the data root and refuses another 
 });
 
 test('locateApplyReport refuses a reports directory that escapes the data root', async () => {
-  const { locateApplyReport, ApplyScopeError } = await import('../apply-scope.ts');
+  const { locateApplyReport, ApplyScopeError } = await import('../packages/cli/src/commands/platform/apply-scope.ts');
   const root = scratch();
   const outside = scratch();
   try {
@@ -218,7 +218,7 @@ test('apply command refuses a report path outside the project', () => {
   const escaped = relative(ROOT, report);
   try {
     for (const ref of [report, escaped]) {
-      const result = spawnSync(NODE, [join(ROOT, 'openrouter-runner.ts'), 'apply', ref], {
+      const result = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/evaluation/openrouter-runner.ts'), 'apply', ref], {
         cwd: ROOT,
         env: {
           ...process.env,
@@ -245,13 +245,13 @@ test('apply instructions name the scope guard and stop telling agents to attach 
   const agents = readFileSync(join(ROOT, 'AGENTS.md'), 'utf8');
   const apply = readFileSync(join(ROOT, 'modes/apply.md'), 'utf8');
   for (const text of [agents, apply]) {
-    assert.match(text, /apply-scope\.ts/);
+    assert.match(text, /career-ops apply-scope/);
     assert.match(text, /DevToolsActivePort/);
   }
   assert.match(agents, /NEVER submit an application/);
   assert.equal(apply.includes('Read active Chrome tab'), false);
 
-  const session = readFileSync(join(ROOT, 'web/src/lib/apply/session.ts'), 'utf8');
+  const session = readFileSync(join(ROOT, 'apps/web/src/lib/apply/session.ts'), 'utf8');
   assert.match(session, /HEADED_APPLY_LAUNCH/);
   assert.match(session, /resolveRootScript/);
   assert.equal(/from\s+['"][^'"]*apply-scope\.ts['"]/.test(session), false);
@@ -268,7 +268,7 @@ test('apply instructions name the scope guard and stop telling agents to attach 
 });
 
 test('check-path and launch-options stay inside the project browser', () => {
-  const rootRun = spawnSync(NODE, [join(ROOT, 'apply-scope.ts'), 'root'], {
+  const rootRun = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/apply-scope.ts'), 'root'], {
     cwd: ROOT,
     env: { ...process.env, CAREER_OPS_ROOT: '', CAREER_OPS_DATA_DIR: '' },
     encoding: 'utf8',
@@ -276,7 +276,7 @@ test('check-path and launch-options stay inside the project browser', () => {
   assert.equal(rootRun.status, 0);
   assert.equal(rootRun.stdout.trim(), ROOT);
 
-  const launch = spawnSync(NODE, [join(ROOT, 'apply-scope.ts'), 'launch-options'], {
+  const launch = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/apply-scope.ts'), 'launch-options'], {
     cwd: ROOT,
     encoding: 'utf8',
   });
@@ -286,7 +286,7 @@ test('check-path and launch-options stay inside the project browser', () => {
   assert.equal(Object.hasOwn(options, 'channel'), false);
   assert.equal(JSON.stringify(options).includes('remote-debugging'), false);
 
-  const help = spawnSync(NODE, [join(ROOT, 'apply-scope.ts'), '--help'], {
+  const help = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/apply-scope.ts'), '--help'], {
     cwd: ROOT,
     env: { ...process.env, CAREER_OPS_ROOT: '', CAREER_OPS_DATA_DIR: '' },
     encoding: 'utf8',
@@ -298,7 +298,7 @@ test('check-path and launch-options stay inside the project browser', () => {
   const outside = scratch();
   const data = scratch();
   try {
-    const checked = spawnSync(NODE, [join(ROOT, 'apply-scope.ts'), 'check-path', outside], {
+    const checked = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/apply-scope.ts'), 'check-path', outside], {
       cwd: ROOT,
       env: { ...process.env, CAREER_OPS_ROOT: '', CAREER_OPS_DATA_DIR: '' },
       encoding: 'utf8',
@@ -308,7 +308,7 @@ test('check-path and launch-options stay inside the project browser', () => {
 
     const link = join(data, 'link');
     symlinkSync(outside, link, process.platform === 'win32' ? 'junction' : 'dir');
-    const escaped = spawnSync(NODE, [join(ROOT, 'apply-scope.ts'), 'check-path', join(link, 'new.md')], {
+    const escaped = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/apply-scope.ts'), 'check-path', join(link, 'new.md')], {
       cwd: ROOT,
       env: { ...process.env, CAREER_OPS_ROOT: '', CAREER_OPS_DATA_DIR: data },
       encoding: 'utf8',
@@ -318,7 +318,7 @@ test('check-path and launch-options stay inside the project browser', () => {
 
     const dangling = join(data, 'dangling');
     danglingLink(join(outside, 'not-yet'), dangling);
-    const danglingCheck = spawnSync(NODE, [join(ROOT, 'apply-scope.ts'), 'check-path', dangling], {
+    const danglingCheck = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/apply-scope.ts'), 'check-path', dangling], {
       cwd: ROOT,
       env: { ...process.env, CAREER_OPS_ROOT: '', CAREER_OPS_DATA_DIR: data },
       encoding: 'utf8',

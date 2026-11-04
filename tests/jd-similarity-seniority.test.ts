@@ -22,7 +22,7 @@ console.log('\njd-similarity.ts — the seniority gate only fires on real level 
 
 try {
   const { recommendCvReuse, hardMismatch, jaccardSimilarity } = await import(
-    pathToFileURL(join(ROOT, 'jd-similarity.ts')).href
+    pathToFileURL(join(ROOT, 'packages/cli/src/commands/evaluation/jd-similarity.ts')).href
   );
 
   const check = (label, actual, expected) => {
@@ -92,5 +92,5 @@ try {
   check('an ambiguous new JD also stands the gate down',
     hardMismatch(progressionCv, 'Intern Developer. Django.'), false);
 } catch (error) {
-  fail(`jd-similarity.ts seniority tests could not run: ${error.message}`);
+  fail(`packages/cli/src/commands/evaluation/jd-similarity.ts seniority tests could not run: ${error.message}`);
 }

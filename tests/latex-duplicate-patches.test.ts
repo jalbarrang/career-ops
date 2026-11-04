@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { pass, fail } from './helpers.ts';
-import { applyPatches, buildManifest } from '../lib/latex-content.ts';
+import { applyPatches, buildManifest } from '../packages/core/src/cv/latex-content.ts';
 
 const sourceText = String.raw`\documentclass{article}
 \newcommand{\resumeSubheading}[4]{}
@@ -36,7 +36,7 @@ for (const destination of ['new', 'existing', 'source']) {
         { id: slots[0].id, text: 'A much longer replacement with verified experience.' },
         { id: slots[0].id, text: 'Short.' },
       ] }));
-      const result = spawnSync(process.execPath, ['patch-latex-content.ts', source, input, output], {
+      const result = spawnSync(process.execPath, ['packages/cli/src/commands/cv/patch-latex-content.ts', source, input, output], {
         cwd: new URL('..', import.meta.url), encoding: 'utf8', env: { ...process.env, CAREER_OPS_ROOT: root },
       });
       assert.equal(result.error, undefined);

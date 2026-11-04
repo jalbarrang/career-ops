@@ -71,7 +71,7 @@ const SERVICE = post(1, '2024-01-01T00:00:00+00:00', 'Channel created', 'service
 const MEDIA_ONLY = post(12491, '2026-08-31T09:00:00+00:00', null);
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/telegram-channel.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/telegram-channel.ts')).href);
   const tg = mod.default;
   const { parseChannelPage, employerName, classifyLink, applicationLink, postToJob } = mod;
 

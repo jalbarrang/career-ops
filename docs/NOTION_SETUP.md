@@ -74,15 +74,15 @@ NOTION_PARENT_PAGE_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ## 6. Verify + run
 
 ```bash
-bun doctor.ts --json                          # confirm notion shows configured
-bun plugins.ts run notion export --dry-run     # preview what would be pushed
-bun plugins.ts run notion export               # push tracker rows into Notion
+career-ops doctor --json                          # confirm notion shows configured
+career-ops plugins run notion export --dry-run     # preview what would be pushed
+career-ops plugins run notion export               # push tracker rows into Notion
 ```
 
 Optional — pull leads that have a URL back into the pipeline:
 
 ```bash
-bun plugins.ts run notion search "<query>"
+career-ops plugins run notion search "<query>"
 ```
 
 ## Scope, honestly

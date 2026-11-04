@@ -5,7 +5,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — dassault (Exalead card_search_api XML parser)');
 try {
-  const dassaultModule = await import(pathToFileURL(join(ROOT, 'providers/dassault.ts')).href);
+  const dassaultModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/dassault.ts')).href);
   const dassault = dassaultModule.default;
   const { parseHits, buildUrl } = dassaultModule;
 
@@ -128,7 +128,7 @@ try {
   // RangeError out of the whole parse. The local decodeEntities copy guarded
   // only with Number.isFinite (no `<= 0x10FFFF` / surrogate check), so ONE
   // adversarial/malformed entity (&#99999999;, &#xFFFFFFFF;) crashed the entire
-  // provider parse and scan.ts's per-company catch dropped EVERY posting for
+  // provider parse and packages/core/src/scanning/scan.ts's per-company catch dropped EVERY posting for
   // that run. parseHits now routes through the shared guarded decoder, which
   // degrades an out-of-range or lone-surrogate entity to literal text while
   // still decoding valid ones (&amp;).

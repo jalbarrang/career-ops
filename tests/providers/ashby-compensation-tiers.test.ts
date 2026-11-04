@@ -12,7 +12,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parseCompensation } from '../../providers/ashby.ts';
+import { parseCompensation } from '../../packages/core/src/scanning/providers/ashby.ts';
 
 /** One component of a real payload's compensationTiers[0].components[]. */
 const salary = (over = {}) => ({

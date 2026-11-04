@@ -8,7 +8,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — _safe-url (encodeURIComponent that never throws)');
 
 try {
-  const { safeEncodeURIComponent } = await import(pathToFileURL(join(ROOT, 'providers/_safe-url.ts')).href);
+  const { safeEncodeURIComponent } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_safe-url.ts')).href);
 
   const eq = (label, actual, expected) => {
     if (actual === expected) pass(label);

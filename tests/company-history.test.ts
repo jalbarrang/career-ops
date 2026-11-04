@@ -1,5 +1,5 @@
 /**
- * tests/company-history.test.ts — External test suite for company-history.ts
+ * tests/company-history.test.ts — External test suite for packages/cli/src/commands/insights/company-history.ts
  *
  * Complements the 38 in-file `--self-test` fixtures (join/label goldens,
  * right-censoring, rejection-is-an-answer, confidence-vs-label, staleness,
@@ -29,7 +29,7 @@ import {
   buildCompanyCards,
   getCompanyCard,
   renderSummary,
-} from '../company-history.ts';
+} from '../packages/cli/src/commands/insights/company-history.ts';
 import { writeFileSync, mkdirSync, mkdtempSync, rmSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -62,12 +62,12 @@ function followup(num, appNum, date, company, role = 'Engineer', channel = 'Emai
   return { num, appNum, date, company, role, channel, contact, notes };
 }
 
-// Repost-cluster fixture — mirrors detect-reposts.ts's detectReposts() output shape.
+// Repost-cluster fixture — mirrors packages/cli/src/commands/insights/detect-reposts.ts's detectReposts() output shape.
 function cluster(company, role, repostCount, firstSeen, lastSeen, daysSpan, appearances) {
   return { company, role, repostCount, firstSeen, lastSeen, daysSpan, appearances };
 }
 
-const scriptPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'company-history.ts');
+const scriptPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/cli/src/commands/insights/company-history.ts');
 const NOW = new Date('2026-07-09T00:00:00Z');
 
 // ============================================================================

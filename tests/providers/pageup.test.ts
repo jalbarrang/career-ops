@@ -5,7 +5,7 @@ import { pass, fail, ROOT, captureConsoleErrors } from '../helpers.ts';
 
 console.log('\nProvider — pageup');
 
-const mod = await import(pathToFileURL(join(ROOT, 'providers/pageup.ts')).href);
+const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/pageup.ts')).href);
 const pageup = mod.default;
 const { parsePageupListing } = mod;
 

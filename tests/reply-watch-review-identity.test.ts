@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pass, fail, ROOT, NODE, rmSync } from './helpers.ts';
-import { openTrackerTransaction } from '../tracker-utils.ts';
+import { openTrackerTransaction } from '../packages/core/src/tracker/tracker-utils.ts';
 
 const header = '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |\n|---|---|---|---|---|---|---|---|---|\n';
 const original = '| 1 | 2026-06-01 | Acme | Backend Engineer | 4/5 | Applied | - | - | |\n';
@@ -21,7 +21,7 @@ async function review(change, expectsConflict = true) {
       message_id: 'fixture-interview', from: 'careers@acme.com',
       subject: 'Acme Backend Engineer', body_snippet: 'We invite you to interview.',
     }]));
-    child = spawn(NODE, [join(ROOT, 'reply-watch.ts'), candidates], {
+    child = spawn(NODE, [join(ROOT, 'packages/cli/src/commands/outreach/reply-watch.ts'), candidates], {
       cwd: root, env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_TRACKER: tracker },
       stdio: ['pipe', 'pipe', 'pipe'],
     });

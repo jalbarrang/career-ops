@@ -8,10 +8,10 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { loadYaml } from '../lib/yaml-document.ts';
-import { isMainModule } from '../lib/is-main-module.ts';
-import { getCareerOpsRoot, getProfilePath, hasProfileOverride } from '../path-resolver.ts';
-import { validateFlags } from '../lib/cli-flags.ts';
+import { loadYaml } from '../packages/core/src/kernel/yaml-document.ts';
+import { isMainModule } from '../packages/core/src/kernel/is-main-module.ts';
+import { getCareerOpsRoot, getProfilePath, hasProfileOverride } from '../packages/core/src/kernel/path-resolver.ts';
+import { validateFlags } from '../packages/core/src/kernel/cli-flags.ts';
 
 /**
  * Sanitizes plain text for ATS forms (converting bullets, dashes, quotes, and stripping emojis/non-breaking spaces).
@@ -370,7 +370,7 @@ export function formatAtsText(profile = {}, options = {}) {
   return Object.values(sections).join('\n\n');
 }
 
-// Main CLI execution guard (repo convention: lib/is-main-module.ts, #3170)
+// Main CLI execution guard (repo convention: packages/core/src/kernel/is-main-module.ts, #3170)
 if (isMainModule(import.meta.url)) {
   validateFlags(process.argv.slice(2), ['--section', '--out', '--profile', '--cv', '--help', '-h'], `Usage: bun scripts/export-ats-text.ts [options]
 

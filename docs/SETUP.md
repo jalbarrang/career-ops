@@ -146,8 +146,8 @@ On NixOS, skip this step: the browsers it downloads can't run there. Use the fla
 ## Verify Setup
 
 ```bash
-bun cv-sync-check.ts      # Check configuration
-bun verify-pipeline.ts     # Check pipeline integrity
+career-ops cv-sync-check      # Check configuration
+career-ops verify-pipeline     # Check pipeline integrity
 ```
 
 ## Build Dashboard (Optional)

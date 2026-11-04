@@ -4,13 +4,13 @@
 // #2765 fixed followup-seed, #2932 fixed set-status's two. These are the rest,
 // and each GATES a decision rather than stamping a filename:
 //
-//   scan.ts                 `today < cooldownUntil` — a posting the user
+//   packages/core/src/scanning/scan.ts                 `today < cooldownUntil` — a posting the user
 //                            silenced until a date resurfaces a day early
-//   followup-cadence.ts     the follow-up due decision
+//   packages/core/src/outreach/followup-cadence.ts     the follow-up due decision
 //   check-table-freshness    `expired`, which exits 1 — a CI gate
-//   funnel-velocity.ts      the "waiting" figure
-//   company-history.ts      the `now` all age math runs against
-//   assessment-log.ts       the date written into a user's assessments.tsv row
+//   packages/core/src/insights/funnel-velocity.ts      the "waiting" figure
+//   packages/cli/src/commands/insights/company-history.ts      the `now` all age math runs against
+//   packages/cli/src/commands/insights/assessment-log.ts       the date written into a user's assessments.tsv row
 //
 // PINNED INSTANT, not the wall clock. The window where the UTC day and the
 // local day disagree only exists for part of the UTC day, so a test that reads
@@ -26,11 +26,11 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { localToday } from '../lib/local-today.ts';
-import { isNestedCheckout, trackedFiles } from '../lib/source-files.ts';
+import { localToday } from '../packages/core/src/kernel/local-today.ts';
+import { isNestedCheckout, trackedFiles } from '../packages/core/src/kernel/source-files.ts';
 import { codeMask, isCodeRange } from './helpers.ts';
-import { shouldDedupScanHistoryRow } from '../scan.ts';
-import { parseScanHistory, detectReposts } from '../detect-reposts.ts';
+import { shouldDedupScanHistoryRow } from '../packages/core/src/scanning/scan.ts';
+import { parseScanHistory, detectReposts } from '../packages/cli/src/commands/insights/detect-reposts.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -102,7 +102,7 @@ test('the premise: at this instant the UTC day is tomorrow in New York', () => {
 
 test('localToday resolves the local day, not the UTC one', () => {
   const out = inFrozenTz('America/New_York',
-    `import {localToday} from '${spec('lib/local-today.ts')}';` +
+    `import {localToday} from '${spec('packages/core/src/kernel/local-today.ts')}';` +
     `const i=new Date('${INSTANT}');` +
     `process.stdout.write(localToday(i)+' '+i.toISOString().slice(0,10));`);
   assert.equal(out, `${NY_DAY} ${UTC_DAY}`);
@@ -131,7 +131,7 @@ test("scan's DEFAULT today is the local day, so a cooldown holds", () => {
   // still the day before, so the default must keep the posting silenced —
   // resolving the default as the UTC day opened it a day early.
   const out = inFrozenTz('America/New_York',
-    `const {shouldDedupScanHistoryRow} = await import('${spec('scan.ts')}');` +
+    `const {shouldDedupScanHistoryRow} = await import('${spec('packages/core/src/scanning/scan.ts')}');` +
     `const held = shouldDedupScanHistoryRow({firstSeen:'2026-01-01',status:'cooldown:${UTC_DAY}'});` +
     `process.stdout.write(String(held));`);
   assert.equal(out, 'true', 'the default today opened the cooldown a day early');
@@ -141,7 +141,7 @@ test('company-history today() is the local calendar day at UTC midnight', () => 
   // The UTC-midnight ANCHOR is deliberate and must survive; only WHICH day
   // moves. #2765 drew the same line, so both halves are asserted.
   const out = inFrozenTz('America/New_York',
-    `const {today} = await import('${spec('company-history.ts')}');` +
+    `const {today} = await import('${spec('packages/cli/src/commands/insights/company-history.ts')}');` +
     `process.stdout.write(today().toISOString());`);
   assert.equal(out.slice(0, 10), NY_DAY, `today() returned the UTC day (${out.slice(0, 10)}), not the local one`);
   assert.equal(out.slice(10), 'T00:00:00.000Z', 'the UTC-midnight anchor was lost');
@@ -150,7 +150,7 @@ test('company-history today() is the local calendar day at UTC midnight', () => 
 test('check-table-freshness --today still overrides, and reports the date it used', () => {
   // The flag is the deterministic escape hatch; the local-day default must not
   // have broken it, or every CI pin in the repo silently drifts.
-  const r = spawnSync(process.execPath, [join(ROOT, 'check-table-freshness.ts'), '--today', '2026-08-18'], {
+  const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/platform/check-table-freshness.ts'), '--today', '2026-08-18'], {
     cwd: ROOT, encoding: 'utf-8', timeout: 30_000,
   });
   assert.equal(r.error, undefined);
@@ -166,7 +166,7 @@ test('check-table-freshness --today still overrides, and reports the date it use
 // different clocks, and left one file carrying rows written on both.
 //
 // The invariant is already established for the dashboard's spawned scan child
-// (web/tests/lib/pipeline-local-today.test.ts asserts `const date =
+// (apps/web/tests/lib/pipeline-local-today.test.ts asserts `const date =
 // localToday();` reaches appendToScanHistory there). This is the same assertion
 // for the engine-side scanners, which were never covered.
 //
@@ -176,7 +176,7 @@ test('check-table-freshness --today still overrides, and reports the date it use
 test('each scanner that writes scan-history imports localToday', () => {
   // The check above is satisfied by deleting the date argument entirely. This
   // asserts the replacement is actually present.
-  for (const file of ['scan.ts', 'scan-ats-full.ts', 'scan-hn.ts', 'scan-interamt.ts']) {
+  for (const file of ['packages/core/src/scanning/scan.ts', 'packages/cli/src/commands/scanning/scan-ats-full.ts', 'packages/cli/src/commands/scanning/scan-hn.ts', 'packages/cli/src/commands/scanning/scan-interamt.ts']) {
     const src = readFileSync(join(ROOT, file), 'utf8');
     assert.match(
       src, /import\s*{[^}]*\blocalToday\b[^}]*}\s*from\s*['"][^'"]*local-today\.ts['"]/,
@@ -211,7 +211,7 @@ test('weekly-digest: "this week" is the week the caller is actually in', () => {
   // week just ended came back empty — which reads as a quiet week, not as a
   // wrong window.
   const out = inFrozenTz('America/New_York',
-    `const {computeDefaultRange} = await import('${spec('weekly-digest.ts')}');` +
+    `const {computeDefaultRange} = await import('${spec('packages/cli/src/commands/interview/weekly-digest.ts')}');` +
     `process.stdout.write(JSON.stringify(computeDefaultRange()));`,
     WEEK_INSTANT);
   assert.deepEqual(JSON.parse(out), { from: '2026-08-10', to: '2026-08-16' },
@@ -220,7 +220,7 @@ test('weekly-digest: "this week" is the week the caller is actually in', () => {
 
 test('weekly-digest: an explicit `now` is resolved locally too', () => {
   const out = inFrozenTz('America/New_York',
-    `const {computeDefaultRange} = await import('${spec('weekly-digest.ts')}');` +
+    `const {computeDefaultRange} = await import('${spec('packages/cli/src/commands/interview/weekly-digest.ts')}');` +
     `process.stdout.write(JSON.stringify(computeDefaultRange(new Date('${WEEK_INSTANT}'))));`,
     WEEK_INSTANT);
   assert.deepEqual(JSON.parse(out), { from: '2026-08-10', to: '2026-08-16' });
@@ -245,7 +245,7 @@ test('rejection-latency: the courtesy threshold is measured from the local day',
   ].join('\n');
 
   const out = inFrozenTz('America/New_York',
-    `const q = await import('${spec('process-quality.ts')}');const m = await import('${spec('rejection-latency.ts')}');` +
+    `const q = await import('${spec('packages/cli/src/commands/outreach/process-quality.ts')}');const m = await import('${spec('packages/cli/src/commands/outreach/rejection-latency.ts')}');` +
     `const rows = q.parseActiveInterviews(${JSON.stringify(active)});` +
     `const tr = m.parseTrackerInterviewRows(${JSON.stringify(tracker)});` +
     // No `today` — the default is what is under test.
@@ -271,7 +271,7 @@ test('rejection-latency still flags once the local window HAS elapsed', () => {
   ].join('\n');
 
   const out = inFrozenTz('America/New_York',
-    `const q = await import('${spec('process-quality.ts')}');const m = await import('${spec('rejection-latency.ts')}');` +
+    `const q = await import('${spec('packages/cli/src/commands/outreach/process-quality.ts')}');const m = await import('${spec('packages/cli/src/commands/outreach/rejection-latency.ts')}');` +
     `const rows = q.parseActiveInterviews(${JSON.stringify(active)});` +
     `const tr = m.parseTrackerInterviewRows(${JSON.stringify(tracker)});` +
     `const r = m.computeRejectionLatency(rows, tr, { courtesyDays: 30 });` +
@@ -303,8 +303,8 @@ test('rejection-latency still flags once the local window HAS elapsed', () => {
 // The import check below is cc241ea's and is kept as it was.
 //
 // data/scan-history.tsv is appended to by FOUR scripts through the same
-// exported helper — scan.ts, scan-ats-full.ts, scan-hn.ts and
-// scan-interamt.ts. #3070 moved scan.ts to the local day and left the other
+// exported helper — packages/core/src/scanning/scan.ts, packages/cli/src/commands/scanning/scan-ats-full.ts, packages/cli/src/commands/scanning/scan-hn.ts and
+// scan-interamt.ts. #3070 moved packages/core/src/scanning/scan.ts to the local day and left the other
 // three on the UTC day, so a single evening west of Greenwich stamps two
 // different dates into the same file.
 //
@@ -318,7 +318,7 @@ test('rejection-latency still flags once the local window HAS elapsed', () => {
  * The argument list of every `appendToScanHistory(...)` CALL in `src`,
  * paren-matched over CODE positions only.
  *
- * `(?<!function )` skips the definition in scan.ts — its own `date` parameter
+ * `(?<!function )` skips the definition in packages/core/src/scanning/scan.ts — its own `date` parameter
  * is not stamped by anything and would read as an offender.
  */
 function scanHistoryCallArgs(src) {
@@ -362,7 +362,7 @@ function topLevelArgs({ list, isCode }) {
 /**
  * Every tracked .ts source file in the repo, at any depth, tests excluded.
  *
- * Enumerated through lib/source-files.ts (#3890) rather than a private walk. The
+ * Enumerated through packages/core/src/kernel/source-files.ts (#3890) rather than a private walk. The
  * walk this replaces named `node_modules`, `.git`, `.next`, `coverage`, `dist`,
  * `build`, `.tmp-script-test-*` and — via isNestedCheckout() — a linked
  * worktree, whose stale sources once failed this very gate by naming files that
@@ -398,7 +398,7 @@ test('the call scanner sees code and only code', () => {
   assert.deepEqual(call('const s = `${appendToScanHistory(o, {a:{b:1}} ? d : d)}`;'), ['{a:{b:1}} ? d : d']);
 
   // A quote or backtick inside a REGEX must not open a phantom string frame and
-  // swallow the call after it. scan-hn.ts carries /```yaml|```/g today.
+  // swallow the call after it. packages/cli/src/commands/scanning/scan-hn.ts carries /```yaml|```/g today.
   assert.deepEqual(call("const p = /'/;\nawait appendToScanHistory(o, utcDate);"), ['utcDate']);
   assert.deepEqual(call('const p = /```yaml|```/g;\nawait appendToScanHistory(o, utcDate);'), ['utcDate']);
   assert.deepEqual(call('if (enabled) /"/.test(v);\nawait appendToScanHistory(o, utcDate);'), ['utcDate']);
@@ -411,10 +411,10 @@ test('the call scanner sees code and only code', () => {
 test('the scanner resolves every call the four known writers contain', () => {
   // The shapes above are synthetic. This is the real files, and it is what
   // would catch masking that is correct in miniature and wrong at scale.
-  // scan.ts went 5 → 7 when the location and posting-age cuts started
+  // packages/core/src/scanning/scan.ts went 5 → 7 when the location and posting-age cuts started
   // recording what they drop (`skipped_location`, `skipped_age`), and 7 → 8
   // when the title cut did (`skipped_title`, #2695).
-  for (const [file, expected] of [['scan.ts', 8], ['scan-ats-full.ts', 1], ['scan-hn.ts', 1], ['scan-interamt.ts', 5]]) {
+  for (const [file, expected] of [['packages/core/src/scanning/scan.ts', 8], ['packages/cli/src/commands/scanning/scan-ats-full.ts', 1], ['packages/cli/src/commands/scanning/scan-hn.ts', 1], ['packages/cli/src/commands/scanning/scan-interamt.ts', 5]]) {
     const src = readFileSync(join(ROOT, file), 'utf-8');
     const naive = [...src.matchAll(/(?<!function )\bappendToScanHistory\s*\(/g)].length;
     assert.equal(naive, expected, `${file}: expected ${expected} call sites, source has ${naive} — update this expectation deliberately`);
@@ -516,12 +516,12 @@ test('two dates for one posting is all detect-reposts needs to call it a repost'
   const sameDay = tsv.replaceAll('2026-08-23', '2026-08-22');
   assert.deepEqual(detectReposts(parseScanHistory(sameDay), 90, 1, null), [], 'one evening, one date, no repost');
 });
-test('stats.ts and analyze-patterns.ts stamp the local day in report headers, not UTC', () => {
+test('packages/core/src/insights/stats.ts and packages/cli/src/commands/insights/analyze-patterns.ts stamp the local day in report headers, not UTC', () => {
   // At INSTANT (01:30 UTC), UTC_DAY is 2026-08-18 but NY_DAY is 2026-08-17.
   // Both report headers must reflect the local day (NY_DAY).
   //
-  // stats.ts resolves its data files from the data root when it is imported,
-  // and followup-cadence.ts, which it imports, reads config/profile.yml there.
+  // packages/core/src/insights/stats.ts resolves its data files from the data root when it is imported,
+  // and packages/core/src/outreach/followup-cadence.ts, which it imports, reads config/profile.yml there.
   // So the child gets an empty data root, with the two overrides that outrank
   // it cleared, and the sources check shows it never read the user's files.
   const dataRoot = mkdtempSync(join(tmpdir(), 'career-ops-localtoday-stats-'));
@@ -530,13 +530,13 @@ test('stats.ts and analyze-patterns.ts stamp the local day in report headers, no
       `process.env.CAREER_OPS_ROOT = ${JSON.stringify(dataRoot)};` +
       `delete process.env.CAREER_OPS_TRACKER;` +
       `delete process.env.CAREER_OPS_PROFILE;` +
-      `const { computeAllStats } = await import('${spec('stats.ts')}');` +
+      `const { computeAllStats } = await import('${spec('packages/core/src/insights/stats.ts')}');` +
       `const s = computeAllStats();` +
       `process.stdout.write(JSON.stringify(s.metadata));`
     );
     const { generatedAt, sources } = JSON.parse(statsOut);
-    assert.deepEqual(Object.keys(sources).filter((k) => sources[k]), [], 'stats.ts read data files outside its empty data root');
-    assert.equal(generatedAt, NY_DAY, `stats.ts stamped ${generatedAt}, expected local day ${NY_DAY}`);
+    assert.deepEqual(Object.keys(sources).filter((k) => sources[k]), [], 'packages/core/src/insights/stats.ts read data files outside its empty data root');
+    assert.equal(generatedAt, NY_DAY, `packages/core/src/insights/stats.ts stamped ${generatedAt}, expected local day ${NY_DAY}`);
   } finally {
     rmSync(dataRoot, { recursive: true, force: true, maxRetries: 10 });
   }
@@ -545,9 +545,9 @@ test('stats.ts and analyze-patterns.ts stamp the local day in report headers, no
     Array(5).fill({ date: '2026-08-01', status: 'Applied', report: '', score: '85', notes: '' })
   );
   const patternsOut = inFrozenTz('America/New_York',
-    `const { analyze } = await import('${spec('analyze-patterns.ts')}');` +
+    `const { analyze } = await import('${spec('packages/cli/src/commands/insights/analyze-patterns.ts')}');` +
     `const p = analyze(${mockEntries});` +
     `process.stdout.write(p.metadata.analysisDate);`
   );
-  assert.equal(patternsOut, NY_DAY, `analyze-patterns.ts stamped ${patternsOut}, expected local day ${NY_DAY}`);
+  assert.equal(patternsOut, NY_DAY, `packages/cli/src/commands/insights/analyze-patterns.ts stamped ${patternsOut}, expected local day ${NY_DAY}`);
 });

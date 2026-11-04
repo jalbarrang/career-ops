@@ -1,18 +1,18 @@
 name: Web CI
 
-# CI for the experimental web UI (web/). Informative by design: it is NOT a
+# CI for the experimental web UI (apps/web/). Informative by design: it is NOT a
 # required check for the core — a red here never blocks a core merge, and core
-# changes never trigger it. The web/ tree versions and releases as its own
+# changes never trigger it. The apps/web/ tree versions and releases as its own
 # release-please component.
 on:
   pull_request:
     paths:
-      - 'web/**'
+      - 'apps/web/**'
       - '.github/workflows/web-ci.yml'
   push:
     branches: [main]
     paths:
-      - 'web/**'
+      - 'apps/web/**'
       - '.github/workflows/web-ci.yml'
 
 permissions:
@@ -22,24 +22,21 @@ jobs:
   web:
     name: web typecheck + build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
     steps:
       - uses: actions/checkout@v7
-      # Bun is the project's only toolchain (lib/bun-floor.ts pins the floor).
+      # Bun is the project's only toolchain (packages/core/src/kernel/bun-floor.ts pins the floor).
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.4.3'
           cache: true
-          cache-dependency-path: web/bun.lock
-      # The doctor parity test runs the real core doctor.ts, which imports the
-      # core's own dependencies (js-yaml, dotenv). Installed from the core's own
-      # bun.lock, without lifecycle scripts (no browser download).
-      - name: Install core dependencies
+          cache-dependency-path: bun.lock
+      # One workspace, one lockfile: the app and the engine its doctor parity test
+      # runs install together from the repository root.
+      - name: Install workspace dependencies
         run: bun install --frozen-lockfile --ignore-scripts
-        working-directory: .
-      - run: bun install --frozen-lockfile --ignore-scripts
-      - run: bun test
-      - run: bunx tsc --noEmit
-      - run: bun run build
+      - name: Typecheck and build the app
+        run: |
+          cd apps/web
+          bun test
+          bunx tsc --noEmit
+          bun run build

@@ -2,35 +2,35 @@
 
 ## Purpose
 
-career-ops already *generates* ATS-optimized CVs (see `modes/pdf.md`) and guards *what* they claim (`verify-cv-facts.ts`). This mode answers the other half of the question users keep asking: **"is my CV actually ATS-friendly?"** — i.e. will an Applicant Tracking System's parser read it correctly at all.
+career-ops already *generates* ATS-optimized CVs (see `modes/pdf.md`) and guards *what* they claim (`packages/cli/src/commands/cv/verify-cv-facts.ts`). This mode answers the other half of the question users keep asking: **"is my CV actually ATS-friendly?"** — i.e. will an Applicant Tracking System's parser read it correctly at all.
 
-`verify-ats.ts` is a **deterministic, read-only** checker (no LLM, no network, no writes). It reads a generated CV's HTML — the output of `pdf` mode, before PDF rendering — and reports an **ATS-friendliness score (0-100 + letter grade)** plus a list of concrete, fixable issues. Think `verify-cv-facts.ts`, but for structure and parseability instead of facts. It is **advisory**: it is not wired into the `pdf` pipeline and never blocks CV generation.
+`packages/cli/src/commands/cv/verify-ats.ts` is a **deterministic, read-only** checker (no LLM, no network, no writes). It reads a generated CV's HTML — the output of `pdf` mode, before PDF rendering — and reports an **ATS-friendliness score (0-100 + letter grade)** plus a list of concrete, fixable issues. Think `packages/cli/src/commands/cv/verify-cv-facts.ts`, but for structure and parseability instead of facts. It is **advisory**: it is not wired into the `pdf` pipeline and never blocks CV generation.
 
 The mode has **two stages**, because ATS parseability is decided in two places:
 
 | Stage | Tool | Operates on |
 |-------|------|-------------|
-| Before the HTML exists | `ats-payload.ts` | the render **payload** — one safe transform, three lints |
-| After the HTML exists | `verify-ats.ts` | the generated **HTML** — score, grade, issues |
+| Before the HTML exists | `packages/cli/src/commands/cv/ats-payload.ts` | the render **payload** — one safe transform, three lints |
+| After the HTML exists | `packages/cli/src/commands/cv/verify-ats.ts` | the generated **HTML** — score, grade, issues |
 
-**The score cannot tell you whether the payload stage was needed.** `verify-ats.ts` reads the document it is given and judges its structure; a payload-level problem produces a structurally perfect document that still parses wrong. A CV whose competencies ship as CSS-separated tags under a header parsers do not recognise scores **97/A with zero issues** — identical to the same CV after the transform. Run the payload stage because the score cannot see it, not because the score complained.
+**The score cannot tell you whether the payload stage was needed.** `packages/cli/src/commands/cv/verify-ats.ts` reads the document it is given and judges its structure; a payload-level problem produces a structurally perfect document that still parses wrong. A CV whose competencies ship as CSS-separated tags under a header parsers do not recognise scores **97/A with zero issues** — identical to the same CV after the transform. Run the payload stage because the score cannot see it, not because the score complained.
 
 ## Inputs
 
-- For the payload stage: a `build-cv-html.ts` render payload (the compact JSON the `pdf` mode writes — see `modes/pdf.md` § "JSON Input Schema").
+- For the payload stage: a `packages/cli/src/commands/cv/build-cv-html.ts` render payload (the compact JSON the `pdf` mode writes — see `modes/pdf.md` § "JSON Input Schema").
 - For the HTML stage: a generated CV HTML file (e.g. `output/cv-{candidate}-{company}.html`).
 - Optional target keywords (`--keywords` / `--role`) for an advisory keyword-coverage read.
 
-## Payload preparation (`ats-payload.ts`)
+## Payload preparation (`packages/cli/src/commands/cv/ats-payload.ts`)
 
 A template owns the DOM; it does not own what is in the payload, and some of what an ATS parser mishandles is in the payload. By the time a template sees `competencies: [...]` the decision that breaks parsing has already been made — so no template swap can fix it, and the HTML-stage score cannot see it.
 
-`ats-payload.ts` is **zero-LLM, deterministic, offline and read-only** with respect to user-layer files: payload JSON in, payload JSON out on stdout, findings on stderr. It never writes back to `cv.md` or `config/profile.yml`.
+`packages/cli/src/commands/cv/ats-payload.ts` is **zero-LLM, deterministic, offline and read-only** with respect to user-layer files: payload JSON in, payload JSON out on stdout, findings on stderr. It never writes back to `cv.md` or `config/profile.yml`.
 
 ```bash
-bun ats-payload.ts payload.json > payload-ats.json
-bun ats-payload.ts payload.json --summary > payload-ats.json   # human findings on stderr
-cat payload.json | bun ats-payload.ts - > payload-ats.json
+career-ops ats-payload payload.json > payload-ats.json
+career-ops ats-payload payload.json --summary > payload-ats.json   # human findings on stderr
+cat payload.json | career-ops ats-payload - > payload-ats.json
 ```
 
 **stdout is the payload and only the payload** — every human-facing word goes to stderr (JSON by default, a formatted report with `--summary`). That is what makes `> payload-ats.json` safe and lets it compose into a pipe.
@@ -43,7 +43,7 @@ Flags: `--summary` (human findings on stderr) · `--self-test` · `--help` / `-h
 
 `competencies[]` is folded into `skills[]` as one comma-delimited category, and the source array is emptied.
 
-`build-cv-html.ts` renders competencies as bare tag spans into a container whose separation is entirely visual (`.competencies-grid { gap: 8px }`) — there is no delimiter *character* between one competency and the next, so the text layer runs adjacent items together into a single token. This is the class `modes/pdf.md` § "ATS Rules (clean parsing)" describes as outside a template lint's reach — nothing about the *rendered text layer* is visible in the HTML, so a clean lint and a clean score are both compatible with it — and it was reproduced with `pypdf` against a rendered PDF in #3251. The block also ships under `Core Competencies`, which parsers do not recognise as a section name, so it is frequently dropped whole rather than merely mangled. `Skills` **is** recognised, and already renders as `Category: a, b, c`. The same facts, expressed two ways, survive or don't depending on which array they sit in.
+`packages/cli/src/commands/cv/build-cv-html.ts` renders competencies as bare tag spans into a container whose separation is entirely visual (`.competencies-grid { gap: 8px }`) — there is no delimiter *character* between one competency and the next, so the text layer runs adjacent items together into a single token. This is the class `modes/pdf.md` § "ATS Rules (clean parsing)" describes as outside a template lint's reach — nothing about the *rendered text layer* is visible in the HTML, so a clean lint and a clean score are both compatible with it — and it was reproduced with `pypdf` against a rendered PDF in #3251. The block also ships under `Core Competencies`, which parsers do not recognise as a section name, so it is frequently dropped whole rather than merely mangled. `Skills` **is** recognised, and already renders as `Category: a, b, c`. The same facts, expressed two ways, survive or don't depending on which array they sit in.
 
 Pure data movement: nothing invented, reversible, and **idempotent** — a second run is a no-op, and re-added competencies merge into the existing category rather than duplicating it. A payload carrying a localized `sections.competencies` keeps its own label as the category name.
 
@@ -66,10 +66,10 @@ The payload is shape-checked before anything is transformed or reported, and a s
 ## Usage (HTML stage)
 
 ```bash
-bun verify-ats.ts output/cv-jane-smith-acme.html
-bun verify-ats.ts output/cv-jane-smith-acme.html --keywords "python,kubernetes,rag"
-bun verify-ats.ts output/cv-jane-smith-acme.html --role "Senior Backend Engineer"
-bun verify-ats.ts output/cv-jane-smith-acme.html --min-score 80 --json
+career-ops verify-ats output/cv-jane-smith-acme.html
+career-ops verify-ats output/cv-jane-smith-acme.html --keywords "python,kubernetes,rag"
+career-ops verify-ats output/cv-jane-smith-acme.html --role "Senior Backend Engineer"
+career-ops verify-ats output/cv-jane-smith-acme.html --min-score 80 --json
 ```
 
 Flags:
@@ -111,9 +111,9 @@ When `--keywords` or `--role` is supplied, the checker reports how many target k
 The two stages chain in payload → HTML order, because the payload stage changes what the HTML stage will read:
 
 1. Tailor the render payload as usual in `pdf` mode (through the fact gate).
-2. **Payload stage:** `bun ats-payload.ts payload.json --summary > payload-ats.json`. The fold is applied for you; the three lints are findings to relay, not edits to make.
-3. Build from the transformed payload: `bun build-cv-html.ts payload-ats.json output/cv-{candidate}-{company}.html [template]`, then gate it: `bun verify-cv-facts.ts output/cv-{candidate}-{company}.html`. The fold cannot add a claim, but this HTML is a CV the user may paste into an application form, and a fix made to the styled HTML in `pdf` mode never reaches the payload this one is built from. If the gate fails, fix the payload and rebuild.
-4. **HTML stage:** `bun verify-ats.ts output/cv-{candidate}-{company}.html`.
+2. **Payload stage:** `career-ops ats-payload payload.json --summary > payload-ats.json`. The fold is applied for you; the three lints are findings to relay, not edits to make.
+3. Build from the transformed payload: `career-ops build-cv-html payload-ats.json output/cv-{candidate}-{company}.html [template]`, then gate it: `career-ops verify-cv-facts output/cv-{candidate}-{company}.html`. The fold cannot add a claim, but this HTML is a CV the user may paste into an application form, and a fix made to the styled HTML in `pdf` mode never reaches the payload this one is built from. If the gate fails, fix the payload and rebuild.
+4. **HTML stage:** `career-ops verify-ats output/cv-{candidate}-{company}.html`.
 5. Fix any `critical`/`warning` items (usually in the template), then re-run step 4.
 6. Optionally pass the JD's keywords with `--keywords` to confirm coverage before rendering the PDF.
 7. Relay both results to the user: `[Render in {language.output}: the fold that was applied and each lint finding with the decision it needs, then the score and grade, each issue's meaning and how to fix it, and the keyword-coverage line if present]`.
@@ -124,9 +124,9 @@ If the user only wants the score on an already-generated CV, steps 4-7 stand alo
 
 ## Rules
 
-- **Read-only.** The checker reads one HTML file and writes nothing. `ats-payload.ts` consumes a payload and emits a new one, and writes nothing either — in particular never `cv.md` or `config/profile.yml`. Both respect `DATA_CONTRACT.md`.
-- **Advisory, not a gate.** Unlike `verify-cv-facts.ts`, neither tool is part of the `pdf` hard-gate chain. Surface the fold, the lint findings, the score and the issues to the user; do not block generation on any of them.
+- **Read-only.** The checker reads one HTML file and writes nothing. `packages/cli/src/commands/cv/ats-payload.ts` consumes a payload and emits a new one, and writes nothing either — in particular never `cv.md` or `config/profile.yml`. Both respect `DATA_CONTRACT.md`.
+- **Advisory, not a gate.** Unlike `packages/cli/src/commands/cv/verify-cv-facts.ts`, neither tool is part of the `pdf` hard-gate chain. Surface the fold, the lint findings, the score and the issues to the user; do not block generation on any of them.
 - **Never apply a lint finding yourself.** The three lints exist precisely because each needs a judgement the user owns — an employer name inside a role, where a parenthetical detail belongs, which bullets belong to which stint. Rewriting a job title or an employer name on the user's behalf is fabrication under AGENTS.md § "Source-of-Truth Boundary", and a silent rewrite is worse than the mangling it prevents. Relay the finding; if the user decides, write the change to the user-layer file through the normal confirm-before-write path.
 - **Deterministic.** Same HTML in, same score out; same payload in, same payload out — no model calls, no network, in either tool.
-- **Localize at the presentation boundary.** `verify-ats.ts` and `ats-payload.ts` both emit fixed English by design (zero-LLM). When you relay its score and issues to the user, render the human-facing summary in `{language.output}` per AGENTS.md § "Output Language vs Market Modes" using the `[Render in {language.output}: …]` mechanism. Keep the checker's raw stdout English; only the surfaced summary is translated. The same applies to the payload stage's lint findings on stderr — and note that `ats-payload.ts`'s *stdout* is a payload, not prose: never translate it.
-- Issues describe structural risk, not facts. For fact/fabrication guarding, use `verify-cv-facts.ts`.
+- **Localize at the presentation boundary.** `packages/cli/src/commands/cv/verify-ats.ts` and `packages/cli/src/commands/cv/ats-payload.ts` both emit fixed English by design (zero-LLM). When you relay its score and issues to the user, render the human-facing summary in `{language.output}` per AGENTS.md § "Output Language vs Market Modes" using the `[Render in {language.output}: …]` mechanism. Keep the checker's raw stdout English; only the surfaced summary is translated. The same applies to the payload stage's lint findings on stderr — and note that `packages/cli/src/commands/cv/ats-payload.ts`'s *stdout* is a payload, not prose: never translate it.
+- Issues describe structural risk, not facts. For fact/fabrication guarding, use `packages/cli/src/commands/cv/verify-cv-facts.ts`.

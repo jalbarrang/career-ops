@@ -5,7 +5,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — csod (Cornerstone OnDemand career-site API)');
 try {
-  const csodModule = await import(pathToFileURL(join(ROOT, 'providers/csod.ts')).href);
+  const csodModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/csod.ts')).href);
   const csod = csodModule.default;
   const { resolveConfig, extractToken, parseCsodDate, cleanLocations, parseRequisitions } = csodModule;
 

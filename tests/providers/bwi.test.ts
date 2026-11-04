@@ -9,7 +9,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — bwi');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/bwi.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/bwi.ts')).href);
   const bwi = mod.default;
   const { assertBwiUrl, collectJobUrls, parseJobPosting, slugToTitle } = mod;
 

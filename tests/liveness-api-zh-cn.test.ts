@@ -29,7 +29,7 @@ import assert from 'node:assert/strict';
 import {
   resolveAtsApi, checkLivenessViaApi,
   classifyTencentPost, classifyMeituanJob, classifyAlibabaPosition,
-} from '../liveness-api.ts';
+} from '../packages/core/src/liveness/liveness-api.ts';
 
 const TENCENT_ID = '2047225595858944000';
 const MEITUAN_ID = '4713288261';

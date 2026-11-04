@@ -5,7 +5,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — softgarden (hosted jobs widget parser)');
 try {
-  const softgardenModule = await import(pathToFileURL(join(ROOT, 'providers/softgarden.ts')).href);
+  const softgardenModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/softgarden.ts')).href);
   const softgarden = softgardenModule.default;
   const { resolveWidgetUrl, parseSoftgardenDate, parseWidget } = softgardenModule;
 

@@ -5,7 +5,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — join (join.com __NEXT_DATA__ SSR parser)');
 try {
-  const joinModule = await import(pathToFileURL(joinPath(ROOT, 'providers/join.ts')).href);
+  const joinModule = await import(pathToFileURL(joinPath(ROOT, 'packages/core/src/scanning/providers/join.ts')).href);
   const joinProvider = joinModule.default;
   const { extractSlug, extractNextData } = joinModule;
 

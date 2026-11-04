@@ -1,38 +1,17 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "lib": ["ESNext"],
-    "module": "Preserve",
-    "moduleResolution": "bundler",
-    "moduleDetection": "force",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "noEmit": true,
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitThis": true,
-    "useUnknownInCatchVariables": true,
-    "alwaysStrict": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "exactOptionalPropertyTypes": false,
-    "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "types": ["bun-types", "node"]
-  },
-  "include": ["**/*.ts"],
-  "exclude": [
-    "node_modules",
-    "web",
-    "output",
-    "data",
-    "dashboard",
-    "test-results",
-    ".git"
-  ]
+  "extends": "./tsconfig.base.json",
+  "include": [
+    "packages/*/src/**/*.ts",
+    "tests/**/*.ts",
+    "scripts/**/*.ts",
+    "batch/**/*.ts",
+    "plugins/**/*.ts",
+    "fork/**/*.ts",
+    "scaffolder/**/*.ts",
+    "test-all.ts",
+    "updater-migration-tests.ts",
+    "upgrade-tests.ts",
+    "playwright.cv.config.ts"
+  ],
+  "exclude": ["node_modules", "apps", "output", "data", "dashboard", "test-results", ".git"]
 }

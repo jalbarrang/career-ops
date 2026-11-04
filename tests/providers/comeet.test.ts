@@ -7,7 +7,7 @@ console.log('\nProvider — comeet');
 
 
 try {
-  const comeetModule = await import(pathToFileURL(join(ROOT, 'providers/comeet.ts')).href);
+  const comeetModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/comeet.ts')).href);
   const comeet = comeetModule.default;
   const { parseComeetResponse } = comeetModule;
 

@@ -28,7 +28,8 @@ test('merge-tracker merges with the status as written when templates/states.yml 
     for (const entry of readdirSync(ROOT, { withFileTypes: true })) {
       if (entry.isFile() && /\.(ts|json)$/.test(entry.name)) cpSync(join(ROOT, entry.name), join(codeRoot, entry.name));
     }
-    cpSync(join(ROOT, 'lib'), join(codeRoot, 'lib'), { recursive: true });
+    // The engine's source tree, laid out as the scripts import it.
+    cpSync(join(ROOT, 'packages'), join(codeRoot, 'packages'), { recursive: true });
     // linkNodeModules() rather than a raw symlinkSync: a bare call leaves a
     // dangling link when the tree is absent, so merge-tracker dies at module
     // load and every assertion below passes vacuously. The helper returns a
@@ -54,7 +55,7 @@ test('merge-tracker merges with the status as written when templates/states.yml 
 
     const env = { ...process.env, CAREER_OPS_ROOT: dataRoot };
     for (const k of ['CAREER_OPS_DATA_DIR', 'CAREER_OPS_TRACKER', 'CAREER_OPS_ADDITIONS', 'CAREER_OPS_BATCH_STATE']) delete env[k];
-    const r = spawnSync(process.execPath, [join(codeRoot, 'merge-tracker.ts')], {
+    const r = spawnSync(process.execPath, [join(codeRoot, 'packages/cli/src/commands/tracker/merge-tracker.ts')], {
       cwd: tmp, env, encoding: 'utf-8', timeout: 60_000,
     });
     const out = `${r.stdout ?? ''}${r.stderr ?? ''}`;

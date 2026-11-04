@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — torre');
 
 try {
-  const torreModule = await import(pathToFileURL(join(ROOT, 'providers/torre.ts')).href);
+  const torreModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/torre.ts')).href);
   const torre = torreModule.default;
   const { buildTorreQuery, normalizeTorreOpportunity } = torreModule;
 

@@ -1,6 +1,6 @@
 // Failure-path writes for scan-runs.tsv (#2643): a run that dies after the
 // sweep has started must leave a `failed` row carrying the counters
-// accumulated so far, so stats.ts trends can exclude it instead of never
+// accumulated so far, so packages/core/src/insights/stats.ts trends can exclude it instead of never
 // seeing it (survivorship bias). Dry runs and pre-sweep exits register no
 // snapshot, so they keep leaving no trace.
 import { test } from 'node:test';
@@ -11,8 +11,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const scan = await import(pathToFileURL(join(ROOT, 'scan.ts')).href);
-const stats = await import(pathToFileURL(join(ROOT, 'stats.ts')).href);
+const scan = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
+const stats = await import(pathToFileURL(join(ROOT, 'packages/core/src/insights/stats.ts')).href);
 
 const COUNTERS = {
   timestamp: '2026-08-09T10:00:00Z',

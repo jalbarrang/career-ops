@@ -15,7 +15,7 @@ import { execFileSync } from 'child_process';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { pass, fail, ROOT, NODE } from './helpers.ts';
-import { stripEmptySections } from '../cv-sections-core.ts';
+import { stripEmptySections } from '../packages/core/src/cv/cv-sections-core.ts';
 
 console.log('\nCV consent footer ({{CONSENT}} + .cv-consent)');
 
@@ -81,7 +81,7 @@ for (const { file, label } of TEMPLATES) {
   // (b) Rendering WITH consent escapes the text and emits it inside the div.
   const outputWith = join(dir, `${label}-with.html`);
   try {
-    execFileSync(NODE, ['build-cv-html.ts', inputWith, outputWith, path], { cwd: ROOT, encoding: 'utf-8' });
+    execFileSync(NODE, ['packages/cli/src/commands/cv/build-cv-html.ts', inputWith, outputWith, path], { cwd: ROOT, encoding: 'utf-8' });
     const rendered = readFileSync(outputWith, 'utf-8');
     if (rendered.includes('cv-consent')) pass(`${label}: rendered output contains the cv-consent div`);
     else fail(`${label}: rendered output is missing the cv-consent div`);
@@ -94,7 +94,7 @@ for (const { file, label } of TEMPLATES) {
     const xssInput = join(dir, `${label}-xss.json`);
     writeFileSync(xssInput, xssPayload);
     const xssOutput = join(dir, `${label}-xss.html`);
-    execFileSync(NODE, ['build-cv-html.ts', xssInput, xssOutput, path], { cwd: ROOT, encoding: 'utf-8' });
+    execFileSync(NODE, ['packages/cli/src/commands/cv/build-cv-html.ts', xssInput, xssOutput, path], { cwd: ROOT, encoding: 'utf-8' });
     const xssRendered = readFileSync(xssOutput, 'utf-8');
     if (
       xssRendered.includes('&lt;script&gt;alert(1)&lt;/script&gt;') &&
@@ -102,7 +102,7 @@ for (const { file, label } of TEMPLATES) {
     ) pass(`${label}: consent text is preserved and HTML-escaped`);
     else fail(`${label}: consent text is missing or was not HTML-escaped`);
   } catch (e) {
-    fail(`${label}: build-cv-html.ts crashed on WITH-consent render — ${e.message}`);
+    fail(`${label}: packages/cli/src/commands/cv/build-cv-html.ts crashed on WITH-consent render — ${e.message}`);
   }
 
   // (c) Rendering WITHOUT consent: the div is present but empty, and the
@@ -110,7 +110,7 @@ for (const { file, label } of TEMPLATES) {
   // (so the CSS can target it) but must NOT contain any consent text.
   const outputWithout = join(dir, `${label}-without.html`);
   try {
-    execFileSync(NODE, ['build-cv-html.ts', inputWithout, outputWithout, path], { cwd: ROOT, encoding: 'utf-8' });
+    execFileSync(NODE, ['packages/cli/src/commands/cv/build-cv-html.ts', inputWithout, outputWithout, path], { cwd: ROOT, encoding: 'utf-8' });
     const rendered = readFileSync(outputWithout, 'utf-8');
     if (/<div class="cv-consent"><\/div>/.test(rendered)) {
       pass(`${label}: empty consent renders as <div class="cv-consent"></div> (CSS hides it)`);
@@ -121,7 +121,7 @@ for (const { file, label } of TEMPLATES) {
     if (!rendered.includes(CONSENT_TEXT)) pass(`${label}: no consent text leaks into the output when payload.consent is absent`);
     else fail(`${label}: consent text leaked into the output despite absent payload.consent`);
   } catch (e) {
-    fail(`${label}: build-cv-html.ts crashed on WITHOUT-consent render — ${e.message}`);
+    fail(`${label}: packages/cli/src/commands/cv/build-cv-html.ts crashed on WITHOUT-consent render — ${e.message}`);
   }
 
   // (c2) Blank-after-trim consent (a lone nonbreaking space) must normalize to
@@ -129,7 +129,7 @@ for (const { file, label } of TEMPLATES) {
   // leaving a bordered footer with no text.
   const outputBlank = join(dir, `${label}-blank.html`);
   try {
-    execFileSync(NODE, ['build-cv-html.ts', inputBlank, outputBlank, path], { cwd: ROOT, encoding: 'utf-8' });
+    execFileSync(NODE, ['packages/cli/src/commands/cv/build-cv-html.ts', inputBlank, outputBlank, path], { cwd: ROOT, encoding: 'utf-8' });
     const rendered = readFileSync(outputBlank, 'utf-8');
     if (/<div class="cv-consent"><\/div>/.test(rendered)) {
       pass(`${label}: blank-after-trim consent renders as an empty div (:empty hides it)`);
@@ -137,7 +137,7 @@ for (const { file, label } of TEMPLATES) {
       fail(`${label}: blank-after-trim consent leaked into the div — :empty guard cannot hide it`);
     }
   } catch (e) {
-    fail(`${label}: build-cv-html.ts crashed on blank-consent render — ${e.message}`);
+    fail(`${label}: packages/cli/src/commands/cv/build-cv-html.ts crashed on blank-consent render — ${e.message}`);
   }
 
   // (d) The consent div survives an all-empty section strip and the closing

@@ -1,12 +1,12 @@
-// tests/reply-hired-data-root.test.ts — hired-share.ts, reply-watch.ts and
-// paste-reply.ts resolve the tracker and their user-layer files against the
-// data root, the same way set-status.ts and merge-tracker.ts already do.
+// tests/reply-hired-data-root.test.ts — packages/cli/src/commands/insights/hired-share.ts, packages/cli/src/commands/outreach/reply-watch.ts and
+// packages/cli/src/commands/outreach/paste-reply.ts resolve the tracker and their user-layer files against the
+// data root, the same way packages/cli/src/commands/tracker/set-status.ts and packages/cli/src/commands/tracker/merge-tracker.ts already do.
 //
 // Before this, all three missed getCareerOpsRoot():
 //
-//   hired-share.ts   resolveWorkspaceRoot(resolveTrackerPath(process.cwd()))
-//   reply-watch.ts   resolveTrackerPath(__dirname), data/*.json under __dirname
-//   paste-reply.ts   data/reply-candidates.json under __dirname
+//   packages/cli/src/commands/insights/hired-share.ts   resolveWorkspaceRoot(resolveTrackerPath(process.cwd()))
+//   packages/cli/src/commands/outreach/reply-watch.ts   resolveTrackerPath(__dirname), data/*.json under __dirname
+//   packages/cli/src/commands/outreach/paste-reply.ts   data/reply-candidates.json under __dirname
 //
 // With the user layer outside the checkout (CAREER_OPS_ROOT,
 // CAREER_OPS_DATA_DIR or a .career-ops-data marker) hired-share found no hires,
@@ -32,9 +32,9 @@ import { fileURLToPath } from 'node:url';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const SCRIPTS = ['hired-share.ts', 'reply-watch.ts', 'paste-reply.ts'];
+const SCRIPTS = ['packages/cli/src/commands/insights/hired-share.ts', 'packages/cli/src/commands/outreach/reply-watch.ts', 'packages/cli/src/commands/outreach/paste-reply.ts'];
 // Runtime assets an import scan cannot see.
-const ASSETS = ['tracker-aliases.json', 'templates/states.yml'];
+const ASSETS = ['packages/core/src/tracker/tracker-aliases.json', 'templates/states.yml'];
 
 // The local import closure of the scripts under test, followed from their
 // `./` and `../` specifiers so a new import is copied without editing a list.
@@ -139,10 +139,10 @@ for (const config of CONFIGS) {
     const f = fixture(t);
     const env = config.setup(f);
 
-    const status = JSON.parse(run(f, 'hired-share.ts', ['--status'], env).stdout);
+    const status = JSON.parse(run(f, 'packages/cli/src/commands/insights/hired-share.ts', ['--status'], env).stdout);
     assert.deepEqual(status.hires.map((h) => h.role), ['data role']);
 
-    run(f, 'hired-share.ts', ['--report', '1', '--mark', 'later'], env);
+    run(f, 'packages/cli/src/commands/insights/hired-share.ts', ['--report', '1', '--mark', 'later'], env);
     const statePath = join(f.data, 'data', '.hired-share-state.json');
     assert.ok(existsSync(statePath), 'state file must land under the data root');
     assert.equal(JSON.parse(readFileSync(statePath, 'utf-8')).byReport['1'].status, 'later');
@@ -157,14 +157,14 @@ for (const config of CONFIGS) {
     const email = join(f.dir, 'email.txt');
     writeFileSync(email, 'Subject: Thanks for applying\nFrom: jobs@acme.example\n\nWe received your application.\n');
 
-    run(f, 'paste-reply.ts', ['--file', email], env);
+    run(f, 'packages/cli/src/commands/outreach/paste-reply.ts', ['--file', email], env);
     const candidatesPath = join(f.data, 'data', 'reply-candidates.json');
     assert.ok(existsSync(candidatesPath), 'paste-reply must write under the data root');
     assert.equal(JSON.parse(readFileSync(candidatesPath, 'utf-8')).length, 1);
 
     // reply-watch reads the same file. Answer "no" to any update prompt so the
     // run never writes the tracker.
-    const watch = run(f, 'reply-watch.ts', [], env, 'n\n');
+    const watch = run(f, 'packages/cli/src/commands/outreach/reply-watch.ts', [], env, 'n\n');
     assert.match(watch.stdout, /Today: 1 application updates need review/);
 
     for (const other of [f.code, f.cwd, f.other]) {
@@ -176,17 +176,17 @@ for (const config of CONFIGS) {
 
 test('with nothing configured, the code root is the default — not the cwd', (t) => {
   const f = fixture(t);
-  const status = JSON.parse(run(f, 'hired-share.ts', ['--status']).stdout);
+  const status = JSON.parse(run(f, 'packages/cli/src/commands/insights/hired-share.ts', ['--status']).stdout);
   assert.deepEqual(status.hires.map((h) => h.role), ['code role']);
 
-  run(f, 'reply-watch.ts', [], {}, 'n\n');
+  run(f, 'packages/cli/src/commands/outreach/reply-watch.ts', [], {}, 'n\n');
   assert.ok(existsSync(join(f.code, 'data', 'reply-candidates.json')));
   assert.ok(!existsSync(join(f.cwd, 'data', 'reply-candidates.json')));
 });
 
 test('an explicit --root still overrides the configured data root for hired-share', (t) => {
   const f = fixture(t);
-  const status = JSON.parse(run(f, 'hired-share.ts', ['--status', '--root', f.other], { CAREER_OPS_ROOT: f.data }).stdout);
+  const status = JSON.parse(run(f, 'packages/cli/src/commands/insights/hired-share.ts', ['--status', '--root', f.other], { CAREER_OPS_ROOT: f.data }).stdout);
   assert.deepEqual(status.hires.map((h) => h.role), ['other role']);
 });
 
@@ -198,7 +198,7 @@ test('hired-share --mark creates data/ on a legacy-layout data root', (t) => {
   mkdirSync(legacy);
   writeFileSync(join(legacy, 'applications.md'), tracker('legacy role'));
 
-  run(f, 'hired-share.ts', ['--report', '1', '--mark', 'never'], { CAREER_OPS_ROOT: legacy });
+  run(f, 'packages/cli/src/commands/insights/hired-share.ts', ['--report', '1', '--mark', 'never'], { CAREER_OPS_ROOT: legacy });
   const statePath = join(legacy, 'data', '.hired-share-state.json');
   assert.ok(existsSync(statePath), 'state file must be written under the legacy root');
   assert.equal(JSON.parse(readFileSync(statePath, 'utf-8')).byReport['1'].status, 'never');

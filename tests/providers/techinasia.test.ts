@@ -11,7 +11,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — techinasia');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/techinasia.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/techinasia.ts')).href);
   const techinasia = mod.default;
   const { findAppAssetPath, parseAlgoliaCredentials, resolveTechInAsiaUrl, normalizeTechInAsiaJob } = mod;
 

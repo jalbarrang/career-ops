@@ -6,7 +6,7 @@ const stub = 'data:text/javascript,' + encodeURIComponent(
 const hooks = 'data:text/javascript,' + encodeURIComponent(`
 export async function resolve(specifier, context, nextResolve) {
   const parent = context.parentURL || '';
-  if (specifier === './generate-pdf.ts' && parent.includes('generate-cover-letter.ts')) {
+  if (specifier === 'packages/cli/src/commands/cv/generate-pdf.ts' && parent.includes('packages/cli/src/commands/cv/generate-cover-letter.ts')) {
     return { url: ${JSON.stringify(stub)}, shortCircuit: true };
   }
   return nextResolve(specifier, context);

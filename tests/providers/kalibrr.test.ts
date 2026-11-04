@@ -10,7 +10,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — kalibrr');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/kalibrr.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/kalibrr.ts')).href);
   const kalibrr = mod.default;
   const { normalizeKalibrrJob } = mod;
 

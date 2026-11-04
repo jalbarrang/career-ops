@@ -2,31 +2,31 @@
  * updater-worktree-redirect.test.ts — updates from a linked worktree land on main.
  *
  * Agents such as Claude Code run each session in a linked git worktree on a
- * throwaway branch. update-system.ts runs every git call from its own
+ * throwaway branch. packages/cli/src/commands/platform/update-system.ts runs every git call from its own
  * directory, so an update started there used to commit to that branch and
  * leave the user's main checkout on the old release. From a linked worktree
  * the CLI now re-runs itself in the checkout that has `main` checked out.
  *
  * The behavioral sections drive `dismiss --version` because it is the one
  * subcommand that writes checkout-local state with no network: where the
- * `.update-dismissed` marker lands is where the command ran. update-system.ts
+ * `.update-dismissed` marker lands is where the command ran. packages/cli/src/commands/platform/update-system.ts
  * is self-loading by contract (#1706), so copying just it and VERSION is a
  * faithful install.
  */
 
-import { mkdtempSync, writeFileSync, readFileSync, copyFileSync, existsSync, realpathSync } from 'fs';
+import {mkdirSync, mkdtempSync, writeFileSync, readFileSync, copyFileSync, existsSync, realpathSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import {dirname, join } from 'path';
 import { pass, fail, NODE, ROOT, rmSync, hermeticGitEnv } from './helpers.ts';
-import { parseWorktreeList, worktreeUpdateTarget } from '../update-system.ts';
+import { parseWorktreeList, worktreeUpdateTarget } from '../packages/cli/src/commands/platform/update-system.ts';
 
 console.log('\n🧪 Testing updater worktree redirect...');
 
 const canonicalize = realpathSync.native ?? realpathSync;
 const same = (a, b) => Boolean(a && b) && canonicalize(a) === canonicalize(b);
 
-// A main checkout with update-system.ts committed, plus a linked worktree on
+// A main checkout with packages/cli/src/commands/platform/update-system.ts committed, plus a linked worktree on
 // a feature branch beside it — the layout an agent session produces.
 function makeFixture() {
   const base = realpathSync(mkdtempSync(join(tmpdir(), 'co-worktree-')));
@@ -46,7 +46,9 @@ function makeFixture() {
   g(main, 'config', 'commit.gpgsign', 'false');
   g(main, 'config', 'core.hooksPath', join(base, 'no-such-hooks'));
   g(main, 'config', 'core.autocrlf', 'false');
-  copyFileSync(join(ROOT, 'update-system.ts'), join(main, 'update-system.ts'));
+  mkdirSync(dirname(join(main, 'packages/cli/src/commands/platform/update-system.ts')), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/cli/src/commands/platform/update-system.ts'), join(main, 'packages/cli/src/commands/platform/update-system.ts'));
+  mkdirSync(dirname(join(main, 'VERSION')), { recursive: true });
   copyFileSync(join(ROOT, 'VERSION'), join(main, 'VERSION'));
   writeFileSync(join(main, '.gitignore'), '.update-dismissed\n');
   g(main, 'add', '-A');
@@ -56,7 +58,7 @@ function makeFixture() {
 }
 
 function runUpdater(cwd, args, env) {
-  return spawnSync(NODE, ['update-system.ts', ...args], { cwd, env, encoding: 'utf-8', timeout: 60000 });
+  return spawnSync(NODE, ['packages/cli/src/commands/platform/update-system.ts', ...args], { cwd, env, encoding: 'utf-8', timeout: 60000 });
 }
 
 // ── 1. parseWorktreeList ──

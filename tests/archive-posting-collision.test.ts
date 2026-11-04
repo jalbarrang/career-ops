@@ -4,9 +4,9 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { createRequire, syncBuiltinESMExports } from 'node:module';
 // The CJS `node:fs` exports object, not the ESM default import: on Bun those
 // are different objects, and the fault cases below reassign fs.promises.open /
-// fs.promises.unlink expecting archive-posting.ts to see the replacement.
+// fs.promises.unlink expecting packages/cli/src/commands/evaluation/archive-posting.ts to see the replacement.
 const fs = createRequire(import.meta.url)('node:fs');
-// archive-posting.ts imports `open`/`unlink` from `fs/promises`, which is its
+// packages/cli/src/commands/evaluation/archive-posting.ts imports `open`/`unlink` from `fs/promises`, which is its
 // own module object; patching that one is what the code under test reads.
 const fsp = createRequire(import.meta.url)('fs/promises');
 import { tmpdir } from 'node:os';
@@ -17,7 +17,7 @@ import { pathToFileURL } from 'node:url';
 const root = mkdtempSync(join(tmpdir(), 'career-ops-capture-collision-'));
 const previousRoot = process.env.CAREER_OPS_ROOT;
 process.env.CAREER_OPS_ROOT = root;
-const { archiveUrl } = await import('../archive-posting.ts?archive-posting-collision');
+const { archiveUrl } = await import('../packages/cli/src/commands/evaluation/archive-posting.ts?archive-posting-collision');
 function browser() {
   return { async newContext() {
     let url;
@@ -57,7 +57,7 @@ try {
     for (const result of concurrent) assert.equal(read(result), firstBytes);
   });
   // The fault cases run in a CHILD, with `fs/promises` patched before
-  // archive-posting.ts is imported. Patching it in this process is too late on
+  // packages/cli/src/commands/evaluation/archive-posting.ts is imported. Patching it in this process is too late on
   // Bun: a builtin's named imports are bound when the importing module is
   // linked, so reassigning fsp.open afterwards leaves the already-loaded
   // archiveUrl calling the real one (Node re-links them; Bun does not).
@@ -90,7 +90,7 @@ try {
         if (${unlinkFails}) throw new Error('injected cleanup failure');
         return realUnlink(path);
       };
-      const { archiveUrl } = await import(${JSON.stringify(pathToFileURL(join(ROOT, 'archive-posting.ts')).href)});
+      const { archiveUrl } = await import(${JSON.stringify(pathToFileURL(join(ROOT, 'packages/cli/src/commands/evaluation/archive-posting.ts')).href)});
       const browser = ${browser.toString()};
       let errorMessage = null;
       try { await archiveUrl(browser(), 'https://boards.greenhouse.io/fictional/jobs/101', { company: 'Fictional', role: 'Engineer' }); }

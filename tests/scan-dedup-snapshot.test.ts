@@ -29,7 +29,7 @@ import { pass, fail } from './helpers.ts';
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { loadDedupSnapshot, buildCompanyCanonicalizer } from '../scan.ts';
+import { loadDedupSnapshot, buildCompanyCanonicalizer } from '../packages/core/src/scanning/scan.ts';
 
 console.log('\nscan.ts — dedup snapshot: one read per source, golden outputs (#2382)');
 

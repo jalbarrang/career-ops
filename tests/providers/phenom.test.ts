@@ -5,7 +5,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — phenom (Phenom People CareerConnect widgets API)');
 try {
-  const phenomModule = await import(pathToFileURL(join(ROOT, 'providers/phenom.ts')).href);
+  const phenomModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/phenom.ts')).href);
   const phenom = phenomModule.default;
   const { resolveConfig: phConfig, slugify, parsePhenomDate, jobLocation, parseRefineSearch } = phenomModule;
 
@@ -161,7 +161,7 @@ try {
   }
 
   // fetch() pagination cap — an inflated `totalHits` must not trigger
-  // unbounded requests (DEFAULT_MAX_PAGES = 20 in providers/phenom.ts, i.e.
+  // unbounded requests (DEFAULT_MAX_PAGES = 20 in packages/core/src/scanning/providers/phenom.ts, i.e.
   // 2,000 postings), and hitting the cap must be visible (console.error), not
   // silent — real tenants (Allianz: ~1,900) sit close to this default, and a
   // bigger one would previously have been silently truncated by the old

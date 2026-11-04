@@ -2,7 +2,7 @@
 
 Scans configured job portals, filters by title relevance, and adds new offers to the pipeline for subsequent evaluation.
 
-> **Note (v1.6+):** The default scanner (`scan.ts` / `bun run scan`) is **zero-token** and uses structured sources: local parsers configured per company and public Greenhouse, Ashby, and Lever APIs. The levels with Playwright/WebSearch described below represent the **agent** workflow (executed by the AI agent), not what `scan.ts` does. If a company does not have a local parser or a Greenhouse/Ashby/Lever API, `scan.ts` will ignore it; in those cases, the agent must manually complete Level 1 (Playwright) or Level 3 (WebSearch).
+> **Note (v1.6+):** The default scanner (`packages/core/src/scanning/scan.ts` / `bun run scan`) is **zero-token** and uses structured sources: local parsers configured per company and public Greenhouse, Ashby, and Lever APIs. The levels with Playwright/WebSearch described below represent the **agent** workflow (executed by the AI agent), not what `packages/core/src/scanning/scan.ts` does. If a company does not have a local parser or a Greenhouse/Ashby/Lever API, `packages/core/src/scanning/scan.ts` will ignore it; in those cases, the agent must manually complete Level 1 (Playwright) or Level 3 (WebSearch).
 >
 > **Rule (v1.8+):** If a company's local parser completes successfully in Level 0, the agent **must not** repeat that company in Playwright (Level 1) or API (Level 2). In Level 3, general queries remain active, but results from companies already covered by a parser are discarded. See [Rule: Successful Local Parser](#rule-successful-local-parser--no-expensive-scraping-repetition).
 
@@ -30,7 +30,7 @@ Read `portals.yml` which contains:
 - `tracked_companies[].parser`: Optional local parser for SSR pages or stable HTML
 - `title_filter`: Keywords (positive/negative/seniority_boost) for filtering job titles
 
-Before using saved per-company WebSearch queries, run `bun audit-portals.ts --queries`.
+Before using saved per-company WebSearch queries, run `career-ops audit-portals --queries`.
 It checks enabled `scan_method: websearch` entries against `title_filter.positive`
 offline, and flags queries with no keyword overlap. Review warnings especially
 after changing target roles; synonyms or another language may legitimately differ.
@@ -55,7 +55,7 @@ Recommended Contract:
   enabled: true
 ```
 
-The script must resolve inside the repo root (security boundary in `providers/local-parser.ts`). Keep a private, non-contributed parser under a gitignored path — `local/` is ignored by default — so it is never staged; `scripts/parsers/` is for a parser you intend to upstream. See `docs/local-parser-cookbook.md`.
+The script must resolve inside the repo root (security boundary in `packages/core/src/scanning/providers/local-parser.ts`). Keep a private, non-contributed parser under a gitignored path — `local/` is ignored by default — so it is never staged; `scripts/parsers/` is for a parser you intend to upstream. See `docs/local-parser-cookbook.md`.
 
 Typically, the parser is company-specific and already knows the URL, selectors, and pagination. `args` is optional: use it however it helps the script author, for example, to reuse it across companies, pass `{careers_url}` or `{company}`, activate a debug flag, save a JSON snapshot, or control any parser-specific behavior.
 
@@ -89,7 +89,7 @@ Object format with `results`:
 }
 ```
 
-`company` is optional; if not provided, `scan.ts` uses the name from `tracked_companies`.
+`company` is optional; if not provided, `packages/core/src/scanning/scan.ts` uses the name from `tracked_companies`.
 
 A posting date is optional too, and worth emitting when the source exposes one: without it the offer has no `postedAt`, so `max_posting_age_days`, `--posted-after`/`--posted-before` and `--since` all pass it through (the same "don't penalize missing data" convention the filters use everywhere else). Epoch milliseconds or any string `Date.parse` accepts, under `postedAt`, `posted_at`, `publishedAt`, `published_at`, `published_date`, `datePosted` or `date_posted` — the last spelling is what a page's JSON-LD `JobPosting` block already calls it:
 
@@ -114,16 +114,16 @@ During the agent's scan, keep the **`local_parser_ok`** set in memory. This set 
 | Level | If the company is in `local_parser_ok` |
 |-------|----------------------------------------|
 | **1 — Playwright** | **Skip** — do not `browser_navigate` to its `careers_url` (most expensive token-consuming method) |
-| **2 — API** | **Skip** — do not WebFetch its `api:` (already covered by parser; `scan.ts` does not use API after a successful parser either) |
+| **2 — API** | **Skip** — do not WebFetch its `api:` (already covered by parser; `packages/core/src/scanning/scan.ts` does not use API after a successful parser either) |
 | **3 — WebSearch** | Run **general** queries (`site:`, role titles); **discard** any hit whose normalized company matches `local_parser_ok` |
 
 **Exceptions:**
 
-- Parser **failed** → the company is **not** added to `local_parser_ok`; Levels 1 and 2 apply normally (same criteria as the fallback in `scan.ts` when the parser fails and an ATS API is available).
+- Parser **failed** → the company is **not** added to `local_parser_ok`; Levels 1 and 2 apply normally (same criteria as the fallback in `packages/core/src/scanning/scan.ts` when the parser fails and an ATS API is available).
 - Level 3: do not deactivate cross-cutting queries (`site:jobs.ashbyhq.com`, `site:boards.greenhouse.io`, etc.) — these are used to discover **new** companies. Only filter out results for companies already in `tracked_companies` with a successful parser.
 - Do not create dedicated `search_queries` for a company with an active local parser (e.g. `site:jobs.ashbyhq.com/cohere "AI Engineer"`); use the parser or, if it fails, Playwright/API.
 
-**Recommended Level 0:** run `bun scan.ts` (or `bun run scan`) at the start of the agent's workflow. This covers local parsers + APIs in a single zero-token step and returns which companies used the `local-parser` successfully.
+**Recommended Level 0:** run `career-ops scan` (or `bun run scan`) at the start of the agent's workflow. This covers local parsers + APIs in a single zero-token step and returns which companies used the `local-parser` successfully.
 
 ### Level 1 — Direct Playwright (PRIMARY)
 
@@ -135,7 +135,7 @@ During the agent's scan, keep the **`local_parser_ok`** set in memory. This set 
 
 **Every company MUST have a `careers_url` in portals.yml.** If it does not, search for it once, save it, and use it in future scans.
 
-> **Opt-in — CLI extractor (`scan.extractor: cli`).** When `config/profile.yml` sets `scan.extractor: cli`, run `bun browser-extract.ts <careers_url> --mode listing` for each company instead of `browser_navigate` + `browser_snapshot`. It renders the page headlessly and returns compact JSON — `{ "url": ..., "jobs": [{ "title", "url" }] }` — so the listing enters context at a fraction of a full snapshot's tokens (~2–3× smaller here). Read the `jobs` array directly; then apply `title_filter` as usual. **Fall back silently** to `browser_navigate` + `browser_snapshot` if the command errors (it prints `{ "error", "code" }` and exits non-zero) or isn't present — never let the flag break a scan. Default (`scan.extractor` absent or `mcp`): the `browser_navigate` + `browser_snapshot` flow above.
+> **Opt-in — CLI extractor (`scan.extractor: cli`).** When `config/profile.yml` sets `scan.extractor: cli`, run `career-ops browser-extract <careers_url> --mode listing` for each company instead of `browser_navigate` + `browser_snapshot`. It renders the page headlessly and returns compact JSON — `{ "url": ..., "jobs": [{ "title", "url" }] }` — so the listing enters context at a fraction of a full snapshot's tokens (~2–3× smaller here). Read the `jobs` array directly; then apply `title_filter` as usual. **Fall back silently** to `browser_navigate` + `browser_snapshot` if the command errors (it prints `{ "error", "code" }` and exits non-zero) or isn't present — never let the flag break a scan. Default (`scan.extractor` absent or `mcp`): the `browser_navigate` + `browser_snapshot` flow above.
 
 ### Level 2 — ATS APIs / Feeds (COMPLEMENTARY)
 
@@ -167,7 +167,7 @@ For companies with a public API or structured feed **that are not in `local_pars
 
 The `search_queries` with `site:` filters cover portals transversally (all Ashby, all Greenhouse, etc.). Useful for discovering NEW companies that are not yet in `tracked_companies`, but results might be outdated. After filtering out hits from companies in `local_parser_ok`, the remaining results are deduplicated with Levels 0–2.
 
-> **Caution — Level-3 hits can be weeks stale.** WebSearch is fed by a search index that lags the live board, so a result can describe a posting that has already closed. Treat every Level-3 hit as unverified: before adding it to `data/pipeline.md` or evaluating it, confirm liveness against the real posting (`bun check-liveness.ts <url>` for ATS-hosted pages, or Playwright for non-ATS pages). Unlike the real-time ATS responses in Level 2, a Level-3 snippet is never proof a role is still open.
+> **Caution — Level-3 hits can be weeks stale.** WebSearch is fed by a search index that lags the live board, so a result can describe a posting that has already closed. Treat every Level-3 hit as unverified: before adding it to `data/pipeline.md` or evaluating it, confirm liveness against the real posting (`career-ops check-liveness <url>` for ATS-hosted pages, or Playwright for non-ATS pages). Unlike the real-time ATS responses in Level 2, a Level-3 snippet is never proof a role is still open.
 
 **Execution Priority:**
 1. Level 0: Local Parser → companies with a configured `parser:` and existing script; build `local_parser_ok`
@@ -180,12 +180,12 @@ Levels are additive — they are executed in order, and results are merged and d
 ## Workflow
 
 1. **Read Configuration**: `portals.yml`
-2. **Do not read the history whole**: `data/scan-history.tsv` holds every URL ever seen and reaches megabytes. `bun scan.ts` dedups its own results against it. For a candidate from Level 1 to 3, search the file with your Grep tool for the URL's host and path, case-insensitive, without the query string or fragment. That way a spelling with tracking parameters, a fragment, a trailing slash, or a different path case still shows up. A row counts only when its first column and the candidate give the same key under `normalizeUrlForDedup` in `scan.ts`, which drops exactly those parts. A row whose URL only starts with the candidate's is a different posting. Step 7 says which statuses count.
+2. **Do not read the history whole**: `data/scan-history.tsv` holds every URL ever seen and reaches megabytes. `career-ops scan` dedups its own results against it. For a candidate from Level 1 to 3, search the file with your Grep tool for the URL's host and path, case-insensitive, without the query string or fragment. That way a spelling with tracking parameters, a fragment, a trailing slash, or a different path case still shows up. A row counts only when its first column and the candidate give the same key under `normalizeUrlForDedup` in `packages/core/src/scanning/scan.ts`, which drops exactly those parts. A row whose URL only starts with the candidate's is a different posting. Step 7 says which statuses count.
 3. **Do not read the dedup sources whole**: search `data/pipeline.md` for the URL the same way, with the same key rule, and `data/applications.md` for the company name.
 
-3.5. **Level 0 — Local Parser** (`scan.ts`, zero-token):
+3.5. **Level 0 — Local Parser** (`packages/core/src/scanning/scan.ts`, zero-token):
    Initialize `local_parser_ok = []`.
-   Prefer running `bun scan.ts` once to cover all zero-token local parsers + APIs; if executing manually, repeat the following logic.
+   Prefer running `career-ops scan` once to cover all zero-token local parsers + APIs; if executing manually, repeat the following logic.
    For each company in `tracked_companies` with `enabled: true`, `parser.command`, and an existing script:
    a. Execute `parser.command` with `parser.script` + `parser.args` using local process execution without shell.
    b. Expand `{careers_url}` and `{company}` placeholders in arguments.
@@ -252,7 +252,7 @@ Levels are additive — they are executed in order, and results are merged and d
    - `applications.md` → normalized company + role already evaluated
    - `pipeline.md` → exact URL already in pending or processed list
 
-7.1. **Cross-listing check (#1597)** — automatic in `scan.ts`, warn only:
+7.1. **Cross-listing check (#1597)** — automatic in `packages/core/src/scanning/scan.ts`, warn only:
    - Each new offer's JD body (when the provider's list API ships one, e.g. Lever) is fingerprinted (64-bit SimHash, stored as the 8th `scan-history.tsv` column).
    - A near-identical body seen within 90 days under a **different company** is flagged in the scan summary — the usual cause is an agency re-posting a direct listing with the employer name stripped, which URL and company+role dedup both miss.
    - Nothing is dropped automatically. If one side is an agency, apply through ONE channel only (see the Via channel workflow, #1596) — a double submission burns the candidate with both parties.
@@ -278,7 +278,7 @@ Levels are additive — they are executed in order, and results are merged and d
 
 8. **For each new verified offer that passes filters**:
    a. Add to the `pipeline.md` "Pending" section: `- [ ] {url} | {company} | {title}`
-   b. Record in `scan-history.tsv` with status `added`. Write the row with `formatScanHistoryRow` / `appendToScanHistory` from `scan.ts` rather than composing the tab-separated line by hand — the column set has grown and will grow again, and a hand-written row is silently short.
+   b. Record in `scan-history.tsv` with status `added`. Write the row with `formatScanHistoryRow` / `appendToScanHistory` from `packages/core/src/scanning/scan.ts` rather than composing the tab-separated line by hand — the column set has grown and will grow again, and a hand-written row is silently short.
 
 9. **Offers filtered by title**: record in `scan-history.tsv` with status `skipped_title`.
 10. **Duplicate offers**: record with status `skipped_dup`.
@@ -304,7 +304,7 @@ If a non-publicly accessible URL is found:
 
 ## Scan History
 
-`data/scan-history.tsv` tracks ALL seen URLs. Each row has tab-separated columns in the order `formatScanHistoryRow` emits them (`scan.ts`):
+`data/scan-history.tsv` tracks ALL seen URLs. Each row has tab-separated columns in the order `formatScanHistoryRow` emits them (`packages/core/src/scanning/scan.ts`):
 
 | # | Column | Example | Notes |
 |---|--------|---------|-------|
@@ -326,7 +326,7 @@ If a non-publicly accessible URL is found:
 
 Columns are append-only: readers index by position, so new columns arrive at the end and older files keep their shorter rows. Never renumber or reorder. The header is written only when the file is created, so an existing file may still carry a shorter header than the rows being appended to it — that is expected, not corruption.
 
-Cells are stored with reversible spreadsheet-formula escaping: tabs and line breaks become spaces, and a cell starting with `=`, `+`, `-` or `@` — or with apostrophes followed by one of them — gets one more leading `'`, so a spreadsheet never runs it as a formula. `parseScanHistoryLine` (`lib/scan-history-columns.ts`) strips exactly that one apostrophe, so read rows through it to get the written values back. A reader that splits lines itself sees the stored form.
+Cells are stored with reversible spreadsheet-formula escaping: tabs and line breaks become spaces, and a cell starting with `=`, `+`, `-` or `@` — or with apostrophes followed by one of them — gets one more leading `'`, so a spreadsheet never runs it as a formula. `parseScanHistoryLine` (`packages/core/src/scanning/scan-history-columns.ts`) strips exactly that one apostrophe, so read rows through it to get the written values back. A reader that splits lines itself sees the stored form.
 
 `skipped_title`, `skipped_location` and `skipped_age` record what `title_filter`, `location_filter` and `max_posting_age_days` removed. They exist so a mis-aimed setting is visible in the data rather than only as a summary counter, and they carry no dedup weight: each names a setting the user edits, so a row written under the old setting must not suppress the same posting once it moves. A keyword added to `title_filter.positive` gets back every title it now matches on the next scan. Each posting gets one such row per status, not one per scan. Only `title_filter` is recorded as `skipped_title`; a rejection by another field declared in `filter_on` is not.
 
@@ -351,7 +351,7 @@ the 17th to the 20th"), pass `--posted-after`/`--posted-before` on the CLI —
 both optional, both `YYYY-MM-DD`, both inclusive:
 
 ```bash
-bun scan.ts --posted-after 2026-07-17 --posted-before 2026-07-20
+career-ops scan --posted-after 2026-07-17 --posted-before 2026-07-20
 ```
 
 Jobs whose provider exposes no `postedAt` always pass (same "don't penalize
@@ -365,16 +365,16 @@ instead of an absolute window, use `max_posting_age_days` in `portals.yml`.
 `--since <days>` states the same bound relatively:
 
 ```bash
-bun scan.ts --since 7                 # nothing older than 7 days
-bun scan.ts --posted-after 2026-07-25 # equivalent on 2026-08-01
+career-ops scan --since 7                 # nothing older than 7 days
+career-ops scan --posted-after 2026-07-25 # equivalent on 2026-08-01
 ```
 
 It **filters**, exactly like `--posted-after` does — same semantics as
-`scan-ats-full.ts`, so the flag means one thing across both scripts.
+`packages/cli/src/commands/scanning/scan-ats-full.ts`, so the flag means one thing across both scripts.
 
 The bound is also passed to providers as an **early-stop hint** — whichever
 lower bound ends up in effect, so `--posted-after` unlocks this too. Providers
-that return postings newest-first (currently `providers/workday.ts`) can stop paginating
+that return postings newest-first (currently `packages/core/src/scanning/providers/workday.ts`) can stop paginating
 once a page's oldest dated posting is past that bound instead of grinding to
 their `max_pages` cap.
 
@@ -395,7 +395,7 @@ Notes:
 
 - **Off by default.** Pagination depth is otherwise configured per-entry with
   `max_pages` in `portals.yml`, so a default window would silently shorten every
-  existing config. (`scan-ats-full.ts` *does* default `--since` to 3 days — it
+  existing config. (`packages/cli/src/commands/scanning/scan-ats-full.ts` *does* default `--since` to 3 days — it
   has no per-entry depth setting to respect.)
 - **`max_posting_age_days` alone does not enable early stopping.** It constrains
   the bound when a CLI window is present, but on its own it leaves pagination
@@ -404,7 +404,7 @@ Notes:
   off.** A posting whose provider exposes no date passes every date filter here,
   and a tenant that exposes no dates *at all* is protected — providers are
   explicitly told not to skip it. A tenant that **mixes** dated and undated
-  postings is not: `providers/workday.ts` decides the early stop from the page's dated
+  postings is not: `packages/core/src/scanning/providers/workday.ts` decides the early stop from the page's dated
   postings only, so once those are past the bound pagination halts and undated
   postings on later pages are never fetched. This is the one case where the
   early stop narrows results instead of only saving time. If a tenant's undated

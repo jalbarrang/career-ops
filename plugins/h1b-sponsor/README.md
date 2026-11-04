@@ -30,13 +30,13 @@ An HTTP backend still exists and is described further down. It runs when you hav
 The plugin ships bundled with career-ops. Enable it once per repo:
 
 ```bash
-bun plugins.ts enable h1b-sponsor --confirm
+bun packages/cli/src/commands/platform/plugins.ts enable h1b-sponsor --confirm
 ```
 
 To confirm it is active:
 
 ```bash
-bun plugins.ts list
+bun packages/cli/src/commands/platform/plugins.ts list
 ```
 
 Then install the index (about 8 MiB, downloaded from the data repo's GitHub releases):
@@ -127,7 +127,7 @@ export H1B_INDEX_PATH=/opt/h1b/index.ndjson.gz
 The companion skill is loaded on demand:
 
 ```bash
-bun plugins.ts skill h1b-sponsor
+bun packages/cli/src/commands/platform/plugins.ts skill h1b-sponsor
 ```
 
 That prints the how-to the agent reads before running a check during an `oferta` evaluation. The skill covers trigger conditions, per-tier interpretation, and the exact Block G bullet template.
@@ -179,7 +179,7 @@ This is not legal or immigration advice. A tier reflects historical filings, not
 Remove the plugin from the active config:
 
 ```bash
-bun plugins.ts remove h1b-sponsor
+bun packages/cli/src/commands/platform/plugins.ts remove h1b-sponsor
 ```
 
-For a bundled plugin this unregisters it and clears its consent pin; the shipped files stay in `plugins/h1b-sponsor/`, so re-adding it later just needs `bun plugins.ts enable h1b-sponsor --confirm`. To delete it entirely, remove the `plugins/h1b-sponsor/` directory. Everything under `data/cache/h1b/` is safe to delete at any time; those are cached answers and the next lookup rebuilds them. Deleting `data/h1b/` removes the index, which means downloading it again.
+For a bundled plugin this unregisters it and clears its consent pin; the shipped files stay in `plugins/h1b-sponsor/`, so re-adding it later just needs `bun packages/cli/src/commands/platform/plugins.ts enable h1b-sponsor --confirm`. To delete it entirely, remove the `plugins/h1b-sponsor/` directory. Everything under `data/cache/h1b/` is safe to delete at any time; those are cached answers and the next lookup rebuilds them. Deleting `data/h1b/` removes the index, which means downloading it again.

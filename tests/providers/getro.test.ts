@@ -12,8 +12,8 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — getro');
 
 try {
-  const getro = (await import(pathToFileURL(join(ROOT, 'providers/getro.ts')).href)).default;
-  const { extractCollectionId } = await import(pathToFileURL(join(ROOT, 'providers/getro.ts')).href);
+  const getro = (await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/getro.ts')).href)).default;
+  const { extractCollectionId } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/getro.ts')).href);
 
   if (getro.id === 'getro') pass('getro.id is "getro"');
   else fail(`getro.id is ${JSON.stringify(getro.id)}`);

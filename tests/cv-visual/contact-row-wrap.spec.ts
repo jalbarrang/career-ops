@@ -26,7 +26,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { listTemplates } from '../../cv-templates.ts';
+import { listTemplates } from '../../packages/cli/src/commands/cv/cv-templates.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -189,7 +189,7 @@ for (const t of contactRowTemplates()) {
           const input = join(dir, 'payload.json');
           const html = join(dir, 'cv.html');
           writeFileSync(input, JSON.stringify(payload(lang, portfolio)));
-          execFileSync(process.execPath, ['build-cv-html.ts', input, html, t.path],
+          execFileSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', input, html, t.path],
             { cwd: ROOT, stdio: 'pipe' });
           await page.goto(pathToFileURL(html).href, { waitUntil: 'load' });
           await page.emulateMedia({ media: 'print' });

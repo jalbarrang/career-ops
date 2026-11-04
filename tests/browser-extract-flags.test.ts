@@ -1,8 +1,8 @@
-// tests/browser-extract-flags.test.ts — browser-extract.ts's CLI contract.
+// tests/browser-extract-flags.test.ts — packages/cli/src/commands/scanning/browser-extract.ts's CLI contract.
 //
 // The script hand-rolled its argv parsing and matched tokens EXACTLY against a
 // local `FLAGS` set, which left three distinct failures on `main` (#3004). All
-// three are the class lib/cli-flags.ts exists to end (#2401/#2402, #2775):
+// three are the class packages/core/src/kernel/cli-flags.ts exists to end (#2401/#2402, #2775):
 //
 //   --max-chars=50000        → not in FLAGS, not the URL either: dropped, and
 //                              the run returned a JD truncated at the 12000
@@ -28,7 +28,7 @@ import { tmpdir } from 'os';
 console.log('\nbrowser-extract.ts — flag validation and value forms');
 
 const NODE = process.execPath;
-const SCRIPT = join(ROOT, 'browser-extract.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/scanning/browser-extract.ts');
 
 // cwd is deliberately not the project root: the script resolves its own paths
 // through import.meta.url, and a cwd-relative read would show up here.

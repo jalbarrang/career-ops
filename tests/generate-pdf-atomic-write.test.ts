@@ -19,7 +19,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const { renderHtmlToPdf } = await import(pathToFileURL(join(ROOT, 'generate-pdf.ts')).href);
+const { renderHtmlToPdf } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts')).href);
 
 const NEW_PDF = Buffer.from('%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n'
   + '2 0 obj\n<< /Type /Pages /Count 1 >>\nendobj\n%%EOF');

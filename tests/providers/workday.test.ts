@@ -6,12 +6,12 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — workday');
 
 // Expected jobs.workdayTruncated value, spelled out locally rather than
-// imported from providers/workday.ts — see the same constant in
+// imported from packages/core/src/scanning/providers/workday.ts — see the same constant in
 // workday-facet-split.test.ts for why.
 const TRANSIENT = 'transient';
 
 try {
-  const workdayModule = await import(pathToFileURL(join(ROOT, 'providers/workday.ts')).href);
+  const workdayModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/workday.ts')).href);
   const workday = workdayModule.default;
   const { parseWorkdayResponse, workdayDedupKey } = workdayModule;
 
@@ -558,7 +558,7 @@ try {
   }
 
   // fetch() pagination cap — an inflated `total` must not trigger unbounded
-  // requests (DEFAULT_MAX_PAGES = 100 in providers/workday.ts), and hitting
+  // requests (DEFAULT_MAX_PAGES = 100 in packages/core/src/scanning/providers/workday.ts), and hitting
   // the cap must be visible (console.error), not silent — real tenants
   // (Dollar Tree, total=23,609; CVS Health, total=16,974) already exceed the
   // 100-page/2000-job default.
@@ -582,11 +582,11 @@ try {
   // Which cap warning fires is keyed on ENTRY PROVENANCE, not on the date
   // bound (#2495). "raise max_pages on this entry for more" is only actionable
   // when the caller has a real portals.yml tracked_companies entry to edit;
-  // scan-ats-full.ts synthesizes its entries from an external dataset and has
+  // packages/cli/src/commands/scanning/scan-ats-full.ts synthesizes its entries from an external dataset and has
   // nothing to point at, so it gets the terser line.
   //
   // `sinceMs === null` used to stand in for that distinction because
-  // scan-ats-full.ts was the only caller setting it. Since #2418 `scan.ts
+  // packages/cli/src/commands/scanning/scan-ats-full.ts was the only caller setting it. Since #2418 `packages/core/src/scanning/scan.ts
   // --since` sets ctx.sinceMs too, so the proxy silently mislabels a tracked
   // entry as synthesized. These three cases pin the two messages to provenance
   // so the next caller to start setting sinceMs cannot re-couple them.
@@ -605,23 +605,23 @@ try {
   const ADVICE = /raise max_pages on this entry for more/;
   const sevenDaysAgo = Date.now() - 7 * 86_400_000;
 
-  // scan.ts without --since — the case that always worked.
+  // packages/core/src/scanning/scan.ts without --since — the case that always worked.
   const capFullRun = await runCapCase({});
   if (capFullRun.some(w => ADVICE.test(w))) {
-    pass('workday.fetch() cap warning: a full scan.ts run gets the "raise max_pages" advice');
+    pass('workday.fetch() cap warning: a full packages/core/src/scanning/scan.ts run gets the "raise max_pages" advice');
   } else {
     fail(`workday cap warning (full run): expected the raise-max_pages advice, got ${JSON.stringify(capFullRun)}`);
   }
 
-  // scan.ts --since — same tracked entry, same cap; only the date bound differs.
+  // packages/core/src/scanning/scan.ts --since — same tracked entry, same cap; only the date bound differs.
   const capSinceRun = await runCapCase({ sinceMs: sevenDaysAgo, includeUndated: true });
   if (capSinceRun.some(w => ADVICE.test(w))) {
-    pass('workday.fetch() cap warning: a scan.ts --since run keeps the "raise max_pages" advice');
+    pass('workday.fetch() cap warning: a packages/core/src/scanning/scan.ts --since run keeps the "raise max_pages" advice');
   } else {
     fail(`workday cap warning (--since run): expected the raise-max_pages advice, got ${JSON.stringify(capSinceRun)}`);
   }
 
-  // scan-ats-full.ts — synthesized entries, nothing for the user to edit.
+  // packages/cli/src/commands/scanning/scan-ats-full.ts — synthesized entries, nothing for the user to edit.
   const capReverseScan = await runCapCase({ sinceMs: sevenDaysAgo, syntheticEntries: true });
   if (capReverseScan.some(w => /truncated at 3 pages/.test(w)) && !capReverseScan.some(w => ADVICE.test(w))) {
     pass('workday.fetch() cap warning: a reverse scan (synthesized entries) stays terse, no advice');
@@ -701,7 +701,7 @@ try {
     workday.fetch(entry, mkWorkdayCtx(async (_url, opts) => {
       flakyWorkdayRequests++;
       const body = JSON.parse(opts.body);
-      const page = body.offset / 20; // PAGE_SIZE in providers/workday.ts
+      const page = body.offset / 20; // PAGE_SIZE in packages/core/src/scanning/providers/workday.ts
       if (page === 2) { const err = new Error('HTTP 503'); err.status = 503; throw err; }
       return { total: 80, jobPostings: Array.from({ length: 20 }, (_, i) => ({ title: `Job p${page}-${i}`, externalPath: `/job/board/p${page}-${i}` })) };
     })));
@@ -731,7 +731,7 @@ try {
     fail(`workday fetch-error stop should not also warn about max_pages: ${JSON.stringify(flakyWarnings)}`);
   }
 
-  // fetch-error truncation must TAG the returned array so scan-ats-full.ts
+  // fetch-error truncation must TAG the returned array so packages/cli/src/commands/scanning/scan-ats-full.ts
   // can queue the tenant for a calm sequential retry (the workdayNoDateSkip
   // pattern — no per-tenant logging beyond the existing truncation warning).
   {
@@ -837,7 +837,7 @@ try {
 
   // fetch() dead-tenant detection — a page-0 422 followed by a careers page
   // carrying Workday's maintenance marker is relabeled as a synthetic 404, so
-  // dead-boards.ts's existing 404 path (shared with every other provider)
+  // packages/core/src/scanning/dead-boards.ts's existing 404 path (shared with every other provider)
   // picks it up with no separate counter or threshold.
   const deadEntry = { name: 'DeadCo', careers_url: 'https://deadco.wd5.myworkdayjobs.com/careers' };
   let deadFetchTextOpts;
@@ -920,7 +920,7 @@ try {
   // fetch() early-stop — once a page's postings are all clearly past
   // ctx.sinceMs, pagination stops without hitting max_pages, and the
   // "raise max_pages" warning does NOT fire (this isn't a cap hit).
-  const SINCE_DAYS = 3; // mirrors scan-ats-full.ts's --since default
+  const SINCE_DAYS = 3; // mirrors packages/cli/src/commands/scanning/scan-ats-full.ts's --since default
   const nowMs = Date.now();
   const sinceMs = nowMs - SINCE_DAYS * 86_400_000;
   let earlyStopRequests = 0;
@@ -972,7 +972,7 @@ try {
   }
 
   // fetch() cap-hit warning — reverse-scan context (ctx.syntheticEntries set,
-  // as scan-ats-full.ts does) where entries are synthesized from an
+  // as packages/cli/src/commands/scanning/scan-ats-full.ts does) where entries are synthesized from an
   // external dataset, not portals.yml: there's no portal entry to edit, and
   // — per the "no fixed cap can guarantee full coverage" conclusion — no
   // fix to advise at all, so the message is just the short fact, with
@@ -997,7 +997,7 @@ try {
   }
 
   // fetch() no-date-skip — the default case (includeUndated NOT set, as
-  // scan-ats-full.ts leaves it by default): a tenant whose first page has
+  // packages/cli/src/commands/scanning/scan-ats-full.ts leaves it by default): a tenant whose first page has
   // zero dated postings stops right there instead of grinding through up to
   // maxPages requests whose results would all be dropped as 'undated'
   // downstream anyway. Only 1 request should fire, not maxPages (100).
@@ -1019,7 +1019,7 @@ try {
   // A full-directory scan hits this on a large fraction of tenants — a
   // console.error per occurrence would just be the same line thousands of
   // times, so the signal is a tag on the returned array instead (aggregated
-  // by scan-ats-full.ts into one summary line at the end of the run).
+  // by packages/cli/src/commands/scanning/scan-ats-full.ts into one summary line at the end of the run).
   if (skipJobs.workdayNoDateSkip === true) {
     pass('workday.fetch() tags the returned jobs array for no-date-skip aggregation');
   } else {

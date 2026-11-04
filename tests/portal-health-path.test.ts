@@ -10,10 +10,10 @@
 // guarantee is unchanged and still asserted below.
 //
 // What changed is the mechanism (#3510). Resolving from the cwd fixed the
-// pollution but left scan.ts with two rules for where user data lives: this
+// pollution but left packages/core/src/scanning/scan.ts with two rules for where user data lives: this
 // path followed the shell, while SCAN_HISTORY_PATH, PIPELINE_PATH and
 // APPLICATIONS_PATH had already followed DATA_ROOT since the data-root feature
-// landed in 02daaf1 -- and stats.ts:39, the only reader of this file, reads it
+// landed in 02daaf1 -- and packages/core/src/insights/stats.ts:39, the only reader of this file, reads it
 // at join(DATA_ROOT, 'data', 'portal-health.tsv'). A user with a data root
 // configured got rows written somewhere their own reader never looked.
 //
@@ -21,7 +21,7 @@
 // suite already uses, rather than from the cwd. This spawns a real child with a
 // data root pinned to a temp dir AND a cwd pinned to a second temp dir, so the
 // two are provably distinguishable, then calls appendPortalHealth() with no
-// filePath argument -- the exact call scan.ts's own production path makes. The
+// filePath argument -- the exact call packages/core/src/scanning/scan.ts's own production path makes. The
 // row must land under the data root, not the cwd, and the script's own directory
 // must be provably untouched.
 import { pass, fail, NODE, ROOT } from './helpers.ts';
@@ -35,7 +35,7 @@ import { applyScriptDirGuard } from './portal-health-guard.ts';
 
 console.log('\nscan.ts — portal-health.tsv resolves against the data root, never the checkout');
 
-const scanUrl = JSON.stringify(pathToFileURL(join(ROOT, 'scan.ts')).href);
+const scanUrl = JSON.stringify(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
 const sandboxCwd = mkdtempSync(join(tmpdir(), 'career-ops-portal-health-cwd-'));
 const sandboxRoot = mkdtempSync(join(tmpdir(), 'career-ops-portal-health-root-'));
 
@@ -44,7 +44,7 @@ const sandboxRoot = mkdtempSync(join(tmpdir(), 'career-ops-portal-health-root-')
 const scriptDirHealthPath = join(ROOT, 'data', 'portal-health.tsv');
 const scriptDirHealthExisted = existsSync(scriptDirHealthPath);
 const scriptDirHealthBackup = scriptDirHealthExisted ? readFileSync(scriptDirHealthPath, 'utf-8') : null;
-// Keep in sync with PORTAL_HEALTH_HEADER in scan.ts -- passed to the guard so
+// Keep in sync with PORTAL_HEALTH_HEADER in packages/core/src/scanning/scan.ts -- passed to the guard so
 // a header-only remainder (appendPortalHealth always writes the header before
 // the marker row) still counts as empty and the cleanup fully removes a
 // script-dir file it created rather than leaving a bare header behind.
@@ -83,7 +83,7 @@ try {
     fail(`expected ${rootHealthPath} to contain the fixture row, it does not`);
   }
 
-  // 1b. And NOT under the cwd, which is a different directory here. stats.ts
+  // 1b. And NOT under the cwd, which is a different directory here. packages/core/src/insights/stats.ts
   //     reads this file at the data root; a row under the cwd is a row its only
   //     reader will never see.
   const cwdHealthPath = join(sandboxCwd, 'data', 'portal-health.tsv');

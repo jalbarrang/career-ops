@@ -1,7 +1,7 @@
 // Fictional responses only; every fetch is stubbed. No ATS requests.
 import assert from 'node:assert/strict';
 import { pass, fail } from '../helpers.ts';
-import provider, { parseSmartRecruitersResponse } from '../../providers/smartrecruiters.ts';
+import provider, { parseSmartRecruitersResponse } from '../../packages/core/src/scanning/providers/smartrecruiters.ts';
 
 console.log('\nSmartRecruiters fallback URL encoding');
 

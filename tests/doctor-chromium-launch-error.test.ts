@@ -15,11 +15,11 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileS
 import { isDeepStrictEqual } from 'util';
 import { tmpdir } from 'os';
 import { dirname, join } from 'path';
-import { classifyChromiumLaunchError } from '../lib/chromium-launch-error.ts';
+import { classifyChromiumLaunchError } from '../packages/core/src/kernel/chromium-launch-error.ts';
 
 console.log('\ndoctor.ts — Chromium launch errors');
 
-const DOCTOR = join(ROOT, 'doctor.ts');
+const DOCTOR = join(ROOT, 'packages/cli/src/commands/platform/doctor.ts');
 const NIXOS = existsSync('/etc/NIXOS');
 // install-deps is apt-only on Linux, so doctor prescribes it only where apt is
 // the package manager; elsewhere on Linux it names the distro's own.

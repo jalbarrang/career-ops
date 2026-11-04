@@ -4,9 +4,9 @@
 // It is named in the Source-of-Truth Boundary as a derived-trust input for
 // generated content, and it was resolved three different ways:
 //
-//   match-star.ts:22               'interview-prep/story-bank.md'          -> cwd
-//   story-provenance-check.ts:162  'interview-prep/story-bank.md'          -> cwd
-//   negotiation-roi.ts:70          join(CAREER_OPS, 'interview-prep', ...) -> CODE root
+//   packages/cli/src/commands/interview/match-star.ts:22               'interview-prep/story-bank.md'          -> cwd
+//   packages/cli/src/commands/interview/story-provenance-check.ts:162  'interview-prep/story-bank.md'          -> cwd
+//   packages/cli/src/commands/insights/negotiation-roi.ts:70          join(CAREER_OPS, 'interview-prep', ...) -> CODE root
 //
 // The negotiation-roi case is the sharp one. Both roots were already defined in
 // that file, and its v1 SAFETY GATE compares the two files — a claim survives
@@ -77,7 +77,7 @@ function run(script, args, f) {
 test('match-star reads the data root story bank', () => {
   const f = fixture();
   try {
-    const r = run('match-star.ts', ['--list'], f);
+    const r = run('packages/cli/src/commands/interview/match-star.ts', ['--list'], f);
     assert.doesNotMatch(r.all, /not found/i, `it looked somewhere else:\n${r.all.slice(0, 300)}`);
     assert.match(r.all, /Cut deploy time/, `the story was not read:\n${r.all.slice(0, 300)}`);
   } finally { cleanup(f); }
@@ -86,7 +86,7 @@ test('match-star reads the data root story bank', () => {
 test('story-provenance-check reads the data root story bank and cv.md', () => {
   const f = fixture();
   try {
-    const r = run('story-provenance-check.ts', ['--summary'], f);
+    const r = run('packages/cli/src/commands/interview/story-provenance-check.ts', ['--summary'], f);
     assert.doesNotMatch(
       r.all,
       /story-bank\.md not found|No story bank/i,
@@ -101,7 +101,7 @@ test("negotiation-roi's safety gate reads both files from the SAME root", () => 
   // could never match, whatever the user wrote.
   const f = fixture();
   try {
-    const r = run('negotiation-roi.ts', ['--summary', '--wage', '120000', '--frequency', 'annually'], f);
+    const r = run('packages/cli/src/commands/insights/negotiation-roi.ts', ['--summary', '--wage', '120000', '--frequency', 'annually'], f);
     // Asserted on stories SCANNED, not on a claim surviving the gate. Whether
     // this particular Result line yields an extractable claim is the claim
     // parser's business; what this test owns is that the file was found at all.
@@ -121,7 +121,7 @@ test('an absent story bank still reports the path it actually looked at', () => 
   const f = fixture();
   rmSync(join(f.dataRoot, 'interview-prep', 'story-bank.md'));
   try {
-    const r = run('match-star.ts', ['--list'], f);
+    const r = run('packages/cli/src/commands/interview/match-star.ts', ['--list'], f);
     assert.match(r.all, /not found/i, 'an absent story bank was not reported');
     assert.ok(
       r.all.includes(f.dataRoot),
@@ -139,7 +139,7 @@ test('--story-bank and --cv still override', () => {
     writeFileSync(join(other, 'sb.md'), STORY_BANK);
     writeFileSync(join(other, 'cv.md'), CV);
     const r = spawnSync(process.execPath, [
-      join(ROOT, 'story-provenance-check.ts'), '--summary',
+      join(ROOT, 'packages/cli/src/commands/interview/story-provenance-check.ts'), '--summary',
       '--story-bank', join(other, 'sb.md'), '--cv', join(other, 'cv.md'),
     ], {
       cwd: f.decoyCwd, encoding: 'utf-8', timeout: 60_000,
@@ -157,7 +157,7 @@ test('no reader of story-bank.md resolves it from the code root or the cwd', () 
   // caused this are a bare relative literal and a join onto a __dirname
   // constant. Covers the next reader, not just today's three.
   const offenders = [];
-  for (const file of ['match-star.ts', 'story-provenance-check.ts', 'negotiation-roi.ts']) {
+  for (const file of ['packages/cli/src/commands/interview/match-star.ts', 'packages/cli/src/commands/interview/story-provenance-check.ts', 'packages/cli/src/commands/insights/negotiation-roi.ts']) {
     const src = readFileSync(join(ROOT, file), 'utf-8');
     for (const line of src.split('\n')) {
       if (!/story-bank\.md|'cv\.md'/.test(line)) continue;

@@ -26,7 +26,7 @@ job_boards:
   - name: "Some Aggregator"
     provider: "not-a-real-provider"
 `);
-  if (run(NODE, ['validate-portals.ts', '--file', badProvider]) === null) {
+  if (run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', badProvider]) === null) {
     pass('job_boards unknown provider → non-zero exit');
   } else {
     fail('job_boards unknown provider should fail validation');
@@ -39,7 +39,7 @@ title_filter:
 job_boards:
   name: oops
 `);
-  if (run(NODE, ['validate-portals.ts', '--file', notArray]) === null) {
+  if (run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', notArray]) === null) {
     pass('job_boards non-array → non-zero exit');
   } else {
     fail('job_boards non-array should fail validation');
@@ -58,7 +58,7 @@ job_boards:
   - name: "Aggregator board B"
     provider: arbeitnow
 `);
-  const goodOut = run(NODE, ['validate-portals.ts', '--file', good]);
+  const goodOut = run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', good]);
   if (goodOut !== null && goodOut.includes('0 errors')) {
     pass('valid job_boards + tracked_companies → 0 errors');
   } else {
@@ -79,7 +79,7 @@ job_boards:
   - name: "Twinco"
     provider: thehub
 `);
-  const dupOut = run(NODE, ['validate-portals.ts', '--file', dupName]);
+  const dupOut = run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', dupName]);
   if (dupOut !== null
     && dupOut.includes('0 errors')
     && /warning: job_boards\[0\]\.name: duplicate enabled job board name/.test(dupOut)) {
@@ -100,7 +100,7 @@ tracked_companies:
   - name: "Dup Co"
     careers_url: "https://jobs.lever.co/two"
 `);
-  const tcWordOut = run(NODE, ['validate-portals.ts', '--file', tcWord]);
+  const tcWordOut = run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', tcWord]);
   if (tcWordOut !== null
     && /duplicate enabled company name also seen at tracked_companies\[0\]\.name/.test(tcWordOut)) {
     pass('tracked_companies duplicate warning uses the "company" noun');

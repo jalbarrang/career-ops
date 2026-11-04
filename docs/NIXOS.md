@@ -11,7 +11,7 @@ The dev shell replaces those downloads with browsers that nixpkgs builds for Nix
 - [ ] Shell re-entered after every `bun install`
 - [ ] Playwright MCP configured as `mcp-server-playwright`, not `bunx @playwright/mcp`
 - [ ] Your AI CLI started from inside the dev shell
-- [ ] `bun doctor.ts` reports `Playwright chromium installed`
+- [ ] `career-ops doctor` reports `Playwright chromium installed`
 
 ## 1. Enter the dev shell
 
@@ -73,7 +73,7 @@ Start your AI CLI from inside the dev shell. The CLI resolves `mcp-server-playwr
 
 ## 4. Don't run `bunx playwright install`
 
-`bunx playwright install chromium` downloads about 600 MB of browsers that can't run on NixOS. If `bun doctor.ts` reports that Chromium is missing, check that you are inside the dev shell and have re-entered it since the last `bun install`.
+`bunx playwright install chromium` downloads about 600 MB of browsers that can't run on NixOS. If `career-ops doctor` reports that Chromium is missing, check that you are inside the dev shell and have re-entered it since the last `bun install`.
 
 ## 5. Tools the dev shell doesn't include
 
@@ -81,7 +81,7 @@ These features need tools that aren't in the dev shell. To use one, run it with 
 
 | Feature | Needs | Example |
 |---------|-------|---------|
-| Go dashboard (`dashboard/`) | `go` | `nix shell nixpkgs#go -c bun build-dashboard.ts` |
+| Go dashboard (`dashboard/`) | `go` | `nix shell nixpkgs#go -c career-ops build-dashboard` |
 | LaTeX CV modes (`latex`, `latex-tex`) | `tectonic` or `pdflatex` | `nix shell nixpkgs#tectonic`, then run the mode |
 
-The HTML-to-PDF CV path (`generate-pdf.ts`) needs only the dev shell.
+The HTML-to-PDF CV path (`packages/cli/src/commands/cv/generate-pdf.ts`) needs only the dev shell.

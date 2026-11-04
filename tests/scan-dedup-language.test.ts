@@ -31,12 +31,12 @@ import {
   matchesSeenCompanyRole,
   requisitionIdsForDedup,
   resolveDedupIncludeLanguage,
-} from '../scan.ts';
+} from '../packages/core/src/scanning/scan.ts';
 import {
   parseScanHistoryLine,
   scanHistoryLineHasColumn,
   SCAN_HISTORY_COLUMNS,
-} from '../lib/scan-history-columns.ts';
+} from '../packages/core/src/scanning/scan-history-columns.ts';
 
 console.log('\nscan.ts — requisition id + language-aware company+role dedupe');
 

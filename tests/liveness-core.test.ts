@@ -10,7 +10,7 @@
 // generalized pattern requires any job noun within 60 chars of "has been
 // filled" and rejects "filled out" (a candidate completing a form).
 import { pass, fail } from './helpers.ts';
-import { classifyLiveness } from '../liveness-core.ts';
+import { classifyLiveness } from '../packages/core/src/liveness/liveness-core.ts';
 
 console.log('\nliveness-core — "filled" reqs (incl. Phenom/ICF phrasing) classify as expired');
 
@@ -769,7 +769,7 @@ classifyLiveness({
   : fail('an unrelated control read as Apply');
 
 // ── isUnreadableVerdict: "body could not be read" is not "closed" (#5408) ────
-import { isUnreadableVerdict } from '../liveness-core.ts';
+import { isUnreadableVerdict } from '../packages/core/src/liveness/liveness-core.ts';
 
 const unreadableProbe = classifyLiveness({
   status: 200,

@@ -1,8 +1,8 @@
 // tests/scan-field-filters-e2e.test.ts — #3438 through the real scan.
 //
 // The unit test next door checks normalizeFilterOn and the compiler in
-// isolation, which cannot notice if scan.ts stops APPLYING filter_on. This
-// runs scan.ts itself against local-parser fixture boards and asserts on what
+// isolation, which cannot notice if packages/core/src/scanning/scan.ts stops APPLYING filter_on. This
+// runs packages/core/src/scanning/scan.ts itself against local-parser fixture boards and asserts on what
 // actually reached the pipeline and on the counters the run printed. It covers
 // the local-parser passthrough in the same pass: without it `job.noc` never
 // reaches the filter at all.
@@ -43,7 +43,7 @@ ${entryExtra}    parser:
       command: node
       script: tests/fixtures/${fixture}
 `);
-    const stdout = execFileSync(NODE, [join(ROOT, 'scan.ts')], {
+    const stdout = execFileSync(NODE, [join(ROOT, 'packages/core/src/scanning/scan.ts')], {
       cwd: dir,
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_PORTALS: portals },
       encoding: 'utf-8',

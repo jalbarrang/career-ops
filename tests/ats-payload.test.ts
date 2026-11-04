@@ -1,10 +1,10 @@
-// tests/ats-payload.test.ts — the CLI contract of ats-payload.ts (#3251).
+// tests/ats-payload.test.ts — the CLI contract of packages/cli/src/commands/cv/ats-payload.ts (#3251).
 //
 // The unit-level behaviour (the fold, its idempotency, the three lints) is
-// pinned by `bun ats-payload.ts --self-test`, registered in test-all.ts's
+// pinned by `career-ops ats-payload --self-test`, registered in test-all.ts's
 // script list. What CANNOT be pinned from inside the module is the property the
 // whole design rests on: stdout carries the payload and ONLY the payload, so
-// `bun ats-payload.ts cv.json > cv-ats.json` yields a file build-cv-html.ts
+// `career-ops ats-payload cv.json > cv-ats.json` yields a file packages/cli/src/commands/cv/build-cv-html.ts
 // can read, while every human-facing word goes to stderr. A findings line that
 // leaked into stdout would corrupt the artifact and nothing inside the module
 // would notice.
@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const SCRIPT = join(ROOT, 'ats-payload.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/cv/ats-payload.ts');
 
 function run(args, { input } = {}) {
   const r = spawnSync(process.execPath, [SCRIPT, ...args], {
@@ -30,8 +30,8 @@ function run(args, { input } = {}) {
     input,
     timeout: 30_000,
   });
-  assert.equal(r.error, undefined, `ats-payload.ts failed to spawn: ${r.error?.message}`);
-  assert.equal(r.signal, null, `ats-payload.ts was killed by ${r.signal} (timeout?)`);
+  assert.equal(r.error, undefined, `packages/cli/src/commands/cv/ats-payload.ts failed to spawn: ${r.error?.message}`);
+  assert.equal(r.signal, null, `packages/cli/src/commands/cv/ats-payload.ts was killed by ${r.signal} (timeout?)`);
   return r;
 }
 
@@ -135,7 +135,7 @@ test('running the transform twice produces a byte-identical payload', () => {
   });
 });
 
-// ── The reason the transform exists: what build-cv-html.ts then renders ─────
+// ── The reason the transform exists: what packages/cli/src/commands/cv/build-cv-html.ts then renders ─────
 
 test('the folded payload renders comma-delimited under Skills, with no CSS-only tag spans', () => {
   withFixture(DIRTY_PAYLOAD, (file, dir) => {
@@ -143,10 +143,10 @@ test('the folded payload renders comma-delimited under Skills, with no CSS-only 
     writeFileSync(foldedFile, run([file]).stdout);
     const htmlFile = join(dir, 'cv.html');
 
-    const build = spawnSync(process.execPath, [join(ROOT, 'build-cv-html.ts'), foldedFile, htmlFile], {
+    const build = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/cv/build-cv-html.ts'), foldedFile, htmlFile], {
       cwd: ROOT, encoding: 'utf-8', timeout: 30_000,
     });
-    assert.equal(build.status, 0, describeSpawn(build, `build-cv-html.ts failed`));
+    assert.equal(build.status, 0, describeSpawn(build, `packages/cli/src/commands/cv/build-cv-html.ts failed`));
 
     const html = readFileSync(htmlFile, 'utf-8');
     // The defect: competency tags separated by `gap: 8px` and nothing else, so
@@ -269,7 +269,7 @@ test('a mixed-type competencies array is refused rather than silently thinned', 
 
 test('a numeric competency is accepted, not refused', () => {
   // The guard is drawn at what is LOST, not at what is non-string: String()
-  // carries a numeric scalar through, and build-cv-html.ts renders it
+  // carries a numeric scalar through, and packages/cli/src/commands/cv/build-cv-html.ts renders it
   // (tests/cv-numeric-scalars.test.ts). Rejecting it would make this script
   // stricter than the builder it feeds.
   const r = run(['-'], { input: JSON.stringify({ competencies: ['AWS', 2024] }) });

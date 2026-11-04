@@ -7,14 +7,14 @@
  * and it read cv.md for the section-order guard and nothing else: a manifest
  * whose CV said "40 engineers" against a cv.md that says 4 rendered and exited 0.
  *
- * Runs a copy of generate-pdf.ts in a sandbox workspace with a stubbed
+ * Runs a copy of packages/cli/src/commands/cv/generate-pdf.ts in a sandbox workspace with a stubbed
  * Chromium (same arrangement as generate-pdf-batch.test.ts), so a blocked
  * entry is observed the way a caller sees it: no PDF, a failed row in
  * <manifest>.results.json and a non-zero exit, with the other entries rendered.
  */
 import { spawnSync } from 'child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, realpathSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import {dirname, join } from 'path';
 import { pass, fail, rmSync, linkRepoPackage, ROOT, NODE, SANDBOX_DATA_ROOT } from './helpers.ts';
 
 // Under the suite's own data root, not the checkout's output/: that directory
@@ -24,19 +24,28 @@ mkdirSync(outputRoot, { recursive: true });
 // realpathSync for the reason generate-pdf-batch.test.ts documents (#3165):
 // the main-module guard compares realpaths.
 const sandbox = realpathSync(mkdtempSync(join(outputRoot, 'batch-fact-gate-test-')));
-const script = join(sandbox, 'generate-pdf.ts');
+const script = join(sandbox, 'packages/cli/src/commands/cv/generate-pdf.ts');
 
-// generate-pdf.ts, its static imports, and verify-cv-facts.ts — the gate is
+// packages/cli/src/commands/cv/generate-pdf.ts, its static imports, and packages/cli/src/commands/cv/verify-cv-facts.ts — the gate is
 // imported lazily, so a sandbox without it would pass every entry unchecked
 // only if the gate were never reached. Here it must be reached.
 for (const file of [
-  'generate-pdf.ts', 'verify-cv-facts.ts', 'theme-style.ts', 'cv-experience-order.ts',
-  'tracker-utils.ts', 'tracker-parse.ts', 'tracker-aliases.json', 'pipeline-lock.ts',
-  'cv-sections-core.ts', 'path-resolver.ts',
-]) copyFileSync(join(ROOT, file), join(sandbox, file));
-mkdirSync(join(sandbox, 'lib'), { recursive: true });
-for (const file of ['is-main-module.ts', 'page-format.ts', 'dir-lock.ts', 'yaml-document.ts']) {
-  copyFileSync(join(ROOT, 'lib', file), join(sandbox, 'lib', file));
+  'packages/cli/src/commands/cv/generate-pdf.ts', 'packages/cli/src/commands/cv/verify-cv-facts.ts', 'packages/cli/src/commands/cv/theme-style.ts', 'packages/core/src/cv/cv-experience-order.ts',
+  'packages/core/src/tracker/tracker-utils.ts', 'packages/core/src/tracker/tracker-parse.ts', 'packages/core/src/tracker/tracker-aliases.json', 'packages/core/src/kernel/pipeline-lock.ts',
+  'packages/core/src/cv/cv-sections-core.ts', 'packages/core/src/kernel/path-resolver.ts',
+'packages/core/src/kernel/repo-root.ts',]) {
+  mkdirSync(dirname(join(sandbox, file)), { recursive: true });
+  copyFileSync(join(ROOT, file), join(sandbox, file));
+}
+for (const file of ['is-main-module.ts', 'dir-lock.ts', 'yaml-document.ts', 'repo-root.ts']) {
+  const target = join(sandbox, 'packages/core/src/kernel', file);
+  mkdirSync(dirname(target), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/core/src/kernel', file), target);
+}
+for (const file of ['page-format.ts', 'cv-payload-schema.ts']) {
+  const target = join(sandbox, 'packages/core/src/cv', file);
+  mkdirSync(dirname(target), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/core/src/cv', file), target);
 }
 mkdirSync(join(sandbox, 'data'), { recursive: true });
 writeFileSync(join(sandbox, 'data', 'pdf-index.tsv'), '', 'utf-8');

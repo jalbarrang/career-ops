@@ -1,9 +1,9 @@
 // tests/outcome-journal-fork.test.ts — one application, one journal.
 //
-// outcome.ts stores an application's outcome journal and artifacts in
+// packages/cli/src/commands/tracker/outcome.ts stores an application's outcome journal and artifacts in
 // data/outcomes/{num}_{company_slug}_{role_slug}/, and that journal is
 // append-only: "the LAST `## Entry:` block is the current truth"
-// (calibrate.ts's parseOutcomeJournal).
+// (packages/cli/src/commands/insights/calibrate.ts's parseOutcomeJournal).
 //
 // The directory name was rebuilt from the tracker row's CURRENT text on every
 // call, so editing the Role cell between two recordings — normalising "Senior
@@ -27,7 +27,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, utime
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { outcomeDirsFor, resolveOutcomeDir } from '../lib/outcome-dir.ts';
+import { outcomeDirsFor, resolveOutcomeDir } from '../packages/core/src/tracker/outcome-dir.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -47,18 +47,18 @@ function sandbox() {
 }
 
 function record(dir, args) {
-  const r = spawnSync(process.execPath, [join(ROOT, 'outcome.ts'), ...args], {
+  const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/tracker/outcome.ts'), ...args], {
     cwd: ROOT,
     encoding: 'utf-8',
     timeout: 30_000,
     env: { ...process.env, CAREER_OPS_TRACKER: join(dir, 'data', 'applications.md') },
   });
   assert.equal(r.error, undefined, `spawn failed: ${r.error?.message}`);
-  // Exit status, not just "it spawned". outcome.ts writes outcome.md BEFORE
+  // Exit status, not just "it spawned". packages/cli/src/commands/tracker/outcome.ts writes outcome.md BEFORE
   // it updates the tracker, so a failure after the journal write leaves every
   // file these tests look for while r.error stays undefined — the assertions
   // below would pass on a command that failed.
-  assert.equal(r.status, 0, describeSpawn(r, `outcome.ts ${args.join(' ')} exited ${r.status}: ${r.stderr || r.stdout}`));
+  assert.equal(r.status, 0, describeSpawn(r, `packages/cli/src/commands/tracker/outcome.ts ${args.join(' ')} exited ${r.status}: ${r.stderr || r.stdout}`));
   return r;
 }
 

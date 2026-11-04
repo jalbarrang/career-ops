@@ -17,7 +17,7 @@
 import { mkdirSync, writeFileSync, rmSync, existsSync, readdirSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';
 import { pass, fail, makeUpdaterRepo } from './helpers.ts';
-import { locallyModifiedSystemFiles, commitPathspecs, updateCommitCommand } from '../update-system.ts';
+import { locallyModifiedSystemFiles, commitPathspecs, updateCommitCommand } from '../packages/cli/src/commands/platform/update-system.ts';
 
 const WINDOWS_ARGV_LIMIT = 32767;
 
