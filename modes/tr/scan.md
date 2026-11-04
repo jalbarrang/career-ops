@@ -2,7 +2,7 @@
 
 Yapılandırılmış iş portallarını tara, başlık ilgisine göre filtrele ve yeni iş ilanlarını sonradan değerlendirilmek üzere ardışık düzene (pipeline) ekle.
 
-> **Not (v1.6+):** Varsayılan tarayıcı (`scan.mjs` / `npm run scan`) **sıfır jeton** (zero-token) kullanır ve yapılandırılmış kaynaklardan yararlanır: şirket başına yapılandırılmış yerel ayrıştırıcılar (local parsers) ve genel Greenhouse, Ashby, Lever API'leri. Aşağıda açıklanan Playwright/WebSearch seviyeleri tarayıcının kendisinin değil, **ajan** iş akışının (yapay zeka ajanı tarafından yürütülen) temsilidir. Bir şirketin yerel ayrıştırıcısı veya Greenhouse/Ashby/Lever API'si yoksa, `scan.mjs` o şirketi yok sayar; bu durumlarda ajan Seviye 1 (Playwright) veya Seviye 3'ü (WebSearch) manuel olarak tamamlamalıdır.
+> **Not (v1.6+):** Varsayılan tarayıcı (`scan.ts` / `bun run scan`) **sıfır jeton** (zero-token) kullanır ve yapılandırılmış kaynaklardan yararlanır: şirket başına yapılandırılmış yerel ayrıştırıcılar (local parsers) ve genel Greenhouse, Ashby, Lever API'leri. Aşağıda açıklanan Playwright/WebSearch seviyeleri tarayıcının kendisinin değil, **ajan** iş akışının (yapay zeka ajanı tarafından yürütülen) temsilidir. Bir şirketin yerel ayrıştırıcısı veya Greenhouse/Ashby/Lever API'si yoksa, `scan.ts` o şirketi yok sayar; bu durumlarda ajan Seviye 1 (Playwright) veya Seviye 3'ü (WebSearch) manuel olarak tamamlamalıdır.
 >
 > **Kural (v1.8+):** Bir şirketin yerel ayrıştırıcısı Seviye 0'da başarıyla tamamlanırsa, ajan o şirketi Playwright (Seviye 1) veya API (Seviye 2) içinde **tekrarlamamalıdır**. Seviye 3'te genel sorgular aktif kalır, ancak halihazırda bir ayrıştırıcı tarafından kapsanmış olan şirketlerden gelen sonuçlar reddedilir. Bkz: [Kural: Başarılı Yerel Ayrıştırıcı](#kural-başarılı-yerel-ayrıştırıcı--pahalı-kazıma-tekrarı-yok).
 
@@ -79,7 +79,7 @@ Dizi (Array) formatı:
 }
 ```
 
-`company` isteğe bağlıdır; eğer sağlanmazsa, `scan.mjs` ismi `tracked_companies` üzerinden kullanır.
+`company` isteğe bağlıdır; eğer sağlanmazsa, `scan.ts` ismi `tracked_companies` üzerinden kullanır.
 
 Tarayıcının (scanner) stdout okunduktan sonra tam JSON'u kalıcı olarak saklamasına gerek yoktur. Bir ayrıştırıcı denetim (auditing) veya hata ayıklama için ayrıca bir yapı (artifact) oluşturursa, bunu `data/parser-output/{company}/` altına kaydedin ve git haricinde tutun (`.gitignore` içindeki JSON dosyaları; dizin yapısını korumak için `.gitkeep` dosyaları git'te tutulur).
 
@@ -96,16 +96,16 @@ Ajanın taraması sırasında, **`local_parser_ok`** kümesini bellekte tut. Bu 
 | Level | If the company is in `local_parser_ok` |
 |-------|----------------------------------------|
 | **1 — Playwright** | **Atla (Skip)** — söz konusu `careers_url`'ye `browser_navigate` yapma (jeton tüketen en pahalı yöntem) |
-| **2 — API** | **Atla** — `api:` uç noktasına WebFetch yapma (halihazırda ayrıştırıcı tarafından kapsanmaktadır; `scan.mjs` de başarılı bir ayrıştırıcı sonrasında API kullanmaz) |
+| **2 — API** | **Atla** — `api:` uç noktasına WebFetch yapma (halihazırda ayrıştırıcı tarafından kapsanmaktadır; `scan.ts` de başarılı bir ayrıştırıcı sonrasında API kullanmaz) |
 | **3 — WebSearch** | **Genel** sorguları çalıştır (`site:`, rol unvanları); normalize edilmiş şirketi `local_parser_ok` ile eşleşen tüm bulguları **reddet** |
 
 **İstisnalar:**
 
-- Ayrıştırıcı **başarısız olduysa** → şirket `local_parser_ok` içine **eklenmez**; Seviye 1 ve 2 normal olarak uygulanır (ayrıştırıcı başarısız olduğunda ve ATS API'si mevcut olduğunda `scan.mjs` içindeki yedek yöntemle (fallback) aynı kriterler geçerlidir).
+- Ayrıştırıcı **başarısız olduysa** → şirket `local_parser_ok` içine **eklenmez**; Seviye 1 ve 2 normal olarak uygulanır (ayrıştırıcı başarısız olduğunda ve ATS API'si mevcut olduğunda `scan.ts` içindeki yedek yöntemle (fallback) aynı kriterler geçerlidir).
 - Seviye 3: kapsamlı sorguları devreden çıkarma (`site:jobs.ashbyhq.com`, `site:boards.greenhouse.io`, vb.) — bunlar **yeni** şirketleri keşfetmek için kullanılır. Yalnızca halihazırda başarılı bir ayrıştırıcıyla `tracked_companies` içinde yer alan şirketlere ait sonuçları filtrele.
 - Aktif bir yerel ayrıştırıcısı olan bir şirket için özel `search_queries` oluşturma (örneğin `site:jobs.ashbyhq.com/cohere "AI Engineer"`); ayrıştırıcıyı kullan, başarısız olursa Playwright/API'ye başvur.
 
-**Önerilen Seviye 0:** Tüm sıfır jetonluk (zero-token) yerel ayrıştırıcıları + API'leri tek adımda kapsamak için ajan iş akışının en başında `node scan.mjs` (veya `npm run scan`) komutunu çalıştır ve `local-parser` yöntemini başarıyla kullanan şirketleri geri döndür.
+**Önerilen Seviye 0:** Tüm sıfır jetonluk (zero-token) yerel ayrıştırıcıları + API'leri tek adımda kapsamak için ajan iş akışının en başında `bun scan.ts` (veya `bun run scan`) komutunu çalıştır ve `local-parser` yöntemini başarıyla kullanan şirketleri geri döndür.
 
 ### Seviye 1 — Doğrudan Playwright (BİRİNCİL)
 
@@ -147,7 +147,7 @@ Açık bir API'si veya yapılandırılmış akışı (feed) olan ve **`local_par
 
 `site:` filtreleriyle donatılmış `search_queries`, portalları çaprazlama (transversally - tüm Ashby, tüm Greenhouse, vb.) kapsar. Henüz `tracked_companies` içinde olmayan YENİ şirketleri keşfetmek için kullanışlıdır, ancak sonuçlar eski (outdated) olabilir. `local_parser_ok` içindeki şirketlere ait sonuçlar filtrelendikten sonra, kalan sonuçlar Seviye 0–2 verileriyle tekilleştirilir (deduplicated).
 
-> **Dikkat — Seviye-3 sonuçları haftalarca eski olabilir.** WebSearch, canlı ilan tahtasını geriden takip eden bir arama dizininden (search index) beslenir, bu nedenle bir sonuç aslında kapanmış bir ilanı tarif ediyor olabilir. Her Seviye-3 bulgusunu doğrulanmamış (unverified) olarak değerlendir: `data/pipeline.md` içine eklemeden veya değerlendirmeden önce gerçek ilan üzerinden aktifliğini onayla (ATS sunuculu sayfalar için `node check-liveness.mjs <url>`, ATS dışı sayfalar için Playwright kullan). Seviye 2'deki gerçek zamanlı ATS yanıtlarının aksine, bir Seviye-3 parçacığı (snippet) asla bir rolün hala açık olduğunun kanıtı değildir.
+> **Dikkat — Seviye-3 sonuçları haftalarca eski olabilir.** WebSearch, canlı ilan tahtasını geriden takip eden bir arama dizininden (search index) beslenir, bu nedenle bir sonuç aslında kapanmış bir ilanı tarif ediyor olabilir. Her Seviye-3 bulgusunu doğrulanmamış (unverified) olarak değerlendir: `data/pipeline.md` içine eklemeden veya değerlendirmeden önce gerçek ilan üzerinden aktifliğini onayla (ATS sunuculu sayfalar için `bun check-liveness.ts <url>`, ATS dışı sayfalar için Playwright kullan). Seviye 2'deki gerçek zamanlı ATS yanıtlarının aksine, bir Seviye-3 parçacığı (snippet) asla bir rolün hala açık olduğunun kanıtı değildir.
 
 **Execution Priority:**
 1. Seviye 0: Local Parser → `parser:` ayarı ve mevcut bir betiği olan şirketler; `local_parser_ok` listesini oluştur
@@ -163,9 +163,9 @@ Seviyeler eklenebilirdir (additive) — sırasıyla çalıştırılırlar ve son
 2. **Read History**: `data/scan-history.tsv` → daha önce görülmüş URL'ler
 3. **Read Dedup Sources**: `data/applications.md` + `data/pipeline.md`
 
-3.5. **Level 0 — Local Parser** (`scan.mjs`, sıfır-jeton):
+3.5. **Level 0 — Local Parser** (`scan.ts`, sıfır-jeton):
    `local_parser_ok = []` olarak başlat.
-   Tüm sıfır-jetonluk yerel ayrıştırıcıları + API'leri kapsamak için `node scan.mjs` komutunu bir kez çalıştırmayı tercih et; eğer manuel olarak çalıştırıyorsan aşağıdaki mantığı tekrar et.
+   Tüm sıfır-jetonluk yerel ayrıştırıcıları + API'leri kapsamak için `bun scan.ts` komutunu bir kez çalıştırmayı tercih et; eğer manuel olarak çalıştırıyorsan aşağıdaki mantığı tekrar et.
    `enabled: true`, `parser.command` ve mevcut bir betiğe sahip `tracked_companies` içindeki her şirket için:
    a. `parser.command`'i `parser.script` + `parser.args` ile yerel süreç yürütme (local process execution) üzerinden kabuk (shell) kullanmadan yürüt.
    b. Argümanlardaki `{careers_url}` ve `{company}` yer tutucularını (placeholders) doldur.
@@ -223,7 +223,7 @@ Seviyeler eklenebilirdir (additive) — sırasıyla çalıştırılırlar ve son
    - `applications.md` → normalize edilmiş şirket + rol daha önce değerlendirilmiş
    - `pipeline.md` → aynı URL beklemede veya işlenmiş listesinde
 
-7.1. **Cross-listing check (#1597)** — `scan.mjs` içinde otomatiktir, sadece uyarır:
+7.1. **Cross-listing check (#1597)** — `scan.ts` içinde otomatiktir, sadece uyarır:
    - Yeni her bir teklifin JD içeriği (sağlayıcının liste API'si bu metni sağlıyorsa, örn. Lever) parmak izine (64-bit SimHash, `scan-history.tsv` 8. sütunu) dönüştürülür.
    - Neredeyse birebir aynı içerik, son 90 gün içinde **farklı bir şirket** altında görüldüyse, tarama özetinde uyarılır — bunun olağan nedeni, işveren ismi gizlenmiş bir ajansın doğrudan ilanı yeniden yayınlamasıdır. URL ve şirket+rol tekilleştirmesi bu durumu yakalayamaz.
    - Otomatik olarak hiçbir veri silinmez. Taraflardan biri ajans ise, başvuruyu yalnızca TEK bir kanal üzerinden yapın (bkz. 'Via' kanal iş akışı, #1596) — çifte başvuru adayın her iki tarafla da arasını bozar.
@@ -249,7 +249,7 @@ Seviyeler eklenebilirdir (additive) — sırasıyla çalıştırılırlar ve son
 
 8. **For each new verified offer that passes filters**:
    a. `pipeline.md` "Pending" (Beklemede) bölümüne ekle: `- [ ] {url} | {company} | {title}`
-   b. `scan.mjs` içindeki `formatScanHistoryRow` / `appendToScanHistory` ile `scan-history.tsv`'ye kaydet; satırı elle oluşturma. Kullanılabilir JD varsa SimHash 8. sütuna yazılır.
+   b. `scan.ts` içindeki `formatScanHistoryRow` / `appendToScanHistory` ile `scan-history.tsv`'ye kaydet; satırı elle oluşturma. Kullanılabilir JD varsa SimHash 8. sütuna yazılır.
 
 9. **Offers filtered by title**: `scan-history.tsv`'ye `skipped_title` durumuyla kaydet.
 10. **Duplicate offers**: `skipped_dup` durumuyla kaydet.

@@ -1,5 +1,5 @@
 # Prepares the environment for Copilot cloud agent sessions.
-# Mirrors test.yml: same Node and Go, dependencies installed without
+# Mirrors test.yml: same Bun and Go, dependencies installed without
 # lifecycle scripts. The agent's network firewall does not apply to this
 # job, so this file stays under CODEOWNERS like every other workflow.
 name: Copilot setup steps
@@ -18,11 +18,11 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '24'
+          bun-version: '1.4.3'
       - uses: actions/setup-go@v7
         with:
           go-version: '1.27'
           cache-dependency-path: dashboard/go.sum
-      - run: npm install --ignore-scripts
+      - run: bun install --frozen-lockfile --ignore-scripts

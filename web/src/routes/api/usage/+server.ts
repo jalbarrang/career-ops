@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { claudeUsageTokens } from "@/lib/claude-usage.mjs";
+import { claudeUsageTokens } from "@/lib/claude-usage.ts";
 
 // Reads Claude Code's per-message usage across ALL projects (~/.claude/projects/
 // **/*.jsonl) and sums tokens in the rolling 5h and 7d windows — the same scope

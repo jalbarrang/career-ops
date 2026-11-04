@@ -3,8 +3,8 @@
 #
 # Scope principle: gate what CI can't catch (a bad change here passes the
 # tests silently) + the catastrophic updater + governance docs. Code that
-# test-all.mjs / Renovate / dependency-review already guard (scan.mjs,
-# generate-pdf.mjs, test-all.mjs, package.json) is intentionally NOT gated,
+# test-all.ts / Renovate / dependency-review already guard (scan.ts,
+# generate-pdf.ts, test-all.ts, package.json) is intentionally NOT gated,
 # so routine contributor PRs aren't bottlenecked on a single owner.
 #
 # 2026-08-13: that condition is met — there is now more than one code owner,
@@ -46,23 +46,23 @@
 /DATA_CONTRACT.md      @santifer
 
 # The self-updater (catastrophic if wrong — touches user installs)
-/update-system.mjs     @santifer
+/update-system.ts     @santifer
 # Its system-layer list (#5554). Kept here: the run-time checks refuse an entry
 # that names the user layer, not one that ships a file installs should not get.
-/lib/update-manifest.mjs  @santifer
-/updater-migration-tests.mjs  @santifer
+/lib/update-manifest.ts  @santifer
+/updater-migration-tests.ts  @santifer
 
 # Plugin governance chokepoint (a bad change here ships unreviewed code to
 # every user — the registry pin, the gates, and the CI must stay single-owner).
 # The registry is one file per plugin under plugins-registry/ (#1401).
 /plugins-registry/             @santifer
-/validate-plugin-registry.mjs  @santifer
-/plugin-install.mjs            @santifer
-/plugin-audit.mjs              @santifer
-/plugins/_engine.mjs           @santifer
-/plugins/_lock.mjs             @santifer
-/plugins/_net.mjs              @santifer
-/plugins/_registry.mjs         @santifer
+/validate-plugin-registry.ts  @santifer
+/plugin-install.ts            @santifer
+/plugin-audit.ts              @santifer
+/plugins/_engine.ts           @santifer
+/plugins/_lock.ts             @santifer
+/plugins/_net.ts              @santifer
+/plugins/_registry.ts         @santifer
 /.github/workflows/            @santifer
 /docs/PLUGIN_REVIEW.md         @santifer
 
@@ -75,7 +75,7 @@
 # carrying them. Test-suite infrastructure and the Go dashboard both fall to
 # @Scott-Emberson, who built most of what is in them (the test-all split into
 # six suites, the provider-contract suites, and the dashboard's tracker work).
-# `test-all.mjs` itself stays out on purpose: it is the harness every other
+# `test-all.ts` itself stays out on purpose: it is the harness every other
 # check runs through, so it keeps the wider review.
 /tests/     @Scott-Emberson
 /dashboard/ @Scott-Emberson

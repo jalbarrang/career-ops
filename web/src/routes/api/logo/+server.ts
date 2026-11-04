@@ -2,8 +2,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { careerOpsRoot } from "@/lib/career-ops";
 import { companyDomain } from "@/lib/company";
-import { companyCacheKey } from "@/lib/core/logo-cache-key.mjs";
-import { companyDomains } from "@/lib/core/company-domains.mjs";
+import { companyCacheKey } from "@/lib/core/logo-cache-key.ts";
+import { companyDomains } from "@/lib/core/company-domains.ts";
 
 // Localhost logo proxy + on-disk cache, FOREVER per key. Honors local-first: the
 // browser never talks to Google directly. Accepts `?domain=` (exact) OR

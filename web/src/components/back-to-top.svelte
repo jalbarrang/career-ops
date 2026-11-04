@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { ArrowUp } from "@lucide/svelte";
   import { cn } from "@/lib/cn";
-  import { scrollBehaviorFor, shouldShowBackToTop } from "@/lib/scroll-to-top.mjs";
+  import { scrollBehaviorFor, shouldShowBackToTop } from "@/lib/scroll-to-top.ts";
   import { m } from "@/lib/paraglide/messages";
 
   // Floating control that returns the window to the top of long pages. Rendered

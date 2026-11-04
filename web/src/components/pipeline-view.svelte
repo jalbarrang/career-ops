@@ -7,13 +7,13 @@
   import CompanyLogo from "@/components/company-logo.svelte";
   import { canonStatus, scoreNum, scoreTone } from "@/lib/format";
   import StatusSelect from "@/components/status-select.svelte";
-  import { applicationKey, applySavedStatus } from "@/lib/pipeline-status.mjs";
+  import { applicationKey, applySavedStatus } from "@/lib/pipeline-status.ts";
   import InboxTriage from "@/components/inbox/inbox-triage.svelte";
   import { cn } from "@/lib/cn";
-  import { companyPresentation, companySearchText } from "@/lib/company-presentation.mjs";
+  import { companyPresentation, companySearchText } from "@/lib/company-presentation.ts";
   import PipelineTableRows from "@/components/page-loading-skeletons/pipeline-table-rows.svelte";
   import { startRouteProgress } from "@/components/route-progress.svelte";
-  import { sortRows } from "@/lib/core/pipeline-sort.mjs";
+  import { sortRows } from "@/lib/core/pipeline-sort.ts";
 
   // INBOX (the triage queue) is the default tab; the rest filter the tracker.
   const TABS = [

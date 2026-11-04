@@ -29,7 +29,7 @@ Zarifçe çıkış yap.
 Şunu çalıştır:
 
 ```bash
-node analyze-patterns.mjs
+bun analyze-patterns.ts
 ```
 
 JSON çıktısını ayrıştır. Şunları içerir:

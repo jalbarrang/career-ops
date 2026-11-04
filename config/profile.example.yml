@@ -138,7 +138,7 @@ language:
 # follow_ups:
 #   enabled: true
 
-# Optional follow-up cadence preferences for `node followup-cadence.mjs`.
+# Optional follow-up cadence preferences for `bun followup-cadence.ts`.
 # CLI flags still win for one-off runs (for example `--applied-days 10`).
 # followup_cadence:
 #   applied_first_days: 7
@@ -155,7 +155,7 @@ language:
 # session_title: auto
 
 # Optional. Private repos the `expand` mode's GitHub evidence step
-# (`node github-evidence.mjs`, needs a logged-in `gh`) may use as evidence.
+# (`bun github-evidence.ts`, needs a logged-in `gh`) may use as evidence.
 # Empty by default: a private repo appears only by name and PR and commit counts,
 # never with PR titles or commit dates, until you add it here yourself as
 # "owner/repo". Only PR and commit metadata is read, never source code or commit
@@ -230,7 +230,7 @@ cv:
   # cv.md; this setting does nothing in either case.
   #
   # This exists so the order can live in your profile instead of in
-  # templates/cv-template.html, which update-system.mjs restores on every update.
+  # templates/cv-template.html, which update-system.ts restores on every update.
   # cv.md stays the source of truth: the section-order guard still compares the
   # rendered CV against it, and still fails if they disagree.
   # sections: [skills, education, certifications, awards]
@@ -337,7 +337,7 @@ cover_letter:
 # How the scan and JD-extraction steps read SPA job pages.
 #   mcp (default) — the browser MCP (browser_navigate + browser_snapshot). Works
 #                   out of the box; the snapshot is token-heavy.
-#   cli           — the headless `browser-extract.mjs` helper: renders the page
+#   cli           — the headless `browser-extract.ts` helper: renders the page
 #                   and returns compact JSON, cutting per-page tokens ~2–5×. Opt-in.
 #                   If the helper isn't available, the modes fall back to mcp
 #                   silently, so nothing breaks. `doctor` reports the active mode.

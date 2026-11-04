@@ -2,26 +2,27 @@ import fs from "node:fs";
 import path from "node:path";
 import * as yaml from "js-yaml";
 import { atomicWrite } from "@/lib/core/safe-write";
-import { resolveDataRoot } from "@/lib/core/data-root.mjs";
-import { readTrackerFile } from "@/lib/core/tracker-files.mjs";
-import { resolveCodeRoot, resolveRootScript } from "@/lib/core/code-root.mjs";
-import { parseApplications } from "@/lib/tracker-table.mjs";
-import { parseStatusLog } from "@/lib/pipeline-sankey.mjs";
-// Pipeline rows are parsed in a plain .mjs for the same reason as
-// tracker-table.mjs: so `node --test` can exercise the real parser.
-import { parseInbox, splitLines } from "@/lib/pipeline-table.mjs";
+import { resolveDataRoot } from "@/lib/core/data-root.ts";
+import { readTrackerFile } from "@/lib/core/tracker-files.ts";
+import { resolveCodeRoot, resolveRootScript } from "@/lib/core/code-root.ts";
+import { parseApplications } from "@/lib/tracker-table.ts";
+import { parseStatusLog } from "@/lib/pipeline-sankey.ts";
+// Pipeline rows are parsed in a plain .ts for the same reason as
+// tracker-table.ts: so `node --test` can exercise the real parser.
+import { parseInbox, splitLines } from "@/lib/pipeline-table.ts";
 // One definition of the `{n}-RESERVED.md` convention, shared with
-// run-cli-support.mjs — see report-files.mjs for why it lives there.
-import { isReservedReportFile } from "@/lib/report-files.mjs";
+// run-cli-support.ts — see report-files.ts for why it lives there.
+import { isReservedReportFile } from "@/lib/report-files.ts";
 import { resolvePdfIndexPath } from "@/lib/core/pdf-index";
 // Pure parser, no I/O — shared with the apply flow's CV resolver so the two
 // don't drift into two different definitions of "which report does this
 // index row belong to" (#2599, #2008 review).
-import { pdfIndexEntryForReport } from "@/lib/apply/cv-selection.mjs";
+import { pdfIndexEntryForReport } from "@/lib/apply/cv-selection.ts";
 // The managed-block markers and the profile read live together in one plain
 // module, so rememberFact() (the block's only WRITER) and readMemory() (its
 // reader) cannot drift apart, and so the read rule is testable from web/tests.
-import { NOTES_START, NOTES_END, profilePath as profileMemoryPath, readProfileMemory } from "@/lib/profile-memory.mjs";
+import { NOTES_START, NOTES_END, profilePath as profileMemoryPath, readProfileMemory } from "@/lib/profile-memory.ts";
+import { getProfilePath } from "@/lib/core/profile-path.ts";
 
 /**
  * Resolve the career-ops "home" — the directory holding the user's sibling
@@ -32,9 +33,9 @@ import { NOTES_START, NOTES_END, profilePath as profileMemoryPath, readProfileMe
  */
 export function careerOpsRoot(): string {
   // `process.cwd()` is `<core>/web` for `next dev`/`next start`, so its parent is
-  // the core checkout — the same directory `path-resolver.mjs` calls `__dirname`.
+  // the core checkout — the same directory `path-resolver.ts` calls `__dirname`.
   // resolveDataRoot() needs it explicitly because relative env values and marker
-  // contents resolve against it; see data-root.mjs for why that base matters.
+  // contents resolve against it; see data-root.ts for why that base matters.
   //
   // Via resolveCodeRoot(), NOT a hardcoded `..`, so this agrees with rootScript()
   // just below — which already resolves the checkout that way. With
@@ -59,25 +60,25 @@ export function careerOpsRoot(): string {
 }
 
 /**
- * Absolute path to a core root script (e.g. doctor, verify-portals). The `.mjs`
+ * Absolute path to a core root script (e.g. doctor, verify-portals). The `.ts`
  * is assembled here from the bare name so the literal never appears as a direct
  * `execFile`/`spawn` argument — Next's bundler statically traces such literals
  * as module imports and fails the production build otherwise.
  *
  * Scripts live in the engine checkout — never in the data root. Under the #524
  * split layout (CAREER_OPS_ROOT pointing at a data-only directory) the data
- * root has no `.mjs` files, so resolving here made every script-driven endpoint
+ * root has no `.ts` files, so resolving here made every script-driven endpoint
  * (Explore discovery, doctor, portals verify, followups, run) report the
  * checkout as missing. CAREER_OPS_CODE_ROOT selects the checkout explicitly.
  */
 export function rootScript(nameNoExt: string): string {
-  // resolveRootScript() already returns the absolute `<checkout>/<name>.mjs`, and
+  // resolveRootScript() already returns the absolute `<checkout>/<name>.ts`, and
   // its path.join carries the Turbopack ignore: the core checkout is selected at
   // runtime and must not be bundled into the web server output.
   return resolveRootScript(resolveCodeRoot(process.cwd(), process.env), nameNoExt);
 }
 
-// Feature-detect the core's `tracker.mjs delete --num` row-delete (#1200) by probing
+// Feature-detect the core's `tracker.ts delete --num` row-delete (#1200) by probing
 // the local script source — older checkouts lack it, so the delete UI hides itself.
 export function trackerCanDelete(): boolean {
   try {
@@ -99,7 +100,7 @@ function read(rel: string): string | null {
 export type InboxJob = { url: string; company: string; role: string; location?: string; compensation?: string; done: boolean; postedAt?: string };
 
 /** Parse data/pipeline.md. The row grammar and its labeled-segment handling
- *  live in pipeline-table.mjs — see there for the column rules (#1015, #1017). */
+ *  live in pipeline-table.ts — see there for the column rules (#1015, #1017). */
 export function readInbox(): InboxJob[] {
   const md = read("data/pipeline.md");
   if (!md) return [];
@@ -149,21 +150,23 @@ export type Application = {
   applyLink: string;
   /** Tracker's `Follow-up` column — a date or "—"; "" when the column is absent. */
   followUp: string;
+  /** Tracker's `URL` column, as the href a markdown link points at (#3516); "" when absent. */
+  url: string;
   notes: string;
 };
 
 /**
  * Parse data/applications.md — the tracker table (source of truth).
- * The header-aware parsing lives in tracker-table.mjs, which resolves headers
+ * The header-aware parsing lives in tracker-table.ts, which resolves headers
  * through the SAME alias table the Node tooling uses (tracker-aliases.json,
- * exported by tracker-parse.mjs as HEADER_ALIASES) — one shared source, no
+ * exported by tracker-parse.ts as HEADER_ALIASES) — one shared source, no
  * web-side mirror to drift (#954, PR #1598 review). A data-only root falls back
  * to the running system checkout for that system-layer alias table.
  */
 export function readApplications(): Application[] {
   const md = readTrackerFile(careerOpsRoot());
   if (!md) return [];
-  // parseApplications derives each row from WEB_FIELD (tracker-table.mjs), so
+  // parseApplications derives each row from WEB_FIELD (tracker-table.ts), so
   // its keys are exactly this type's field names by construction — adding a
   // tracker column is the two edits described there (WEB_FIELD + Application),
   // never a hand-written return-shape list that the two could drift from. The
@@ -225,7 +228,7 @@ export type PdfPathForReportResult =
  *  CAREER_OPS_PDF_INDEX) rather than a hardcoded "data/pdf-index.tsv" literal
  *  — the exact class of bug that #2471 fixed in the core, once, for every
  *  reader. The parsing itself is pdfIndexEntryForReport, a pure function
- *  shared with the apply flow's own CV resolver (cv-selection.mjs) so there
+ *  shared with the apply flow's own CV resolver (cv-selection.ts) so there
  *  is one definition of "which row matches this report", not two. */
 export async function pdfPathStatusForReport(n: string): Promise<PdfPathForReportResult> {
   const target = pdfIndexTarget(n);
@@ -242,7 +245,7 @@ export async function pdfPathStatusForReport(n: string): Promise<PdfPathForRepor
   const entry = pdfIndexEntryForReport(tsv, target);
   if (!entry.found) return { status: "not-found" };
   if (!entry.path) return { status: "rejected" };
-  // The manifest is a user-layer file (generate-pdf.mjs writes it, but nothing
+  // The manifest is a user-layer file (generate-pdf.ts writes it, but nothing
   // stops a hand edit) turned into a filesystem read that this route then
   // serves — the path must be contained BY CONSTRUCTION, not by trusting the
   // writer. Rows are written relative to the WORKSPACE root (careerOpsRoot()),
@@ -267,13 +270,13 @@ export async function pdfPathForReport(n: string): Promise<string | null> {
 
 /**
  * Server-side lifecycle of the user's setup — mirrors the prerequisite list that
- * doctor.mjs uses (cv.md, config/profile.yml, modes/_profile.md, portals.yml), by
+ * doctor.ts uses (cv.md, config/profile.yml, modes/_profile.md, portals.yml), by
  * plain file-stat (no subprocess). Drives the home branch: first-run (no CV) →
  * the CV takeover; in-between (CV but no profile) → gentle nudges; established.
  */
 export type LifecyclePhase = "first-run" | "in-between" | "established";
 /**
- * Server-side lifecycle, mirroring the core doctor.mjs prerequisite list with the
+ * Server-side lifecycle, mirroring the core doctor.ts prerequisite list with the
  * SAME existsSync semantics (the SSOT the OnboardingBanner already reads via
  * /api/doctor). The 4 user-layer prereqs: cv.md, config/profile.yml,
  * modes/_profile.md, portals.yml.
@@ -282,7 +285,7 @@ export type LifecyclePhase = "first-run" | "in-between" | "established";
  *     already has data (a full pipeline/tracker with no cv.md is valid).
  *   - in-between → has cv/data but setup incomplete: dashboard + the nudge banner.
  *   - established → all 4 prereqs present.
- * onboardingNeeded mirrors doctor.mjs: true if ANY prereq is missing → show banner.
+ * onboardingNeeded mirrors doctor.ts: true if ANY prereq is missing → show banner.
  */
 export function doctorState(snapshot?: Pick<PipelineSummary, "applications" | "inbox">): {
   phase: LifecyclePhase;
@@ -347,7 +350,7 @@ export type ReportData = { content: string; file: string };
  *
  *  Both the linked lookup and the fallback scan skip `{n}-RESERVED.md`
  *  placeholder files.
- *  `reserve-report-num.mjs` writes an empty `NNN-RESERVED.md` sentinel to
+ *  `reserve-report-num.ts` writes an empty `NNN-RESERVED.md` sentinel to
  *  claim a report number before a worker has actually written the report;
  *  it's normally deleted once the real report lands (or GC'd after 4h if
  *  abandoned). But "RESERVED" sorts alphabetically before nearly every real
@@ -425,7 +428,7 @@ export function profilePath(): string {
   return profileMemoryPath(careerOpsRoot());
 }
 
-/** Read modes/_profile.md back for injection into a prompt. profile-memory.mjs
+/** Read modes/_profile.md back for injection into a prompt. profile-memory.ts
  *  owns the rule and is where it is tested. */
 export function readMemory(): string {
   return readProfileMemory(careerOpsRoot());
@@ -556,7 +559,7 @@ export function readLanguageConfig(): LanguageConfig {
   let modesDirs = ["modes"];
   let output = "en";
   try {
-    const parsed = yaml.load(fs.readFileSync(path.join(root, "config", "profile.yml"), "utf8"));
+    const parsed = yaml.load(fs.readFileSync(getProfilePath(root, { explicitRoot: true }), "utf8"));
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
       const language = (parsed as Record<string, unknown>).language;
       if (language && typeof language === "object" && !Array.isArray(language)) {
@@ -576,7 +579,7 @@ export function readLanguageConfig(): LanguageConfig {
         };
         // The first declared entry is primary. Do not filter it away and
         // silently promote a later market into the evaluation slot. This
-        // mirrors gemini-eval.mjs: invalid primary -> default modes, while
+        // mirrors gemini-eval.ts: invalid primary -> default modes, while
         // valid secondary markets remain available as shared context.
         const primary = resolveDeclaredDir(rawCandidates[0]);
         const extras = rawCandidates.slice(1).map(resolveDeclaredDir).filter(

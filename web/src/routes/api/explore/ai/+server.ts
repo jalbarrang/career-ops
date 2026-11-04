@@ -1,14 +1,14 @@
-import { spawnHeadlessCli } from "@/lib/spawn-cli.mjs";
+import { spawnHeadlessCli } from "@/lib/spawn-cli.ts";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { cliSubstitutionNotice, cliUnavailableError, resolveCliOrFallback } from "@/lib/clis";
 import { careerOpsRoot, readMemory } from "@/lib/career-ops";
 import { assembleDedupContext } from "@/lib/core/discover";
-import { CAPS } from "@/lib/worker-capabilities.mjs";
-import { scopeFrom } from "@/lib/claude-invocation.mjs";
-import { fencingReport } from "@/lib/cli-fencing.mjs";
-import { codexFencingSupported } from "@/lib/cli-fencing-probe.mjs";
+import { CAPS } from "@/lib/worker-capabilities.ts";
+import { scopeFrom } from "@/lib/claude-invocation.ts";
+import { fencingReport } from "@/lib/cli-fencing.ts";
+import { codexFencingSupported } from "@/lib/cli-fencing-probe.ts";
 
 // Deny list DERIVED, never hand-written: every one of the six advisor argvs
 // that spelled its own omitted MultiEdit, which --permission-mode acceptEdits

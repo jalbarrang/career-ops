@@ -13,9 +13,9 @@ export const ATS_LABEL: Record<AtsSource, string> = {
   workday: "Workday",
 };
 
-/** The full UI filter state. The keyword/location lists mirror scan.mjs's
+/** The full UI filter state. The keyword/location lists mirror scan.ts's
  *  buildTitleFilter / buildLocationFilter semantics; sinceDays/ats/limitPerAts map
- *  to scan-ats-full.mjs's --since / --ats / --limit. */
+ *  to scan-ats-full.ts's --since / --ats / --limit. */
 export type ExploreFilters = {
   positive: string[];
   negative: string[];
@@ -40,7 +40,7 @@ export const DEFAULT_FILTERS: ExploreFilters = {
   limitPerAts: 150,
 };
 
-/** Banded title-vs-profile overlap (web/src/lib/title-fit.mjs). Words, not
+/** Banded title-vs-profile overlap (web/src/lib/title-fit.ts). Words, not
  *  numbers, so it can't be mistaken for the evaluation's real 1–5 / A–F. */
 export type FitBand = "strong" | "related" | "weak";
 
@@ -61,7 +61,7 @@ export type DiscoveredOffer = {
    *  Scan offers only; AI offers already carry why + confidence. */
   fit?: { band: FitBand; score: number };
   /** optional free-text ranking signal preserved to pipeline.md by the canonical
-   *  writer (scan.mjs formatPipelineOffer). Generic and source-agnostic — an
+   *  writer (scan.ts formatPipelineOffer). Generic and source-agnostic — an
    *  importer can attach a note; the deterministic scan omits it. */
   note?: string;
   // ── AI-search (modes/discover.md) additions — all optional, so the
@@ -106,10 +106,10 @@ export type ScanEvent =
   | { kind: "error"; message: string }
   | { kind: "done"; count: number; offers: DiscoveredOffer[]; cost?: { tokens: number; usd: number } };
 
-// cleanChips is defined in clean-chips.mjs (plain JS) so it can be shared
+// cleanChips is defined in clean-chips.ts (plain JS) so it can be shared
 // with the test suite without a TypeScript runner. Import for internal use
 // and re-export for external consumers (filter-builder.tsx, etc.).
-import { cleanChips } from "./clean-chips.mjs";
+import { cleanChips } from "./clean-chips.ts";
 export { cleanChips };
 
 function clampNum(v: unknown, lo: number, hi: number, fallback: number): number {

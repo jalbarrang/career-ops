@@ -1,7 +1,7 @@
 import type { Handle } from "@sveltejs/kit/hooks";
 import { getTextDirection } from "@/lib/paraglide/runtime";
 import { paraglideMiddleware } from "@/lib/paraglide/server";
-import { checkRequest, parseAllowedHosts, parseAllowedOrigins } from "@/lib/origin-guard.mjs";
+import { checkRequest, parseAllowedHosts, parseAllowedOrigins } from "@/lib/origin-guard.ts";
 
 // Two things happen here, in this order, on every request.
 //
@@ -9,7 +9,7 @@ import { checkRequest, parseAllowedHosts, parseAllowedOrigins } from "@/lib/orig
 //    Every request is gated on the same-origin + loopback check before it can
 //    reach an endpoint (which may spawn a child process or write the user's
 //    files) or a page (which renders the user's CV, pipeline and reports). See
-//    origin-guard.mjs for the two-layer rationale (F1 drive-by CSRF, F2 LAN
+//    origin-guard.ts for the two-layer rationale (F1 drive-by CSRF, F2 LAN
 //    reachability). It runs FIRST and returns early: a refused request should not
 //    pay for locale resolution, and nothing below can turn a 403 into a page.
 //

@@ -1,7 +1,7 @@
 // The assistant console's message model and its `<<act:ID {json}>>` envelope
 // parser. Plain module (not a component) so the parsing rules sit in one place
 // and `part-view.svelte` can import the Part types it renders.
-import { pendingActOpenerStart } from "@/lib/act-envelope.mjs";
+import { pendingActOpenerStart } from "@/lib/act-envelope.ts";
 
 // ── message model: messages are PART arrays so a live worker card can render
 // inline next to text, both fed by the single jobs store ───────────────────────

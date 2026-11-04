@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { Clock3, Copy, Check } from "@lucide/svelte";
-  import { quietModel, checkRan } from "@/lib/quiet-companies.mjs";
+  import { quietModel, checkRan } from "@/lib/quiet-companies.ts";
 
   type QuietModel = ReturnType<typeof quietModel>;
   type QuietCompany = QuietModel["companies"][number];
 
   // Companies still in Interview whose silence has passed the courtesy threshold,
-  // from the core's rejection-latency.mjs via /api/quiet-companies.
+  // from the core's rejection-latency.ts via /api/quiet-companies.
   //
   // On Follow-ups because that is the page about chasing, and this is the far end
   // of it: the point where chasing stops being worth it. It sits BELOW the due

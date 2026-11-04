@@ -1,14 +1,14 @@
 # Adding a provider
 
-A provider is a module `providers/{name}.mjs` that maps one public, no-auth
+A provider is a module `providers/{name}.ts` that maps one public, no-auth
 job source (an ATS API, an RSS/JSON feed, or a server-rendered HTML page) to
-the scanner's normalized `Job` shape. `scan.mjs` and `verify-portals.mjs`
-load every such module through `providers/_registry.mjs` — no manual
+the scanner's normalized `Job` shape. `scan.ts` and `verify-portals.ts`
+load every such module through `providers/_registry.ts` — no manual
 registration, dropping the file in `providers/` is enough.
 
 This file is the checklist and the set of requirements. The authoritative
-type catalog is [`_types.js`](_types.js); the architectural role of the layer
-is in [`../ARCHITECTURE.md`](../ARCHITECTURE.md) ("Discovery — `scan.mjs` +
+type catalog is [`_types.ts`](_types.ts); the architectural role of the layer
+is in [`../ARCHITECTURE.md`](../ARCHITECTURE.md) ("Discovery — `scan.ts` +
 `providers/`"). Mirror an existing module of the same shape — see the table
 in section 4.
 
@@ -56,12 +56,12 @@ records how the rules were applied to sources that went through that process.
 
 ## 1. The contract
 
-A `providers/{name}.mjs` file (not starting with `_` — those are shared
-helpers and `_registry.mjs` skips them) has a `default` export:
+A `providers/{name}.ts` file (not starting with `_` — those are shared
+helpers and `_registry.ts` skips them) has a `default` export:
 
 ```js
 // @ts-check
-/** @typedef {import('./_types.js').Provider} Provider */
+/** @typedef {import('./_types.ts').Provider} Provider */
 
 /** @type {Provider} */
 export default {
@@ -73,17 +73,17 @@ export default {
 
 - `id` — required, unique. On a duplicate the first-loaded provider wins and
   the later file is skipped with a warning.
-- `detect(entry)` — optional; returns `{ url }` or `null`. `_registry.mjs`
+- `detect(entry)` — optional; returns `{ url }` or `null`. `_registry.ts`
   resolves an entry in order: (1) an explicit `provider: {id}` field, which
   bypasses `detect()` entirely; (2) the `local-parser` provider, when the
   entry sets `parser.command` + a script; (3) each provider's `detect()` in
   alphabetical file order, first hit wins. Three valid `detect()` shapes:
   1. **URL-pattern** — match `entry.careers_url` / `entry.api` against a
-     known host pattern (`greenhouse.mjs`, `lever.mjs`, `remotli.mjs`).
+     known host pattern (`greenhouse.ts`, `lever.ts`, `remotli.ts`).
   2. **Explicit-only** — `return entry?.provider === '{id}' ? { url: FEED_URL } : null`
-     for a board-wide feed with no per-entry URL (`larajobs.mjs`).
+     for a board-wide feed with no per-entry URL (`larajobs.ts`).
   3. **Omit `detect()`** — the provider is then reachable only by an explicit
-     `provider: {id}` in `portals.yml` (`yourator.mjs`).
+     `provider: {id}` in `portals.yml` (`yourator.ts`).
   A branded/unrecognizable domain must **not** be matched by a URL-pattern
   `detect()` — use shape 2 or 3 instead, so the provider never claims an
   entry the user did not point at it.
@@ -103,13 +103,13 @@ export default {
   `preferred_languages`: a provider that returns language versions
   selectively also returns the ranked ones, after each posting's default
   version, so the scan can keep the preferred one; references
-  `providers/personio.mjs` and `providers/recruitee.mjs`). Returns a
+  `providers/personio.ts` and `providers/recruitee.ts`). Returns a
   normalized `Job[]`.
 - `Job` — `title`, `url` (required, absolute — this is the dedup key),
   `company`, `location`; optional `postedAt` (epoch ms) and `description`.
   When the payload has a dedicated field for them, also set `requisitionId`
   (the employer's requisition id — never the posting id, which changes on
-  every re-release; `coerceId` from `_ids.mjs`) and `language` (the posting
+  every re-release; `coerceId` from `_ids.ts`) and `language` (the posting
   text's language as the source names it, preferring a code such as `de` or
   `en-GB` over a display name when both are offered): the scanner's
   company+role dedup reads both. Omit either key when the source has no such
@@ -117,8 +117,8 @@ export default {
   with a `language` / `lang` / `locale` param returns one Job per version,
   each with `language` set, the posting's own default language first — the
   URL dedup relies on that order, and never reads a candidate's language from
-  its URL (`_types.js`, `language`; reference `providers/personio.mjs`). See
-  `_types.js` for the full list of optional fields.
+  its URL (`_types.ts`, `language`; reference `providers/personio.ts`). See
+  `_types.ts` for the full list of optional fields.
   Populate `description` **only** when the list payload carries it for free
   (no extra per-job request — the scanner is zero-token). The one exception
   is opt-in enrichment: `fetchDetails: true` (plus an optional `detailLimit`
@@ -126,11 +126,11 @@ export default {
   `eploy: { fetchDetails: true, detailLimit: 25 }`, not top-level keys —
   makes the provider fetch per-posting detail to fill `description`, bounded
   by `detailLimit` and skipped entirely while a health probe runs
-  (reference: `eploy.mjs`; find the rest with
-  `grep -l fetchDetails providers/*.mjs`). That enrichment is
+  (reference: `eploy.ts`; find the rest with
+  `grep -l fetchDetails providers/*.ts`). That enrichment is
   opt-in *only*: gate the whole detail loop on the entry config asking for
-  it **and** on not being in a probe — `eploy.mjs`
-  (`if (!fetchDetails || probing) return jobs;`), `peoplesoft.mjs`
+  it **and** on not being in a probe — `eploy.ts`
+  (`if (!fetchDetails || probing) return jobs;`), `peoplesoft.ts`
   (`if (fetchDetails && !probing)`). A provider that fetches
   per-posting detail on every scan, with no config switch, defeats the
   opt-in and puts the per-posting request fan-out back on the default path;
@@ -141,7 +141,7 @@ export default {
   Source Indexing Policy rule 2 ("the shortest verifiable path to the
   employer"); the source's own page is the fallback, used only when the
   upstream link is missing or not `https:`. Reference: `resolveYouratorUrl`
-  in `providers/yourator.mjs` and the equivalent in `providers/remotli.mjs`.
+  in `providers/yourator.ts` and the equivalent in `providers/remotli.ts`.
   A single-company ATS adapter has one natural posting URL and nothing to
   choose — that URL is the canonical one.
 
@@ -155,21 +155,21 @@ contract** (`name` / `careers_url` / `api` / `provider` / `parser`), the same
 shape from either list. A single-company provider is documented and tested
 against `tracked_companies:`, an aggregator/feed against `job_boards:`. The
 file's header comment must name the target list — reference
-`providers/ibm.mjs` and `providers/dassault.mjs` for a single-company
-`tracked_companies:` adapter, `providers/remotli.mjs` and
-`providers/yourator.mjs` for a `job_boards:` aggregator/feed.
+`providers/ibm.ts` and `providers/dassault.ts` for a single-company
+`tracked_companies:` adapter, `providers/remotli.ts` and
+`providers/yourator.ts` for a `job_boards:` aggregator/feed.
 
 ### The `enrichDate` hook (optional, rarely needed)
 
 An optional `async enrichDate(job, ctx)` fetches one posting's detail page
 to fill `postedAt` (and opportunistically `location`) for a source whose
 list page carries no date (`icims`). It is **not** in the core contract,
-and `_registry.mjs` never calls it. Its only caller is `scan-ats-full.mjs`,
+and `_registry.ts` never calls it. Its only caller is `scan-ats-full.ts`,
 the reverse-ATS sweep, and only for a job that passed the title/location
 filters but came back undated — so the undated-drop policy has a date to
 judge.
 
-`scan-ats-full.mjs` reaches a provider in one of two ways, and both call
+`scan-ats-full.ts` reaches a provider in one of two ways, and both call
 `enrichDate`:
 
 - **The dataset sweep.** A **fixed** `SOURCES` table of six directly
@@ -177,16 +177,16 @@ judge.
   `bamboohr`), each paired with a public company dataset. No registry
   lookup; joining it means adding an import and a `SOURCES` entry.
 - **The `--history-seeds` pass.** Boards derived from the user's tracker and
-  scan history (`history-ats-seeds.mjs`). This one does load the registry,
+  scan history (`history-ats-seeds.ts`). This one does load the registry,
   but it only reaches a provider whose `id` equals a vendor label from
-  `ATS_HOST_PATTERNS` in `ats-vendor.mjs` and whose `detect()` accepts the
+  `ATS_HOST_PATTERNS` in `ats-vendor.ts` and whose `detect()` accepts the
   derived board URL.
 
 A provider reached by neither can define `enrichDate` and nothing will ever
 call it. The hook also overlaps the `fetchDetails` opt-in above, which
-already fetches the detail page on the normal `scan.mjs` path. Pick one:
+already fetches the detail page on the normal `scan.ts` path. Pick one:
 `fetchDetails` for a provider reached through `portals.yml`; `enrichDate`
-only when `scan-ats-full.mjs` reaches the provider (or is being changed to).
+only when `scan-ats-full.ts` reaches the provider (or is being changed to).
 Don't ship both. If you add it, test it, and if the provider is not reached
 yet, say in the header comment that the hook is inert until it is.
 
@@ -202,7 +202,7 @@ yet, say in the header comment that the hook is inert until it is.
 - If the final URL is built from `portals.yml` data (`entry.api`,
   `entry.careers_url`), check the hostname against an allowlist **before**
   any network call. Reference: `assertGreenhouseUrl` in
-  `providers/greenhouse.mjs` — parse the URL (throws if malformed), reject a
+  `providers/greenhouse.ts` — parse the URL (throws if malformed), reject a
   non-`https:` protocol, reject a hostname not in `ALLOWED_GREENHOUSE_HOSTS`.
   A test must prove the guard runs before `ctx.fetchJson` / `ctx.fetchText`
   (see section 3).
@@ -210,9 +210,9 @@ yet, say in the header comment that the hook is inert until it is.
   `*.myworkdayjobs.com`) can't enumerate a `Set` — match the hostname with an
   anchored full-host test instead. Two idioms in the tree: an anchored regex
   over the whole hostname (`/^[a-z0-9-]+\.vendordomain\.com$/` —
-  `providers/bamboohr.mjs`, `providers/breezy.mjs`), or
-  `hostname.endsWith('.vendordomain.com')` (`providers/workday.mjs`,
-  `providers/icims.mjs`). Get the anchoring right or the guard is a no-op:
+  `providers/bamboohr.ts`, `providers/breezy.ts`), or
+  `hostname.endsWith('.vendordomain.com')` (`providers/workday.ts`,
+  `providers/icims.ts`). Get the anchoring right or the guard is a no-op:
   keep the trailing `$` (without it `tenant.vendordomain.com.evil.example`
   passes), escape the dots (`\.`, or `.` also matches `vendordomainXcom`), and
   keep the leading dot on a suffix test (`endsWith('vendordomain.com')` also
@@ -222,14 +222,14 @@ yet, say in the header comment that the hook is inert until it is.
   from `entry.api` / `entry.careers_url` and rebuild `https://${hostname}`
   yourself, then append the provider's own canonical path — never parse or
   validate the shape of whatever path (or port) the input happened to
-  carry. Reference: `resolveOrigin`-shaped helpers in `providers/bamboohr.mjs`
-  / `providers/breezy.mjs`, each of which appends its own fixed suffix
+  carry. Reference: `resolveOrigin`-shaped helpers in `providers/bamboohr.ts`
+  / `providers/breezy.ts`, each of which appends its own fixed suffix
   (`/careers/list`, `/json`) to a hardcoded `https://${hostname}` —
   the input path is discarded, not inspected, and a port has nowhere to
   survive to since it was never part of what got reconstructed. Don't use
   `new URL(raw).origin` for this: unlike a manually rebuilt origin, it
   carries the input's own port through unchanged, which quietly reopens
-  the exact thing rebuilding the origin was meant to close (`providers/icims.mjs`
+  the exact thing rebuilding the origin was meant to close (`providers/icims.ts`
   does use `.origin`, inconsistently with the other two — treat the
   hardcoded-scheme form as the one to copy). The alternative — accepting
   or rejecting specific path shapes
@@ -247,11 +247,11 @@ yet, say in the header comment that the hook is inert until it is.
   target is an arbitrary **customer-branded** host taken straight from
   `entry.api` / `entry.careers_url`, with no vendor-domain pattern to
   allowlist against and no `detect()` auto-claim — the provider is wired
-  explicitly per `portals.yml` entry instead. Reference: `providers/phenom.mjs`.
+  explicitly per `portals.yml` entry instead. Reference: `providers/phenom.ts`.
   For this shape a per-provider host allowlist isn't constructible (there is
   no stable vendor string to match — every tenant's hostname is different and
   unrelated to the others), and the real SSRF protection is the central
-  DNS/IP-layer guard (`_ip-guard.mjs`, #3096), already wrapped around every
+  DNS/IP-layer guard (`_ip-guard.ts`, #3096), already wrapped around every
   `ctx.fetchJson` / `ctx.fetchText` call regardless of provider. Don't add an
   allowlist just because a reviewer expects the Greenhouse-style pattern —
   a config-derived URL with no vendor host to check against is a valid,
@@ -262,13 +262,13 @@ yet, say in the header comment that the hook is inert until it is.
   legitimate same-origin 3xx. A provider that needs to *inspect* a redirect without
   following it (e.g. to tell an empty-board redirect from a dead-tenant one)
   passes `redirect: 'manual'`: `ctx.fetch*` then throws a structured error
-  carrying `.status` and `.location` (see `_http.mjs`; `providers/jobvite.mjs`
-  and `providers/telegram-channel.mjs` use it — a 302 to a login page then
+  carrying `.status` and `.location` (see `_http.ts`; `providers/jobvite.ts`
+  and `providers/telegram-channel.ts` use it — a 302 to a login page then
   reads as a named failure rather than a generic one). Actually following a
   hop is out — if a source only serves content
   past a bootstrap 3xx, target the settled URL directly
-  (`providers/deutschebahn.mjs` — a portal that 302s into its own results
-  endpoint) or rewrite a known static 3xx up front (`providers/builtin.mjs` —
+  (`providers/deutschebahn.ts` — a portal that 302s into its own results
+  endpoint) or rewrite a known static 3xx up front (`providers/builtin.ts` —
   bare hosts that 301 to `www`). The one case that needs an actual follow is
   a session-establishing bootstrap 3xx whose target is not knowable ahead of
   time — a portal that bounces through a session or theme-negotiation hop
@@ -300,7 +300,7 @@ surface instead of reading as `0` jobs forever. Three outcomes:
   the body is a bare non-object (`""`, a number, `true`) where an object is
   documented. One guard covers all of these — a truthy-array test with a
   single fall-through `throw`, before any row loop — and that is what
-  `parseIbmResponse` in `providers/ibm.mjs` is built around:
+  `parseIbmResponse` in `providers/ibm.ts` is built around:
 
   ```js
   const rows = json && Array.isArray(json.jobs) ? json.jobs : null;
@@ -312,7 +312,7 @@ surface instead of reading as `0` jobs forever. Three outcomes:
 
   Name the keys (or the type) you did get. Returning `[]` here instead is a
   defensible "a partial/empty board beats a run error" call — but make it
-  deliberately, not through an enumeration gap. `scan.mjs` separately throws
+  deliberately, not through an enumeration gap. `scan.ts` separately throws
   on a non-array *return value* out of `fetch()`; `verify-portals` catches
   that.
 - **`continue` / `.filter` — one row is malformed.** Never an exception out
@@ -323,15 +323,15 @@ surface instead of reading as `0` jobs forever. Three outcomes:
   embedded blob (`__NEXT_DATA__`, a JSON-LD script) matching *nothing at
   all* is a markup change → `throw`. An empty list inside an otherwise
   well-formed payload is the empty-board case → `[]`. Reference:
-  `providers/join.mjs` — `!Array.isArray(items)` throws, `items.length
+  `providers/join.ts` — `!Array.isArray(items)` throws, `items.length
   === 0` returns `[]`. A **regex scraper** has no array container to
   type-check, so it keys the same split off a listing signal that only a
   populated board carries: posting-shaped links (an `href` to a
   detail-page path) present in the HTML but zero cards parsed ⇒ a markup
   change → `throw`; neither the links nor the cards present ⇒ a genuinely
-  empty board → `[]`. Reference: `providers/itviec.mjs`
+  empty board → `[]`. Reference: `providers/itviec.ts`
   (`assertParsedSomething` — detail-page hrefs matched by shape but no row
-  built ⇒ throw), called on the first page only. `icims.mjs` does not draw
+  built ⇒ throw), called on the first page only. `icims.ts` does not draw
   this line at all (zero cards on a page is read as "past the last page");
   don't carry that into a new scraper.
 - Paginating provider whose loop-termination reads the raw page shape
@@ -349,8 +349,8 @@ surface instead of reading as `0` jobs forever. Three outcomes:
   deeper pages still hold unique postings, so a "nothing new on this page"
   stop ends the pass one or more pages early. Keep the shared set for output
   de-dup, but key each pass's stop off the source's own page shape (an empty
-  page, or a count `< PAGE_SIZE`). Reference: `providers/oraclecloud.mjs`
-  (`item.requisitionList.length`), `providers/jobbankca.mjs` (`rawEntryCount`).
+  page, or a count `< PAGE_SIZE`). Reference: `providers/oraclecloud.ts`
+  (`item.requisitionList.length`), `providers/jobbankca.ts` (`rawEntryCount`).
 - Dates: a date *string* through `Date.parse` can return `NaN`. Don't write
   `Date.parse(s) || undefined` (it also nulls a valid epoch `0` — a
   `1970-01-01` timestamp) — use a NaN-safe helper. Its `!value` guard is for
@@ -371,10 +371,10 @@ surface instead of reading as `0` jobs forever. Three outcomes:
 
 When `job.url` is built from a response field (`id`, `slug`, `refnr`) inside
 a `.map()` / `for` loop, encode that segment with `safeEncodeURIComponent`
-from [`_safe-url.mjs`](_safe-url.mjs), not bare `encodeURIComponent`:
+from [`_safe-url.ts`](_safe-url.ts), not bare `encodeURIComponent`:
 
 ```js
-import { safeEncodeURIComponent } from './_safe-url.mjs';
+import { safeEncodeURIComponent } from './_safe-url.ts';
 // ...
 const seg = safeEncodeURIComponent(job.id);
 if (seg === null) continue;          // or .filter(Boolean) on the .map() output
@@ -383,14 +383,14 @@ const url = `https://example.com/jobs/${seg}`;
 
 `encodeURIComponent` throws `URIError` on a lone UTF-16 surrogate, and a
 `"\uD800"` escape survives `JSON.parse` — the throw leaves the loop and
-`scan.mjs`'s per-company `catch` then loses every posting already parsed on
+`scan.ts`'s per-company `catch` then loses every posting already parsed on
 that page. The helper returns `null` instead, so you drop exactly the one bad
 posting — the same as a posting with no `id`. It returns `null` rather than a
 `U+FFFD` substitute on purpose: a degraded value flows on into
 `data/scan-history.tsv`, the tracker, and generated documents as ill-formed
 UTF-8, and where the encoded value is also the dedup key (`arbeitsagentur`,
 `vdab`) it would collide distinct bad postings onto one key. Reference: the
-wired providers in `tests/providers/url-encoding-surrogate.test.mjs`
+wired providers in `tests/providers/url-encoding-surrogate.test.ts`
 (`alibaba`, `bamboohr`, `phenom`, …).
 
 Scope is exactly this case — a **host-controlled** API field becoming a URL
@@ -401,26 +401,26 @@ config is the wrong trade — but still `encodeURIComponent`'d, and computed
 **once outside the row loop**. A structural `/`, `?` or `#` then stays
 escaped so the URL is well-formed, and a genuinely broken value (a lone
 surrogate) throws there, as the loud config error it is, instead of
-silently once per posting. `garena.mjs` splits the two explicitly —
+silently once per posting. `garena.ts` splits the two explicitly —
 `urlSegment()` throws for the config `office`, `idUrlSegment()` drops for
-the response `id`; `tkms.mjs`'s `parseQuery` hoists its locale
+the response `id`; `tkms.ts`'s `parseQuery` hoists its locale
 `encodeURIComponent` out of the loop for the same reason. A value a regex
-has already restricted to safe characters (`4dayweek.mjs`'s slug `SLUG_RE`,
+has already restricted to safe characters (`4dayweek.ts`'s slug `SLUG_RE`,
 which rejects a surrogate before this line) or encoded inside its own
 try/catch needs nothing further.
 
 The mirror case on decode: `decodeURIComponent` on a scraped href segment
 also throws `URIError` on a malformed percent-escape (`%ZZ`) — wrap it in
-try/catch with a fallback to the raw segment (reference: `workday.mjs`,
-`successfactors.mjs`, `rheinmetall.mjs`).
+try/catch with a fallback to the raw segment (reference: `workday.ts`,
+`successfactors.ts`, `rheinmetall.ts`).
 
 ### HTML entities — use the shared decoder
 
 If the provider parses HTML/XML (not a JSON API), decode entities
-(`&amp;`, `&#252;`) through `providers/_html-entities.mjs`:
+(`&amp;`, `&#252;`) through `providers/_html-entities.ts`:
 
 ```js
-import { decodeEntities } from './_html-entities.mjs';
+import { decodeEntities } from './_html-entities.ts';
 ```
 
 Never write a local copy. The project has a history of bugs from exactly
@@ -450,14 +450,14 @@ function resolveMaxPages(entry) {
 ```
 
 A source-reported value enters the formula only through `Math.min(...)` with
-this ceiling, never on its own. Reference: `providers/workday.mjs`
+this ceiling, never on its own. Reference: `providers/workday.ts`
 (`DEFAULT_MAX_PAGES`, `MAX_PAGES_CAP`, `resolveMaxPages()`). When the ceiling
 truncated the list, warn the user (`raise max_pages on this entry`) so a
 partial list is not mistaken for a complete one.
 
 `max_pages` and `ctx.maxPages` count **pages of results**. A one-shot
 bootstrap that carries no listings — a token/cookie primer, a board-id
-lookup — is free and sits outside the count (`providers/csod.mjs`: a
+lookup — is free and sits outside the count (`providers/csod.ts`: a
 home-page GET for the anonymous token, then a `for page = 1..maxPages`
 search loop). But a first request that *does* return the first batch of
 postings is page one: when it is issued before the pagination loop, the
@@ -467,7 +467,7 @@ probe assertion in section 3 depends on it.
 
 A source-reported `total` can also be plain wrong, not just absent — some
 backends silently clamp it, so a `total`-bounded walk is not proof of
-completeness. Reference: `providers/workday.mjs`'s facet split (#3310).
+completeness. Reference: `providers/workday.ts`'s facet split (#3310).
 
 The reverse direction happens too, and independently of the clamp case above:
 a source-reported **results count** can just as easily *overstate* what its
@@ -488,7 +488,7 @@ When `ctx.maxPages` is set, `verify-portals` is running a liveness probe
 
 **Cap the walk (SHOULD).** Stop after `ctx.maxPages` pages, and skip any
 per-posting `fetchDetails` / detail enrichment (`eploy`, `peoplesoft`) —
-the probe has no use for it. Reference `providers/workday.mjs`:
+the probe has no use for it. Reference `providers/workday.ts`:
 
 ```js
 const ctxMaxPages = Number(ctx?.maxPages);
@@ -510,7 +510,7 @@ unknown", not a broken board. If a per-page / per-keyword `catch` swallows it
 into `[]` or rethrows it as a `new Error(...)`, the probe misreads a healthy
 board as `missing`. So when `ctx.maxPages` is set, propagate a `ctx.fetch*`
 rejection **unwrapped**. In a real scan (no `ctx.maxPages`) the recall-first
-"swallow and keep the pages so far" behavior is still fine — `vdab.mjs` shows
+"swallow and keep the pages so far" behavior is still fine — `vdab.ts` shows
 both branches.
 
 Keep the "raise `max_pages`" warning tied to the
@@ -526,7 +526,7 @@ per-posting detail fetches:
 
 - **Inter-page delay.** A module constant applied only to pages past the
   first: `if (page > 0) await sleep(INTER_PAGE_DELAY_MS, ctx)`. Import
-  `sleep` from [`_http.mjs`](_http.mjs) (it honours a ctx-supplied test
+  `sleep` from [`_http.ts`](_http.ts) (it honours a ctx-supplied test
   clock) — don't hand-roll a local copy, and don't call `ctx.sleep(ms)`
   directly either: `ctx.sleep` is `Optional` in the §1 contract, so a ctx
   that carries no clock turns a bare `ctx.sleep(...)` into a `TypeError` out
@@ -540,17 +540,17 @@ per-posting detail fetches:
   reasonable floor for `INTER_PAGE_DELAY_MS` directly, no need to observe
   throttling first. It governs spacing *between* requests, not a mandatory
   pause before the first one — `Crawl-delay` isn't even part of RFC 9309,
-  the base robots.txt spec (`jobbankca.mjs` delays before page 1 too, but
+  the base robots.txt spec (`jobbankca.ts` delays before page 1 too, but
   that's a per-provider choice, not something rule 6 requires).
 - **Bounded retry.** Wrap every page fetch — and the one-shot
   config-resolving fetch before pagination, if any — in `fetchJsonWithRetry`
-  / `fetchTextWithRetry` (`_http.mjs`). They retry 429, any 5xx, and
+  / `fetchTextWithRetry` (`_http.ts`). They retry 429, any 5xx, and
   transport errors (timeout / abort / DNS) with exponential backoff + jitter;
   they never retry a non-429 4xx or a refused redirect. A `Retry-After`
   header is honoured but clamped, so a hostile `Retry-After: 86400` can't
   stall the sweep. Default policy is
   `{ retries: 2, baseDelayMs: 500, maxDelayMs: 8_000 }`; pass a `policy` 4th
-  argument for a different cadence (`workday.mjs`, `oraclecloud.mjs` use
+  argument for a different cadence (`workday.ts`, `oraclecloud.ts` use
   `{ retries: 3 }` because their API is WAF-fronted).
 - **A `fetchDetails` loop counts too.** A provider that does not paginate
   but issues up to `detailLimit` sequential detail fetches under
@@ -559,13 +559,13 @@ per-posting detail fetches:
   `fetchTextWithRetry` / `fetchJsonWithRetry`. Detail enrichment is
   best-effort: a detail fetch that exhausts retry is caught, the listing row
   kept as-is, and the sweep moves on — it never fails the run
-  (`eploy.mjs` — small parallel batches, `fetchTextWithRetry`, `sleep`
-  between batches; `peoplesoft.mjs` — sequential, paced per request).
+  (`eploy.ts` — small parallel batches, `fetchTextWithRetry`, `sleep`
+  between batches; `peoplesoft.ts` — sequential, paced per request).
 
 **Exhaustion is your call, not the helper's.** `withRetry` rethrows; the
 error carries `.attempts` (the real request count). Decide per provider: keep
-the pages already collected and `warn` (`workday.mjs`), or fail loud rather
-than hand back a silent partial board (`a16z-speedrun-talent.mjs`). Either
+the pages already collected and `warn` (`workday.ts`), or fail loud rather
+than hand back a silent partial board (`a16z-speedrun-talent.ts`). Either
 way, the "raise `max_pages`" warning must **not** fire when pagination
 stopped on a fetch error — that message means the ceiling truncated a
 healthy board, not that the board broke.
@@ -574,8 +574,8 @@ The same distinction carries to any incomplete marker a provider puts on the
 returned array: track *why* the walk stopped — ceiling, fetch error,
 unrecognised page — as one value, and drive both the warning and the marker's
 `reason` from it, so a consumer can tell "truncated a healthy board" from
-"the board broke". Reference: `workday.mjs`'s `stopReason`
-(`complete` / `cap` / `fetch-error` / …); `providers/phenom.mjs` is the
+"the board broke". Reference: `workday.ts`'s `stopReason`
+(`complete` / `cap` / `fetch-error` / …); `providers/phenom.ts` is the
 compact version. Keep that reason independent of whether the source ever
 reported a `total`: a walk that hits its own ceiling — or breaks on a fetch
 error — with no `total` in hand still has to carry the stop reason and still
@@ -592,8 +592,8 @@ not `cap`, and nothing warns. Only a full page at the cap boundary is a
 `cap` stop; a source-reported `total` disambiguates a full boundary page
 too. Gating the incomplete marker on the page index alone
 (`page === lastAllowedPage`) tags a naturally-short final page as
-truncated. Reference: `eightfold.mjs` ("a short page has to win");
-`jobbankca.mjs` keys the stop off `rawEntryCount`, the feed's own
+truncated. Reference: `eightfold.ts` ("a short page has to win");
+`jobbankca.ts` keys the stop off `rawEntryCount`, the feed's own
 `<entry>` count.
 
 A paginating JSON API can also hit a hard, source-side result-window
@@ -612,7 +612,7 @@ ends the walk, stop reason `complete`) and don't let `max_pages` /
 
 ### Health-check coverage (`verify-portals`)
 
-`npm run verify:portals` and `node validate-portals.mjs` (and `doctor.mjs
+`bun run verify:portals` and `bun validate-portals.ts` (and `doctor.ts
 --strict`, which delegates to the former) sweep **both** `tracked_companies`
 and `job_boards` — the two lists share one entry schema and one enabled-name
 namespace (a board and a company with the same name is flagged).
@@ -620,7 +620,7 @@ namespace (a board and a company with the same name is flagged).
 
 1. **tier 1** — a direct Greenhouse/Ashby/Lever slug probe, when a
    `tracked_companies` `careers_url` / `api` carries a recognizable ATS slug.
-   Only these three ATS get a `suggested` fix, so `fix-slugs.mjs` rewrites
+   Only these three ATS get a `suggested` fix, so `fix-slugs.ts` rewrites
    slugs only for them — a `job_boards` aggregator is a provider-layer entry
    and never carries a `suggested` alternate.
 2. **tier 2** — every other entry (Workday, SmartRecruiters, branded careers
@@ -635,7 +635,7 @@ your `detect()` or carry an explicit `provider:`, whichever list it sits in.
 
 ### Timeouts and User-Agent
 
-Use `providers/_http.mjs` (`fetchJson` / `fetchText` / `makeHttpCtx`) — it
+Use `providers/_http.ts` (`fetchJson` / `fetchText` / `makeHttpCtx`) — it
 already has the `AbortController` timeout (10s default, raise it for a slow
 feed by passing `timeoutMs` in the per-call options) and the shared
 User-Agent; a non-2xx response throws an `Error` carrying `.status`, `.body`,
@@ -651,9 +651,9 @@ A provider reads only open APIs/feeds with no login. Sending the user's data
 
 ### Browser-based scanners (standalone scripts only)
 
-Some sources have no reachable API and render their listings in the browser (`scan-interamt.mjs` is the precedent; Dayforce career sites are the same shape). A scanner that drives a real browser (Playwright) is accepted as its own top-level script, never as a `providers/*.mjs` module, and under three conditions:
+Some sources have no reachable API and render their listings in the browser (`scan-interamt.ts` is the precedent; Dayforce career sites are the same shape). A scanner that drives a real browser (Playwright) is accepted as its own top-level script, never as a `providers/*.ts` module, and under three conditions:
 
-1. **Standalone.** It ships as `scan-<source>.mjs` with its own npm script, tests, `SUPPORTED_JOB_BOARDS.md` row, `portals.example.yml` stanza and `SYSTEM_PATHS` entry. `providers/` stays fetch-only.
+1. **Standalone.** It ships as `scan-<source>.ts` with its own bun script, tests, `SUPPORTED_JOB_BOARDS.md` row, `portals.example.yml` stanza and `SYSTEM_PATHS` entry. `providers/` stays fetch-only.
 2. **Public pages only.** It reads what any visitor sees: no login, no session or cookies of a real user, no authenticated area.
 3. **No bypass.** It never solves or relays a CAPTCHA, and never spoofs another client's cookies, tokens or headers. If a source puts an interactive challenge in front of its public listings, the scanner reports that as a named error and stops; it does not work around it.
 
@@ -661,8 +661,8 @@ A browser scanner is slower and more fragile than a provider (markup changes bre
 
 ## 3. Tests
 
-One file: `tests/providers/{name}.test.mjs`. Auto-discovered
-(`tests/**/*.test.mjs`) — nothing to register in `test-all.mjs`. RSS/HTML
+One file: `tests/providers/{name}.test.ts`. Auto-discovered
+(`tests/**/*.test.ts`) — nothing to register in `test-all.ts`. RSS/HTML
 providers should export their pure parser function for direct unit testing.
 
 Don't re-prove the shared helpers (`_safe-url`, `_html-entities`) — their own
@@ -681,7 +681,7 @@ went through them. Must cover:
   fetches alike — assert `opts.redirect === 'error'`, not just that the call
   happened; the sole exception is a deliberate redirect-*inspection* request
   (`redirect: 'manual'`, to read `.location` off the thrown 3xx without
-  following it — `jobvite.mjs`), and `redirect: 'follow'` is never used. For
+  following it — `jobvite.ts`), and `redirect: 'follow'` is never used. For
   a config-derived URL, the allowlist guard throws **before** `fetchJson` /
   `fetchText` is called — a stub that only throws does not prove this (it
   passes whether the guard fired or a fetch was wrongly attempted), so assert
@@ -693,10 +693,10 @@ went through them. Must cover:
   documented envelope → a descriptive throw. Assert both branches — for a
   scraper that means a fixture whose card selector / embedded blob matches
   nothing throws, while a well-formed page carrying an empty list still
-  returns `[]` (`join.mjs`). For a regex scraper with no container to
+  returns `[]` (`join.ts`). For a regex scraper with no container to
   type-check, the throwing fixture must carry the listing signal (a
   detail-page href in the HTML) with zero rows parsed, and the `[]` fixture
-  must carry neither (`itviec.mjs`).
+  must carry neither (`itviec.ts`).
 - Pagination (if any): the provider's own `DEFAULT_MAX_PAGES` stops it even
   when the source reports more pages; `ctx.maxPages` stops it earlier. For a
   provider that fans out over several query/category passes behind one shared
@@ -710,52 +710,52 @@ went through them. Must cover:
 - `fetchDetails` + a failed detail fetch (if any): a detail fetch that
   exhausts retry is caught, the listing row comes back intact, and the sweep
   finishes — enrichment failure is never fatal to the target
-  (reference: `eploy.test.mjs`, which also retries a transient error first).
+  (reference: `eploy.test.ts`, which also retries a transient error first).
 - `detailLimit` (if `fetchDetails`): a test caps the detail-fetch count at
-  `detailLimit` however many postings match — `smartrecruiters.test.mjs`
+  `detailLimit` however many postings match — `smartrecruiters.test.ts`
   runs 40 postings at `detailLimit: 10` and asserts exactly 10 detail calls.
 - Probe cooperation (if paginating *or* fetching details): with
   `ctx.maxPages: 1`, exactly one list request and no `fetchDetails` /
   enrichment calls — a non-paginating provider that skips the detail loop
   under the probe still owes this assertion; and a `ctx.fetch*` rejection
   *while `ctx.maxPages` is set* propagates unwrapped — not swallowed to
-  `[]`, not rewrapped (reference: `vdab.test.mjs`).
+  `[]`, not rewrapped (reference: `vdab.test.ts`).
 - HTML parsing (if any): a fixture title with an entity comes out decoded
   *before* the keyword match runs (an encoded `&amp;` must not drop the job —
   #2923), not just that `decodeEntities` was called.
 
 If `job.url` is built from a host-controlled `id` / `slug` in a loop, add one
-behavioural case to the shared `tests/providers/url-encoding-surrogate.test.mjs`
+behavioural case to the shared `tests/providers/url-encoding-surrogate.test.ts`
 (a batch with one lone-surrogate value alongside a clean one → no throw, clean
 posting kept, bad one dropped). That file also carries the cross-provider
 source guard (no bare `encodeURIComponent` on a `url:` line, helper imported
-where used) — nothing to add in your own `{name}.test.mjs` for this.
+where used) — nothing to add in your own `{name}.test.ts` for this.
 
 Fixture values that actually reach the call (`name` / `careers_url` / `api`)
 are fictional (`Acme`, `ExampleCo`, `BigCo`) — never real companies. A
 comment citing real observed data (e.g. why a page-limit constant was
 chosen) is welcome — it documents that the number is not arbitrary.
 
-Dev loop: `node test-all.mjs --only providers/{name}`. Before a PR: the full
-`node test-all.mjs` (`--only` is not a merge gate).
+Dev loop: `bun test-all.ts --only providers/{name}`. Before a PR: the full
+`bun test-all.ts` (`--only` is not a merge gate).
 
 ## 4. Reference modules
 
 | What you need | Example |
 |---|---|
-| Simple JSON API, no pagination | `providers/greenhouse.mjs` + `tests/providers/greenhouse.test.mjs` |
-| Pagination honoring `ctx.maxPages` | `providers/workday.mjs` |
-| HTML scraping with the shared `decodeEntities` | `providers/icims.mjs` |
-| SSR JSON inside HTML (`__NEXT_DATA__`) | `providers/join.mjs` |
-| Empty board vs a broken selector, told apart | `providers/join.mjs` (array shape), `providers/itviec.mjs` (regex scraper) |
-| Wildcard-tenant host allowlisting (anchored, not a `Set`) | `providers/bamboohr.mjs`, `providers/workday.mjs` |
-| RSS parsed in-process | `providers/larajobs.mjs` |
-| `job.url` from a host-controlled `id` / `slug` via `safeEncodeURIComponent` | `providers/phenom.mjs`, `providers/bamboohr.mjs` |
-| Retry/backoff via the shared helper, default policy | `providers/a16z-speedrun-talent.mjs`, `providers/getro.mjs` |
-| Retry/backoff via the shared helper, policy override | `providers/workday.mjs`, `providers/oraclecloud.mjs` |
-| Detecting a clamped `total`, recovering it via query fan-out + dedup | `providers/workday.mjs` (facet split) |
+| Simple JSON API, no pagination | `providers/greenhouse.ts` + `tests/providers/greenhouse.test.ts` |
+| Pagination honoring `ctx.maxPages` | `providers/workday.ts` |
+| HTML scraping with the shared `decodeEntities` | `providers/icims.ts` |
+| SSR JSON inside HTML (`__NEXT_DATA__`) | `providers/join.ts` |
+| Empty board vs a broken selector, told apart | `providers/join.ts` (array shape), `providers/itviec.ts` (regex scraper) |
+| Wildcard-tenant host allowlisting (anchored, not a `Set`) | `providers/bamboohr.ts`, `providers/workday.ts` |
+| RSS parsed in-process | `providers/larajobs.ts` |
+| `job.url` from a host-controlled `id` / `slug` via `safeEncodeURIComponent` | `providers/phenom.ts`, `providers/bamboohr.ts` |
+| Retry/backoff via the shared helper, default policy | `providers/a16z-speedrun-talent.ts`, `providers/getro.ts` |
+| Retry/backoff via the shared helper, policy override | `providers/workday.ts`, `providers/oraclecloud.ts` |
+| Detecting a clamped `total`, recovering it via query fan-out + dedup | `providers/workday.ts` (facet split) |
 
-`fetchJsonWithRetry` / `fetchTextWithRetry` (`providers/_http.mjs`) take an
+`fetchJsonWithRetry` / `fetchTextWithRetry` (`providers/_http.ts`) take an
 optional 4th argument `policy: { retries, baseDelayMs, maxDelayMs }` for a
 provider whose tuning needs differ from the shared default
 (`{ retries: 2, baseDelayMs: 500, maxDelayMs: 8_000 }`).
@@ -789,10 +789,10 @@ provider whose tuning needs differ from the shared default
       blob that matches nothing at all. A single bad row is skipped
       (`continue` / `null` + `.filter`), not fatal to the target.
 - [ ] Dates are NaN-safe (`toEpochMs` pattern).
-- [ ] HTML/XML entities go through `providers/_html-entities.mjs`, not a
+- [ ] HTML/XML entities go through `providers/_html-entities.ts`, not a
       local copy.
 - [ ] `job.url` from a per-posting `id` / `slug` goes through
-      `safeEncodeURIComponent` (`_safe-url.mjs`), `null` → drop the posting;
+      `safeEncodeURIComponent` (`_safe-url.ts`), `null` → drop the posting;
       no bare `encodeURIComponent` on a `url:` line. A scraped href segment
       passed to `decodeURIComponent` is wrapped in try/catch with a
       raw-segment fallback.
@@ -811,11 +811,11 @@ provider whose tuning needs differ from the shared default
       or fail loud) that doesn't misfire the "raise `max_pages`" warning.
 - [ ] A `fetchDetails` detail-fetch loop is paced and retry-wrapped the
       same way, even when the provider does not paginate.
-- [ ] No `enrichDate` unless `scan-ats-full.mjs` reaches the provider
+- [ ] No `enrichDate` unless `scan-ats-full.ts` reaches the provider
       (or is being changed to); not shipped alongside the `fetchDetails`
       opt-in.
-- [ ] `tests/providers/{name}.test.mjs` covers everything in section 3.
-- [ ] `node test-all.mjs` — the full suite is green (not just `--only`).
+- [ ] `tests/providers/{name}.test.ts` covers everything in section 3.
+- [ ] `bun test-all.ts` — the full suite is green (not just `--only`).
 - [ ] A row is added to
       [`../docs/SUPPORTED_JOB_BOARDS.md`](../docs/SUPPORTED_JOB_BOARDS.md), in
       case-insensitive alphabetical position by board name (the table is

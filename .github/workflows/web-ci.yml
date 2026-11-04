@@ -27,18 +27,19 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      # Bun is the project's only toolchain (lib/bun-floor.ts pins the floor).
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-      # The doctor parity test runs the real core doctor.mjs, which imports the
-      # core's own dependencies (js-yaml, dotenv). Installed the same way as
-      # test.yml: no lockfile at the root, and no browser download.
+          bun-version: '1.4.3'
+          cache: true
+          cache-dependency-path: web/bun.lock
+      # The doctor parity test runs the real core doctor.ts, which imports the
+      # core's own dependencies (js-yaml, dotenv). Installed from the core's own
+      # bun.lock, without lifecycle scripts (no browser download).
       - name: Install core dependencies
-        run: npm install --ignore-scripts
+        run: bun install --frozen-lockfile --ignore-scripts
         working-directory: .
-      - run: npm ci
-      - run: npm test
-      - run: npx tsc --noEmit
-      - run: npm run build
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun test
+      - run: bunx tsc --noEmit
+      - run: bun run build

@@ -1,11 +1,11 @@
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { careerOpsRoot } from "@/lib/career-ops";
-import { normalizeTextKey as fallbackKey } from "./normalize-text-key.mjs";
+import { normalizeTextKey as fallbackKey } from "./normalize-text-key.ts";
 
 /**
- * ACL for the core's `normalizeTextKey` (tracker-parse.mjs) — the shared
- * matching/dedup key helper that scan.mjs and tracker-parse.mjs use (#2569).
+ * ACL for the core's `normalizeTextKey` (tracker-parse.ts) — the shared
+ * matching/dedup key helper that scan.ts and tracker-parse.ts use (#2569).
  *
  * DERIVED, NOT COPIED (#2369, #2666). The web used to reimplement this with
  * `[^a-z0-9]`, which deletes every non-ASCII letter: "Nestlé" keyed to "nestl",
@@ -24,7 +24,7 @@ import { normalizeTextKey as fallbackKey } from "./normalize-text-key.mjs";
  * semantic, and that's the correct behaviour — not a bug to paper over.
  *
  * Client components cannot use this ACL (Node-only). They import the Unicode-safe
- * mirror from normalize-text-key.mjs instead — same algorithm, parity-tested
+ * mirror from normalize-text-key.ts instead — same algorithm, parity-tested
  * against the core so [^a-z0-9] cannot creep back in.
  */
 
@@ -36,7 +36,7 @@ let warned = false;
 
 /** Resolve the core's normalizeTextKey for the current root, or the fallback. */
 export async function getNormalizeTextKey(): Promise<NormalizeTextKey> {
-  const file = path.join(careerOpsRoot(), "tracker-parse.mjs");
+  const file = path.join(careerOpsRoot(), "tracker-parse.ts");
   const hit = modCache.get(file);
   if (hit) return hit;
   try {

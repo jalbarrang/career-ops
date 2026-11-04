@@ -1,10 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { careerOpsRoot, findApplication, isRegularContainedFile } from "@/lib/career-ops";
-import { companySlug } from "@/lib/company-slug.mjs";
-import { hasToken, matchesTailoredCover, sortNewestFirst } from "./cv-match.mjs";
+import { companySlug } from "@/lib/company-slug.ts";
+import { hasToken, matchesTailoredCover, sortNewestFirst } from "./cv-match.ts";
 
-/** The length generate-cover-letter.mjs truncates a role slug to when it builds
+/** The length generate-cover-letter.ts truncates a role slug to when it builds
  *  a default output filename (`role.slice(0, 30)`). A role longer than this is
  *  on disk only in its cut form, so both spellings are accepted below. */
 const ROLE_SLUG_MAX = 30;

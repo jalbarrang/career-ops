@@ -79,7 +79,7 @@
 
   {#if res && !res.available}
     <p class="mt-4 rounded-xl border border-dashed border-border bg-surface/30 p-4 text-sm text-muted">
-      <code class="text-foreground">verify-portals.mjs</code> not found — this needs a complete career-ops
+      <code class="text-foreground">verify-portals.ts</code> not found — this needs a complete career-ops
       checkout (the web orchestrates the core's validator).
     </p>
   {/if}

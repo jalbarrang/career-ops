@@ -2,14 +2,14 @@ import { execFile } from "node:child_process";
 import fs from "node:fs";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
 
-// Lifetime pipeline stats, read from the core's own stats.mjs — the SAME
+// Lifetime pipeline stats, read from the core's own stats.ts — the SAME
 // calculator the CLI and the Go dashboard funnel agree on. We never recompute a
-// rate here: computeFunnel()'s docstring in stats.mjs is the canonical funnel
+// rate here: computeFunnel()'s docstring in stats.ts is the canonical funnel
 // definition ("Hired counts into every stage through everOffer"), and a second
 // implementation in TypeScript is how the web's numbers start disagreeing with
 // the CLI's. Mirrors /api/followups and /api/doctor.
 //
-// stats.mjs prints JSON by DEFAULT and rejects a --json flag outright, so this
+// stats.ts prints JSON by DEFAULT and rejects a --json flag outright, so this
 // passes no flags at all. Worth stating, because every sibling route here spawns
 // the script with that flag and copying the shape silently fails.
 //
@@ -22,7 +22,7 @@ export async function GET() {
   if (!fs.existsSync(script)) return Response.json({ available: false, stats: null });
 
   const stdout = await new Promise<string>((resolve) => {
-    execFile("node", [script], { cwd: careerOpsRoot(), timeout: 20_000, maxBuffer: 8 << 20 }, (err, out) =>
+    execFile("bun", [script], { cwd: careerOpsRoot(), timeout: 20_000, maxBuffer: 8 << 20 }, (err, out) =>
       resolve(err ? "" : out || ""),
     );
   });

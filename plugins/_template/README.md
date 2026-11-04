@@ -10,17 +10,17 @@ TODO: one paragraph.
 
 ```bash
 # Once it's in the career-ops registry:
-node plugins.mjs add {{NAME}}
+bun plugins.ts add {{NAME}}
 
 # Before listing (install directly from your repo at a pinned commit):
-node plugins.mjs add <your-github-user>/career-ops-plugin-{{NAME}} --sha <40-hex-commit>
+bun plugins.ts add <your-github-user>/career-ops-plugin-{{NAME}} --sha <40-hex-commit>
 ```
 
 Then enable + consent:
 
 ```bash
-node plugins.mjs enable {{NAME}}            # shows the capability card
-node plugins.mjs enable {{NAME}} --confirm  # grants it
+bun plugins.ts enable {{NAME}}            # shows the capability card
+bun plugins.ts enable {{NAME}} --confirm  # grants it
 ```
 
 ## Configure

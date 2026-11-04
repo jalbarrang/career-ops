@@ -4,7 +4,7 @@
   import { cn } from "@/lib/cn";
   import CadenceSettings from "@/components/followups/cadence-settings.svelte";
   import { persistCliId, readSavedCliId } from "@/lib/saved-cli";
-  import { keepIfInstalled, pickDefaultInstalled } from "@/lib/cli-pick.mjs";
+  import { keepIfInstalled, pickDefaultInstalled } from "@/lib/cli-pick.ts";
 
   type Cli = {
     id: string;

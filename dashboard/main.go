@@ -297,13 +297,13 @@ func openCmd(target string) tea.Cmd {
 	}
 }
 
-// runGeneratePDF runs the checkout's generate-pdf.mjs against the selected data root,
+// runGeneratePDF runs the checkout's generate-pdf.ts against the selected data root,
 // opens the resulting PDF on success, and reports the outcome back to the
 // pipeline screen as a PipelinePDFGeneratedMsg. Runs in a tea.Cmd goroutine,
 // so the UI stays responsive while Chromium renders.
 func runGeneratePDF(msg screens.PipelineGeneratePDFMsg) tea.Cmd {
 	return func() tea.Msg {
-		script, err := data.CheckoutScriptPath("generate-pdf.mjs")
+		script, err := data.CheckoutScriptPath("generate-pdf.ts")
 		if err != nil {
 			return screens.PipelinePDFGeneratedMsg{Err: err.Error()}
 		}
@@ -345,7 +345,7 @@ func runGeneratePDF(msg screens.PipelineGeneratePDFMsg) tea.Cmd {
 }
 
 // summarizeCmdError condenses a failed command into one help-bar-sized line:
-// the last non-empty output line when there is one (generate-pdf.mjs prints
+// the last non-empty output line when there is one (generate-pdf.ts prints
 // its error there), otherwise the exec error itself.
 func summarizeCmdError(err error, out []byte) string {
 	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
@@ -371,7 +371,7 @@ func (m appModel) View() string {
 }
 
 // getRepoRoot defers to internal/data, which already walks up from cwd looking
-// for path-resolver.mjs and is the function a relative CAREER_OPS_TRACKER
+// for path-resolver.ts and is the function a relative CAREER_OPS_TRACKER
 // resolves through.
 //
 // This used to be a second, shorter search — cwd and cwd's PARENT, then a
@@ -409,7 +409,7 @@ func resolveEnvPath(envVal string) string {
 	if root == "" {
 		// Anchoring to cwd here is a guess, and what is being guessed at is
 		// which tracker to read. Getting it wrong is invisible: the dashboard
-		// shows one file while every .mjs writer uses another, and neither side
+		// shows one file while every .ts writer uses another, and neither side
 		// reports anything. The guess is still made — exiting would be worse
 		// for a user whose layout we cannot see — but it is said out loud, with
 		// the absolute path the reader can check.
@@ -421,7 +421,7 @@ func resolveEnvPath(envVal string) string {
 		fmt.Fprintf(os.Stderr,
 			"Warning: no career-ops checkout found above the working directory or the executable, "+
 				"so the relative path %q was resolved against the working directory: %s\n"+
-				"         The .mjs scripts resolve it against the repository root, so they may be using a "+
+				"         The .ts scripts resolve it against the repository root, so they may be using a "+
 				"different tracker. Pass an absolute path or --path to be sure.\n",
 			trimmed, resolved)
 		return resolved

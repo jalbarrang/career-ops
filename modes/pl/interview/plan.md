@@ -14,7 +14,7 @@ Na podstawie opisu stanowiska (JD) oraz daty i godziny rozmowy zbuduj uporządko
 6. **Profil** w `config/profile.yml` + `modes/_profile.md` — do odczytu narracji, archetypów i celów
 7. **Bank historii** w `interview-prep/story-bank.md` — istniejące historie STAR+R
 8. **Bank pytań** w `interview-prep/question-bank.md` — istniejące luki (jeśli plik istnieje)
-9. **Wcześniej podane wynagrodzenie** — jeśli znany jest numer tracker#, uruchom `node salary-gap.mjs --stated-for <tracker#>` (zero tokenów). Każda wcześniejsza obserwacja `stated` to kwota, którą kandydat już zadeklarował w poprzedniej rundzie konkretnemu rozmówcy — uwzględnij ją w skróconej ściądze w Step 4, aby kandydat pozostał konsekwentny i przypadkiem nie renegocjował od nowa.
+9. **Wcześniej podane wynagrodzenie** — jeśli znany jest numer tracker#, uruchom `bun salary-gap.ts --stated-for <tracker#>` (zero tokenów). Każda wcześniejsza obserwacja `stated` to kwota, którą kandydat już zadeklarował w poprzedniej rundzie konkretnemu rozmówcy — uwzględnij ją w skróconej ściądze w Step 4, aby kandydat pozostał konsekwentny i przypadkiem nie renegocjował od nowa.
 
 ---
 

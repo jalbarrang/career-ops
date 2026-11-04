@@ -1,12 +1,12 @@
 // Pure, node-free helpers shared by server and client components (no fs/path
 // imports here — career-ops.ts holds the filesystem reads). Aligned with the
-// core: normalize-statuses.mjs (aliases) + the Go TUI dashboard (score/status
+// core: normalize-statuses.ts (aliases) + the Go TUI dashboard (score/status
 // colours = the current state-of-the-art).
 
-// Alias → canonical stage. Lives in status-alias.mjs so a `node --test` unit
+// Alias → canonical stage. Lives in status-alias.ts so a `node --test` unit
 // test can load it and assert it still covers templates/states.yml (#2917);
 // a hand-maintained copy is what drifted in #2249 and again after #2705.
-import { canonStatus } from "@/lib/status-alias.mjs";
+import { canonStatus } from "@/lib/status-alias.ts";
 
 export { canonStatus };
 
@@ -14,6 +14,7 @@ export const CANONICAL_STATES = [
   "Evaluated",
   "Applied",
   "Responded",
+  "Assessment",
   "Interview",
   "Offer",
   "Hired",

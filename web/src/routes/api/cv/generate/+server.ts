@@ -5,17 +5,18 @@ import os from "node:os";
 import path from "node:path";
 import * as yaml from "js-yaml";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
-import { rootScriptEnv } from "@/lib/core/root-env.mjs";
-import { resolveCodeRoot } from "@/lib/core/code-root.mjs";
-import { resolveCvTemplate } from "@/lib/core/cv-template.mjs";
-import { buildCvPayload, candidateFromProfileConfig, cvFileStem } from "@/lib/cv-generation.mjs";
-import { ensureShape } from "@/lib/cv-profile.mjs";
+import { rootScriptEnv } from "@/lib/core/root-env.ts";
+import { resolveCodeRoot } from "@/lib/core/code-root.ts";
+import { resolveCvTemplate } from "@/lib/core/cv-template.ts";
+import { buildCvPayload, candidateFromProfileConfig, cvFileStem } from "@/lib/cv-generation.ts";
+import { ensureShape } from "@/lib/cv-profile.ts";
+import { getProfilePath } from "@/lib/core/profile-path.ts";
 
 // Render a CV from selected career-profile facts.
 //
 // Everything that decides whether the document is valid belongs to the core:
-// `build-cv-html.mjs` validates the payload against lib/cv-payload-schema.mjs,
-// and `generate-pdf.mjs` runs the fact gate, the section-order guard and the
+// `build-cv-html.ts` validates the payload against lib/cv-payload-schema.ts,
+// and `generate-pdf.ts` runs the fact gate, the section-order guard and the
 // page check. This route assembles the payload, hands it over, and reports what
 // came back — it never bypasses a gate and never adds --skip-fact-check.
 //
@@ -30,7 +31,7 @@ type RunResult = { code: number | null; stdout: string; stderr: string; error: s
 
 function run(script: string, args: string[], cwd: string, timeout: number): Promise<RunResult> {
   return new Promise((resolve) => {
-    execFile("node", [script, ...args], { cwd, env: rootScriptEnv(cwd), timeout, maxBuffer: 8 * 1024 * 1024 }, (err, stdout, stderr) => {
+    execFile("bun", [script, ...args], { cwd, env: rootScriptEnv(cwd), timeout, maxBuffer: 8 * 1024 * 1024 }, (err, stdout, stderr) => {
       const code = typeof err?.code === "number" ? err.code : err ? null : 0;
       resolve({ code, stdout: stdout || "", stderr: stderr || "", error: err && code === null ? err.message : null });
     });
@@ -86,7 +87,7 @@ export async function POST({ request }: { request: Request }) {
     return json({ error: `career-profile.yml could not be read: ${(error as Error).message}` }, { status: 422 });
   }
 
-  const candidate = candidateFromProfileConfig(readYamlIfPresent(path.join(root, "config", "profile.yml")) ?? {});
+  const candidate = candidateFromProfileConfig(readYamlIfPresent(getProfilePath(root, { explicitRoot: true })) ?? {});
   const built = buildCvPayload({ profile, candidate, selection: body.selection as Parameters<typeof buildCvPayload>[0]["selection"] });
 
   // A selected role that cannot render is a CV missing a job. Preview may show

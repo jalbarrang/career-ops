@@ -13,7 +13,7 @@ import (
 //
 // states.yml says so itself: "Source of truth for career-ops (writer) and
 // dashboard (reader). Both systems MUST use these exact states." It also
-// explains that its lifecycle ordering is consumed by tracker-sync-check.mjs
+// explains that its lifecycle ordering is consumed by tracker-sync-check.ts
 // "so a new state added here can't silently fall through as unrecognized" —
 // and that is guarded for the mjs side. Nothing guarded it for the Go side.
 //

@@ -2,4 +2,4 @@
 
 <!-- OpenCode config — imports AGENTS.md -->
 
-Pass `--cli opencode` to `doctor.mjs`.
+Pass `--cli opencode` to `doctor.ts`.

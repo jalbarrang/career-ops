@@ -2,13 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { atomicWrite } from "@/lib/core/safe-write";
 import { isRealISODate, localISODate } from "@/lib/followups";
-import { parseFollowupId } from "@/lib/followup-id.mjs";
+import { parseFollowupId } from "@/lib/followup-id.ts";
 import { followupsLogPath, withFollowupsWrite, followupsWriteError } from "@/lib/followups-server";
 
 // Pin an application's NEXT follow-up date, overriding the computed cadence.
 // Stored as a directive line in data/follow-ups.md —
 //   - next #42 2026-07-10 (set 2026-07-02)
-// — which the core followup-cadence.mjs reads (parseNextOverrides). The pin
+// — which the core followup-cadence.ts reads (parseNextOverrides). The pin
 // wins over the computed schedule (it even revives a cold application) until a
 // follow-up is logged on/after the set-date, which resumes the normal cadence.
 

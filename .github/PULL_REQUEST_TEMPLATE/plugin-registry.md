@@ -31,7 +31,7 @@ Paste the registry entry (one object), pinned to the exact reviewed commit:
 ### Maintainer review checklist
 
 - [ ] Naming `career-ops-plugin-<name>`; `id` == name minus the prefix
-- [ ] Minimum files present (manifest.json, index.mjs, README.md, LICENSE)
+- [ ] Minimum files present (manifest.json, index.ts, README.md, LICENSE)
 - [ ] Manifest valid: apiVersion 1, `humanInTheLoop: true`, hooks ⊆ {provider, ingest, search, notify, export} — **no apply/submit**
 - [ ] MIT-compatible LICENSE; no personal data in the repo
 - [ ] Egress: `allowedHosts` are real public hosts; no IP literals / metadata / `*.internal`; no localhost without `allowsLocalhost` + a reason

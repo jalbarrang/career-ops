@@ -13,9 +13,9 @@
   import { useApply } from "@/lib/apply.svelte";
   import { useExplore } from "@/lib/explore.svelte";
   import { dispatch, type ActionCtx, type DoneInfo } from "@/lib/actions/registry";
-  import { estimateRunCost } from "@/lib/run-cost-estimate.mjs";
+  import { estimateRunCost } from "@/lib/run-cost-estimate.ts";
   import { scoreNum } from "@/lib/format";
-  import { cleanMessages } from "@/lib/assistant-history.mjs";
+  import { cleanMessages } from "@/lib/assistant-history.ts";
   import { cn } from "@/lib/cn";
   import {
     NAV_RE,

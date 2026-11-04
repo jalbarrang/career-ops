@@ -25,7 +25,7 @@
 
   // The /followups tracker: WHO needs a nudge today, HOW urgent, WHEN the next
   // touch is due, and the permanent history of every follow-up sent. The verdict
-  // is the core's followup-cadence.mjs (via /api/followups?full=1) — this view
+  // is the core's followup-cadence.ts (via /api/followups?full=1) — this view
   // only filters, sorts, and records.
 
   const URGENCY_TABS = ["ALL", "OVERDUE", "URGENT", "WAITING", "COLD"] as const;
@@ -436,7 +436,7 @@
     {#if !data.available}
       {@render emptyPanel(
         "Cadence unavailable",
-        "The cadence engine (followup-cadence.mjs) returned nothing — check that the core scripts are present.",
+        "The cadence engine (followup-cadence.ts) returned nothing — check that the core scripts are present.",
       )}
     {:else if !pending && filtered.length === 0}
       {#if filtering}

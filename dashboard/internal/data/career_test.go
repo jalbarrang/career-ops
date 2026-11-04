@@ -215,7 +215,7 @@ func TestParseApplicationsResolvesTrackerRelativeReportLinks(t *testing.T) {
 	}
 
 	// Tracker links are written relative to the tracker file itself
-	// (merge-tracker.mjs normalization): ../reports/... when the tracker
+	// (merge-tracker.ts normalization): ../reports/... when the tracker
 	// lives under data/. Legacy trackers may still carry root-relative
 	// links; both must resolve to the same on-disk report.
 	applications := `# Applications Tracker
@@ -500,7 +500,7 @@ func TestParseApplicationsRespectsCareerOpsTracker(t *testing.T) {
 }
 
 // A duplicated header name resolves to its LAST occurrence, matching
-// detectColumns in tracker-parse.mjs — the JS and Go readers must map an
+// detectColumns in tracker-parse.ts — the JS and Go readers must map an
 // identical header row identically.
 func TestResolveTrackerColumnsDuplicateHeaderLastWins(t *testing.T) {
 	dup := strings.Split(`| # | Notes | Company | Role | Score | Status | PDF | Report | Notes |
@@ -509,7 +509,7 @@ func TestResolveTrackerColumnsDuplicateHeaderLastWins(t *testing.T) {
 	cols := resolveTrackerColumns(dup)
 	// Verify that the last "Notes" column wins
 	if cols["notes"] != 8 {
-		t.Fatalf("notes index = %d, expected 8 (tracker-parse.mjs parity)", cols["notes"])
+		t.Fatalf("notes index = %d, expected 8 (tracker-parse.ts parity)", cols["notes"])
 	}
 }
 
@@ -602,7 +602,7 @@ func TestNormalizeStatus(t *testing.T) {
 	}
 }
 
-// Regression: when an external writer (set-status.mjs, merge-tracker.mjs,
+// Regression: when an external writer (set-status.ts, merge-tracker.ts,
 // another session) changes a row's status while the dashboard is open, the
 // in-memory "old" status no longer matches the file. The update must still
 // land in the Status column — identified via the header — rather than
@@ -759,7 +759,7 @@ func TestParseApplicationsReadsLinkedURLCells(t *testing.T) {
 }
 
 // The writer only links a href that survives a markdown destination byte for
-// byte (merge-tracker.mjs isLinkableDestination); everything else is written
+// byte (merge-tracker.ts isLinkableDestination); everything else is written
 // bare. Both forms must read back whole HERE too — the Node parser and this
 // regex disagreeing about a row's URL is the drift the shared extractor exists
 // to prevent. TestExtractCellURLMatchesNodeReader pins the full parity table.
@@ -786,7 +786,7 @@ func TestExtractCellURLAgreesWithTheWriterOnUnlinkableHrefs(t *testing.T) {
 }
 
 // One table, two readers: test-fixtures/url-cell-parity.json is asserted here
-// against extractCellURL and in tracker-columns-tests.mjs against Node's
+// against extractCellURL and in tracker-columns-tests.ts against Node's
 // extractCellUrl. Its expectations were generated from the Node reader, so this
 // test failing means the Go port has drifted from the parser merge-tracker keys
 // on — and a hand-edited cell would show the dashboard one posting while dedup
@@ -819,9 +819,9 @@ func TestExtractCellURLMatchesNodeReader(t *testing.T) {
 
 // One table, two readers: test-fixtures/tracker-row-split-parity.json is
 // asserted here against splitTrackerRow and in
-// tests/tracker-row-split-parity.test.mjs against Node's splitTrackerCells. A
+// tests/tracker-row-split-parity.test.ts against Node's splitTrackerCells. A
 // tab only marks a legacy tab-delimited row when the line has at most two
-// pipes; in a pipe table it is note text that set-status.mjs --note keeps
+// pipes; in a pipe table it is note text that set-status.ts --note keeps
 // verbatim. Splitting such a row on tabs left fewer than eight fields, so
 // ParseApplications dropped it while Node and the web still showed it.
 func TestSplitTrackerRowMatchesNodeReader(t *testing.T) {

@@ -98,7 +98,7 @@ Nó điều chỉnh CV và soạn nháp&nbsp;câu&nbsp;trả&nbsp;lời. <strong
 Dán một tin bạn định ứng tuyển tối nay. Nếu kết quả là <em>đừng ứng tuyển</em>, bạn vừa lấy lại được buổi tối. Nếu kết quả là một kế hoạch, bạn biết phải làm gì tiếp theo.
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 <p align="center"><sub>Mã nguồn mở. Chạy cục bộ. Ngay trong AI CLI bạn đang dùng. <a href="docs/RUNNING_ON_A_BUDGET.md">Gồm cả mô hình miễn phí và cục bộ.</a></sub></p>
@@ -159,7 +159,7 @@ Lần khởi động đầu tiên, nó hỏi tất cả những điều đó nga
 
 ## career-ops sẽ không làm gì
 
-- **Tự động nộp đơn ứng tuyển.** Nó soạn nháp câu trả lời cho mọi ô; bạn xem lại và bấm Submit. Script không bao giờ POST (`prepare-application.mjs`).
+- **Tự động nộp đơn ứng tuyển.** Nó soạn nháp câu trả lời cho mọi ô; bạn xem lại và bấm Submit. Script không bao giờ POST (`prepare-application.ts`).
 - **Gửi email.** Chỉ soạn nháp. Không có thành phần gửi thư nào trong codebase này.
 - **Gửi dữ liệu về máy chủ của chúng tôi.** Không telemetry, không backend của chúng tôi. CV của bạn đi từ máy bạn tới nhà cung cấp AI bạn chọn, và không đi đâu khác. Sổ cái công khai duy nhất là repo này: `HIRED.md` và các issue của nó.
 - **Thúc bạn ứng tuyển khi điểm dưới 4.0/5.** Nó sẽ khuyên bạn đừng. Bạn có thể quyết định khác, và nó sẽ nói rõ điều đó.
@@ -175,7 +175,7 @@ Nó diễn đạt lại CV của bạn; nó không bao giờ được bịa ra. 
 | **Tạo PDF cho ATS**      | CV đọc được bởi ATS, điều chỉnh theo từng JD từ chính kinh nghiệm của bạn, thiết kế Space Grotesk + DM Sans |
 | **Tạo Cover Letter**     | Cover letter có nghiên cứu, bám sát từ khóa của JD, bốn câu hỏi định hướng tương tác (vì sao/vấn đề/cách tiếp cận/giọng điệu), bước duyệt bản nháp ngay trong chat, và PDF A4 qua cùng pipeline HTML + Playwright như CV. Tự soạn nháp ở mỗi lần đánh giá; hoàn thiện và tạo theo yêu cầu qua `/career-ops cover` |
 | **Vượt ra ngoài CV**     | Nghiên cứu công ty ([`deep`](modes/deep.md)) chỉ ra chiến lược AI, các động thái gần đây, văn hóa kỹ thuật và góc tiếp cận hồ sơ của bạn nên chọn. Tìm liên hệ ([`contacto`](modes/contacto.md)) xác định hiring manager, recruiter hoặc đồng nghiệp trong team đáng để tiếp cận và soạn nháp tin nhắn LinkedIn dưới 300 ký tự phù hợp với từng loại liên hệ. Soạn nháp email ứng tuyển chính thức ([`email`](modes/email.md)) biến một báo cáo đã đánh giá hoặc JD dán vào thành dòng tiêu đề, nội dung và danh sách tệp đính kèm mà không gửi, nộp hay bấm bất cứ thứ gì. Đơn ứng tuyển đưa bạn vào hàng đợi; nghiên cứu đưa bạn vào cuộc trò chuyện. |
-| **Phân tích mẫu hình**   | Mẫu hình bị từ chối và tỷ lệ tiến tới bước sau theo từng kênh ATS (`analyze-patterns.mjs`), thống kê phễu toàn thời gian (`stats.mjs`), phát hiện tin đăng lại, dấu hiệu có thể của tin ma (`detect-reposts.mjs`) |
+| **Phân tích mẫu hình**   | Mẫu hình bị từ chối và tỷ lệ tiến tới bước sau theo từng kênh ATS (`analyze-patterns.ts`), thống kê phễu toàn thời gian (`stats.ts`), phát hiện tin đăng lại, dấu hiệu có thể của tin ma (`detect-reposts.ts`) |
 
 <details>
 <summary><b>Mọi thứ khác nó làm được</b></summary>
@@ -192,8 +192,8 @@ Nó diễn đạt lại CV của bạn; nó không bao giờ được bịa ra. 
 | **Dashboard TUI**        | Giao diện terminal để duyệt, lọc và sắp xếp pipeline của bạn |
 | **Toàn vẹn pipeline**    | Tự động merge, loại trùng, chuẩn hóa trạng thái, kiểm tra sức khỏe |
 | **Bộ công cụ phỏng vấn** | Kế hoạch chuẩn bị theo khung giờ, buổi luyện tập có phản hồi, tổng kết sau phỏng vấn ([`interview/`](modes/interview/README.md)), và bộ phát hiện red flag của công ty ([`interview-redflag`](modes/interview-redflag.md)) |
-| **Giai đoạn offer**      | Trợ lý đọc hợp đồng -- đi qua từng điều khoản kèm danh sách câu hỏi cho luật sư ([`offer-prep`](modes/offer-prep.md)) -- và bộ phân tích chênh lệch lương mong muốn/quảng cáo/thực tế (`salary-gap.mjs`) |
-| **Follow-up và phản hồi** | Bộ tính nhịp follow-up và nhắc nhở gieo sẵn (`followup-cadence.mjs`, `followup-seed.mjs`); phân loại phản hồi của nhà tuyển dụng thành cập nhật tracker ([`reply-watch`](modes/reply-watch.md)) |
+| **Giai đoạn offer**      | Trợ lý đọc hợp đồng -- đi qua từng điều khoản kèm danh sách câu hỏi cho luật sư ([`offer-prep`](modes/offer-prep.md)) -- và bộ phân tích chênh lệch lương mong muốn/quảng cáo/thực tế (`salary-gap.ts`) |
+| **Follow-up và phản hồi** | Bộ tính nhịp follow-up và nhắc nhở gieo sẵn (`followup-cadence.ts`, `followup-seed.ts`); phân loại phản hồi của nhà tuyển dụng thành cập nhật tracker ([`reply-watch`](modes/reply-watch.md)) |
 | **Hệ thống plugin**      | Tích hợp tùy chọn (Gmail, Notion, Apify + registry cộng đồng), tắt theo mặc định -- xem [docs/PLUGINS.md](docs/PLUGINS.md) |
 
 </details>
@@ -203,7 +203,7 @@ Nó diễn đạt lại CV của bạn; nó không bao giờ được bịa ra. 
 **Cách nhanh nhất, một lệnh:**
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 > 💡 `npx` đi kèm [Node.js](https://nodejs.org): nó chạy trình cài đặt một lần,
@@ -224,8 +224,8 @@ claude   # hoặc codex / qwen / opencode / agy / grok — mở AI CLI của b�
 
 ```bash
 git clone https://github.com/career-ops-hq/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # chỉ cần khi tạo PDF
+cd career-ops && bun install
+bunx playwright install chromium   # chỉ cần khi tạo PDF
 # Trên bản phân phối Linux không phải Debian/Ubuntu (Fedora, Arch, ...), các thư viện
 # hệ thống của Chromium không được cài bởi dòng trên — hãy tự cài bằng trình quản lý
 # gói của bản phân phối nếu việc tạo PDF không mở được trình duyệt
@@ -255,21 +255,21 @@ claude   # hoặc codex / opencode / qwen / agy / grok
 
 ### Quét qua proxy đi ra ngoài
 
-`fetch()` thông thường của Node có thể bỏ qua `HTTP_PROXY`, `HTTPS_PROXY` và `NO_PROXY` trong một sandbox chỉ cho đi qua proxy. Các request của provider có thể dùng các biến này với `CAREER_OPS_TRUST_PROXY_EGRESS=1 node scan.mjs`. Cách này dùng một bộ điều phối proxy theo phạm vi request; các request không liên quan không bị ảnh hưởng, và các đích trong `NO_PROXY` vẫn dùng lớp bảo vệ địa chỉ riêng cục bộ.
+`fetch()` thông thường của Node có thể bỏ qua `HTTP_PROXY`, `HTTPS_PROXY` và `NO_PROXY` trong một sandbox chỉ cho đi qua proxy. Các request của provider có thể dùng các biến này với `CAREER_OPS_TRUST_PROXY_EGRESS=1 bun scan.ts`. Cách này dùng một bộ điều phối proxy theo phạm vi request; các request không liên quan không bị ảnh hưởng, và các đích trong `NO_PROXY` vẫn dùng lớp bảo vệ địa chỉ riêng cục bộ.
 
-Chỉ đặt cờ này **khi chính proxy được cấu hình đã chặn kết nối tới các địa chỉ riêng tư, loopback và metadata**. Khi proxy phân giải đích từ xa, career-ops không thể xác minh địa chỉ cuối cùng ở máy cục bộ; proxy phải tự thực thi phần đó của ranh giới SSRF. Nếu không có thiết lập tin cậy tường minh này, các request của provider giữ đường truyền trực tiếp bình thường và lỗi DNS sẽ nêu rõ thiết lập proxy cần có. URL proxy chứa thông tin đăng nhập phải dùng HTTPS; proxy HTTP không có thông tin đăng nhập vẫn được hỗ trợ. Cờ này yêu cầu Node.js 18.17 trở lên. Các bản cài hiện có vẫn giữ đường truyền trực tiếp sau khi cập nhật hệ thống; chỉ riêng biến môi trường proxy không bật nó. Trước khi bật cờ, chạy `npm install` trong thư mục career-ops để cài phụ thuộc `undici` được thêm vào. Nó chỉ được nạp cho request đã chọn tham gia và có proxy được cấu hình, nên quét trực tiếp vẫn chạy bình thường ngay cả khi phụ thuộc đó chưa được cài.
+Chỉ đặt cờ này **khi chính proxy được cấu hình đã chặn kết nối tới các địa chỉ riêng tư, loopback và metadata**. Khi proxy phân giải đích từ xa, career-ops không thể xác minh địa chỉ cuối cùng ở máy cục bộ; proxy phải tự thực thi phần đó của ranh giới SSRF. Nếu không có thiết lập tin cậy tường minh này, các request của provider giữ đường truyền trực tiếp bình thường và lỗi DNS sẽ nêu rõ thiết lập proxy cần có. URL proxy chứa thông tin đăng nhập phải dùng HTTPS; proxy HTTP không có thông tin đăng nhập vẫn được hỗ trợ. Cờ này yêu cầu Node.js 18.17 trở lên. Các bản cài hiện có vẫn giữ đường truyền trực tiếp sau khi cập nhật hệ thống; chỉ riêng biến môi trường proxy không bật nó. Trước khi bật cờ, chạy `bun install` trong thư mục career-ops để cài phụ thuộc `undici` được thêm vào. Nó chỉ được nạp cho request đã chọn tham gia và có proxy được cấu hình, nên quét trực tiếp vẫn chạy bình thường ngay cả khi phụ thuộc đó chưa được cài.
 
 ### Cài toàn cục
 
 ```bash
-npm i -g @santifer/career-ops
+bun add -g @santifer/career-ops
 ```
 
 Lệnh này cài binary `career-ops` ở cấp toàn cục để bạn chạy `career-ops init [folder]` mà không cần `npx`. `init` là lệnh duy nhất của nó: nó dựng một workspace, và mọi việc sau đó diễn ra bên trong AI coding CLI của bạn (xem Cách dùng bên dưới), không qua binary này.
 
 **Nên dùng cách nào?**
-- `npx @santifer/career-ops init`: tốt nhất cho lần dùng đầu; tạo một thư mục dự án riêng.
-- `npm i -g @santifer/career-ops`: nếu bạn thích gõ `career-ops init` hơn dạng `npx`. Nó không thêm lệnh nào khác.
+- `bunx @santifer/career-ops init`: tốt nhất cho lần dùng đầu; tạo một thư mục dự án riêng.
+- `bun add -g @santifer/career-ops`: nếu bạn thích gõ `career-ops init` hơn dạng `npx`. Nó không thêm lệnh nào khác.
 
 > **Hệ thống được thiết kế để chính AI coding CLI của bạn tùy chỉnh.** Mode, archetype, trọng số chấm điểm, kịch bản đàm phán -- chỉ cần nhờ nó thay đổi. Nó đọc chính những file nó dùng, nên biết chính xác cần sửa gì.
 
@@ -460,13 +460,13 @@ cp .env.example .env
 # Sửa .env, đặt GEMINI_API_KEY=your_key_here
 
 # 2. Cài các phụ thuộc
-npm install
+bun install
 
 # 3. Đánh giá một mô tả công việc
-node gemini-eval.mjs "We are looking for a Senior AI Engineer..."
-node gemini-eval.mjs --file ./jds/my-job.txt
-node agent-inbox.mjs add "..."   # xếp hàng một yêu cầu cho phiên sau
-npm run gemini:eval -- "JD text here"
+bun gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun gemini-eval.ts --file ./jds/my-job.txt
+bun agent-inbox.ts add "..."   # xếp hàng một yêu cầu cho phiên sau
+bun run gemini:eval -- "JD text here"
 ```
 
 > **Gói miễn phí:** Cả hai cách đều chạy được mà không cần thanh toán. CLI gốc dùng Google OAuth; script API dùng `gemini-3.6-flash` (giới hạn tốc độ phụ thuộc mô hình và gói; xem tài liệu Google AI để biết hạn mức hiện tại).
@@ -486,10 +486,10 @@ Scanner đi kèm **100+ công ty** sẵn sàng quét và **35+ truy vấn tìm k
 
 **Cổng việc làm được tìm:** 55+ module provider bao phủ API của ATS, feed toàn cổng, feed XML/RSS, feed markdown và bộ phân tích cục bộ. Xem [Các cổng việc làm được hỗ trợ](docs/SUPPORTED_JOB_BOARDS.md) để có bảng đầy đủ.
 
-Theo mặc định `node scan.mjs` (hay `npm run scan`) tin vào những gì mỗi feed ATS trả về. Một số công ty để lại tin cũ trong API công khai ngay cả sau khi vai trò đã đóng, nên các mục hết hạn đó có thể lọt vào `pipeline.md`. Truyền `--verify` để khởi chạy Playwright sau lượt API và loại bỏ tin hết hạn trước khi chúng vào pipeline:
+Theo mặc định `bun scan.ts` (hay `bun run scan`) tin vào những gì mỗi feed ATS trả về. Một số công ty để lại tin cũ trong API công khai ngay cả sau khi vai trò đã đóng, nên các mục hết hạn đó có thể lọt vào `pipeline.md`. Truyền `--verify` để khởi chạy Playwright sau lượt API và loại bỏ tin hết hạn trước khi chúng vào pipeline:
 
 ```bash
-node scan.mjs --verify          # khám phá không tốn token + kiểm tra còn mở bằng Playwright
+bun scan.ts --verify          # khám phá không tốn token + kiểm tra còn mở bằng Playwright
 ```
 
 Việc xác minh chạy tuần tự và chỉ áp dụng cho tin mới (sau khi loại trùng), nên chi phí luôn có giới hạn.
@@ -499,8 +499,8 @@ Việc xác minh chạy tuần tự và chỉ áp dụng cho tin mới (sau khi 
 Dashboard terminal tích hợp cho phép bạn duyệt pipeline một cách trực quan:
 
 ```bash
-npm run serve:dashboard   # chạy TUI
-npm run build:dashboard   # tùy chọn: build binary độc lập
+bun run serve:dashboard   # chạy TUI
+bun run build:dashboard   # tùy chọn: build binary độc lập
 ```
 
 Tính năng: 10 tab lọc, 8 kiểu sắp xếp, chế độ nhóm/phẳng, xem trước tải lười, đổi trạng thái ngay trong danh sách.
@@ -562,9 +562,9 @@ Sau khi xác định xong, mọi file người dùng được đọc và ghi tư
 
 - **Ghi đè tracker:** Bạn cũng có thể đặt `CAREER_OPS_TRACKER` để ghi đè trực tiếp đường dẫn file tracker đơn ứng tuyển.
 - **Ghi:** Mọi thao tác ghi (như merge) mặc định nhắm tới `{DATA_ROOT}/data/applications.md`.
-- **Cấu hình scanner:** `portals.yml` được đọc và kiểm tra tại `{DATA_ROOT}/portals.yml`, nên `node validate-portals.mjs` kiểm tra đúng file mà `scan.mjs` đọc.
+- **Cấu hình scanner:** `portals.yml` được đọc và kiểm tra tại `{DATA_ROOT}/portals.yml`, nên `bun validate-portals.ts` kiểm tra đúng file mà `scan.ts` đọc.
 - **Tài liệu được tạo:** CV và cover letter đã điều chỉnh được ghi dưới `{DATA_ROOT}/output/`, và manifest PDF liên kết chúng với một báo cáo nằm ở `{DATA_ROOT}/data/pdf-index.tsv`. Khi `CAREER_OPS_TRACKER` chưa đặt, workspace tracker giới hạn các lần ghi đó là thư mục dữ liệu, không phải thư mục checkout.
-- **PDF khi ghi đè tracker:** `generate-pdf.mjs` xác định `CAREER_OPS_TRACKER` trước khi suy ra workspace, nên khi có ghi đè, workspace là thư mục chứa tracker đó (hoặc thư mục cha của nó, khi tracker nằm trong thư mục `data/`). Khi đó HTML của CV và mọi PDF phải nằm trong workspace này, và manifest chuyển sang `data/pdf-index.tsv` của nó. Cover letter vẫn nhắm tới `{DATA_ROOT}/output/`, nên bị từ chối khi thư mục đó nằm ngoài workspace của tracker.
+- **PDF khi ghi đè tracker:** `generate-pdf.ts` xác định `CAREER_OPS_TRACKER` trước khi suy ra workspace, nên khi có ghi đè, workspace là thư mục chứa tracker đó (hoặc thư mục cha của nó, khi tracker nằm trong thư mục `data/`). Khi đó HTML của CV và mọi PDF phải nằm trong workspace này, và manifest chuyển sang `data/pdf-index.tsv` của nó. Cover letter vẫn nhắm tới `{DATA_ROOT}/output/`, nên bị từ chối khi thư mục đó nằm ngoài workspace của tracker.
 - **Lớp mã giữ nguyên chỗ:** `node_modules/`, `providers/`, `modes/` và chính các script luôn được xác định theo repo, không bao giờ theo thư mục dữ liệu.
 
 TUI dashboard viết bằng Go, các script Node.js và các mode của AI agent đều tự động tuân theo thứ tự ưu tiên này.
@@ -623,7 +623,7 @@ TUI dashboard viết bằng Go, các script Node.js và các mode của AI agent
 career-ops ([career-ops.org](https://career-ops.org), còn gọi là **careerops**) là công cụ tìm việc bằng AI mã nguồn mở chạy cục bộ trong AI coding CLI của bạn (Claude Code, Codex, OpenCode và các CLI khác) và để mọi quyết định cho bạn. Nó đánh giá tin tuyển dụng dựa trên CV của bạn, tạo PDF điều chỉnh cho ATS, tìm đúng người để liên hệ và theo dõi mọi thứ ở một nơi: bạn luôn là người quyết định cuối cùng. Đây là bản triển khai tham chiếu đầu tiên của [Tuyên ngôn CareerOps](https://career-ops.org/manifesto).
 
 **CV đã điều chỉnh có thể bịa ra thông tin không?**
-Không được phép, và các prompt đã nói rõ: diễn đạt lại, không bao giờ bịa. `generate-pdf` chặn CV có số liệu hoặc thông tin không có trong nguồn của bạn, trừ khi bạn truyền `--skip-fact-check`. Chế độ `pdf` cũng chạy `cv-title-check.mjs`, công cụ so sánh từng chức danh trong CV đã tùy chỉnh với chức danh mà cv.md ghi cho cùng công việc đó (ghép theo công ty và thời gian), rồi hỏi bạn muốn giữ hay đổi lại chức danh nào khác biệt. Nó chỉ cảnh báo chứ không chặn, vì diễn đạt lại một chức danh đôi khi là quyết định của bạn. Chưa có gì đánh giá cách diễn đạt lại: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (kiểm tra tính trung thực theo hướng chặn khi lỗi) đang theo dõi việc này. Cho đến lúc đó, hãy đọc từng CV trước khi gửi. [Tuyên bố miễn trừ pháp lý](LEGAL_DISCLAIMER.md) nói điều tương tự bằng lời dài hơn.
+Không được phép, và các prompt đã nói rõ: diễn đạt lại, không bao giờ bịa. `generate-pdf` chặn CV có số liệu hoặc thông tin không có trong nguồn của bạn, trừ khi bạn truyền `--skip-fact-check`. Chế độ `pdf` cũng chạy `cv-title-check.ts`, công cụ so sánh từng chức danh trong CV đã tùy chỉnh với chức danh mà cv.md ghi cho cùng công việc đó (ghép theo công ty và thời gian), rồi hỏi bạn muốn giữ hay đổi lại chức danh nào khác biệt. Nó chỉ cảnh báo chứ không chặn, vì diễn đạt lại một chức danh đôi khi là quyết định của bạn. Chưa có gì đánh giá cách diễn đạt lại: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (kiểm tra tính trung thực theo hướng chặn khi lỗi) đang theo dõi việc này. Cho đến lúc đó, hãy đọc từng CV trước khi gửi. [Tuyên bố miễn trừ pháp lý](LEGAL_DISCLAIMER.md) nói điều tương tự bằng lời dài hơn.
 
 **Tôi có thể chạy career-ops miễn phí, hoặc trên mô hình rẻ hơn / cục bộ không?**
 Được. career-ops không phụ thuộc CLI và chạy được trên mô hình miễn phí và cục bộ (mô hình miễn phí của OpenRouter, Ollama hoặc bất kỳ endpoint tương thích OpenAI nào), nên bạn không bị ràng buộc với gói trả phí. Xem [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md) để biết cách thiết lập đầy đủ.

@@ -2,9 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { careerOpsRoot, readApplications } from "@/lib/career-ops";
 import { getNormalizeTextKey } from "@/lib/core/text-key";
-import { evaluatedKeys, isEvaluated } from "@/lib/whats-new-suppression.mjs";
+import { evaluatedKeys, isEvaluated } from "@/lib/whats-new-suppression.ts";
 import type { DiscoveredOffer } from "@/lib/explore";
-import { collectWhatsNew, resolveOfferLimit } from "@/lib/whats-new.mjs";
+import { collectWhatsNew, resolveOfferLimit } from "@/lib/whats-new.ts";
 
 // The SUPPLY loop, ZERO tokens: "new matches this week" = roles surfaced by past
 // free scans (data/scan-history.tsv) in the last N days that the user hasn't

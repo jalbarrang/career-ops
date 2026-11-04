@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { ArrowLeft, CircleAlert, Download, Eye, Loader2 } from "@lucide/svelte";
   import { cn } from "@/lib/cn";
-  import { allRoles } from "@/lib/cv-profile.mjs";
+  import { allRoles } from "@/lib/cv-profile.ts";
 
   type Fact = { id: string; text: string; review_status?: string };
   type Role = { id: string; name?: string; period?: string; location?: string; facts?: Fact[] };
@@ -128,7 +128,7 @@
     <div>
       <h1 class="font-display text-2xl tracking-tight text-landing">Generate a CV</h1>
       <p class="mt-1 max-w-2xl text-sm text-muted">
-        Pick what goes in, then render it through the same builders the CLI uses. The payload is validated by <code class="text-foreground">build-cv-html.mjs</code>{" "}
+        Pick what goes in, then render it through the same builders the CLI uses. The payload is validated by <code class="text-foreground">build-cv-html.ts</code>{" "}
         and the PDF runs the fact gate — neither is bypassed here.
       </p>
     </div>

@@ -13,8 +13,8 @@
 
 import type { Application, InboxJob } from "@/lib/career-ops";
 import type { Job } from "@/lib/jobs.svelte";
-import { normalizeTextKey } from "@/lib/core/normalize-text-key.mjs";
-import { formatBatchSpendConfirmation, requiresBatchSpendConfirmation } from "@/lib/run-cost-estimate.mjs";
+import { normalizeTextKey } from "@/lib/core/normalize-text-key.ts";
+import { formatBatchSpendConfirmation, requiresBatchSpendConfirmation } from "@/lib/run-cost-estimate.ts";
 
 export const BATCH_CAP = 12; // hard ceiling on a single fan-out
 

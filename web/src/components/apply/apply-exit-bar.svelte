@@ -3,7 +3,7 @@
   import { goto, invalidateAll } from "$app/navigation";
   import { ArrowLeft, ClipboardCheck, Loader2 } from "@lucide/svelte";
   import { useApply } from "@/lib/apply.svelte";
-  import { needsLeaveConfirmation, resolveReturnPath } from "@/lib/apply/exit.mjs";
+  import { needsLeaveConfirmation, resolveReturnPath } from "@/lib/apply/exit.ts";
 
   // ── Leaving the page: back out, or record that you applied ─────────────────
   // You submit the real form yourself on the employer's site, so the moment you

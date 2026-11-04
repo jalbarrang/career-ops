@@ -31,7 +31,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     # Without a limit a hung job holds its runner for GitHub's default of six
-    # hours. test-all.mjs kills a discovered suite that runs past its budget,
+    # hours. test-all.ts kills a discovered suite that runs past its budget,
     # but its inline sections and the install steps have no limit of their
     # own. The slowest leg (macOS) takes about 11 minutes.
     timeout-minutes: 30
@@ -46,29 +46,25 @@ jobs:
         with:
           # Test code (fork code, in a merge_group) must not find a token in .git/config.
           persist-credentials: false
-      # The declared floor (lib/node-floor.mjs, package.json engines). Exact on
-      # purpose: a bare '22' resolves to the newest 22.x and tests nothing.
-      # Renovate is told to leave node-version in this file alone (renovate.json);
-      # tests/node-floor.test.mjs fails if this drifts from NODE_MIN.
-      - name: Set up the Node floor (22.13) for syntax compatibility
-        uses: actions/setup-node@v7
+      # The declared floor (lib/bun-floor.ts, package.json engines). Exact on
+      # purpose: a bare '1' resolves to the newest 1.x and tests nothing.
+      # Renovate is told to leave bun-version in this file alone (renovate.json);
+      # tests/bun-floor.test.ts fails if this drifts from BUN_MIN.
+      - name: Set up the Bun floor (1.4.3)
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '22.13'
-      - run: npm run lint
-      - name: Set up Node 24 for the test suite
-        uses: actions/setup-node@v7
-        with:
-          node-version: '24'
+          bun-version: '1.4.3'
+      - run: bun run lint
       - uses: actions/setup-go@v7
         with:
           go-version: '1.27'
           # The module lives in dashboard/, so without this setup-go looks for
           # go.sum at the root, warns, and caches nothing.
           cache-dependency-path: dashboard/go.sum
-      # Skip the postinstall (npx playwright install chromium); the tests
+      # Skip the postinstall (bunx playwright install chromium); the tests
       # never launch a browser, so the ~170 MB download is pure CI overhead.
-      - run: npm install --ignore-scripts
-      - run: node test-all.mjs --quick
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun test-all.ts --quick
       - name: Go dashboard tests
         run: go test ./...
         working-directory: dashboard
@@ -88,7 +84,7 @@ jobs:
           docker run --rm --init --ipc=host --platform linux/amd64 \
             --volume "$PWD:/work" --volume /work/node_modules \
             career-ops-cv-visual \
-            sh -c 'npm install --ignore-scripts --package-lock=false && npm run test:cv-visual'
+            sh -c 'bun install --frozen-lockfile --ignore-scripts && bun run test:cv-visual'
       - name: Upload CV visual diffs and rendered previews
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -108,21 +104,21 @@ jobs:
         with:
           fetch-depth: 0            # harness needs release tags
           persist-credentials: false # the harness only ever touches a local mirror
-      - uses: actions/setup-node@v7
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '24'
+          bun-version: '1.4.3'
       - uses: actions/setup-go@v7
         with:
           go-version: '1.27'   # old updaters rebuild the dashboard during apply
           cache-dependency-path: dashboard/go.sum
-      - run: npm install --ignore-scripts
+      - run: bun install --frozen-lockfile --ignore-scripts
       - name: Upgrade PR gate (newest old release -> this commit)
-        run: node upgrade-tests.mjs --pr-gate
+        run: bun upgrade-tests.ts --pr-gate
       - name: Canary (harness must be able to fail)
-        run: node upgrade-tests.mjs --canary
+        run: bun upgrade-tests.ts --canary
       - name: Local-paths declaration survives a real apply (#2421)
-        run: node upgrade-tests.mjs --local-paths
+        run: bun upgrade-tests.ts --local-paths
       - name: User-layer manifest entry is refused, not fatal (#3782)
-        run: node upgrade-tests.mjs --user-layer-refusal
-      - name: Failed npm install is reported, rollback reinstalls
-        run: node upgrade-tests.mjs --failed-install
+        run: bun upgrade-tests.ts --user-layer-refusal
+      - name: Failed bun install is reported, rollback reinstalls
+        run: bun upgrade-tests.ts --failed-install

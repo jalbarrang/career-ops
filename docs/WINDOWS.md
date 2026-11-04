@@ -9,8 +9,8 @@ If something is failing and the error mentions `node: command not found`, an emp
 - [ ] Node.js LTS installed and on `PATH`
 - [ ] Git for Windows installed (it provides Git Bash, which `batch/` needs)
 - [ ] Cloned on v1.26.0 or later, or renormalized once (see §3)
-- [ ] `npx playwright install chromium` if you want PDF generation
-- [ ] `node doctor.mjs --json` reports `"onboardingNeeded": false`
+- [ ] `bunx playwright install chromium` if you want PDF generation
+- [ ] `bun doctor.ts --json` reports `"onboardingNeeded": false`
 
 ## 1. `bash` on your PATH is probably not Git Bash
 
@@ -45,7 +45,7 @@ Two common layouts:
 | Git for Windows installer | `C:\Program Files\Git\bin\bash.exe` |
 | Scoop | `%USERPROFILE%\scoop\apps\git\current\bin\bash.exe` |
 
-The test suite searches both — `tests/helpers.mjs` checks the Program Files layout and the Scoop layout under `%SCOOP%` and `%USERPROFILE%\scoop`, and names the shell it fell back to when a shell command fails, so a failure tells you which bash actually ran.
+The test suite searches both — `tests/helpers.ts` checks the Program Files layout and the Scoop layout under `%SCOOP%` and `%USERPROFILE%\scoop`, and names the shell it fell back to when a shell command fails, so a failure tells you which bash actually ran.
 
 The same split applies to `cygpath.exe` (`...\Git\usr\bin\cygpath.exe`), which converts Windows paths to the `/c/...` form Git Bash expects.
 
@@ -82,25 +82,25 @@ git ls-files --eol batch/batch-runner.sh
 ## 4. Running the tests
 
 ```powershell
-node test-all.mjs
+bun test-all.ts
 ```
 
 To run one suite on its own — useful when you are adding tests, and the fastest way to see a specific failure — pass part of its path under `tests/`:
 
 ```powershell
-node test-all.mjs --only providers/themuse
+bun test-all.ts --only providers/themuse
 ```
 
-`--only` runs every suite whose path contains that text, and exits 1 if one of them fails. Don't use `node --test` or `node tests/<file>.test.mjs` for this: most suites report through `pass()`/`fail()` from `tests/helpers.mjs`, which print a ❌ but leave the exit code at 0, so a failing suite still ends green. `--only` also skips the checks `test-all.mjs` runs inline, so run the full `node test-all.mjs` before pushing.
+`--only` runs every suite whose path contains that text, and exits 1 if one of them fails. Don't run a suite file directly (`bun tests/<file>.test.ts`) for this: most suites report through `pass()`/`fail()` from `tests/helpers.ts`, which print a ❌ but leave the exit code at 0, so a failing suite still ends green, and a `node:test` suite run outside the runner refuses to register its tests at all. `--only` also skips the checks `test-all.ts` runs inline, so run the full `bun test-all.ts` before pushing.
 
 Windows-specific failures in the suite are almost always one of the three problems above rather than a logic bug. If a group of tests fails while their own captured output shows the correct behaviour, suspect the shell before the code.
 
 ## 5. PDF generation needs a browser
 
-`generate-pdf.mjs` drives Playwright. Install the browser once:
+`generate-pdf.ts` drives Playwright. Install the browser once:
 
 ```powershell
-npx playwright install chromium
+bunx playwright install chromium
 ```
 
 Without it, PDF generation fails while every other part of the pipeline works — so a report can be produced with no PDF beside it. Assert the file exists rather than trusting the log line.

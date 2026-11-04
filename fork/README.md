@@ -29,12 +29,12 @@ progression looks like.
 
 ## The contract
 
-These files live in the updater's manifest, so `node update-system.mjs apply`
+These files live in the updater's manifest, so `bun update-system.ts apply`
 reverts them. **The fork's copies live in `fork/core/` and are installed with:**
 
 ```bash
-node fork/apply.mjs            # install
-node fork/apply.mjs --check    # report drift, change nothing
+bun fork/apply.ts            # install
+bun fork/apply.ts --check    # report drift, change nothing
 ```
 
 Run it **after every career-ops update**. `apply` refuses to overwrite a file
@@ -44,18 +44,18 @@ needs a human decision, not a silent overwrite. After reviewing upstream's
 version, either port the fork change by hand or:
 
 ```bash
-node fork/apply.mjs --reset-base   # accept what is on disk as the new base
+bun fork/apply.ts --reset-base   # accept what is on disk as the new base
 ```
 
 Files owned (`fork/base.json` records the hashes):
 
 | File | Why it is forked |
 |---|---|
-| `career-profile.mjs` | the importer that WRITES the profile: block classification (company / role / period) and the merge |
-| `lib/career-profile.mjs` | `validateProfile` — the gate every write goes through |
-| `lib/profile-cv-selection.mjs` | a CV slot binds to a ROLE, so the lookup flattens companies |
-| `tests/career-profile.test.mjs` | upstream's v1 suite, ported: every upstream scenario is kept, asserted through `roles[]` |
-| `tests/profile-cv-selection.test.mjs` | same, plus `tests/fixtures/profile-cv-selection.json` |
+| `career-profile.ts` | the importer that WRITES the profile: block classification (company / role / period) and the merge |
+| `lib/career-profile.ts` | `validateProfile` — the gate every write goes through |
+| `lib/profile-cv-selection.ts` | a CV slot binds to a ROLE, so the lookup flattens companies |
+| `tests/career-profile.test.ts` | upstream's v1 suite, ported: every upstream scenario is kept, asserted through `roles[]` |
+| `tests/profile-cv-selection.test.ts` | same, plus `tests/fixtures/profile-cv-selection.json` |
 
 ## Rules this follows
 

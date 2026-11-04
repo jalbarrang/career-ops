@@ -1,7 +1,7 @@
 import { json } from "@sveltejs/kit";
 import { careerOpsRoot } from "@/lib/career-ops";
-import { ChatError, listChats, readChat, saveChat, deleteChat } from "@/lib/assistant-chat-store.mjs";
-import { MAX_CHAT_BYTES } from "@/lib/assistant-history.mjs";
+import { ChatError, listChats, readChat, saveChat, deleteChat } from "@/lib/assistant-chat-store.ts";
+import { MAX_CHAT_BYTES } from "@/lib/assistant-history.ts";
 
 function failure(error: unknown) {
   return json({ error: error instanceof ChatError ? error.message : "Could not access conversation history" }, { status: error instanceof ChatError ? error.status : 500 });

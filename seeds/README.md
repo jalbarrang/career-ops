@@ -4,12 +4,12 @@ A complementary discovery path for startup job-seekers: pull a **public VC portf
 
 ## What this does
 
-`scan-ats-full.mjs` normally discovers companies by walking public ATS directories (Greenhouse, Lever, Ashby, Workday). The `seeds/` layer adds a **high-signal starting point for startup roles**: rather than waiting for companies to appear in ATS directories, we seed the universe from well-known VC portfolios — giving you instant coverage of hundreds of YC/a16z-backed companies.
+`scan-ats-full.ts` normally discovers companies by walking public ATS directories (Greenhouse, Lever, Ashby, Workday). The `seeds/` layer adds a **high-signal starting point for startup roles**: rather than waiting for companies to appear in ATS directories, we seed the universe from well-known VC portfolios — giving you instant coverage of hundreds of YC/a16z-backed companies.
 
 Flow:
 ```
 VC portfolio API/page
-    ↓ seeds/vc-portfolios.mjs
+    ↓ seeds/vc-portfolios.ts
 SeedCompany[]
     ↓ toPortalEntry()
 PortalEntry (careers_url set to best-guess ATS URL)
@@ -21,27 +21,27 @@ data/pipeline.md
 
 ## Usage
 
-### Via scan-ats-full.mjs (recommended)
+### Via scan-ats-full.ts (recommended)
 
 ```bash
 # Seed from Y Combinator portfolio, last 7 days
-node scan-ats-full.mjs --seeds yc --since 7
+bun scan-ats-full.ts --seeds yc --since 7
 
 # Seed from both YC and a16z, dry-run preview
-node scan-ats-full.mjs --seeds yc,a16z --dry-run
+bun scan-ats-full.ts --seeds yc,a16z --dry-run
 
 # Combine seeds + regular ATS sources
-node scan-ats-full.mjs --seeds yc --ats greenhouse,lever --since 5
+bun scan-ats-full.ts --seeds yc --ats greenhouse,lever --since 5
 
-# npm shortcuts
-npm run scan:seeds   # yc + a16z
-npm run scan:yc      # YC only
+# bun shortcuts
+bun run scan:seeds   # yc + a16z
+bun run scan:yc      # YC only
 ```
 
 ### Programmatic
 
 ```js
-import { fetchYCCompanies, fetchA16zCompanies, toPortalEntry, SEED_SOURCES } from './seeds/vc-portfolios.mjs';
+import { fetchYCCompanies, fetchA16zCompanies, toPortalEntry, SEED_SOURCES } from './seeds/vc-portfolios.ts';
 
 // Fetch YC companies
 const companies = await fetchYCCompanies();
@@ -71,7 +71,7 @@ for (const [id, source] of Object.entries(SEED_SOURCES)) {
 
 ## Security
 
-- All slugs are validated against `SLUG_RE = /^[A-Za-z0-9._-]+$/` before any URL interpolation — consistent with the guard in `scan-ats-full.mjs`.
+- All slugs are validated against `SLUG_RE = /^[A-Za-z0-9._-]+$/` before any URL interpolation — consistent with the guard in `scan-ats-full.ts`.
 - Constructed ATS URLs go through the existing `entryOnHost()` SSRF guard before reaching any provider.
 - No authentication tokens, no headless browser, no LLM API calls.
 
@@ -90,7 +90,7 @@ export const SEED_SOURCES = {
 };
 ```
 
-4. Add test cases in `test-all.mjs` covering your `parseXyzPayload()` function.
+4. Add test cases in `test-all.ts` covering your `parseXyzPayload()` function.
 
 ## Prior art
 

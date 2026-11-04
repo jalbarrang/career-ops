@@ -2,7 +2,7 @@
 // the core runs merge-tracker / updates applications.md). The web is a single local
 // Node process, so a module-level set is enough.
 //
-// Why this exists: `tracker.mjs delete` (#1200) does NOT yet share a file lock with
+// Why this exists: `tracker.ts delete` (#1200) does NOT yet share a file lock with
 // merge-tracker (a documented follow-up — merge-tracker isn't import-safe), so a row
 // delete must not run while a worker is mid-merge or one of the two writes is lost.
 // The delete route serializes against this registry — coarse (the whole run), but
@@ -11,7 +11,7 @@
 // WHAT THIS DOES **NOT** PROTECT, and the reason that matters: this is a counter
 // in THIS process's memory. It cannot see the user's CLI, a second `career-ops
 // web` instance, or anything else on the machine. Cross-process exclusion on
-// data/applications.md is the core's FILE lock (tracker-utils.mjs), reached from
+// data/applications.md is the core's FILE lock (tracker-utils.ts), reached from
 // web via lib/core/tracker-lock.ts.
 //
 // The distinction is not academic: /api/status wrote the tracker with no file

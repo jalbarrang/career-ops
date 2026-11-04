@@ -1,14 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { statsModel } from "@/lib/analytics/view-model.mjs";
-  import type { StatsModel, BreakdownSection, ThresholdSection, VendorSection } from "@/lib/analytics/view-model.mjs";
+  import { statsModel } from "@/lib/analytics/view-model.ts";
+  import type { StatsModel, BreakdownSection, ThresholdSection, VendorSection } from "@/lib/analytics/view-model.ts";
 
-  // The "Insights" view: analyze-patterns.mjs, rendered.
+  // The "Insights" view: analyze-patterns.ts, rendered.
   //
   // The core already refuses to claim things its sample cannot support, and every
   // one of those refusals is surfaced here rather than smoothed over — a panel
   // that quietly drops a caveat is how a hedged number becomes a rule someone
-  // filters their search by. The gating lives in lib/analytics/view-model.mjs and
+  // filters their search by. The gating lives in lib/analytics/view-model.ts and
   // is unit-tested; this file only renders the decision.
   let model = $state<StatsModel | null>(null);
   let loading = $state(true);
@@ -54,7 +54,7 @@
 {:else if !model || model.state === "unavailable"}
   {@render empty(
     "Pattern analysis isn't available",
-    "This needs analyze-patterns.mjs in the career-ops checkout. Everything else on this page still works.",
+    "This needs analyze-patterns.ts in the career-ops checkout. Everything else on this page still works.",
   )}
 {:else if model.state === "below-threshold" && model.progress}
   {@const progress = model.progress}

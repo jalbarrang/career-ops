@@ -80,7 +80,7 @@ type ledgerObservation struct {
 // Reached keeps its long-standing, lenient rule: any line with a numeric
 // tracker # and non-empty date/from/to contributes both states' ranks.
 //
-// LatestDate mirrors foldObservations in funnel-velocity.mjs rather than
+// LatestDate mirrors foldObservations in funnel-velocity.ts rather than
 // taking a plain maximum, because the ledger is append-only and corrects
 // itself by appending: a `to` of "-" retracts the row's latest surviving
 // observation (so a mis-click's later date does not linger), and a

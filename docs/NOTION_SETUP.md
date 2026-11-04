@@ -29,7 +29,7 @@ truth throughout — Notion is an opt-in mirror, not a replacement backend.
 1. In Notion, create a page named **"Career Ops"** (any parent is fine — this page is
    just a container the plugin walks for child databases).
 2. Under it, add a database named **exactly** `Applications` — the plugin resolves it
-   by this literal name (`resolveDBs()` in `_notion.mjs`) and throws if it's missing
+   by this literal name (`resolveDBs()` in `_notion.ts`) and throws if it's missing
    rather than creating it for you.
 3. Give it these properties, with these **exact types** (the plugin writes typed
    property payloads, so a mismatched type will fail on export):
@@ -74,15 +74,15 @@ NOTION_PARENT_PAGE_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ## 6. Verify + run
 
 ```bash
-node doctor.mjs --json                          # confirm notion shows configured
-node plugins.mjs run notion export --dry-run     # preview what would be pushed
-node plugins.mjs run notion export               # push tracker rows into Notion
+bun doctor.ts --json                          # confirm notion shows configured
+bun plugins.ts run notion export --dry-run     # preview what would be pushed
+bun plugins.ts run notion export               # push tracker rows into Notion
 ```
 
 Optional — pull leads that have a URL back into the pipeline:
 
 ```bash
-node plugins.mjs run notion search "<query>"
+bun plugins.ts run notion search "<query>"
 ```
 
 ## Scope, honestly

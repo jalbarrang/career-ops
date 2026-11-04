@@ -12,7 +12,7 @@ import { CANONICAL_STATES } from "@/lib/format";
  * The hand-maintained FALLBACK that used to live here is gone. It promised to be
  * "kept identical to the file" and was not: it shipped without `hired` (#2282)
  * and later drifted 31 aliases behind. The core states the rule outright in
- * followup-cadence.mjs — "a fallback copy is the same copy in disguise and drifts
+ * followup-cadence.ts — "a fallback copy is the same copy in disguise and drifts
  * the same way" — and two incidents in this file proved it.
  *
  * The degraded path now derives from CANONICAL_STATES, the list CI already
@@ -39,11 +39,11 @@ const FALLBACK: CanonicalState[] = CANONICAL_STATES.map((label) => ({
 /**
  * Cached per resolved states.yml path and keyed on the file's mtime+size (one
  * statSync per call, no full read), mirroring loadHeaderAliases in
- * tracker-table.mjs.
+ * tracker-table.ts.
  *
  * A bare `if (cache) return cache` made the "READ it live" contract above true
  * only for the first request a server process ever served: a core update that
- * rewrote templates/states.yml (git pull, update-system.mjs apply) was then
+ * rewrote templates/states.yml (git pull, update-system.ts apply) was then
  * invisible until restart, so a newly canonical status was rejected by
  * POST /api/status and a removed one kept being accepted.
  *
@@ -95,7 +95,7 @@ export function canonicalLabels(): string[] {
 
 /**
  * Fold a raw status the SAME way the core's foldStatusInput does
- * (tracker-utils.mjs). A bare toLowerCase() is not enough: JS lowercases the
+ * (tracker-utils.ts). A bare toLowerCase() is not enough: JS lowercases the
  * Turkish dotted capital `İ` to `i` + U+0307 and the mark survives, so every
  * all-caps Turkish status ("TEKLİF", "KABUL EDİLDİ") missed every alias here
  * while the CLI resolved it — the web answered HTTP 400 for rows the core

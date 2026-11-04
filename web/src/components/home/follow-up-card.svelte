@@ -6,7 +6,7 @@
     status?: string;
     appliedDate?: string;
     notes?: string;
-    // Raw pass-through from followup-cadence.mjs — 'urgent'/'overdue' entries
+    // Raw pass-through from followup-cadence.ts — 'urgent'/'overdue' entries
     // are due now, 'waiting'/'cold' are not (#86).
     urgency?: "urgent" | "overdue" | "waiting" | "cold";
     nextFollowupDate?: string | null;

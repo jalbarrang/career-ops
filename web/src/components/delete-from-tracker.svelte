@@ -4,7 +4,7 @@
 
   // disc#9: remove a bogus tracker row (e.g. a job marked Evaluated after the CLI
   // errored mid-run). Hard delete via the core write-gate (/api/tracker/delete →
-  // tracker.mjs delete), behind a confirm. The soft option (status → Discarded) lives
+  // tracker.ts delete), behind a confirm. The soft option (status → Discarded) lives
   // in StatusSelect and stays for real-but-passed applications.
   let { n }: { n: string } = $props();
 

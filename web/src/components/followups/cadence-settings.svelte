@@ -6,7 +6,7 @@
 
   // Follow-up cadence knobs → config/profile.yml (followup_cadence). Server-
   // persisted (unlike the localStorage engine prefs above) because the core
-  // followup-cadence.mjs reads the same keys — the CLI and the web must agree.
+  // followup-cadence.ts reads the same keys — the CLI and the web must agree.
 
   const FIELDS: { key: ProfileCadenceKey; label: string; hint: string }[] = [
     { key: "applied_first_days", label: "First follow-up", hint: "days after applying before the 1st nudge is due" },

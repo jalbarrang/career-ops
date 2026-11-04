@@ -1,7 +1,7 @@
-import { spawnHeadlessCli } from "@/lib/spawn-cli.mjs";
-import { CAPS } from "@/lib/worker-capabilities.mjs";
-import { scopeFrom } from "@/lib/claude-invocation.mjs";
-import { fencingReport } from "@/lib/cli-fencing.mjs";
+import { spawnHeadlessCli } from "@/lib/spawn-cli.ts";
+import { CAPS } from "@/lib/worker-capabilities.ts";
+import { scopeFrom } from "@/lib/claude-invocation.ts";
+import { fencingReport } from "@/lib/cli-fencing.ts";
 import type { CliSpec } from "@/lib/clis";
 
 /**

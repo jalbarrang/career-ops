@@ -7,19 +7,21 @@ import fs from "node:fs";
 import path from "node:path";
 import { cliSubstitutionNotice, cliUnavailableError, resolveCliOrFallback } from "@/lib/clis";
 import { localISODate } from "@/lib/followups";
-import { accumulateTokens, hasNewCompletedReport, isFatalGenericStderr, killMsForKind, timeoutMessage } from "@/lib/run-cli-support.mjs";
-import { spawnHeadlessCli } from "@/lib/spawn-cli.mjs";
+import { accumulateTokens, isFatalGenericStderr, killMsForKind, timeoutMessage } from "@/lib/run-cli-support.ts";
+import { spawnHeadlessCli } from "@/lib/spawn-cli.ts";
 import { careerOpsRoot, readMemory, findReportFile, readInbox, readScanDates, readLanguageConfig } from "@/lib/career-ops";
-import { resolvePdfPaths, type PdfPaths } from "@/lib/pdf-paths.mjs";
-import { renderAndMarkPdf, writeCvHtml, pdfRunOutcome } from "@/lib/pdf-render.mjs";
-import { createCvEnvelopeFilter, type CvEnvelope } from "@/lib/cv-envelope.mjs";
-import { buildPrompt, isShellSafeCompanyName } from "@/lib/run-prompts.mjs";
-import { capabilitiesFor } from "@/lib/worker-capabilities.mjs";
-import { fencingReport, isCliAllowedForCapabilities } from "@/lib/cli-fencing.mjs";
-import { claudeCliArgs } from "@/lib/claude-invocation.mjs";
-import { resolveCvTemplate } from "@/lib/core/cv-template.mjs";
+import { resolvePdfPaths, type PdfPaths } from "@/lib/pdf-paths.ts";
+import { renderAndMarkPdf, writeCvHtml, pdfRunOutcome } from "@/lib/pdf-render.ts";
+import { createCvEnvelopeFilter, type CvEnvelope } from "@/lib/cv-envelope.ts";
+import { parseReportEnvelope } from "@/lib/report-envelope.ts";
+import { persistEvaluation } from "@/lib/evaluate-persist.ts";
+import { buildPrompt, isShellSafeCompanyName } from "@/lib/run-prompts.ts";
+import { capabilitiesFor } from "@/lib/worker-capabilities.ts";
+import { fencingReport, isCliAllowedForCapabilities } from "@/lib/cli-fencing.ts";
+import { claudeCliArgs } from "@/lib/claude-invocation.ts";
+import { resolveCvTemplate } from "@/lib/core/cv-template.ts";
 import { acquireTrackerWrite, releaseTrackerWrite } from "@/lib/core/run-registry";
-import { createRunFinalizer } from "@/lib/run-finalizer.mjs";
+import { createRunFinalizer } from "@/lib/run-finalizer.ts";
 
 // The Next route declared maxDuration = 800 here: a real oferta evaluation /
 // pdf-mode CV tailoring + render is heavy and multi-step.
@@ -59,7 +61,7 @@ export async function POST({ request }: { request: Request }) {
   // it to modes/oferta.md meant a configured market passed a check on a file the
   // run never opens, and would have missed a market dir with no evaluation mode.
   const lang = readLanguageConfig();
-  const needsScript: Record<string, string> = { evaluate: lang.evalModeFile, "fix-portal": "verify-portals.mjs", pdf: "generate-pdf.mjs" };
+  const needsScript: Record<string, string> = { evaluate: lang.evalModeFile, "fix-portal": "verify-portals.ts", pdf: "generate-pdf.ts" };
   const required = needsScript[kind];
   // CAREER_OPS_ROOT is runtime user data, not a build input. Tracing this
   // dynamic path would copy the whole web project into every server bundle.
@@ -125,22 +127,22 @@ export async function POST({ request }: { request: Request }) {
       ? readInbox().find((j) => j.url === input)?.postedAt ?? readScanDates().get(input)
       : undefined;
   // Which CV template the worker fills. Resolved HERE, for the same reason `lang`
-  // is: the worker has no Bash (#2172), so it cannot run cv-templates.mjs and the
+  // is: the worker has no Bash (#2172), so it cannot run cv-templates.ts and the
   // prompt used to name the base template outright, silently ignoring cv.template
   // (#4034). Only pdf fills a template, so nothing else pays for the lookup.
   // The root is passed, not re-derived: a relative CAREER_OPS_PROFILE resolves
-  // against it, and `process.cwd()` here is `<core>/web` (see cv-template.mjs).
+  // against it, and `process.cwd()` here is `<core>/web` (see cv-template.ts).
   const cvTemplate = kind === "pdf" ? await resolveCvTemplate(careerOpsRoot()) : undefined;
   const prompt = buildPrompt({ kind, input, memory: readMemory(), today, postedAt, lang, cvTemplate });
 
   const isClaude = cliId === "claude";
   // Which tools each kind gets, and the whole claude argv, live in
-  // claude-invocation.mjs — see its header for the policy and for why it is asserted on
+  // claude-invocation.ts — see its header for the policy and for why it is asserted on
   // built values rather than on this file's source. NEVER auto-submits; that
   // remains a prompt-level guarantee.
   // Non-Claude CLIs get no tool flags from spec.args(), so permission for them is
   // applied at the spawn boundary instead: spawnHeadlessCli takes what this kind
-  // needs (capabilitiesFor) and cli-fencing.mjs translates it for the chosen
+  // needs (capabilitiesFor) and cli-fencing.ts translates it for the chosen
   // runtime — an OS sandbox on Codex, nothing yet on the runtimes with no
   // verified mechanism. Those report level "none" and the run says so
   // below, rather than looking identical to a fenced one (#2507).
@@ -149,23 +151,9 @@ export async function POST({ request }: { request: Request }) {
   // envelope-parsing routes rely on.
   const args = isClaude ? claudeCliArgs({ kind, prompt }) : (spec.streamArgs ?? spec.args)(prompt);
 
-  // For write-needing kinds, snapshot reports/ so we can verify the worker
-  // actually persisted (non-Claude CLIs lack Write auth and silently no-op).
-  // Names, not a count: reserving a number writes reports/NNN-RESERVED.md and the
-  // final report REPLACES it, so the `.md` count is unchanged and a count-delta
-  // gate reported "didn't save a report" for an evaluation that saved fine (#2085).
-  const reportsDir = path.join(careerOpsRoot(), "reports");
-  const reportEntries = () => {
-    try {
-      return fs.readdirSync(reportsDir);
-    } catch {
-      return [];
-    }
-  };
   const persists = kind === "evaluate";
-  const reportsBefore = persists ? reportEntries() : [];
   // Tracker-mutating runs hold a write token so a row delete can't race their merge
-  // (tracker.mjs delete doesn't yet share a lock with merge-tracker — see run-registry).
+  // (tracker.ts delete doesn't yet share a lock with merge-tracker — see run-registry).
   const writeToken = kind === "evaluate" || kind === "pdf" ? acquireTrackerWrite() : null;
 
   // stdin must reach EOF or the CLI waits on piped input that never comes: Codex's
@@ -217,7 +205,7 @@ export async function POST({ request }: { request: Request }) {
   // after the agent child closes — and even after a client disconnect fires
   // cancel(). Track its promise so cancel() can defer releasing writeToken
   // until that work actually settles, instead of releasing the tracker-delete
-  // guard while mark-pdf-ready.mjs is still actively writing applications.md.
+  // guard while mark-pdf-ready.ts is still actively writing applications.md.
   let pdfRenderPromise: Promise<void> | null = null;
   // Cancellation only requests termination. Keep the guard until the child
   // actually closes and any render/mark work has finished.
@@ -234,7 +222,7 @@ export async function POST({ request }: { request: Request }) {
       let sawError = false;
       let stderrBuf = "";
       // Fallback for a CLI with no CliSpec.stderrIsFatal of its own. Moved into
-      // run-cli-support.mjs beside the per-CLI classifiers so it has a reachable
+      // run-cli-support.ts beside the per-CLI classifiers so it has a reachable
       // test: as an inline regex in this closure nothing could assert it, which
       // is how a bare `auth` came to match "Authentication successful" and mark a
       // successful run as failed on six of the eight runtimes (#1974).
@@ -260,7 +248,7 @@ export async function POST({ request }: { request: Request }) {
       // (renderPdf, below) starts only after this timer's window and has no
       // timeout of its own, so an agent that runs close to its full budget
       // would otherwise leave the platform's hard maxDuration cutoff to kill
-      // generate-pdf.mjs mid-render. 600s agent / ~200s render is ample —
+      // generate-pdf.ts mid-render. 600s agent / ~200s render is ample —
       // a Chromium PDF render normally takes low tens of seconds even with a
       // cold Playwright launch.
       // pdf keeps 600s because its render+mark phase runs AFTER this timer; a
@@ -327,7 +315,7 @@ export async function POST({ request }: { request: Request }) {
       // pdf's CV arrives inline in a <<cv-html>> envelope instead of being written
       // by the agent (#2185). The filter keeps every byte for the backend while
       // holding the 15-25 KB body out of the run log, which is the agent's
-      // narration — see cv-envelope.mjs.
+      // narration — see cv-envelope.ts.
       const cvFilter = kind === "pdf" ? createCvEnvelopeFilter() : null;
       // While the agent emits the 15-25 KB <<cv-html>> envelope, cvFilter swallows
       // every byte, so the response stream goes completely silent for as long as
@@ -353,7 +341,7 @@ export async function POST({ request }: { request: Request }) {
       };
 
       // One dispatch for every structured CLI: the per-CLI knowledge (which event
-      // means text/tool/status/usage) lives in run-cli-support.mjs behind
+      // means text/tool/status/usage) lives in run-cli-support.ts behind
       // spec.parseEvent, so adding the next such CLI needs no change here.
       // Shared with the close-time flush below, so a final JSONL line the CLI never
       // newline-terminates before exiting isn't dropped along with the usage event
@@ -410,10 +398,10 @@ export async function POST({ request }: { request: Request }) {
           flagStderrLine(line);
         }
       });
-      // Render + mark-tracker-ready live in pdf-render.mjs (plain, dependency-
+      // Render + mark-tracker-ready live in pdf-render.ts (plain, dependency-
       // injected, unit-tested) so the render-then-mark orchestration isn't
       // buried untested inside this transport-layer closure. Runs generate-
-      // pdf.mjs and mark-pdf-ready.mjs as plain Node child processes — no agent
+      // pdf.ts and mark-pdf-ready.ts as plain Node child processes — no agent
       // CLI or its sandbox involved — so a browser launch never depends on an
       // interactive approval nobody is present to grant in a headless/web-
       // triggered run (#2172). The tracker is marked ✅ only after a CONFIRMED
@@ -451,7 +439,7 @@ export async function POST({ request }: { request: Request }) {
       };
 
       child.on("error", (e) => { send({ type: "error", msg: e.message }); close(); });
-      child.on("close", (code) => {
+      child.on("close", async (code) => {
         // A trailing line with no newline would otherwise never be tested.
         if (stderrBuf) { flagStderrLine(stderrBuf); stderrBuf = ""; }
         // A disconnected client must not start a new PDF render. Still finish
@@ -531,17 +519,28 @@ export async function POST({ request }: { request: Request }) {
           return close();
         }
 
-        const wroteReport = hasNewCompletedReport(reportsBefore, reportEntries());
+        // Evaluations are persisted HERE (#2185): the worker is read-only, because
+        // a posting is untrusted data and must never aim Write/Bash. It returns
+        // the report in a <<report-md>> envelope and the backend writes the report
+        // and merges the tracker through the same scripts a CLI run uses.
+        let persistError: string | null = null;
+        if (persists) {
+          const envelope = parseReportEnvelope(buf);
+          if (!envelope.ok || typeof envelope.markdown !== "string") {
+            persistError = "This evaluation returned no report, so nothing was saved. Re-run it to try again.";
+          } else {
+            const saved = await persistEvaluation(envelope.markdown, input);
+            if (!saved.ok) persistError = saved.error ?? "The evaluation could not be saved.";
+          }
+        }
         // Honesty gate (#9): a green "done" with a parsed score requires a CLEAN exit,
-        // real output, AND (for evaluations) a report actually written. Anything else
-        // is surfaced — an errored run must never be banked as a confident score.
+        // real output, AND (for evaluations) a report actually persisted. Anything
+        // else is surfaced — an errored run is never banked as a confident score.
         const baseErr = noOutputError();
         if (baseErr) {
           send({ type: "error", msg: baseErr });
-        } else if (persists && !wroteReport) {
-          // The worker ran but never wrote the report/tracker row (e.g. a CLI
-          // without file-write authorization) — surface it instead of a fake score.
-          send({ type: "error", msg: "This evaluation didn't save a report, so it's not in your tracker. Full evaluation is verified on Claude Code." });
+        } else if (persistError) {
+          send({ type: "error", msg: persistError });
         } else if (!cleanExit || sawError) {
           // Produced output (maybe even a report) but did NOT finish cleanly — flag it
           // instead of recording a confident score off a half-finished run. sawError
@@ -564,7 +563,7 @@ export async function POST({ request }: { request: Request }) {
       if (pdfRenderPromise) {
         // Render/mark keeps running after this client disconnects — wait for
         // it to settle before releasing the guard, so a concurrent tracker
-        // delete can't race mark-pdf-ready.mjs's still-in-flight write.
+        // delete can't race mark-pdf-ready.ts's still-in-flight write.
         pdfRenderPromise.finally(finishRun);
       } else {
         finishRun();

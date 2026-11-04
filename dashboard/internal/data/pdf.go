@@ -12,7 +12,7 @@ import (
 )
 
 // PDFManifestEntry is one row of data/pdf-index.tsv, written by
-// generate-pdf.mjs each time a PDF is produced. ReportNumber may be empty
+// generate-pdf.ts each time a PDF is produced. ReportNumber may be empty
 // for PDFs generated without --report; those rows still help the glob
 // matcher via their recorded paths.
 type PDFManifestEntry struct {
@@ -89,7 +89,7 @@ func pdfWorkspaceRootForTracker(tracker string) string {
 	return root
 }
 
-// resolvePDFIndexPath mirrors tracker-utils.mjs: an explicit override wins
+// resolvePDFIndexPath mirrors tracker-utils.ts: an explicit override wins
 // (relative to cwd), otherwise the index follows the tracker workspace.
 func resolvePDFIndexPath(careerOpsPath string) string {
 	if override := os.Getenv("CAREER_OPS_PDF_INDEX"); override != "" {
@@ -121,7 +121,7 @@ func LoadPDFEntriesByPath(careerOpsPath string) map[string]PDFManifestEntry {
 			continue
 		}
 		// A report may have both a CV and a cover letter. Legacy rows without
-		// the sixth kind column are CVs, matching find.mjs's reader contract.
+		// the sixth kind column are CVs, matching find.ts's reader contract.
 		if len(fields) > 5 && strings.TrimSpace(fields[5]) == "cover" {
 			continue
 		}
@@ -151,7 +151,7 @@ func LoadPDFEntriesByPath(careerOpsPath string) map[string]PDFManifestEntry {
 
 // LoadPDFManifest reads the selected workspace's PDF index. A missing
 // file is not an error — the manifest is optional and absent until the
-// first generate-pdf.mjs run that writes it. Later rows win over earlier
+// first generate-pdf.ts run that writes it. Later rows win over earlier
 // CV rows for the same report number, so regenerated PDFs supersede stale
 // entries without any compaction step.
 func LoadPDFManifest(careerOpsPath string) PDFManifest {
@@ -206,7 +206,7 @@ var rePDFDate = regexp.MustCompile(`(\d{4}-\d{2}-\d{2})\.pdf$`)
 //
 // Precedence:
 //  1. Manifest entry for the application's report number, when the file
-//     still exists. This is exact — generate-pdf.mjs recorded the linkage.
+//     still exists. This is exact — generate-pdf.ts recorded the linkage.
 //  2. Filename match: output/cv-*.pdf whose name contains the kebab-cased
 //     company at hyphen boundaries. This covers every PDF generated before
 //     the manifest existed without matching a longer company's slug.

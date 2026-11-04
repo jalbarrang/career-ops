@@ -19,7 +19,7 @@ Olası durumlar (yerel dilde de kullanılabilir): `Evaluated` (`Değerlendirildi
 - `Discarded` = aday tarafından reddedildi veya teklif kapandı
 - `SKIP` = uygun değil, başvurma
 
-Kullanıcı bir durumu güncellemeyi isterse, doğrudan satırı düzenlemeyin; bunun yerine `node set-status.mjs <company> <Yeni_Durum>` komutunu kullanın.
+Kullanıcı bir durumu güncellemeyi isterse, doğrudan satırı düzenlemeyin; bunun yerine `bun set-status.ts <company> <Yeni_Durum>` komutunu kullanın.
 
 Ayrıca istatistikleri de gösterin:
 - Toplam başvuru sayısı

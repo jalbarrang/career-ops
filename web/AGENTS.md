@@ -20,7 +20,7 @@ through **Paraglide JS** (see Localization below).
 
 2. **Markdown is the source of truth.** `data/applications.md`, `cv.md`, `reports/`
    are canonical; anything else is a derived index. Status changes go through
-   `/api/status`, which delegates to the root `set-status.mjs`. That is the single
+   `/api/status`, which delegates to the root `set-status.ts`. That is the single
    write path, and it is single on purpose. Never write a user's file from a route
    that bypasses it.
 
@@ -32,20 +32,20 @@ through **Paraglide JS** (see Localization below).
 Treating a parse error as "not there yet" is how a user's config gets overwritten
 with the shipped example. Distinguish `ENOENT` from every other failure, and let a
 broken user-layer file surface as an error the user can act on rather than as an
-empty default. (`web/src/lib/portals-config.mjs` is the worked example.)
+empty default. (`web/src/lib/portals-config.ts` is the worked example.)
 
 ## Testing
 
-Logic that deserves a test lives in a plain `.mjs` module so `node --test` can import
-it with no build step and no `@/` alias loader. See `tracker-table.mjs`,
-`cv-selection.mjs`, `report-sections.mjs`. A component is not a place to put a rule
+Logic that deserves a test lives in a plain `.ts` module so `bun test` can import
+it with no build step and no `@/` alias loader. See `tracker-table.ts`,
+`cv-selection.ts`, `report-sections.ts`. A component is not a place to put a rule
 you want to assert.
 
 ```
-npm test          # node --test "tests/**/*.test.mjs"
-npm run typecheck # svelte-check
-npm run dev       # the app, reading the sibling career-ops files
-npm run build     # vite build → build/ (served by `npm start`)
+bun test          # discovers tests/**/*.test.ts
+bun run typecheck # svelte-check
+bun run dev       # the app, reading the sibling career-ops files
+bun run build     # vite build → build/ (served by `bun start`)
 ```
 
 A few suites assert on *source shape* (route X calls Y before Z). When a file moves,
@@ -63,7 +63,7 @@ the app actually uses is vendored — `button`, `badge`, `dialog`, `skeleton`. A
 another with the CLI rather than by hand:
 
 ```bash
-npx shadcn-svelte add card --overwrite --skip-preflight   # then import from @/components/ui/card
+bunx shadcn-svelte add card --overwrite --skip-preflight   # then import from @/components/ui/card
 ```
 
 Two project-specific rules apply to anything you add:
@@ -71,7 +71,7 @@ Two project-specific rules apply to anything you add:
 1. **`components.json` aliases point at this app's tree**: `ui` → `@/components/ui`,
    `utils` → `@/lib/cn` (which also exports shadcn's `WithElementRef`,
    `WithoutChild`, `WithoutChildren`, `WithoutChildrenOrChild` helpers). Add a new
-   component with `npx shadcn-svelte add <name> --overwrite --skip-preflight`;
+   component with `bunx shadcn-svelte add <name> --overwrite --skip-preflight`;
    `--overwrite` is only needed when a file already exists.
    Note `--overwrite` is required once a directory exists, and the CLI rewrites the
    `index.ts` barrel each time.
@@ -105,7 +105,7 @@ Translations are an inlang project. Before localization work, read
   `m.some_key()` inside markup; `src/hooks.server.ts` runs Paraglide's middleware
   after the origin guard and fills `%lang%` / `%dir%` in `app.html`.
 
-`npm run check:i18n` lints the catalogue; `npm run typecheck` compiles the messages
+`bun run check:i18n` lints the catalogue; `bun run typecheck` compiles the messages
 first, so a fresh clone typechecks without a build.
 
 ## Reviews and scope

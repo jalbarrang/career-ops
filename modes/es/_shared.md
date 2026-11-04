@@ -195,7 +195,7 @@ En las ofertas y negociaciones en español, ciertos términos no existen en los 
 
 0. **Carta de presentación:** Si el formulario lo permite, SIEMPRE incluir una. PDF con el mismo diseño visual que el CV. Citas de la oferta mapeadas sobre los proof points. Máximo 1 página.
 1. Leer `cv.md` y `article-digest.md` (si existe) antes de evaluar una oferta
-1b. **Primera evaluación de cada sesión:** Ejecutar `node cv-sync-check.mjs` via Bash. Si hay alertas, avisar al candidato
+1b. **Primera evaluación de cada sesión:** Ejecutar `bun cv-sync-check.ts` via Bash. Si hay alertas, avisar al candidato
 2. Detectar el arquetipo del rol y adaptar el framing
 3. Citar líneas exactas del CV en el matching
 4. Usar WebSearch para datos de remuneración y de empresa
@@ -204,7 +204,7 @@ En las ofertas y negociaciones en español, ciertos términos no existen en los 
 7. Ser directo y concreto — sin relleno
 8. Español técnico natural en los textos generados. Frases cortas, verbos de acción, evitar la voz pasiva. No forzar la traducción de términos técnicos (stack, pipeline, deployment, embedding)
 8b. **URLs de case studies en el Professional Summary del PDF:** Si el PDF menciona case studies o demos, las URLs DEBEN aparecer en el primer párrafo (Professional Summary). Los reclutadores suelen leer solo el summary. Todas las URLs en HTML con `white-space: nowrap`
-9. **Entradas del tracker en TSV** — NUNCA editar applications.md directamente para nuevas entradas. Escribir el TSV en `batch/tracker-additions/`, `merge-tracker.mjs` gestiona la fusión. Escribir primero una fila de **nombres de columna** y debajo exactamente una fila de datos (ver AGENTS.md, «TSV Format for Tracker Additions»). Esa fila de nombres es lo que permite a `merge-tracker.mjs` resolver los campos por NOMBRE en vez de adivinar qué columna es score y cuál status
+9. **Entradas del tracker en TSV** — NUNCA editar applications.md directamente para nuevas entradas. Escribir el TSV en `batch/tracker-additions/`, `merge-tracker.ts` gestiona la fusión. Escribir primero una fila de **nombres de columna** y debajo exactamente una fila de datos (ver AGENTS.md, «TSV Format for Tracker Additions»). Esa fila de nombres es lo que permite a `merge-tracker.ts` resolver los campos por NOMBRE en vez de adivinar qué columna es score y cuál status
 10. **`**URL:**` en cada cabecera de report** — entre Score y PDF
 
 ### Herramientas
@@ -216,5 +216,5 @@ En las ofertas y negociaciones en español, ciertos términos no existen en los 
 | Playwright | Verificar si las ofertas están activas (browser_navigate + browser_snapshot), extraer ofertas desde SPAs. **CRÍTICO: NUNCA 2+ agentes en paralelo con Playwright — comparten la misma instancia del navegador** |
 | Read | cv.md, article-digest.md, cv-template.html |
 | Write | HTML temporal para PDF, reports .md, TSV de nuevas entradas del tracker en `batch/tracker-additions/` (nunca `applications.md` directamente) |
-| Edit | Correcciones en reports y otro contenido generado. Nunca la tabla del tracker: las filas nuevas entran como TSV y se fusionan con `node merge-tracker.mjs`; los cambios de estado y de notas pasan por `node set-status.mjs` |
-| Bash | `node generate-pdf.mjs`, `node merge-tracker.mjs`, `node set-status.mjs` |
+| Edit | Correcciones en reports y otro contenido generado. Nunca la tabla del tracker: las filas nuevas entran como TSV y se fusionan con `bun merge-tracker.ts`; los cambios de estado y de notas pasan por `bun set-status.ts` |
+| Bash | `bun generate-pdf.ts`, `bun merge-tracker.ts`, `bun set-status.ts` |

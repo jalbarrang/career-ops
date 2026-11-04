@@ -7,7 +7,7 @@
   import type { Application, InboxJob } from "@/lib/career-ops";
   import type { DiscoveredOffer } from "@/lib/explore";
   import { scoreNum } from "@/lib/format";
-  import { pickAwaitingDecision } from "@/lib/home/awaiting.mjs";
+  import { pickAwaitingDecision } from "@/lib/home/awaiting.ts";
   import HeroGlow from "@/components/hero-glow.svelte";
   import DiscoveryCard from "@/components/explore/discovery-card.svelte";
   import FollowUpCard, { type FollowUp } from "@/components/home/follow-up-card.svelte";
@@ -123,7 +123,7 @@
   });
 
   // Awaiting decision: scored (Evaluated) but no terminal status yet. The
-  // ordering lives in lib/home/awaiting.mjs so it can be tested — see the file
+  // ordering lives in lib/home/awaiting.ts so it can be tested — see the file
   // for why "first six in the array" was a bug waiting for #3529.
   const awaiting = $derived(pickAwaitingDecision(applications, scoreNum));
 

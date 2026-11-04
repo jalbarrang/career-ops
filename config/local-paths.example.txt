@@ -3,18 +3,18 @@
 # Copy this file to `config/local-paths.txt` (gitignored) and list anything you
 # keep in your own fork: a nightly runner, an .mcp.json, a .gitattributes, a
 # fixtures directory. Every path listed here is treated exactly like cv.md —
-# `update-system.mjs apply` will never write to it, and the coverage guard
-# (`validate-system-paths-coverage.mjs`) stops reporting it as an orphan.
+# `update-system.ts apply` will never write to it, and the coverage guard
+# (`validate-system-paths-coverage.ts`) stops reporting it as an orphan.
 #
 # Without this file, saying "that one is mine" means editing USER_PATHS inside
-# update-system.mjs — the file `apply` overwrites and git re-merges on every
+# update-system.ts — the file `apply` overwrites and git re-merges on every
 # sync, so the statement is guaranteed to conflict (#2421).
 #
 # Running the suite in CI in a fork
-#   `validate-system-paths-coverage.mjs` reads this file, so a fork whose CI runs
+#   `validate-system-paths-coverage.ts` reads this file, so a fork whose CI runs
 #   the suite has to make it visible to that checkout — otherwise every path
 #   declared here is reported as an orphan (#2991). Committing it as-is fails the
-#   other guard instead: `tests/user-layer-untracked.test.mjs` refuses a User Layer
+#   other guard instead: `tests/user-layer-untracked.test.ts` refuses a User Layer
 #   file that is git-ignored AND tracked, which is how a late ignore rule hides an
 #   already-committed personal file.
 #

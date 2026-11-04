@@ -15,14 +15,14 @@ From the career-ops checkout:
 
 ```bash
 mkdir -p local data/gojobs
-cp docs/recipes/gojobs/parse-gojobs-html.mjs local/gojobs.mjs
+cp docs/recipes/gojobs/parse-gojobs-html.ts local/gojobs.ts
 ```
 
 On PowerShell:
 
 ```powershell
 New-Item -ItemType Directory -Force local, data/gojobs
-Copy-Item docs/recipes/gojobs/parse-gojobs-html.mjs local/gojobs.mjs
+Copy-Item docs/recipes/gojobs/parse-gojobs-html.ts local/gojobs.ts
 ```
 
 In your normal browser, open the GO Jobs search page, complete any challenge
@@ -33,7 +33,7 @@ are collapsed across captures.
 Test the copied parser directly:
 
 ```bash
-node local/gojobs.mjs data/gojobs
+bun local/gojobs.ts data/gojobs
 ```
 
 A CAPTCHA page or bare search form fails loudly instead of returning a false
@@ -50,13 +50,13 @@ tracked_companies:
     scan_method: local_parser
     parser:
       command: node
-      script: local/gojobs.mjs
+      script: local/gojobs.ts
       args: [data/gojobs]
       format: jobs-json-v1
     enabled: true
 ```
 
-Run `node scan.mjs` as usual. The local-parser provider starts the copied script
+Run `bun scan.ts` as usual. The local-parser provider starts the copied script
 from the career-ops checkout, and the parser resolves capture paths through
 `CAREER_OPS_ROOT`, `CAREER_OPS_DATA_DIR`, or `.career-ops-data` using the same
 precedence as the rest of career-ops. Normal scan filters, deduplication, and
@@ -66,12 +66,12 @@ this is not real-time or unattended scanning.
 ## Manual recipe test
 
 Recipe tests live beside the recipe and are intentionally not discovered by
-`test-all.mjs`, which only runs suites under `tests/`. Run this focused test by
+`test-all.ts`, which only runs suites under `tests/`. Run this focused test by
 hand after modifying the parser:
 
 ```bash
-node --test docs/recipes/gojobs/parse-gojobs-html.manual-test.mjs
+bun test docs/recipes/gojobs/parse-gojobs-html.manual-test.ts
 ```
 
-Every `.mjs` file in the repository still participates in the standard
+Every `.ts` file in the repository still participates in the standard
 `node --check` syntax pass.

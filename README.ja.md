@@ -98,7 +98,7 @@
 今夜応募しようとしていた求人をひとつ貼り付けてみてほしい。<em>応募しない</em>と返ってきたら、その夜を取り戻したということ。プランと一緒に返ってきたら、次にやることは分かっている。
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 <p align="center"><sub>オープンソース。ローカル実行。すでに使っている AI CLI の中で。<a href="docs/RUNNING_ON_A_BUDGET.md">無料モデルとローカルモデルにも対応。</a></sub></p>
@@ -159,7 +159,7 @@ career-ops は求職者にとって永久に無料。以下の企業がこのプ
 
 ## career-ops がやらないこと
 
-- **応募を自動で送信すること。** すべての項目の回答の下書きは作る。確認して送信ボタンを押すのはあなた。スクリプトは決して POST しない（`prepare-application.mjs`）。
+- **応募を自動で送信すること。** すべての項目の回答の下書きは作る。確認して送信ボタンを押すのはあなた。スクリプトは決して POST しない（`prepare-application.ts`）。
 - **メールを送る。** 下書きのみ。このコードベースにメール送信の仕組みはどこにもありません。
 - **外部に送信する。** テレメトリなし、こちらのバックエンドなし。あなたの履歴書は、あなたのマシンから自分で選んだ AI プロバイダーへ行くだけで、他のどこにも行きません。唯一の公開台帳はこのリポジトリ、`HIRED.md` とその issue です。
 - **4.0/5 未満の求人に応募させる。** 応募しないよう伝えます。無視することはできますが、その旨を伝えます。
@@ -175,7 +175,7 @@ career-ops は求職者にとって永久に無料。以下の企業がこのプ
 | **ATS 向け PDF 生成**    | あなた自身の経験をもとに求人票ごとに調整した、ATS が読み取れる CV（Space Grotesk + DM Sans のデザイン）                                     |
 | **カバーレター生成**     | リサーチに基づくカバーレター。キーワードの反映、4 つの対話式の切り口（理由／課題／アプローチ／トーン）、チャット内での下書き承認、CV と同じ HTML + Playwright パイプラインによる A4 PDF。評価のたびに自動で下書きし、`/career-ops cover` で必要なときに仕上げて生成 |
 | **CV の先へ**            | 企業調査（[`deep`](modes/deep.md)）は AI 戦略、最近の動き、エンジニアリング文化、あなたのプロフィールが取るべき角度を明らかにします。連絡先の発見（[`contacto`](modes/contacto.md)）は、連絡する価値のある採用責任者・リクルーター・チームメンバーを特定し、相手のタイプに合わせた 300 文字以内の LinkedIn メッセージを下書きします。正式な応募メールの下書き（[`email`](modes/email.md)）は、評価済みレポートや貼り付けた求人票を件名・本文・添付チェックリストに変えます。何も送信・提出・クリックしません。応募はあなたを列に並ばせる。調査は会話を生む。 |
-| **パターン分析**         | 不採用パターンと ATS チャネル別の通過率（`analyze-patterns.mjs`）、求職全体のファネル統計（`stats.mjs`）、ゴーストジョブの兆候かもしれない再掲載の検出（`detect-reposts.mjs`） |
+| **パターン分析**         | 不採用パターンと ATS チャネル別の通過率（`analyze-patterns.ts`）、求職全体のファネル統計（`stats.ts`）、ゴーストジョブの兆候かもしれない再掲載の検出（`detect-reposts.ts`） |
 
 <details>
 <summary><b>その他にできること</b></summary>
@@ -192,8 +192,8 @@ career-ops は求職者にとって永久に無料。以下の企業がこのプ
 | **ダッシュボード TUI**   | パイプラインを閲覧・フィルタ・ソートするターミナル UI                                                                                     |
 | **パイプラインの整合性** | 自動マージ、重複排除、ステータス正規化、ヘルスチェック                                                                                     |
 | **面接スイート**         | 時間割型の準備プラン、フィードバック付きの練習セッション、面接後の振り返り（[`interview/`](modes/interview/README.md)）、企業の危険信号検出（[`interview-redflag`](modes/interview-redflag.md)） |
-| **オファー段階**         | 契約書の読み合わせ：条項ごとの確認と弁護士への質問リスト（[`offer-prep`](modes/offer-prep.md)）、希望／提示／実際の給与ギャップ分析（`salary-gap.mjs`） |
-| **フォローアップと返信** | フォローアップ間隔の計算と事前設定のリマインダー（`followup-cadence.mjs`、`followup-seed.mjs`）。雇用主からの返信をトラッカー更新に分類（[`reply-watch`](modes/reply-watch.md)） |
+| **オファー段階**         | 契約書の読み合わせ：条項ごとの確認と弁護士への質問リスト（[`offer-prep`](modes/offer-prep.md)）、希望／提示／実際の給与ギャップ分析（`salary-gap.ts`） |
+| **フォローアップと返信** | フォローアップ間隔の計算と事前設定のリマインダー（`followup-cadence.ts`、`followup-seed.ts`）。雇用主からの返信をトラッカー更新に分類（[`reply-watch`](modes/reply-watch.md)） |
 | **プラグインシステム**   | オプトインの連携（Gmail、Notion、Apify + コミュニティレジストリ）、デフォルトでは無効。[docs/PLUGINS.md](docs/PLUGINS.md) を参照            |
 
 </details>
@@ -203,7 +203,7 @@ career-ops は求職者にとって永久に無料。以下の企業がこのプ
 **いちばん速い方法、コマンド 1 つで：**
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 > 💡 `npx` は [Node.js](https://nodejs.org) に同梱されています：グローバルに何もインストールせず、
@@ -224,8 +224,8 @@ claude   # or codex / qwen / opencode / agy / grok — open your AI CLI here
 
 ```bash
 git clone https://github.com/career-ops-hq/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # only needed for PDF generation
+cd career-ops && bun install
+bunx playwright install chromium   # only needed for PDF generation
 # On a non-Debian/Ubuntu Linux distro (Fedora, Arch, ...), Chromium's system
 # libraries aren't installed by the line above — install them yourself with
 # your distro's package manager if PDF generation fails to launch the browser
@@ -256,14 +256,14 @@ claude   # or codex / opencode / qwen / agy / grok
 ### グローバルインストール
 
 ```bash
-npm i -g @santifer/career-ops
+bun add -g @santifer/career-ops
 ```
 
 これで `career-ops` バイナリがグローバルにインストールされ、`npx` なしで `career-ops init [folder]` を実行できます。`init` が唯一のコマンドです。ワークスペースを用意するだけで、その後の作業はすべてこのバイナリではなく AI コーディング CLI の中で行います（下の「使い方」を参照）。
 
 **どちらを使うべき？**
-- `npx @santifer/career-ops init`：初回利用に最適。専用のプロジェクトフォルダを作ります。
-- `npm i -g @santifer/career-ops`：`npx` 形式より `career-ops init` と打ちたい場合に。ほかのコマンドは増えません。
+- `bunx @santifer/career-ops init`：初回利用に最適。専用のプロジェクトフォルダを作ります。
+- `bun add -g @santifer/career-ops`：`npx` 形式より `career-ops init` と打ちたい場合に。ほかのコマンドは増えません。
 
 > **このシステムは、あなたの AI コーディング CLI 自身がカスタマイズするように設計されています。** モード、アーキタイプ、スコアの重み、交渉スクリプト：変えてほしいと頼むだけです。CLI は自分が使っているファイルをそのまま読むので、何を編集すべきか正確に分かっています。
 
@@ -454,13 +454,13 @@ cp .env.example .env
 # Edit .env, set GEMINI_API_KEY=your_key_here
 
 # 2. Install dependencies
-npm install
+bun install
 
 # 3. Evaluate a job description
-node gemini-eval.mjs "We are looking for a Senior AI Engineer..."
-node gemini-eval.mjs --file ./jds/my-job.txt
-node agent-inbox.mjs add "..."   # queue a request for the next session
-npm run gemini:eval -- "JD text here"
+bun gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun gemini-eval.ts --file ./jds/my-job.txt
+bun agent-inbox.ts add "..."   # queue a request for the next session
+bun run gemini:eval -- "JD text here"
 ```
 
 > **無料枠：** どちらの方法も課金なしで動きます。ネイティブ CLI は Google OAuth を使い、API スクリプトは `gemini-3.6-flash` を使います（レート制限はモデルと階層によって異なります。現在の割り当ては Google AI のドキュメントを参照してください）。
@@ -480,10 +480,10 @@ npm run gemini:eval -- "JD text here"
 
 **検索対象の求人サイト：** 55 以上のプロバイダーモジュールが、ATS の API、サイト全体のフィード、XML/RSS フィード、マークダウンフィード、ローカルパーサーをカバーします。完全な一覧は[対応求人サイト](docs/SUPPORTED_JOB_BOARDS.md)を参照してください。
 
-デフォルトでは `node scan.mjs`（別名 `npm run scan`）は各 ATS フィードが返す内容を信頼します。一部の企業は募集終了後も公開 API に古い求人を残すため、期限切れの項目が `pipeline.md` に紛れ込むことがあります。`--verify` を付けると、API のパスの後に Playwright を起動し、期限切れの求人がパイプラインに入る前に除外します：
+デフォルトでは `bun scan.ts`（別名 `bun run scan`）は各 ATS フィードが返す内容を信頼します。一部の企業は募集終了後も公開 API に古い求人を残すため、期限切れの項目が `pipeline.md` に紛れ込むことがあります。`--verify` を付けると、API のパスの後に Playwright を起動し、期限切れの求人がパイプラインに入る前に除外します：
 
 ```bash
-node scan.mjs --verify          # zero-token discovery + Playwright liveness check
+bun scan.ts --verify          # zero-token discovery + Playwright liveness check
 ```
 
 検証は逐次的で、（重複排除後の）新しい求人に対してのみ実行されるため、コストは限定的です。
@@ -493,8 +493,8 @@ node scan.mjs --verify          # zero-token discovery + Playwright liveness che
 内蔵のターミナルダッシュボードで、パイプラインを視覚的に閲覧できます：
 
 ```bash
-npm run serve:dashboard   # launch the TUI
-npm run build:dashboard   # optional: build the standalone binary
+bun run serve:dashboard   # launch the TUI
+bun run build:dashboard   # optional: build the standalone binary
 ```
 
 機能：10 個のフィルタータブ、8 種類のソートモード、グループ表示／フラット表示、遅延読み込みのプレビュー、インラインでのステータス変更。
@@ -556,9 +556,9 @@ career-ops/
 
 - **トラッカーの上書き：** `CAREER_OPS_TRACKER` を設定して、応募トラッカーファイルのパスを直接上書きすることもできます。
 - **書き込み：** すべての書き込み操作（マージなど）は正規に `{DATA_ROOT}/data/applications.md` を対象とします。
-- **スキャナーの設定：** `portals.yml` は `{DATA_ROOT}/portals.yml` で読み込まれ検証されるので、`node validate-portals.mjs` は `scan.mjs` が読むのと同じファイルをチェックします。
+- **スキャナーの設定：** `portals.yml` は `{DATA_ROOT}/portals.yml` で読み込まれ検証されるので、`bun validate-portals.ts` は `scan.ts` が読むのと同じファイルをチェックします。
 - **生成されるドキュメント：** 調整済みの CV とカバーレターは `{DATA_ROOT}/output/` の下に書き込まれ、それらをレポートに結び付ける PDF マニフェストは `{DATA_ROOT}/data/pdf-index.tsv` にあります。`CAREER_OPS_TRACKER` が未設定の間は、これらの書き込み先を限定するトラッカーのワークスペースはデータルートであり、チェックアウトではありません。
-- **トラッカー上書き時の PDF：** `generate-pdf.mjs` はワークスペースを決める前に `CAREER_OPS_TRACKER` を解決します。そのため上書きが設定されていると、ワークスペースはそのトラッカーを含むフォルダ（トラッカーが `data/` フォルダにある場合はその一つ上のフォルダ）になります。このとき CV の HTML とすべての PDF はそのワークスペース内に置く必要があり、マニフェストはその `data/pdf-index.tsv` に移ります。カバーレターは引き続き `{DATA_ROOT}/output/` を対象とするため、そのフォルダがトラッカーのワークスペースの外にある場合は拒否されます。
+- **トラッカー上書き時の PDF：** `generate-pdf.ts` はワークスペースを決める前に `CAREER_OPS_TRACKER` を解決します。そのため上書きが設定されていると、ワークスペースはそのトラッカーを含むフォルダ（トラッカーが `data/` フォルダにある場合はその一つ上のフォルダ）になります。このとき CV の HTML とすべての PDF はそのワークスペース内に置く必要があり、マニフェストはその `data/pdf-index.tsv` に移ります。カバーレターは引き続き `{DATA_ROOT}/output/` を対象とするため、そのフォルダがトラッカーのワークスペースの外にある場合は拒否されます。
 - **コード層は動かない：** `node_modules/`、`providers/`、`modes/`、そしてスクリプト自体は常にリポジトリを基準に解決され、データルートを基準にすることはありません。
 
 Go のダッシュボード TUI、Node.js スクリプト、AI エージェントモードのすべてが、この解決の階層を自動的に尊重します。
@@ -617,7 +617,7 @@ Go のダッシュボード TUI、Node.js スクリプト、AI エージェン�
 career-ops（[career-ops.org](https://career-ops.org)、別名 **careerops**） は、あなたの AI コーディング CLI（Claude Code、Codex、OpenCode など）の中でローカルで動くオープンソースの AI 求職ツールで、すべての判断をあなたに委ねます。求人を CV と照らして評価し、ATS 向けに調整した PDF を生成し、連絡すべき相手を見つけ、すべてを一か所で追跡します：最終判断は常にあなたのものです。[CareerOps マニフェスト](https://career-ops.org/manifesto)の最初のリファレンス実装です。
 
 **カスタマイズされた履歴書が事実をでっち上げることはありますか？**
-あってはならず、プロンプトにもそう書いてあります：言い換えはしても、でっち上げはしない。`generate-pdf` は、あなたの情報源にない数字や事実を含む CV をブロックします（`--skip-fact-check` を渡した場合を除く）。`pdf` モードは `cv-title-check.mjs` も実行します。これはカスタマイズした CV の各職名を、cv.md に書かれた同じ職歴（会社と期間で照合）の職名と比べ、違いがあれば残すか元に戻すかをあなたに確認します。職名の言い回しを変えるのはあなたの判断であることもあるため、警告するだけでブロックはしません。言い換えの判断はまだ何もしません：[#1411](https://github.com/career-ops-hq/career-ops/issues/1411)（不一致なら止める忠実性チェック）がそれを追跡しています。それまでは、送る前にすべての履歴書を読んでください。[免責事項](LEGAL_DISCLAIMER.md) にも同じことがより長く書いてあります。
+あってはならず、プロンプトにもそう書いてあります：言い換えはしても、でっち上げはしない。`generate-pdf` は、あなたの情報源にない数字や事実を含む CV をブロックします（`--skip-fact-check` を渡した場合を除く）。`pdf` モードは `cv-title-check.ts` も実行します。これはカスタマイズした CV の各職名を、cv.md に書かれた同じ職歴（会社と期間で照合）の職名と比べ、違いがあれば残すか元に戻すかをあなたに確認します。職名の言い回しを変えるのはあなたの判断であることもあるため、警告するだけでブロックはしません。言い換えの判断はまだ何もしません：[#1411](https://github.com/career-ops-hq/career-ops/issues/1411)（不一致なら止める忠実性チェック）がそれを追跡しています。それまでは、送る前にすべての履歴書を読んでください。[免責事項](LEGAL_DISCLAIMER.md) にも同じことがより長く書いてあります。
 
 **career-ops を無料で、あるいはより安価なモデルやローカルモデルで動かせますか？**
 はい。career-ops は CLI に依存せず、無料モデルやローカルモデル（OpenRouter の無料モデル、Ollama、または OpenAI 互換のエンドポイント）で動くので、有料サブスクリプションに縛られません。完全なセットアップは [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md) を参照してください。

@@ -22,8 +22,8 @@ import {
   type ScanEvent,
 } from "@/lib/explore";
 import { makeAiStreamParser, type AiTraceChunk } from "@/lib/explore-ai";
-import { MAX_OFFER_LIMIT } from "@/lib/whats-new.mjs";
-import { isScannerMissing } from "@/lib/explore-error.mjs";
+import { MAX_OFFER_LIMIT } from "@/lib/whats-new.ts";
+import { isScannerMissing } from "@/lib/explore-error.ts";
 import { SvelteSet } from "svelte/reactivity";
 
 export type Phase =

@@ -21,11 +21,12 @@
           - .antigravitycli/skills/**
           - .grok/skills/**
           - .kimi/skills/**
+          - .cursor/skills/**
 
 "🔧 scripts":
   - changed-files:
       - any-glob-to-any-file:
-          - "*.mjs"
+          - "*.ts"
           - batch/**
 
 "📄 docs":

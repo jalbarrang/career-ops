@@ -3,12 +3,12 @@ import { execFile } from "node:child_process";
 import fs from "node:fs";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
 import { canonicalizeStatus } from "@/lib/core/states";
-import { clientErrorMessage, parseCliJson, trackerRowArg } from "@/lib/status-cli.mjs";
+import { clientErrorMessage, parseCliJson, trackerRowArg } from "@/lib/status-cli.ts";
 
 // Writeback: UPDATE the status cell of an EXISTING tracker row only. Never adds
 // rows — per the core data contract, new rows go through the TSV + merge flow.
 //
-// It delegates to set-status.mjs, the path every other writer already uses: it
+// It delegates to set-status.ts, the path every other writer already uses: it
 // holds the shared tracker lock across the whole read-modify-write, validates
 // the state against templates/states.yml, and appends the transition ledger.
 // `--source web` keeps rows written from here distinguishable in the ledger.
@@ -35,7 +35,7 @@ function boundedLockWait(): Record<string, string> {
   return { CAREER_OPS_TRACKER_LOCK_TIMEOUT_MS: String(Math.min(requested, LOCK_WAIT_CEILING_MS)) };
 }
 
-// set-status.mjs exit codes (CLI_EXIT in tracker-utils.mjs) → HTTP.
+// set-status.ts exit codes (CLI_EXIT in tracker-utils.ts) → HTTP.
 // 4 means another writer holds the tracker lock: transient, so the caller should
 // retry rather than treat the change as rejected.
 const EXIT_TO_HTTP: Record<number, number> = { 2: 404, 3: 409, 4: 503 };
@@ -72,7 +72,7 @@ function runSetStatus(args: string[]): Promise<CliResult> {
 
 // --json puts a single JSON object on stdout on both the success and the error
 // path. Anything printed before it (a ledger-append warning, say) is not part of
-// the document and can contain a brace of its own — so status-cli.mjs reads the
+// the document and can contain a brace of its own — so status-cli.ts reads the
 // document from the end rather than from the first `{`.
 
 export async function POST({ request }) {
@@ -93,7 +93,7 @@ export async function POST({ request }) {
   }
   // Resolving aliases here lets the response echo the canonical label without
   // waiting on the CLI, and costs no process spawn for an unknown state.
-  // set-status.mjs validates again against states.yml — this is a fast path,
+  // set-status.ts validates again against states.yml — this is a fast path,
   // not the authority.
   const canon = canonicalizeStatus(status);
   if (!canon) {
@@ -129,7 +129,7 @@ export async function POST({ request }) {
   if (spawnFailed) {
     // Child stderr is a Node stack trace carrying absolute server paths. It
     // belongs in the server log, never in the response body.
-    console.error(`/api/status: set-status.mjs failed to run: ${stderr.trim()}`);
+    console.error(`/api/status: set-status.ts failed to run: ${stderr.trim()}`);
     return json({ error: "status update failed to run" }, { status: 500 });
   }
 
@@ -148,7 +148,7 @@ export async function POST({ request }) {
     // Child stderr is logged, never echoed: on this path it is most likely a
     // Node stack trace carrying absolute server paths.
     if (!parsed && stderr.trim()) {
-      console.error(`/api/status: set-status.mjs exited ${code} without JSON: ${stderr.trim()}`);
+      console.error(`/api/status: set-status.ts exited ${code} without JSON: ${stderr.trim()}`);
     }
     const error = clientErrorMessage(parsed, stderr);
     return json(

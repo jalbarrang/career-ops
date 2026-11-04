@@ -2,8 +2,8 @@ import { execFile } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
-import { rootScriptEnv } from "@/lib/core/root-env.mjs";
-import { summarizeCheck, summarizeDoctor, reviewHeadline } from "@/lib/cv-review.mjs";
+import { rootScriptEnv } from "@/lib/core/root-env.ts";
+import { summarizeCheck, summarizeDoctor, reviewHeadline } from "@/lib/cv-review.ts";
 
 // The three commands the CLI would run before trusting a CV, run here so the
 // editor can show their verdicts instead of letting the user discover a broken
@@ -20,7 +20,7 @@ function runRootScript(root: string, nameNoExt: string, args: string[]): Promise
   }
   return new Promise((resolve) => {
     execFile(
-      "node",
+      "bun",
       [script, ...args],
       { cwd: root, env: rootScriptEnv(root), timeout: TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
       (err, stdout, stderr) => {
@@ -72,7 +72,7 @@ export async function GET() {
           exitCode: doctor.exitCode,
           stdout: doctor.stdout,
           stderr: doctor.stderr,
-          error: doctor.error || "doctor.mjs did not print its JSON",
+          error: doctor.error || "doctor.ts did not print its JSON",
         }),
     summarizeCheck({
       id: "sync",

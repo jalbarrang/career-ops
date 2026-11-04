@@ -15,7 +15,7 @@ import (
 )
 
 // pendingRepairs remembers Applied saves that returned a partial-success error,
-// so only an explicit retry of the same row asks set-status.mjs to repair the
+// so only an explicit retry of the same row asks set-status.ts to repair the
 // missing lifecycle records. A routine Applied save never requests repair.
 var (
 	pendingRepairsMu sync.Mutex
@@ -33,7 +33,7 @@ func CheckoutScriptPath(name string) (string, error) {
 		roots = append(roots, filepath.Dir(executable), filepath.Dir(filepath.Dir(executable)))
 	}
 	for _, root := range roots {
-		if info, err := os.Stat(filepath.Join(root, "path-resolver.mjs")); err != nil || info.IsDir() {
+		if info, err := os.Stat(filepath.Join(root, "path-resolver.ts")); err != nil || info.IsDir() {
 			continue
 		}
 		script := filepath.Join(root, name)
@@ -45,7 +45,7 @@ func CheckoutScriptPath(name string) (string, error) {
 }
 
 func runStatusWriter(dataRoot, report, status, note string) error {
-	script, err := CheckoutScriptPath("set-status.mjs")
+	script, err := CheckoutScriptPath("set-status.ts")
 	if err != nil {
 		return err
 	}
@@ -127,10 +127,10 @@ func runStatusWriter(dataRoot, report, status, note string) error {
 		return fmt.Errorf("status update: %s", result.Error)
 	}
 	if runErr != nil {
-		return fmt.Errorf("run set-status.mjs: %w: %s", runErr, strings.TrimSpace(stderr.String()))
+		return fmt.Errorf("run set-status.ts: %w: %s", runErr, strings.TrimSpace(stderr.String()))
 	}
 	if parseErr != nil || result.Changed == nil || result.NewStatus == "" {
-		return fmt.Errorf("set-status.mjs returned no valid result; reload to check whether the change was applied")
+		return fmt.Errorf("set-status.ts returned no valid result; reload to check whether the change was applied")
 	}
 	// The CLI treats these as non-fatal after the tracker commit. Surface that
 	// partial success so a missing lifecycle record cannot disappear silently.

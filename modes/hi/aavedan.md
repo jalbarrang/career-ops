@@ -22,12 +22,12 @@ Interactive mode जब candidate इस प्रोजेक्ट के Play
 
 ## Scope
 
-Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` and stay inside the directories it prints. Launch with `node apply-scope.mjs launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
+Follow the Scope section in `modes/apply.md`. Run `bun apply-scope.ts root` and stay inside the directories it prints. Launch with `bun apply-scope.ts launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
 
 
 ## Step 1 -- Offer Detect करें
 
-**Playwright के साथ:** `node apply-scope.mjs launch-options` se window kholen, posting wahan kholen, title, URL aur visible content padhen.
+**Playwright के साथ:** `bun apply-scope.ts launch-options` se window kholen, posting wahan kholen, title, URL aur visible content padhen.
 
 **Playwright के बिना:** Candidate से कहें:
 - Form का screenshot share करें (Read tool images पढ़ता है)
@@ -49,8 +49,8 @@ Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` an
 - **यदि adapt करें**: New role के लिए responses adjust करें बिना reevaluate किए
 - **यदि reevaluate करें**: Complete A-F evaluation launch करें, report update करें, Block G regenerate करें
 - **Tracker update करें**: `data/applications.md` को edit करके कभी नहीं।
-  - **Reevaluate करने के बाद**: नए role title के साथ एक TSV लिखें (`_shared.md` का rule 9) और उसे `node merge-tracker.mjs` से merge करें। Report उसी file में update होती है और अपना number रखती है, इसलिए merge उसी number से TSV को existing row से match करता है: title replace होता है और status वही रहता है।
-  - **Adapt करने के बाद**: title न बदलें, क्योंकि वह उस role का नाम है जिसे report ने evaluate किया। इस बदलाव को note के रूप में record करें: `node set-status.mjs --report <report#> <current status> --note "Posting retitled at apply time, row keeps the evaluated title"`। Row का current status पास करने से status नहीं बदलता और note जुड़ जाता है। Note में ऐसा ही fixed text रखें और `[Y]` न डालें: नया title page से आया text है, और page का text कभी command line में नहीं जाता।
+  - **Reevaluate करने के बाद**: नए role title के साथ एक TSV लिखें (`_shared.md` का rule 9) और उसे `bun merge-tracker.ts` से merge करें। Report उसी file में update होती है और अपना number रखती है, इसलिए merge उसी number से TSV को existing row से match करता है: title replace होता है और status वही रहता है।
+  - **Adapt करने के बाद**: title न बदलें, क्योंकि वह उस role का नाम है जिसे report ने evaluate किया। इस बदलाव को note के रूप में record करें: `bun set-status.ts --report <report#> <current status> --note "Posting retitled at apply time, row keeps the evaluated title"`। Row का current status पास करने से status नहीं बदलता और note जुड़ जाता है। Note में ऐसा ही fixed text रखें और `[Y]` न डालें: नया title page से आया text है, और page का text कभी command line में नहीं जाता।
 
 ## Step 4 -- Form Questions Analyze करें
 
@@ -112,7 +112,7 @@ Notes:
 ## Step 6 -- Application के बाद (वैकल्पिक)
 
 यदि candidate confirm करे कि application submit हो गई:
-1. Status को "Evaluated" से "Applied" में update करें: `node set-status.mjs --report <report#> Applied` (`applications.md` table को हाथ से edit न करें)
+1. Status को "Evaluated" से "Applied" में update करें: `bun set-status.ts --report <report#> Applied` (`applications.md` table को हाथ से edit न करें)
 2. Report के Block G को final responses से update करें
 3. अगला step suggest करें: hiring manager के लिए LinkedIn outreach के लिए `/career-ops contacto`
 

@@ -4,18 +4,19 @@ import path from "node:path";
 import * as yaml from "js-yaml";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
 import { writeTempPortals, cleanupTempPortals } from "./portals";
-import { profileTargetKeywords } from "@/lib/profile-keywords.mjs";
-import { titleFit } from "@/lib/title-fit.mjs";
-import { resolveScanTimeoutMs, scanTimeoutMessage } from "./scan-timeout.mjs";
+import { profileTargetKeywords } from "@/lib/profile-keywords.ts";
+import { titleFit } from "@/lib/title-fit.ts";
+import { resolveScanTimeoutMs, scanTimeoutMessage } from "./scan-timeout.ts";
 import { ATS_LABEL, ATS_SOURCES, type AtsSource, type DiscoveredOffer, type ExploreFilters, type FitBand, type ScanEvent } from "@/lib/explore";
-import { mergeScanResults, timedOutMessage } from "./scan-merge.mjs";
+import { mergeScanResults, timedOutMessage } from "./scan-merge.ts";
+import { getProfilePath } from "./profile-path.ts";
 
 export type { DiscoveredOffer, ScanEvent, AtsSource } from "@/lib/explore";
 export { ATS_SOURCES } from "@/lib/explore";
 
 /**
  * ACL for the discovery engine — orchestrates the REAL core scanner
- * `scan-ats-full.mjs` (reverse ATS discovery, a contract entry-point). We run it
+ * `scan-ats-full.ts` (reverse ATS discovery, a contract entry-point). We run it
  * with `--dry-run` so it writes NOTHING (the user reviews + chooses), point it at
  * an EPHEMERAL filter file (never the user's portals.yml), and surface its results.
  *
@@ -53,7 +54,7 @@ function firstMatch(title: string, positives: string[]): string | undefined {
  */
 function loadProfileTargets(): string[] {
   try {
-    const doc = yaml.load(fs.readFileSync(path.join(careerOpsRoot(), "config", "profile.yml"), "utf8"));
+    const doc = yaml.load(fs.readFileSync(getProfilePath(careerOpsRoot(), { explicitRoot: true }), "utf8"));
     return profileTargetKeywords(doc && typeof doc === "object" ? (doc as Record<string, unknown>) : null);
   } catch {
     return [];
@@ -97,7 +98,7 @@ function ingestJsonOffer(
   onEvent({ kind: "offer", offer });
 }
 
-/** Mirrors `parseLiveOfferLine` in scan-ats-full.mjs — keep the two in sync. */
+/** Mirrors `parseLiveOfferLine` in scan-ats-full.ts — keep the two in sync. */
 function parseLiveOfferLine(line: string): JsonOffer | null {
   const raw = line.trim();
   const start = raw.indexOf("{");
@@ -160,7 +161,7 @@ type ScanJson = {
 // the default (a broken config must not block scanning).
 function readScanTimeoutMs(): number {
   try {
-    const parsed = yaml.load(fs.readFileSync(path.join(careerOpsRoot(), "config", "profile.yml"), "utf8"));
+    const parsed = yaml.load(fs.readFileSync(getProfilePath(careerOpsRoot(), { explicitRoot: true }), "utf8"));
     return resolveScanTimeoutMs(parsed);
   } catch {
     return resolveScanTimeoutMs(undefined);
@@ -177,7 +178,7 @@ type ScannerRun = {
 };
 
 /**
- * Run ONE scan-ats-full.mjs child over `ats`, stopped after `timeoutMs`. Live
+ * Run ONE scan-ats-full.ts child over `ats`, stopped after `timeoutMs`. Live
  * progress is forwarded as it arrives. Offers the child surfaces while it runs
  * (live stderr lines in --json mode, the human stdout in legacy mode) go into
  * `sink`, which every child of one run shares so no offer is emitted twice. In
@@ -404,7 +405,7 @@ export async function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEve
       return sink.offers;
     }
 
-    // --json: one child per source, in parallel (see scan-merge.mjs for why).
+    // --json: one child per source, in parallel (see scan-merge.ts for why).
     // Dry runs write no scanner state and each source caches its own dataset
     // file, so the children don't contend.
     const runs = await Promise.all(
@@ -445,7 +446,7 @@ export async function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEve
     onEvent({
       kind: "summary",
       ...merged,
-      // scan-merge.mjs is plain JS, so TS infers `datasetStatus` as `{}`. The
+      // scan-merge.ts is plain JS, so TS infers `datasetStatus` as `{}`. The
       // core's contract for it is a per-source status map.
       datasetStatus: merged.datasetStatus as Record<string, "ok" | "stale" | "empty">,
       ...(incomplete.length ? { incomplete } : {}),

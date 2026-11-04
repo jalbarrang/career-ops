@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { ArrowLeft, Check, Loader2, Pencil, SkipForward, X } from "@lucide/svelte";
   import { cn } from "@/lib/cn";
-  import { applyBlockDecision, groupImportBlocks, suggestEntryFields } from "@/lib/cv-import.mjs";
+  import { applyBlockDecision, groupImportBlocks, suggestEntryFields } from "@/lib/cv-import.ts";
 
   type Candidate = {
     section: string;
@@ -234,7 +234,7 @@
     <div>
       <h1 class="font-display text-2xl tracking-tight text-landing">Import into your career profile</h1>
       <p class="mt-1 max-w-2xl text-sm text-muted">
-        Every fact <code class="text-foreground">career-profile.mjs</code> pulled out of <code class="text-foreground">cv.md</code>, with the line it came from.
+        Every fact <code class="text-foreground">career-profile.ts</code> pulled out of <code class="text-foreground">cv.md</code>, with the line it came from.
         One role is one decision: the company, title and date lines the parser split apart stay together here, and only the block you approve becomes an entry.
       </p>
     </div>

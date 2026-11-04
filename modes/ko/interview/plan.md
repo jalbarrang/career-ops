@@ -14,7 +14,7 @@ JD(채용 공고)와 면접 일시가 주어지면, 후보자의 구체적인 �
 6. **프로필** — `config/profile.yml` + `modes/_profile.md`. narrative, archetype, 목표를 파악하기 위해 읽습니다
 7. **Story bank** — `interview-prep/story-bank.md`. 기존 STAR+R 스토리
 8. **Question bank** — `interview-prep/question-bank.md`. 기존 갭 (파일이 있다면)
-9. **이전에 밝힌 보상 금액** — tracker#를 알고 있다면 `node salary-gap.mjs --stated-for <tracker#>`를 실행합니다(토큰 소모 없음). 이전의 `stated` 기록은 후보자가 이전 라운드에서 특정 면접관에게 이미 말한 숫자입니다 — Step 4의 quick-reference에 넣어서, 후보자가 의도치 않게 재협상하지 않고 일관성을 유지하도록 합니다.
+9. **이전에 밝힌 보상 금액** — tracker#를 알고 있다면 `bun salary-gap.ts --stated-for <tracker#>`를 실행합니다(토큰 소모 없음). 이전의 `stated` 기록은 후보자가 이전 라운드에서 특정 면접관에게 이미 말한 숫자입니다 — Step 4의 quick-reference에 넣어서, 후보자가 의도치 않게 재협상하지 않고 일관성을 유지하도록 합니다.
 
 ---
 

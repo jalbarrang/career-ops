@@ -49,7 +49,7 @@ type PipelineOpenFailedMsg struct {
 	Err    string
 }
 
-// PipelineGeneratePDFMsg requests a PDF regeneration via generate-pdf.mjs
+// PipelineGeneratePDFMsg requests a PDF regeneration via generate-pdf.ts
 // from the application's recorded source HTML. Paths are relative to
 // CareerOpsPath (as recorded in the manifest).
 type PipelineGeneratePDFMsg struct {
@@ -128,7 +128,7 @@ type PipelineOpenProgressMsg struct{}
 type PipelineOpenStatsMsg struct{}
 
 // Mirrors the ids in templates/discard-reasons.yml, in order.
-// tests/discard-reasons-vocabulary.test.mjs fails when the two drift.
+// tests/discard-reasons-vocabulary.test.ts fails when the two drift.
 var canonicalDiscardReasons = []string{
 	"salary_too_low",
 	"hybrid_required",
@@ -704,7 +704,7 @@ func (m PipelineModel) handleKey(msg tea.KeyMsg) (PipelineModel, tea.Cmd) {
 				m.flash = "Source HTML missing: " + entry.HTMLPath
 				return m, nil
 			}
-			m.flash = "Regenerating PDF via generate-pdf.mjs — this takes a few seconds..."
+			m.flash = "Regenerating PDF via generate-pdf.ts — this takes a few seconds..."
 			path, report := workspaceRoot, entry.ReportNumber
 			html, pdf, format := entry.HTMLPath, entry.PDFPath, entry.Format
 			return m, func() tea.Msg {
@@ -2074,7 +2074,7 @@ func previewOutcome(app model.CareerApplication) string {
 // instruction rather than as text, which is how a cell that renders correctly
 // everywhere else can still move the cursor or repaint the help bar.
 //
-// The range is the one tracker-utils.mjs strips at the tracker write path
+// The range is the one tracker-utils.ts strips at the tracker write path
 // (CONTROL_CHARS, #3892): C0, DEL and C1. It differs deliberately in one
 // respect. cell() keeps \t, \r and \n because it has already folded them to a
 // space and dropping them there would glue words together; the help bar is a

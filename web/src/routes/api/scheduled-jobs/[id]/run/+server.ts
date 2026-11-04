@@ -3,8 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { json } from "@sveltejs/kit";
 import { getScheduledJob } from "@/lib/scheduled-jobs";
-import { isSafeScheduledId } from "@/lib/scheduled-jobs-store.mjs";
-import { resolveCodeRoot } from "@/lib/core/code-root.mjs";
+import { isSafeScheduledId } from "@/lib/scheduled-jobs-store.ts";
+import { resolveCodeRoot } from "@/lib/core/code-root.ts";
 
 const TIMEOUT_MS = 76 * 60 * 1_000;
 const KILL_GRACE_MS = 5_000;
@@ -74,7 +74,7 @@ export async function POST({ params }: { params: { id: string } }) {
     return json({ error: "Could not read scheduled jobs." }, { status: 500 });
   }
 
-  const runner = path.join(resolveCodeRoot(process.cwd(), process.env), "web", "scripts", "scheduled-jobs-runner.mjs");
+  const runner = path.join(resolveCodeRoot(process.cwd(), process.env), "web", "scripts", "scheduled-jobs-runner.ts");
   if (!fs.existsSync(runner)) {
     return json({ error: "Scheduled job runner is not installed." }, { status: 404 });
   }

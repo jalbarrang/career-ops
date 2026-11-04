@@ -23,7 +23,7 @@ docker build --platform linux/amd64 --tag career-ops-cv-visual tests/cv-visual
 docker run --rm --init --ipc=host --platform linux/amd64 \
   --volume "$PWD:/work" --volume /work/node_modules \
   career-ops-cv-visual \
-  sh -c 'npm install --ignore-scripts --package-lock=false && npm run test:cv-visual'
+  sh -c 'bun install --ignore-scripts --package-lock=false && bun run test:cv-visual'
 ```
 
 CI uses these same commands and [`tests/cv-visual/Dockerfile`](../tests/cv-visual/Dockerfile).
@@ -64,7 +64,7 @@ macOS, Windows, or ARM screenshots as the Linux baseline.
    docker run --rm --init --ipc=host --platform linux/amd64 \
      --volume "$PWD:/work" --volume /work/node_modules \
      career-ops-cv-visual \
-     sh -c 'npm install --ignore-scripts --package-lock=false && npm run test:cv-visual:update'
+     sh -c 'bun install --ignore-scripts --package-lock=false && bun run test:cv-visual:update'
    ```
 
 4. Review every changed PNG in `tests/cv-visual/__screenshots__/`. Remove obsolete
@@ -83,13 +83,13 @@ A native run is useful while editing templates. Install Liberation Sans/Serif,
 Noto CJK, and Poppler (`pdftotext` and `pdftoppm`) for your platform, then run:
 
 ```bash
-npm install --ignore-scripts
-npx playwright install chromium
-npm run test:cv-visual -- --ignore-snapshots
+bun install --ignore-scripts
+bunx playwright install chromium
+bun run test:cv-visual -- --ignore-snapshots
 ```
 
 This exercises layout, pagination, and ATS assertions without comparing or
 updating committed PNGs. Native fonts and rasterizers can still alter geometry
 or page counts, so investigate differences in the canonical container before
 changing the expected result. A native smoke check does not replace the Linux
-snapshot gate or the full `node test-all.mjs` contribution gate.
+snapshot gate or the full `bun test-all.ts` contribution gate.

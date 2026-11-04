@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
 
 // Companies still in Interview whose silence since the last round has passed a
-// courtesy threshold, from the core's rejection-latency.mjs.
+// courtesy threshold, from the core's rejection-latency.ts.
 //
 // SUGGESTION-ONLY, and the script says so in its own header: it "never writes".
 // This route is read-only too — in particular it does not touch
@@ -11,14 +11,14 @@ import { careerOpsRoot, rootScript } from "@/lib/career-ops";
 // auto-populated. The script hands back a ready-to-paste blacklist row; pasting
 // it stays the user's decision.
 //
-// No flags: rejection-latency.mjs prints JSON by default, like stats.mjs and
-// upskill.mjs. The argv is registered in tests/web-core-argv-contract.test.mjs.
+// No flags: rejection-latency.ts prints JSON by default, like stats.ts and
+// upskill.ts. The argv is registered in tests/web-core-argv-contract.test.ts.
 export async function GET() {
   const script = rootScript("rejection-latency");
   if (!fs.existsSync(script)) return Response.json({ available: false, reason: "no-script", data: null });
 
   const stdout = await new Promise<string>((resolve) => {
-    execFile("node", [script], { cwd: careerOpsRoot(), timeout: 20_000, maxBuffer: 8 << 20 }, (_err, out) =>
+    execFile("bun", [script], { cwd: careerOpsRoot(), timeout: 20_000, maxBuffer: 8 << 20 }, (_err, out) =>
       resolve(out || ""),
     );
   });

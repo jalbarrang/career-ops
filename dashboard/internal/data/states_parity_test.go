@@ -64,7 +64,7 @@ func loadCanonicalStates(t *testing.T) []canonicalState {
 // states.yml is the source of truth Node and web load directly. NormalizeStatus
 // is Go's compiled copy, so every spelling the file accepts has to land on the
 // same state here, or one tracker row reads differently in the TUI than it does
-// everywhere else. test-all.mjs guards the opposite direction (#2704).
+// everywhere else. test-all.ts guards the opposite direction (#2704).
 func TestNormalizeStatusCoversStatesYAML(t *testing.T) {
 	for _, st := range loadCanonicalStates(t) {
 		for _, spelling := range append([]string{st.id, st.label}, st.aliases...) {

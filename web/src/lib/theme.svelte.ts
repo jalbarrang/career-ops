@@ -4,7 +4,7 @@
 // theme-color meta, so the first paint is already correct. This module adopts
 // that choice after hydration and keeps it in sync with the OS preference, the
 // storage event across tabs, and the toggle.
-import { THEME_COLORS, THEME_STORAGE_KEY, isTheme, storedTheme } from "@/lib/theme.mjs";
+import { THEME_COLORS, THEME_STORAGE_KEY, isTheme, storedTheme } from "@/lib/theme.ts";
 
 export type Theme = "light" | "dark";
 

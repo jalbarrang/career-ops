@@ -1,5 +1,5 @@
 import { pipelineSummary, readApplicationStatusLog, readStatusLog, type StatusLogRow } from "@/lib/career-ops";
-import { cumulativeTilesWithHistory } from "@/lib/funnel-tiles.mjs";
+import { cumulativeTilesWithHistory } from "@/lib/funnel-tiles.ts";
 import { canonStatus } from "@/lib/format";
 import type { PageServerLoad } from "./$types";
 
@@ -33,7 +33,7 @@ export const load: PageServerLoad = async ({ url }) => {
     // achievement counters whose zero-state shows a coaching nudge, so a
     // candidate who has already advanced past a stage must not read 0 for it (an
     // offer-holder was told "Interviews follow replies — keep follow-ups warm").
-    // Mirrors everInterview/everOffer in stats.mjs, including stages recovered
+    // Mirrors everInterview/everOffer in stats.ts, including stages recovered
     // from history.
     ({ interviews, offers } = await cumulativeTilesWithHistory(
       applications.map((a) => ({ n: a.n, status: canonStatus(a.status) })),

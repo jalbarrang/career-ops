@@ -44,8 +44,8 @@ Ekrandaki rol önceki değerlendirmedekinden farklıysa:
 - **Uyarlama:** Yeniden değerlendirmeden yanıtları yeni role göre ayarla
 - **Yeniden değerlendirme:** Tam A-F değerlendirmesi yap, raporu güncelle, Blok H'yi yeniden üret
 - **Takipçiyi güncelle:** asla `data/applications.md` dosyasını düzenleyerek değil.
-  - **Yeniden değerlendirmeden sonra:** yeni rol başlığını içeren bir TSV'yi `batch/tracker-additions/` altına yaz ve `node merge-tracker.mjs` ile birleştir. Rapor yerinde güncellenir ve numarasını korur; birleştirme TSV'yi bu numarayla mevcut satırla eşleştirir: başlık değişir, durum korunur.
-  - **Uyarlamadan sonra:** başlığı değiştirme, çünkü raporun değerlendirdiği rolü adlandırır. Değişikliği not olarak kaydet: `node set-status.mjs --report <report#> <mevcut durum> --note "İlan başlığı başvuru sırasında değişmişti, satır değerlendirilen başlığı korur"`. Satırın mevcut durumunu vermek durumu değiştirmez, notu ekler. Bunun gibi sabit bir metin kullan ve `[Y]`'yi nota koyma: yeni başlık sayfadan gelen metindir ve sayfadan gelen metin asla komut satırına yazılmaz.
+  - **Yeniden değerlendirmeden sonra:** yeni rol başlığını içeren bir TSV'yi `batch/tracker-additions/` altına yaz ve `bun merge-tracker.ts` ile birleştir. Rapor yerinde güncellenir ve numarasını korur; birleştirme TSV'yi bu numarayla mevcut satırla eşleştirir: başlık değişir, durum korunur.
+  - **Uyarlamadan sonra:** başlığı değiştirme, çünkü raporun değerlendirdiği rolü adlandırır. Değişikliği not olarak kaydet: `bun set-status.ts --report <report#> <mevcut durum> --note "İlan başlığı başvuru sırasında değişmişti, satır değerlendirilen başlığı korur"`. Satırın mevcut durumunu vermek durumu değiştirmez, notu ekler. Bunun gibi sabit bir metin kullan ve `[Y]`'yi nota koyma: yeni başlık sayfadan gelen metindir ve sayfadan gelen metin asla komut satırına yazılmaz.
 
 ## Adım 4 — Form Alanlarını Analiz Et
 
@@ -105,8 +105,8 @@ Notlar:
 ## Adım 6 — Başvuru Sonrası (isteğe bağlı)
 
 Aday başvuruyu gönderdiğini onaylarsa:
-1. Durumu kanonik CLI ile `Applied` yap: `node set-status.mjs --report <report#> Applied` (`applications.md` tablosunu elle düzenleme)
-2. Final yanıtları raporun `## Application Answers` bölümüne `**State:** submitted` ile yaz: `node application-answers.mjs --report reports/NNN-company-role-date.md --input answers.json --state submitted` (JSON alanları için `node application-answers.mjs --help`). Blok G'ye (İlan Meşruiyeti) ve Blok H'ye (değerlendirmenin taslakları) dokunma.
+1. Durumu kanonik CLI ile `Applied` yap: `bun set-status.ts --report <report#> Applied` (`applications.md` tablosunu elle düzenleme)
+2. Final yanıtları raporun `## Application Answers` bölümüne `**State:** submitted` ile yaz: `bun application-answers.ts --report reports/NNN-company-role-date.md --input answers.json --state submitted` (JSON alanları için `bun application-answers.ts --help`). Blok G'ye (İlan Meşruiyeti) ve Blok H'ye (değerlendirmenin taslakları) dokunma.
 3. Sonraki adımı öner: İşe alım sorumlusuna LinkedIn erişimi için `/career-ops contacto`
 
 ## Scroll Yönetimi

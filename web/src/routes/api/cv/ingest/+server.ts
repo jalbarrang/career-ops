@@ -1,12 +1,12 @@
-import { spawnHeadlessCli } from "@/lib/spawn-cli.mjs";
+import { spawnHeadlessCli } from "@/lib/spawn-cli.ts";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { cliSubstitutionNotice, cliUnavailableError, resolveCliOrFallback, type CliResolution } from "@/lib/clis";
 import { careerOpsRoot } from "@/lib/career-ops";
-import { CAPS } from "@/lib/worker-capabilities.mjs";
-import { scopeFrom } from "@/lib/claude-invocation.mjs";
-import { fencingReport } from "@/lib/cli-fencing.mjs";
+import { CAPS } from "@/lib/worker-capabilities.ts";
+import { scopeFrom } from "@/lib/claude-invocation.ts";
+import { fencingReport } from "@/lib/cli-fencing.ts";
 
 // Deny list DERIVED, never hand-written: every one of the six advisor argvs
 // that spelled its own omitted MultiEdit, which --permission-mode acceptEdits
@@ -124,7 +124,7 @@ export async function POST({ request }: { request: Request }) {
         "--include-partial-messages",
         "--permission-mode",
         "acceptEdits",
-        // Required for a non-writing worker — see cli-fencing.mjs (#2507).
+        // Required for a non-writing worker — see cli-fencing.ts (#2507).
         "--strict-mcp-config",
         "--allowedTools",
         ADVISOR_SCOPE.allowed,

@@ -19,8 +19,8 @@
   import RunHistoryDrawer from "./scheduled-scans/run-history-drawer.svelte";
   import type { ScheduledJob, JobRun } from "@/lib/scheduled-jobs";
   import { instrumentSerif } from "@/lib/fonts";
-  import { updateScheduledJobRequest } from "@/lib/scheduled-job-client.mjs";
-  import { isSchedulerStatusPayload } from "@/lib/scheduled-scheduler-status.mjs";
+  import { updateScheduledJobRequest } from "@/lib/scheduled-job-client.ts";
+  import { isSchedulerStatusPayload } from "@/lib/scheduled-scheduler-status.ts";
 
   type Store = { jobs: ScheduledJob[]; runs: JobRun[] };
   type SchedulerStatus = {

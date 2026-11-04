@@ -2,7 +2,7 @@ name: Release Please
 on:
   push:
     branches: [main]
-  # Manual re-publish: when a release was tagged but the npm publish failed,
+  # Manual re-publish: when a release was tagged but the registry publish failed,
   # dispatch this workflow to publish the scaffolder at its current version
   # without cutting a new release.
   workflow_dispatch:
@@ -40,13 +40,19 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # Publish the npm scaffolder when a career-ops release was just created,
+      # Publish the scaffolder to the npm registry when a career-ops release was
+      # just created,
       # OR on a manual dispatch (to recover from a failed publish). Kept in this
       # job so the publish stays tied to the run that cut the release. The
       # checkout also runs when only the `web` component was released: the
       # Latest step at the bottom reads the manifest from it.
       - uses: actions/checkout@v7
         if: ${{ steps.release.outputs.releases_created == 'true' || github.event_name == 'workflow_dispatch' }}
+      # The one place npm is still used, and deliberately: it is the REGISTRY
+      # PUBLISHER, not the repository's toolchain. npm's Trusted Publishing
+      # (OIDC, no long-lived token) plus --provenance has no Bun equivalent —
+      # `bun publish` exists but does not implement the OIDC/provenance flow, so
+      # moving this step would downgrade the supply-chain guarantee.
       - uses: actions/setup-node@v7
         if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
         with:
@@ -78,7 +84,7 @@ jobs:
       # unset when false, so the bare form works for it and not for this one).
       #
       # Runs on ANY release, not only a career-ops one: a web-only release
-      # would otherwise become Latest, and update-system.mjs resolves what to
+      # would otherwise become Latest, and update-system.ts resolves what to
       # install from /releases/latest — it refuses a web-* tag, so every
       # install would stop getting updates until the next career-ops release.
       - name: Keep the career-ops release marked as Latest

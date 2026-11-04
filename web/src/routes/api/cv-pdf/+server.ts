@@ -2,8 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { resolveTailoredCv } from "@/lib/apply/cv";
 import { careerOpsRoot, isRegularContainedFile, pdfPathStatusForReport } from "@/lib/career-ops";
-import { companySlug } from "@/lib/company-slug.mjs";
-import { matchesTailoredCv, sortNewestFirst } from "@/lib/apply/cv-match.mjs";
+import { companySlug } from "@/lib/company-slug.ts";
+import { matchesTailoredCv, sortNewestFirst } from "@/lib/apply/cv-match.ts";
 
 function servePdf(file: string): Response {
   const buf = fs.readFileSync(file);
@@ -23,7 +23,7 @@ function servePdf(file: string): Response {
 // PDF recorded in data/pdf-index.tsv — application via the row's own Report
 // cell. The company slug is the fallback for reports generated before that
 // manifest existed. The fallback uses the SAME matching contract as
-// resolveTailoredCv (see cv-match.mjs) so this and the apply flow always land
+// resolveTailoredCv (see cv-match.ts) so this and the apply flow always land
 // on the same file.
 export async function GET({ url }: { url: URL }) {
   const n = (url.searchParams.get("n") ?? "").trim();

@@ -15,7 +15,7 @@ Two things this log deliberately is not: a ranking, and a promise. Rule 4 says i
 | | |
 |---|---|
 | **Proposed by** | @eliador90, **who operates the source** (declared in the proposal) |
-| **Provider** | `providers/remotli.mjs` |
+| **Provider** | `providers/remotli.ts` |
 | **PR** | [#2465](https://github.com/santifer/career-ops/pull/2465) · issue [#2464](https://github.com/santifer/career-ops/issues/2464) |
 | **Merged** | 2026-08-07 |
 | **Status** | Listed |
@@ -41,7 +41,7 @@ First source reviewed under the written policy. The operator proposing their own
 | | |
 |---|---|
 | **Proposed by** | @justma16ze (community contributor, not affiliated with the source) |
-| **Provider** | `providers/a16z-speedrun.mjs` |
+| **Provider** | `providers/a16z-speedrun.ts` |
 | **PR** | [#2231](https://github.com/santifer/career-ops/pull/2231) |
 | **Merged** | 2026-07-29 |
 | **Status** | Listed |
@@ -77,7 +77,7 @@ Re-read against the written policy after a second source of the same shape asked
 | | |
 |---|---|
 | **Proposed by** | @nikitacometa, who operates none of the channels measured |
-| **Provider** | `providers/telegram-channel.mjs` |
+| **Provider** | `providers/telegram-channel.ts` |
 | **PR** | [#3668](https://github.com/career-ops-hq/career-ops/pull/3668) · issue [#3701](https://github.com/career-ops-hq/career-ops/issues/3701) |
 | **Merged** | 2026-09-05 |
 | **Status** | Provider listed; no channel is listed. The shipped `job_boards:` entry is a disabled template, and a channel added to the registry gets its operator declared per channel. |
@@ -102,7 +102,7 @@ The pass rate is each channel's editorial shape, not noise: @data_science_job 77
 
 **Rule 4 (operator declared).** Per channel, not per transport: the registry names the channel, and the shipped example is disabled. Indexing a channel is not endorsement of its operator.
 
-**Rule 5 (aggregation stays in core).** The provider reads one channel per entry and does no cross-source work. The one change outside the provider, `aggregator: true` in `scan.mjs`, only switches off cross-employer title dedup for a feed that names itself as the company; dedup, ranking and matching stay where they were.
+**Rule 5 (aggregation stays in core).** The provider reads one channel per entry and does no cross-source work. The one change outside the provider, `aggregator: true` in `scan.ts`, only switches off cross-employer title dedup for a feed that names itself as the company; dedup, ranking and matching stay where they were.
 
 **The bar for the next channel proposal**, so it is written down: measure the channel (share of posts naming an employer, share linking a vacancy page, what survives both), name its operator, and expect the provider to drop the rest. A channel below roughly a quarter passing is the channel's editorial choice, and the provider will read it correctly and emit little.
 
@@ -113,7 +113,7 @@ The pass rate is each channel's editorial shape, not noise: @data_science_job 77
 | | |
 |---|---|
 | **Proposed by** | @configurowebmax (community contributor; no affiliation with the source declared) |
-| **Provider** | `providers/computrabajo.mjs` |
+| **Provider** | `providers/computrabajo.ts` |
 | **PR** | [#2650](https://github.com/career-ops-hq/career-ops/pull/2650) |
 | **Merged** | pending (this PR) |
 | **Status** | Provider listed; the shipped `job_boards:` entry is `enabled: false`. |
@@ -136,14 +136,14 @@ A general job board with one host per Latin American country. Only the Colombian
 
 ## ElEmpleo (not listed)
 
-Proposed in [#2650](https://github.com/career-ops-hq/career-ops/pull/2650) together with Computrabajo and Magneto365, and taken out of it on 2026-10-23. The comments in `https://www.elempleo.com/robots.txt` (read 2026-10-23) say that extracting or scraping its content by automated means is prohibited without ELEMPLEO's prior written permission. A provider reads the board by automated means, so it is not listed. The provider code stays in the history of #2650 (`providers/elempleo.mjs` at e40e148) in case ELEMPLEO gives that permission.
+Proposed in [#2650](https://github.com/career-ops-hq/career-ops/pull/2650) together with Computrabajo and Magneto365, and taken out of it on 2026-10-23. The comments in `https://www.elempleo.com/robots.txt` (read 2026-10-23) say that extracting or scraping its content by automated means is prohibited without ELEMPLEO's prior written permission. A provider reads the board by automated means, so it is not listed. The provider code stays in the history of #2650 (`providers/elempleo.ts` at e40e148) in case ELEMPLEO gives that permission.
 
 ## Magneto365
 
 | | |
 |---|---|
 | **Proposed by** | @configurowebmax (community contributor; no affiliation with the source declared) |
-| **Provider** | `providers/magneto.mjs` |
+| **Provider** | `providers/magneto.ts` |
 | **PR** | [#2650](https://github.com/career-ops-hq/career-ops/pull/2650) |
 | **Merged** | pending (this PR) |
 | **Status** | Provider listed; the shipped `job_boards:` entry is `enabled: false`. |

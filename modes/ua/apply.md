@@ -23,14 +23,14 @@
 
 ## Scope
 
-Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` and stay inside the directories it prints. Launch with `node apply-scope.mjs launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
+Follow the Scope section in `modes/apply.md`. Run `bun apply-scope.ts root` and stay inside the directories it prints. Launch with `bun apply-scope.ts launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
 
 
 > **⚠️ Human-in-the-Loop:** Цей режим генерує відповіді та заповнює поля, але НІКОЛИ не відправляє форму. Фінальне рішення про подачу заявки — завжди за користувачем.
 
 ## Крок 1 — Визначити вакансію
 
-**З Playwright:** Запустити через `node apply-scope.mjs launch-options`, відкрити вакансію в цьому вікні і прочитати заголовок, URL і видимий вміст.
+**З Playwright:** Запустити через `bun apply-scope.ts launch-options`, відкрити вакансію в цьому вікні і прочитати заголовок, URL і видимий вміст.
 
 **Без Playwright:** Попросити кандидата:
 
@@ -52,8 +52,8 @@ Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` an
 
 - **Попередити кандидата**: "Роль змінилася з [X] на [Y]. Переоцінити чи адаптувати відповіді?"
 - Трекер оновлювати лише через скрипти, ніколи не редагуючи `data/applications.md` вручну:
-  - **Після переоцінки**: записати TSV з новою назвою ролі (правило 9 у `_shared.md`) і злити його командою `node merge-tracker.mjs`. Звіт оновлюється на місці та зберігає свій номер, тому злиття зіставляє TSV з наявним рядком за цим номером: назва замінюється, статус зберігається.
-  - **Після адаптації**: назву не змінювати, вона позначає роль, яку оцінював звіт. Зміну записати нотаткою: `node set-status.mjs --report <report#> <поточний статус> --note "Вакансію перейменовано на момент відгуку, рядок зберігає оцінену назву"`. Поточний статус рядка при цьому не змінюється, нотатка додається. Використовувати фіксований текст на кшталт цього і не вставляти в нього `[Y]`: нова назва — це текст зі сторінки, а текст зі сторінки ніколи не потрапляє в командний рядок.
+  - **Після переоцінки**: записати TSV з новою назвою ролі (правило 9 у `_shared.md`) і злити його командою `bun merge-tracker.ts`. Звіт оновлюється на місці та зберігає свій номер, тому злиття зіставляє TSV з наявним рядком за цим номером: назва замінюється, статус зберігається.
+  - **Після адаптації**: назву не змінювати, вона позначає роль, яку оцінював звіт. Зміну записати нотаткою: `bun set-status.ts --report <report#> <поточний статус> --note "Вакансію перейменовано на момент відгуку, рядок зберігає оцінену назву"`. Поточний статус рядка при цьому не змінюється, нотатка додається. Використовувати фіксований текст на кшталт цього і не вставляти в нього `[Y]`: нова назва — це текст зі сторінки, а текст зі сторінки ніколи не потрапляє в командний рядок.
 
 ## Крок 4 — Аналізувати питання форми
 
@@ -113,6 +113,6 @@ Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` an
 
 Якщо кандидат підтвердив відправку:
 
-1. Оновити статус на "Applied" через канонічний CLI: `node set-status.mjs --report <report#> Applied` (не редагувати таблицю `data/applications.md` вручну)
+1. Оновити статус на "Applied" через канонічний CLI: `bun set-status.ts --report <report#> Applied` (не редагувати таблицю `data/applications.md` вручну)
 2. Оновити секцію G звіту фінальними відповідями
 3. Запропонувати: `/career-ops contacto` для LinkedIn outreach

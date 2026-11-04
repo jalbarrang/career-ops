@@ -4,7 +4,7 @@
   import { Check, Pencil, X } from "@lucide/svelte";
   import { CANONICAL_STATES, statusDot } from "@/lib/format";
   import { cn } from "@/lib/cn";
-  import { saveStatus } from "@/lib/pipeline-status.mjs";
+  import { saveStatus } from "@/lib/pipeline-status.ts";
 
   // Status writeback control. Updates the existing tracker row (status cell) via
   // /api/status — never adds rows. Reverts on failure; confirms with the

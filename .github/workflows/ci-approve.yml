@@ -1,7 +1,7 @@
 name: Approve CI for fork PRs
 
 # Cada 30 min aprueba los runs de tests que esperan aprobación (política de Actions
-# `first_time_contributors`), con reglas fijas (.github/scripts/ci-approve.mjs):
+# `first_time_contributors`), con reglas fijas (.github/scripts/ci-approve.ts):
 #   - pagina TODOS los runs `action_required` y los agrupa por head_sha en local
 #   - aprueba solo si la PR está abierta, el run es del head actual, el autor no es bot,
 #     y la PR no toca .github/workflows/** ni ningún package*.json
@@ -35,12 +35,12 @@ jobs:
         with:
           persist-credentials: false
           sparse-checkout: .github/scripts
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '24'
+          bun-version: '1.4.3'
       - name: Approve pending runs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CI_APPROVE_TOKEN: ${{ secrets.CI_APPROVE_TOKEN }}
           DRY_RUN: ${{ vars.TRIAGE_DRY_RUN }}
-        run: node .github/scripts/ci-approve.mjs
+        run: bun .github/scripts/ci-approve.ts

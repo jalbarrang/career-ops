@@ -4,7 +4,7 @@
   import { cn } from "@/lib/cn";
   import { instrumentSerif } from "@/lib/fonts";
   import type { Application, InboxJob } from "@/lib/career-ops";
-  import { normalizeTextKey } from "@/lib/core/normalize-text-key.mjs";
+  import { normalizeTextKey } from "@/lib/core/normalize-text-key.ts";
   import { paramsToFilters, paramsToAi, type ExploreFilters } from "@/lib/explore";
   import { useExplore } from "@/lib/explore.svelte";
   import FilterBuilder from "./filter-builder.svelte";

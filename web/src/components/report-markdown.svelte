@@ -9,7 +9,7 @@
     isStarTableHeader,
     parsePipeTable,
     splitPipeTables,
-  } from "@/lib/report-tables.mjs";
+  } from "@/lib/report-tables.ts";
 
   // GFM report body: STAR+R grids become cards; Fit cells become tone badges.
   //

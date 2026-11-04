@@ -21,7 +21,7 @@ name: 'Plugin registry freshness'
 # unrelated PR until whoever is on hand bumps a third party's pin — and it
 # would deadlock the pin bumps themselves, since the registry CI permits only
 # one changed plugins-registry/*.json per PR. The check's own correctness is
-# covered by tests/registry-pin-freshness.test.mjs, which test-all discovers
+# covered by tests/registry-pin-freshness.test.ts, which test-all discovers
 # and runs on every PR.
 on:
   schedule:
@@ -41,9 +41,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '24'
+          bun-version: '1.4.3'
 
       # Exits non-zero when a pin trails its release, AND when a lookup fails.
       # An unreachable repo is reported as an error rather than passing quietly:
@@ -51,4 +51,4 @@ jobs:
       - name: Check registry pins against latest releases
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: node validate-plugin-registry.mjs --check-stale
+        run: bun validate-plugin-registry.ts --check-stale

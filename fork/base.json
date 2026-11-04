@@ -1,19 +1,19 @@
 {
-  "//": "The upstream version each fork-owned file was copied from. fork/apply.mjs refuses to overwrite a file whose current hash is neither the recorded base nor the fork's own copy — that is what a real upstream change to the same file looks like, and it must be reviewed by a human instead of silently clobbering the fork's schema.",
+  "//": "The upstream version each fork-owned file was copied from. fork/apply.mjs refuses to overwrite a file whose current hash is neither the recorded base nor the fork's own copy \u2014 that is what a real upstream change to the same file looks like, and it must be reviewed by a human instead of silently clobbering the fork's schema.",
   "upstream_version": "1.38.0",
   "files": {
-    "career-profile.mjs": "9cf645764933363400b26b6f84b51a3cfca4b491a82c7a62d8545c2857422790",
-    "lib/career-profile.mjs": "1969ec7aa933b3e24aa25384e03c8d91d65c61d33616911f1044ef2bac737c67",
-    "lib/profile-cv-selection.mjs": "4ff9b717cd667af192b1eb758ef9ddce3c7173ad3bf08b408a0f6cb8a05d6334",
-    "tests/career-profile.test.mjs": "4dc2d045457db858f1dc17af5429c156600d2be903fb9f544bd7d27e502d44ff",
-    "tests/profile-cv-selection.test.mjs": "0172ff1ecfa1448c6c6a3a51de7667bc7abd447779196f009b8328ebb026510d"
+    "career-profile.ts": "9cf645764933363400b26b6f84b51a3cfca4b491a82c7a62d8545c2857422790",
+    "lib/career-profile.ts": "1969ec7aa933b3e24aa25384e03c8d91d65c61d33616911f1044ef2bac737c67",
+    "lib/profile-cv-selection.ts": "4ff9b717cd667af192b1eb758ef9ddce3c7173ad3bf08b408a0f6cb8a05d6334",
+    "tests/career-profile.test.ts": "4dc2d045457db858f1dc17af5429c156600d2be903fb9f544bd7d27e502d44ff",
+    "tests/profile-cv-selection.test.ts": "0172ff1ecfa1448c6c6a3a51de7667bc7abd447779196f009b8328ebb026510d"
   },
   "installed": {
-    "career-profile.mjs": "a635dd89b1a3e3bfec015cb08d045828dc46767e003442fe562220c2b0c1ec95",
-    "lib/career-profile.mjs": "ee5bfe109e91ff65a60693a3369ceab8d03f5a2dc1a9d0763c286e2ce594590a",
-    "lib/profile-cv-selection.mjs": "48c874561d2251a1eafd571d0f10298be75378a461faff3e5940ea16b9c8b9eb",
-    "tests/profile-cv-selection.test.mjs": "bcfb13b61bb344d9cdea864c35abff40e7beb64a80611af3d75cd59dadf87bcd",
-    "tests/career-profile.test.mjs": "b027ca9a2d5ee2b6bbd9f6b2e99c9401637c9058f623bdd4470e7f279bfbdadb",
+    "career-profile.ts": "a635dd89b1a3e3bfec015cb08d045828dc46767e003442fe562220c2b0c1ec95",
+    "lib/career-profile.ts": "ee5bfe109e91ff65a60693a3369ceab8d03f5a2dc1a9d0763c286e2ce594590a",
+    "lib/profile-cv-selection.ts": "48c874561d2251a1eafd571d0f10298be75378a461faff3e5940ea16b9c8b9eb",
+    "tests/profile-cv-selection.test.ts": "bcfb13b61bb344d9cdea864c35abff40e7beb64a80611af3d75cd59dadf87bcd",
+    "tests/career-profile.test.ts": "b027ca9a2d5ee2b6bbd9f6b2e99c9401637c9058f623bdd4470e7f279bfbdadb",
     "tests/fixtures/profile-cv-selection.json": "5a40942b6f566ea37dca7d71f42495aaf205686be4ae216de4ab164f93014d25"
   }
 }

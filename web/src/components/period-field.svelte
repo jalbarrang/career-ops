@@ -1,7 +1,7 @@
 <script lang="ts">
   import { CalendarDays, Keyboard, Trash2 } from "@lucide/svelte";
   import { cn } from "@/lib/cn";
-  import { MONTH_LABELS, formatPeriod, parsePeriod } from "@/lib/cv-profile.mjs";
+  import { MONTH_LABELS, formatPeriod, parsePeriod } from "@/lib/cv-profile.ts";
 
   /**
    * Start / end date picker for a role's `period`, with a "currently working here"

@@ -1,12 +1,12 @@
 // Pure types + helpers for the follow-up tracker (shared by the /followups page,
 // the home follow-up card, and the log API route). The cadence VERDICT itself is
-// the core's — followup-cadence.mjs --json — never recomputed here; these are
+// the core's — followup-cadence.ts --json — never recomputed here; these are
 // only the display-side contracts and formatters.
 
 export const CHANNELS = ["Email", "LinkedIn", "Phone", "Other"] as const;
 export type Channel = (typeof CHANNELS)[number];
 
-/** The profile.yml → followup_cadence keys the core followup-cadence.mjs reads. */
+/** The profile.yml → followup_cadence keys the core followup-cadence.ts reads. */
 export const PROFILE_CADENCE_KEYS = [
   "applied_first_days",
   "applied_subsequent_days",
@@ -18,8 +18,8 @@ export const PROFILE_CADENCE_KEYS = [
 export type ProfileCadenceKey = (typeof PROFILE_CADENCE_KEYS)[number];
 
 /* CADENCE_DEFAULTS used to live here as a hand-copy of DEFAULT_CADENCE in
-   followup-cadence.mjs, kept in sync by a comment. It is gone (#2369): the
-   pure defaults now come from the core itself via `followup-cadence.mjs
+   followup-cadence.ts, kept in sync by a comment. It is gone (#2369): the
+   pure defaults now come from the core itself via `followup-cadence.ts
    --json` -> `cadenceDefaults`, read server-side in /api/followups/cadence.
    Do not reintroduce a local table here, not even as a fallback — a fallback
    copy drifts exactly like the original did (states.ts FALLBACK, #2282). */
@@ -38,7 +38,7 @@ export type FollowupLogEntry = {
 
 export type SuggestedContact = { email: string; name: string | null };
 
-/** One actionable application as analyzed by followup-cadence.mjs. */
+/** One actionable application as analyzed by followup-cadence.ts. */
 export type CadenceEntry = {
   num: number;
   date: string;

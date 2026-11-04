@@ -1,5 +1,5 @@
 import { doctorState, readApplications, readInbox } from "@/lib/career-ops";
-import { todaySnapshot } from "@/lib/home/today-snapshot.mjs";
+import { todaySnapshot } from "@/lib/home/today-snapshot.ts";
 import { scoreNum } from "@/lib/format";
 import type { PageServerLoad } from "./$types";
 
@@ -17,7 +17,7 @@ export const load: PageServerLoad = () => {
 
   const { inbox, applications } = todaySnapshot(snapshot, scoreNum);
   // Established / in-between: the dual-loop retention dashboard. Show the setup
-  // banner whenever ANY prereq is missing (mirrors the core doctor.mjs), so a
+  // banner whenever ANY prereq is missing (mirrors the core doctor.ts), so a
   // portals-missing user is nudged rather than told "all caught up".
   return { phase, onboardingNeeded, applications, inbox };
 };

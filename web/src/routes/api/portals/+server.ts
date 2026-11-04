@@ -3,7 +3,7 @@ import * as yaml from "js-yaml";
 import { json } from "@sveltejs/kit";
 import { careerOpsRoot } from "@/lib/career-ops";
 import { atomicWriteWithBackup } from "@/lib/core/safe-write";
-import { PortalsConfigError, loadPortalsDocument, mergePortalFilters } from "@/lib/portals-config.mjs";
+import { PortalsConfigError, loadPortalsDocument, mergePortalFilters } from "@/lib/portals-config.ts";
 
 // Merge-safe writer for portals.yml's web-owned filters (a USER-LAYER file).
 // Replaces title_filter.positive and, when provided, location_filter.allow;

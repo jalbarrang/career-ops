@@ -8,11 +8,11 @@ Interactive mode for filling out an application form. Open the form in a Playwri
 
 ## Scope
 
-Work only inside this checkout. Run `node apply-scope.mjs root` and read or search only the directories it prints. That list is this checkout, plus the data root when `CAREER_OPS_ROOT` or `CAREER_OPS_DATA_DIR` is set.
+Work only inside this checkout. Run `bun apply-scope.ts root` and read or search only the directories it prints. That list is this checkout, plus the data root when `CAREER_OPS_ROOT` or `CAREER_OPS_DATA_DIR` is set.
 
 Do not search the home directory. Do not grep or open another career-ops install.
 
-Open the form in a Playwright browser this project launches. Run `node apply-scope.mjs launch-options` and pass that object to `chromium.launch`. Do not call `chromium.connect` or `connectOverCDP`. Do not read `DevToolsActivePort`. Do not pass a remote-debugging port or a Chrome user-data directory.
+Open the form in a Playwright browser this project launches. Run `bun apply-scope.ts launch-options` and pass that object to `chromium.launch`. Do not call `chromium.connect` or `connectOverCDP`. Do not read `DevToolsActivePort`. Do not pass a remote-debugging port or a Chrome user-data directory.
 
 If Playwright is not available, ask the candidate to paste the questions or share a screenshot.
 
@@ -50,7 +50,7 @@ Before generating any application answers, verify that the form still points to 
 
 **Blacklist check (#1742):** before any form filling starts, if `data/blacklist.md` exists, check both the visible company and posting URL against it. For `Scope: company` (also the default for blank or unsupported scopes), match the company case- and punctuation-insensitively. For `Scope: domain`, treat the Company cell as a hostname suffix: compare it with the posting URL's hostname, ignoring case and a trailing dot, and match only the exact host or a subdomain (`ibm.com` matches `jobs.ibm.com`, never `notibm.com`). Keep dots and hyphens distinct. If the URL is missing or invalid, domain rules cannot match; still check company rules. The file is the candidate's own do-not-apply list — on a hit, STOP and surface their own recorded decision: "{Company} is on your blacklist (since {Since}): *{Reason}*. Do you still want to apply?" Require an explicit yes before generating or filling anything — never silently refuse, never silently proceed; the candidate's call always wins. Absent file = skip this check.
 
-**Duplicate check:** once per new posting, before writing a CV, run `node precheck-duplicate.mjs --company "$COMPANY" --title "$TITLE" [--req "$REQ"] [--url "$URL"]` (read-only, advisory; set each variable from the posting with single quotes, or pass an argument array, and never paste posting text into the command string, since `$(...)` in a posting title would be expanded inside double quotes) and show any hit in one line, e.g. "Possible repost of #N (Applied, date)". A Rejected match is a warning, not a block; the candidate decides.
+**Duplicate check:** once per new posting, before writing a CV, run `bun precheck-duplicate.ts --company "$COMPANY" --title "$TITLE" [--req "$REQ"] [--url "$URL"]` (read-only, advisory; set each variable from the posting with single quotes, or pass an argument array, and never paste posting text into the command string, since `$(...)` in a posting title would be expanded inside double quotes) and show any hit in one line, e.g. "Possible repost of #N (Applied, date)". A Rejected match is a warning, not a block; the candidate decides.
 
 **Cross-channel check (#1596):** before drafting — and ALWAYS before the user authorizes an agency to submit on their behalf — check `data/applications.md` for an existing row with the same company+role under a different Via (agency vs direct, or two agencies). A double submission burns the candidate with both the agency and the employer. If found, stop and ask the user which channel owns the candidacy. If the end employer is still unknown (Company `?`), the check still runs in degraded form — it is never silently skipped:
 
@@ -144,26 +144,26 @@ Before drafting answers, read the matched report's Block G fixed-term finding an
 - Never invent a duration, percentage premium, market rate, entitlement, severance/notice rule, or legal conclusion. This is a role-term reminder and a negotiation prompt, not legal advice.
 - If the report already contains the same reminder, do not duplicate its full prose; surface a one-line apply-time reminder with a link/reference to that report section.
 
-**Applying to several roles in one sitting?** This preflight verifies the single form in front of you. Before a multi-role session — especially against scanner entries marked `**Verification:** unconfirmed (batch mode)` — run the `pipeline` mode **Liveness sweep** first (`node check-liveness.mjs --file <urls>`). It drops the dead postings from `data/pipeline.md` in one batch so you never open a tab on an expired role.
+**Applying to several roles in one sitting?** This preflight verifies the single form in front of you. Before a multi-role session — especially against scanner entries marked `**Verification:** unconfirmed (batch mode)` — run the `pipeline` mode **Liveness sweep** first (`bun check-liveness.ts --file <urls>`). It drops the dead postings from `data/pipeline.md` in one batch so you never open a tab on an expired role.
 
 ## Step 1 — Detect the job
 
-**With Playwright:** Run `node apply-scope.mjs launch-options` and launch Chromium with that object. Open the posting URL in that browser. Snapshot that page. Read the title, the URL, and the visible content. Do not attach to a browser the candidate already has open. Do not read `DevToolsActivePort`.
+**With Playwright:** Run `bun apply-scope.ts launch-options` and launch Chromium with that object. Open the posting URL in that browser. Snapshot that page. Read the title, the URL, and the visible content. Do not attach to a browser the candidate already has open. Do not read `DevToolsActivePort`.
 
 **Without Playwright:** Ask the candidate to:
 - Share a screenshot of the form (Read tool can read images)
 - Or paste the form questions as text
-- Or say the company and the role so we can search `reports/` under the roots from `node apply-scope.mjs root`
+- Or say the company and the role so we can search `reports/` under the roots from `bun apply-scope.ts root`
 
 ## Step 2 — Identify and search for context
 
 1. Extract company name and role title from the page
-2. Search `reports/` under every root printed by `node apply-scope.mjs root` (this checkout, plus the configured data root when set) by company name (case-insensitive grep). Do not search only the checkout when the data root holds the reports.
+2. Search `reports/` under every root printed by `bun apply-scope.ts root` (this checkout, plus the configured data root when set) by company name (case-insensitive grep). Do not search only the checkout when the data root holds the reports.
 3. If there is a match → load the full report
 4. If there is a `## Application Answers` section → recover it through the strict reader, never by re-reading the rendered markdown as prose:
 
    ```bash
-   node application-answers.mjs --report reports/NNN-company-role-date.md --read --strict
+   bun application-answers.ts --report reports/NNN-company-role-date.md --read --strict
    ```
 
    - **Exit 0** → the JSON on stdout is the base snapshot of previous answers. `null` means the report has no section; treat it as a fresh application.
@@ -171,7 +171,7 @@ Before drafting answers, read the matched report's Block G fixed-term finding an
    - A **Section H** (`## H) Draft Application Answers`, drafted during evaluation before any form was seen) has its own reader, because its body is a convention rather than a format this repo writes:
 
      ```bash
-     node application-answers.mjs --report reports/NNN-company-role-date.md --read-draft
+     bun application-answers.ts --report reports/NNN-company-role-date.md --read-draft
      ```
 
      - Prints `{"freeText": [...]}`, or `null` when the report has no Block H. There is no `--strict` counterpart: an empty `freeText` means the block exists but did not follow the convention, which is an expected outcome and not a corrupted report.
@@ -186,8 +186,8 @@ If the role on screen differs from the one evaluated:
 - **If adapt**: Adjust responses to the new role without re-evaluating, only after the candidate explicitly accepts the mismatch
 - **If re-evaluate**: Execute full A-F evaluation, update report, regenerate Section H
 - **Update tracker**: never by editing `data/applications.md`.
-  - **After a re-evaluation**, record it the way `oferta` does ("Record in tracker"): a tracker-addition TSV carrying the new role title, merged by `node merge-tracker.mjs`. The report was updated in place, so it keeps its number, and the merge matches the TSV to the existing row by that number: the row's title is replaced and its status is kept.
-  - **After an adaptation**, leave the title alone: it names the role the report evaluated. Record the retitling as a note instead, with `node set-status.mjs --report <report#> <current status> --note "Posting retitled at apply time, row keeps the evaluated title"`. Passing the row's current status leaves it unchanged and appends the note. Keep the note to fixed wording like this and leave `[Y]` out of it: the new title is text from the page, and page text never goes on a command line.
+  - **After a re-evaluation**, record it the way `oferta` does ("Record in tracker"): a tracker-addition TSV carrying the new role title, merged by `bun merge-tracker.ts`. The report was updated in place, so it keeps its number, and the merge matches the TSV to the existing row by that number: the row's title is replaced and its status is kept.
+  - **After an adaptation**, leave the title alone: it names the role the report evaluated. Record the retitling as a note instead, with `bun set-status.ts --report <report#> <current status> --note "Posting retitled at apply time, row keeps the evaluated title"`. Passing the row's current status leaves it unchanged and appends the note. Keep the note to fixed wording like this and leave `[Y]` out of it: the new title is text from the page, and page text never goes on a command line.
 
 ## Step 4b — Resolve the tailored CV (source of truth for experience fields)
 
@@ -205,7 +205,7 @@ tailoring that made the application relevant.
 1. **The bundle first, because its path needs no lookup.** An application with a
    bundle keeps its tailored CV at a path derived from the report number, the
    company and the role, so nothing has to stay in sync for it to resolve:
-   `node application-artifacts.mjs --report {report#} --company "{company}" --role "{role}"`
+   `bun application-artifacts.ts --report {report#} --company "{company}" --role "{role}"`
    prints every path as JSON, where `cv` → `tailored` → `html` holds the document's
    path, `cv/tailored/vNNN/cv.html` on disk. That is where `modes/pdf.md` writes it. Read the `.html` and not the `.pdf`: same content,
    readable directly.
@@ -215,14 +215,14 @@ tailoring that made the application relevant.
 3. No bundle, so a flat `output/cv-{candidate}[-{report}]-{company}-{YYYY-MM-DD}.html`.
    `data/pdf-index.tsv` can shorten the search here, but it is a hint and not an
    answer. Its columns are `report \t pdf \t html \t format \t date` and there is
-   no document-kind column: `generate-pdf.mjs` drops every earlier row for a report
-   number when it writes a new one, and `generate-cover-letter.mjs` renders through
+   no document-kind column: `generate-pdf.ts` drops every earlier row for a report
+   number when it writes a new one, and `generate-cover-letter.ts` renders through
    that same function with the same report, so the row for a report can name the
    cover letter rather than the CV. Read the path before trusting it, and remember a
-   `cover-…` file is never a CV. `node find.mjs {report#}` surfaces the same manifest
+   `cover-…` file is never a CV. `bun find.ts {report#}` surfaces the same manifest
    from the tracker side and returns only the PDF path, so it cannot tell you which
    kind of document that is either. A CV built through the `latex` / `latex-tex`
-   path is not in the manifest at all, since only `generate-pdf.mjs` writes it.
+   path is not in the manifest at all, since only `generate-pdf.ts` writes it.
 4. Manifest silent or pointing at the wrong kind of document? Fall back to a
    filename match in `output/`: a `cv-…` artifact for this application's company,
    preferring `.html` or `.tex` (readable) over `.pdf`. Match the company slug at a
@@ -292,7 +292,7 @@ For every free-text field, inspect the **rendered form control** before drafting
 
 For each question, generate the response following:
 
-1. **Report context**: Use proof points from block B, STAR stories from block F. Block F stories and story-bank entries supply narrative; a figure from one goes into an answer only if it appears in `cv.md` or `article-digest.md`, or `node story-provenance-check.mjs --summary` puts it in `existing`. Otherwise leave the number out, or ask the candidate with AGENTS.md's four outcomes (confirm as stated, give the correct figure, narrative only, "I don't know"). Never use a figure from a `user-cannot-confirm` story. An answer carrying an unconfirmed figure is not ready for copy-paste
+1. **Report context**: Use proof points from block B, STAR stories from block F. Block F stories and story-bank entries supply narrative; a figure from one goes into an answer only if it appears in `cv.md` or `article-digest.md`, or `bun story-provenance-check.ts --summary` puts it in `existing`. Otherwise leave the number out, or ask the candidate with AGENTS.md's four outcomes (confirm as stated, give the correct figure, narrative only, "I don't know"). Never use a figure from a `user-cannot-confirm` story. An answer carrying an unconfirmed figure is not ready for copy-paste
 2. **Previous Section H / Application Answers**: If a draft or final response exists, use it as a base and refine
 3. **"I'm choosing you" tone**: Same auto-pipeline framework
 4. **Specificity**: Reference something specific from the JD visible on screen
@@ -383,22 +383,22 @@ The section must include:
 
 Write the section at the end of the report, or replace only the existing `## Application Answers` section if it already exists. Do not rename, reorder, or edit the existing A-H report blocks or `## Keywords extracted`.
 
-Use `application-answers.mjs` when possible to format/upsert the section:
+Use `application-answers.ts` when possible to format/upsert the section:
 
 ```bash
-node application-answers.mjs --report reports/NNN-company-role-date.md --input answers.json --state filled
+bun application-answers.ts --report reports/NNN-company-role-date.md --input answers.json --state filled
 ```
 
 ## Step 9 — Post-apply (optional)
 
 If the candidate confirms that they submitted the application:
-1. Update status to Applied via the canonical CLI: `node set-status.mjs --report <report#> Applied` (never hand-edit the table). If the candidate submitted on a different day than today, add `--on YYYY-MM-DD` with the actual submission date — the status-log ledger should record when it happened, not when it was typed in.
-2. Seed the follow-up schedule: run `node followup-seed.mjs {num} --json` (where `{num}` is the tracker row number). If the candidate applied on a different day than today, pass `--date YYYY-MM-DD` with the actual submission date. It's idempotent, so re-running is safe. (`--on` and `--date` are the same concept — the real submission date — each under its own script's flag name; pass the same value to both.) Skip this step when `config/profile.yml` sets `follow_ups.enabled: false`.
+1. Update status to Applied via the canonical CLI: `bun set-status.ts --report <report#> Applied` (never hand-edit the table). If the candidate submitted on a different day than today, add `--on YYYY-MM-DD` with the actual submission date — the status-log ledger should record when it happened, not when it was typed in.
+2. Seed the follow-up schedule: run `bun followup-seed.ts {num} --json` (where `{num}` is the tracker row number). If the candidate applied on a different day than today, pass `--date YYYY-MM-DD` with the actual submission date. It's idempotent, so re-running is safe. (`--on` and `--date` are the same concept — the real submission date — each under its own script's flag name; pass the same value to both.) Skip this step when `config/profile.yml` sets `follow_ups.enabled: false`.
 3. Refresh the report's `## Application Answers` section with the final field values and `**State:** submitted`
 4. Suggest next step: run the `contacto` mode (`/career-ops contacto` where available) for LinkedIn outreach. This is a first outreach, not a follow-up, so suggest it even when `follow_ups.enabled` is `false`.
 
 **Confirmed resume-verification failure at this vendor? Check the rest of the pipeline (#1870).** If the candidate confirms the ATS silently dropped or altered resume content that they had submitted (see the SuccessFactors-family quirk below), don't treat it as a one-off. Tracker rows in `data/applications.md` don't carry a canonical ATS-vendor field, so don't grep the tracker text for a vendor name — it will miss rows silently. Instead, resolve the vendor per row from its linked report's `**URL:**` field:
-- For clean-fingerprint vendors (Greenhouse, Lever, Ashby, Workday, iCIMS), match the URL's hostname the same way `detectVendor()` in `analyze-patterns.mjs` does — reuse that function/pattern rather than re-deriving it, so the two stay in sync.
+- For clean-fingerprint vendors (Greenhouse, Lever, Ashby, Workday, iCIMS), match the URL's hostname the same way `detectVendor()` in `analyze-patterns.ts` does — reuse that function/pattern rather than re-deriving it, so the two stay in sync.
 - White-labeled ATS (SuccessFactors, UKG, Dayforce, and similar) are **not** detectable from the URL alone — the very vendor family this quirk was confirmed on falls in this bucket. For those, don't guess from the domain: ask the candidate directly which other in-flight rows (`Applied`, `Responded`, `Assessment`, `Interview`) went through the same portal, since neither the tracker nor the URL structurally exposes it.
 
 Once the same-vendor rows are identified (by URL match or candidate confirmation), surface that list and prompt the candidate to spot-check each one via that portal's preview/profile step if one exists. One confirmed silent-truncation case at a vendor raises the prior that it happened elsewhere in-flight through the same vendor too.

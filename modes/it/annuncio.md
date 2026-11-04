@@ -103,7 +103,7 @@ Eseguire **SEMPRE** dopo i blocchi A-F:
 
 Salvare la valutazione completa in `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
-- `{###}` = prossimo numero sequenziale a 3 cifre, zero-padded. Allocarlo in modo atomico eseguendo `node reserve-report-num.mjs` (restituisce `{###}` su stdout), scrivere il report, poi eseguire `node reserve-report-num.mjs --release {###}` per liberare la prenotazione.
+- `{###}` = prossimo numero sequenziale a 3 cifre, zero-padded. Allocarlo in modo atomico eseguendo `bun reserve-report-num.ts` (restituisce `{###}` su stdout), scrivere il report, poi eseguire `bun reserve-report-num.ts --release {###}` per liberare la prenotazione.
 - `{company-slug}` = nome dell'azienda in minuscolo senza spazi (usare i trattini)
 - `{YYYY-MM-DD}` = data odierna
 
@@ -152,7 +152,7 @@ Salvare la valutazione completa in `reports/{###}-{company-slug}-{YYYY-MM-DD}.md
 
 ### 2. Registrare nel tracker
 
-Registrare **SEMPRE** la valutazione nel tracker. Scrivere un TSV (regola 9 di `_shared.md`) e unirlo con `node merge-tracker.mjs`; non scrivere mai una riga direttamente in `data/applications.md`. Campi:
+Registrare **SEMPRE** la valutazione nel tracker. Scrivere un TSV (regola 9 di `_shared.md`) e unirlo con `bun merge-tracker.ts`; non scrivere mai una riga direttamente in `data/applications.md`. Campi:
 - Prossimo numero sequenziale
 - Data odierna
 - Azienda

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { runDiscovery } from "@/lib/core/scan";
 import { rootScript } from "@/lib/career-ops";
 import { parseExplorePatch, DEFAULT_FILTERS, type DiscoveredOffer, type ScanEvent } from "@/lib/explore";
-import { scannerMissingBody, SCANNER_MISSING_STATUS } from "@/lib/explore-error.mjs";
+import { scannerMissingBody, SCANNER_MISSING_STATUS } from "@/lib/explore-error.ts";
 
 // Discovery is HTTP-bound across many ATS boards; give it room. It is FREE —
 // zero LLM tokens (the scanner only does HTTP + JSON, and --dry-run writes nothing).

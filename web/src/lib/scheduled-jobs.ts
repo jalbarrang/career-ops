@@ -5,10 +5,10 @@ import {
   isSafeScheduledId,
   readScheduledStore,
   withScheduledStore,
-} from "./scheduled-jobs-store.mjs";
-import { nextScheduledRun } from "./scheduled-cadence.mjs";
-import { assertScheduledJobBody } from "./scheduled-job-input.mjs";
-import { scheduledStorePath } from "./scheduled-runner-path.mjs";
+} from "./scheduled-jobs-store.ts";
+import { nextScheduledRun } from "./scheduled-cadence.ts";
+import { assertScheduledJobBody } from "./scheduled-job-input.ts";
+import { scheduledStorePath } from "./scheduled-runner-path.ts";
 
 export type JobStatus = "active" | "paused" | "deleted";
 export type ScanEngine = "full" | "portals";

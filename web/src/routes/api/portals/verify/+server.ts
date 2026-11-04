@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
 
-// Orchestrates the core's verify-portals.mjs (#1016) — the SAME ATS-slug
+// Orchestrates the core's verify-portals.ts (#1016) — the SAME ATS-slug
 // validator the CLI uses. Catches the silent 404s that quietly drop a company
 // from every future scan (= lost offers). We parse its console output; we do NOT
 // reimplement the validation.
@@ -26,7 +26,7 @@ export async function GET() {
 
   const stdout = await new Promise<string>((resolve) => {
     execFile(
-      "node",
+      "bun",
       [verifyPortals],
       { cwd: root, timeout: 110_000, maxBuffer: 4 * 1024 * 1024 },
       (_e, out, err) => resolve((out || "") + (err || "")),

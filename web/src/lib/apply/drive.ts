@@ -1,12 +1,12 @@
-import { spawnHeadlessCli } from "@/lib/spawn-cli.mjs";
+import { spawnHeadlessCli } from "@/lib/spawn-cli.ts";
 import type { Page, Frame, ElementHandle } from "playwright-core";
 import { resolveCli } from "@/lib/clis";
 import { careerOpsRoot } from "@/lib/career-ops";
 import { dropNewTabs } from "./diagnose";
-import { isSubmitControl, snapshotLabel } from "./submit-guard.mjs";
+import { isSubmitControl, snapshotLabel } from "./submit-guard.ts";
 import type { DriveStep } from "./issue";
-import { CAPS } from "../worker-capabilities.mjs";
-import { scopeFrom } from "../claude-invocation.mjs";
+import { CAPS } from "../worker-capabilities.ts";
+import { scopeFrom } from "../claude-invocation.ts";
 
 export type { DriveStep };
 
@@ -20,7 +20,7 @@ export type { DriveStep };
 //     be named, and we re-check the element before every action that names one.
 //     What this does NOT construct away: an allowed control's own click handler can
 //     still call requestSubmit(). Closing that needs an interlock on the submit
-//     event itself, not another DOM heuristic (see submit-guard.mjs's header). The
+//     event itself, not another DOM heuristic (see submit-guard.ts's header). The
 //     human submits every path this loop does cover.
 //   • everything stays in OUR session (screenshots, handoff, the streamed UI).
 // HYBRID = drive only until a fillable application form is reached, then hand back
@@ -29,7 +29,7 @@ export type { DriveStep };
 
 export type DriveResult = { reached: boolean; turns: number; reason: string; steps: DriveStep[] };
 
-/** What the guard decides on, read from the live DOM. See submit-guard.mjs. */
+/** What the guard decides on, read from the live DOM. See submit-guard.ts. */
 type ElementFacts = {
   ref: string;
   tag: string;
@@ -83,7 +83,7 @@ const factsOf = (el: Element, ref: string | null): ElementFacts => {
     text: flat(el.textContent).slice(0, 200),
     value: field.value || "",
     name: field.name || "",
-    // Classification only (see submit-guard.mjs): they name an icon-only
+    // Classification only (see submit-guard.ts): they name an icon-only
     // control that carries nothing else, and never reach the snapshot line.
     // Same 200-char cap and the same caveat as `text` above.
     title: flat(el.getAttribute("title")).slice(0, 200),

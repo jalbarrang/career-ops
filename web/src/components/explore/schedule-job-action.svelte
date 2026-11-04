@@ -2,7 +2,7 @@
   import { CalendarPlus } from "@lucide/svelte";
   import type { ExploreFilters } from "@/lib/explore";
   import { Button } from "@/components/ui/button";
-  import { cadenceMinimum, createScheduledJobRequest } from "@/lib/scheduled-job-client.mjs";
+  import { cadenceMinimum, createScheduledJobRequest } from "@/lib/scheduled-job-client.ts";
 
   type ScheduleUnit = "minutes" | "hours" | "days";
 

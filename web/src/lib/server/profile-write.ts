@@ -4,15 +4,15 @@ import os from "node:os";
 import path from "node:path";
 import * as yaml from "js-yaml";
 import { rootScript } from "@/lib/career-ops";
-import { rootScriptEnv } from "@/lib/core/root-env.mjs";
+import { rootScriptEnv } from "@/lib/core/root-env.ts";
 import { atomicWriteWithBackup } from "@/lib/core/safe-write";
-import { parseValidationErrors } from "@/lib/cv-profile.mjs";
+import { parseValidationErrors } from "@/lib/cv-profile.ts";
 
 // THE one place the web app replaces data/career-profile.yml.
 //
 // Two routes now write it (the builder's save, and the import queue's follow-up
 // consolidation of the entry it just created), and both must be gated by the
-// core's own `career-profile.mjs validate` rather than a second opinion in the
+// core's own `career-profile.ts validate` rather than a second opinion in the
 // web app. Keeping the dump → validate → atomic replace sequence here means the
 // two callers cannot drift into validating differently.
 const VALIDATE_TIMEOUT_MS = 30_000;
@@ -22,7 +22,7 @@ export type ProfileWriteResult = { ok: true; backedUp: boolean } | { ok: false; 
 function validateWithCore(script: string, root: string, file: string): Promise<{ valid: boolean; errors: string[] }> {
   return new Promise((resolve) => {
     execFile(
-      "node",
+      "bun",
       [script, "validate", file],
       { cwd: root, env: rootScriptEnv(root), timeout: VALIDATE_TIMEOUT_MS, maxBuffer: 1024 * 1024 },
       (err, stdout, stderr) => {
@@ -50,7 +50,7 @@ export async function writeProfileValidated({ root, profile, file }: { root: str
   }
 
   const script = rootScript("career-profile");
-  if (!script) return { ok: false, errors: [], message: "career-profile.mjs is not in this checkout" };
+  if (!script) return { ok: false, errors: [], message: "career-profile.ts is not in this checkout" };
 
   let scratch = "";
   try {

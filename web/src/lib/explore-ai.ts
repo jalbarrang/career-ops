@@ -5,8 +5,8 @@
 // across stream chunk boundaries must BUFFER, never flush as garbage or drop.
 
 import type { DiscoveredOffer } from "./explore";
-import { pendingOpenerLen } from "./stream-parse.mjs";
-import { normalizeUrl } from "./core/url-key.mjs";
+import { pendingOpenerLen } from "./stream-parse.ts";
+import { normalizeUrl } from "./core/url-key.ts";
 
 const OPEN = "<<offer:";
 const CLOSE = ">>";
@@ -18,7 +18,7 @@ export type AiTraceChunk =
 
 /**
  * Normalize a URL for dedup. Delegates to the parity-tested normalizeUrl
- * mirror (url-key.mjs) instead of host+pathname — a bare host+path key
+ * mirror (url-key.ts) instead of host+pathname — a bare host+path key
  * discarded the query string unconditionally, so two DIFFERENT postings that
  * share a path and differ only by a functional query id (e.g. Greenhouse's
  * `?gh_jid=`) collapsed onto one key and every opening after the first at

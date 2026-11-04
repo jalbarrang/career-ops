@@ -1,6 +1,6 @@
 name: PR triage
 
-# Clasifica, etiqueta y da la primera respuesta a cada PR (script: .github/scripts/triage.bundle.mjs,
+# Clasifica, etiqueta y da la primera respuesta a cada PR (script: .github/scripts/triage.bundle.ts,
 # generado desde el maintainer privado; la política vive allí, aquí solo se ejecuta).
 #
 #   pull_request_target  -> triage de esa PR; en `opened`/`ready_for_review` publica la primera respuesta
@@ -54,9 +54,9 @@ jobs:
           sparse-checkout: |
             .github/scripts
             .github/CODEOWNERS
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '24'
+          bun-version: '1.4.3'
       - name: Triage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -66,4 +66,4 @@ jobs:
           TRIAGE_SWEEP_MAX: ${{ vars.TRIAGE_SWEEP_MAX }}
           TRIAGE_BACKLOG_HOURS: ${{ vars.TRIAGE_BACKLOG_HOURS }}
           TRIAGE_RETRIAGE_MAX: ${{ vars.TRIAGE_RETRIAGE_MAX }}
-        run: node .github/scripts/triage.bundle.mjs
+        run: bun .github/scripts/triage.bundle.ts

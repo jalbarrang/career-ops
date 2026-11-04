@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { careerOpsRoot, pdfPathStatusForReport, readApplications } from "@/lib/career-ops";
-import { companySlug } from "@/lib/company-slug.mjs";
-import { matchesTailoredCv, sortNewestFirst } from "./cv-match.mjs";
-import { reportNumberFromCell } from "./cv-selection.mjs";
+import { companySlug } from "@/lib/company-slug.ts";
+import { matchesTailoredCv, sortNewestFirst } from "./cv-match.ts";
+import { reportNumberFromCell } from "./cv-selection.ts";
 
 /**
  * Locate the tailored CV PDF for an application. When the tracker application

@@ -13,7 +13,7 @@ profile, tracker, and all generated artifacts live on the host as before.
 **The image has no AI coding CLI.** Claude Code, Codex, OpenCode, Gemini CLI
 and the others are not installed in it, so the agent modes (evaluating a pasted
 job, tailoring a CV, `apply`) run in the CLI on your host. Those modes call
-scripts such as `node generate-pdf.mjs` and `node check-liveness.mjs` directly,
+scripts such as `bun generate-pdf.ts` and `bun check-liveness.ts` directly,
 with the host's Node, so on a host where Playwright can't run, those steps fail
 just as they would without Docker. When one does, run the script yourself
 through `./cops`, for example `./cops pdf output/cv.html output/cv.pdf`.
@@ -53,13 +53,13 @@ The `./cops` wrapper forwards any command into the container.
 | Apply update | `./cops update` |
 | Rollback | `./cops rollback` |
 | Interactive shell | `./cops shell` |
-| Raw node script | `./cops node check-liveness.mjs <url>` |
+| Raw node script | `./cops bun check-liveness.ts <url>` |
 | Build dashboard | `./cops bash -c 'cd dashboard && go build -buildvcs=false -o career-dashboard . && ./career-dashboard --path ..'` |
 
 Unknown subcommands fall through to `docker compose exec` so anything works:
 
 ```bash
-./cops node test-all.mjs --quick
+./cops bun test-all.ts --quick
 ./cops bash -c 'find reports -name "*.md" | wc -l'
 ```
 
@@ -76,7 +76,7 @@ Unknown subcommands fall through to `docker compose exec` so anything works:
 ## How it works
 
 - `Dockerfile` — installs Node, Playwright/Chromium (preinstalled in base image),
-  Go (for the dashboard), LaTeX (for `generate-latex.mjs`), and project deps.
+  Go (for the dashboard), LaTeX (for `generate-latex.ts`), and project deps.
 - `docker-compose.yml` — bind-mounts the project at `/app` so host edits appear
   inside the container immediately. `node_modules` lives in a named volume to
   avoid host/container ABI mismatches. Docker fills that volume from the image

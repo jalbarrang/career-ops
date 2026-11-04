@@ -3,7 +3,7 @@
   import type { JobRun } from "@/lib/scheduled-jobs";
   import { cn } from "@/lib/cn";
   import ScheduledOverlay from "./scheduled-overlay.svelte";
-  import { runStatusTone } from "@/lib/scheduled-run-status.mjs";
+  import { runStatusTone } from "@/lib/scheduled-run-status.ts";
 
   let { isopen, onclose, runs }: { isopen: boolean; onclose: () => void; runs: JobRun[] } = $props();
 

@@ -1,10 +1,11 @@
 import fs from "node:fs";
-import { profilePatchError } from "@/lib/profile-patch.mjs";
+import { profilePatchError } from "@/lib/profile-patch.ts";
 import path from "node:path";
 import * as yaml from "js-yaml";
 import { careerOpsRoot } from "@/lib/career-ops";
 import { atomicWriteWithBackup } from "@/lib/core/safe-write";
-import { isMapping } from "@/lib/portals-config.mjs";
+import { isMapping } from "@/lib/portals-config.ts";
+import { getProfilePath } from "@/lib/core/profile-path.ts";
 
 // Merge-safe writer for config/profile.yml (a USER-LAYER file — DATA_CONTRACT:
 // never clobber the user's archetypes/narrative/proof-points). On first create we
@@ -67,7 +68,7 @@ export async function POST({ request }: { request: Request }) {
   if (Object.keys(proposed).length === 0) return Response.json({ error: "nothing to write" }, { status: 400 });
 
   const root = careerOpsRoot();
-  const file = path.join(root, "config", "profile.yml");
+  const file = getProfilePath(root, { explicitRoot: true });
   let base: Record<string, unknown> = {};
   let seeded = false;
   // DATA-LOSS GUARD (maintainer, bug-class #649/#704/#920/#958): distinguish

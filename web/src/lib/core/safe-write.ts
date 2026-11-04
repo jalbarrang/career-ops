@@ -13,9 +13,9 @@ import { randomUUID } from "node:crypto";
 //
 // Both intermediate files carry the SAME content as the user-layer file they
 // stand in for, so both have to stay unstageable: see .gitignore's `*.bak*` and
-// `*.tmp*` rules and the probes in tests/user-layer-gitignored.test.mjs.
+// `*.tmp*` rules and the probes in tests/user-layer-gitignored.test.ts.
 //
-// NOT YET SHARED WITH THE CORE: tracker-utils.mjs renames through
+// NOT YET SHARED WITH THE CORE: tracker-utils.ts renames through
 // renameSyncWithRetry, which survives the Windows destination-handle contention
 // #3006/#3046 catalogued. Its backoff is a BLOCKING Atomics.wait — correct for a
 // CLI holding a lock, wrong inside a Next request handler, where it would stall
@@ -24,7 +24,7 @@ import { randomUUID } from "node:crypto";
 
 export function atomicWrite(file: string, content: string): void {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  // Same shape as the core's writeFileAtomic (tracker-utils.mjs): dot-prefixed,
+  // Same shape as the core's writeFileAtomic (tracker-utils.ts): dot-prefixed,
   // in the destination's own directory, `.tmp` suffixed. It used to be
   // `${file}.tmp-${pid}-${uuid}`, a SECOND shape that .gitignore's atomic-write
   // rule then had to cover separately — and did not.

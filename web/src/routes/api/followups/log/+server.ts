@@ -2,12 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { atomicWrite } from "@/lib/core/safe-write";
 import { CHANNELS, isRealISODate, localISODate } from "@/lib/followups";
-import { parseFollowupId } from "@/lib/followup-id.mjs";
+import { parseFollowupId } from "@/lib/followup-id.ts";
 import { followupsLogPath, withFollowupsWrite, followupsWriteError } from "@/lib/followups-server";
 
 // Append-only follow-up log → data/follow-ups.md (NEVER clobber; the cadence
 // calculator reads this to advance the schedule). Writes the canonical TABLE row
-// the core's followup-cadence.mjs parses:
+// the core's followup-cadence.ts parses:
 //   | num | appNum | date | company | role | channel | contact | notes |
 // (Earlier builds wrote bullet lines; those stay in place — the core parser now
 // reads both formats — but every new log is a full-fidelity table row.)

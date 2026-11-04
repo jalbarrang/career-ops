@@ -4,11 +4,12 @@ import path from "node:path";
 import * as yaml from "js-yaml";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
 import { atomicWriteWithBackup } from "@/lib/core/safe-write";
-import { isMapping } from "@/lib/portals-config.mjs";
+import { isMapping } from "@/lib/portals-config.ts";
 import { PROFILE_CADENCE_KEYS, type ProfileCadenceKey } from "@/lib/followups";
+import { getProfilePath } from "@/lib/core/profile-path.ts";
 
 // The follow-up cadence knobs live in config/profile.yml → followup_cadence
-// (a USER-LAYER file) — the SAME keys the core followup-cadence.mjs reads, so
+// (a USER-LAYER file) — the SAME keys the core followup-cadence.ts reads, so
 // tuning them here changes the CLI's verdict too. Reads are live; writes are
 // merge-safe + atomic and never clobber the rest of the profile (mirrors the
 // /api/profile guards for the malformed-YAML and first-create cases).
@@ -20,7 +21,7 @@ function isObj(v: unknown): v is Record<string, unknown> {
 /**
  * PURE defaults, read from the core rather than copied (#2369).
  *
- * `followup-cadence.mjs --json` emits `cadenceDefaults` (DEFAULT_CADENCE) next
+ * `followup-cadence.ts --json` emits `cadenceDefaults` (DEFAULT_CADENCE) next
  * to `cadenceConfig` (defaults + the user's profile overrides). The form needs
  * the PURE defaults for its placeholders: sourcing them from `cadenceConfig`
  * would render a user's own override as the default they'd be reverting to.
@@ -37,7 +38,7 @@ async function readCoreDefaults(): Promise<Partial<Record<ProfileCadenceKey, num
   const script = rootScript("followup-cadence");
   if (!fs.existsSync(script)) return null;
   const stdout = await new Promise<string>((resolve) => {
-    execFile("node", [script, "--json"], { cwd: careerOpsRoot(), timeout: 12_000 }, (_e, out) => resolve(out || ""));
+    execFile("bun", [script, "--json"], { cwd: careerOpsRoot(), timeout: 12_000 }, (_e, out) => resolve(out || ""));
   });
   try {
     const start = stdout.indexOf("{");
@@ -65,7 +66,7 @@ async function readCoreDefaults(): Promise<Partial<Record<ProfileCadenceKey, num
 }
 
 export async function GET() {
-  const file = path.join(careerOpsRoot(), "config", "profile.yml");
+  const file = getProfilePath(careerOpsRoot(), { explicitRoot: true });
   const overrides: Partial<Record<ProfileCadenceKey, number>> = {};
   if (fs.existsSync(file)) {
     let profile: Record<string, unknown> = {};
@@ -108,7 +109,7 @@ export async function POST({ request }: { request: Request }) {
   if (Object.keys(cadence).length === 0) return Response.json({ error: "nothing to write" }, { status: 400 });
 
   const root = careerOpsRoot();
-  const file = path.join(root, "config", "profile.yml");
+  const file = getProfilePath(root, { explicitRoot: true });
   let base: Record<string, unknown> = {};
   if (!fs.existsSync(file)) {
     // First create: seed from the example so we never leave a cadence-only profile.

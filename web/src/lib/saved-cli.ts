@@ -1,4 +1,4 @@
-import { keepIfInstalled, pickSoleInstalled } from "./cli-pick.mjs";
+import { keepIfInstalled, pickSoleInstalled } from "./cli-pick.ts";
 
 export const CONFIG_KEY = "career-ops:config";
 
@@ -25,7 +25,7 @@ export function persistCliId(cliId: string) {
   }
 }
 
-export { pickDefaultInstalled, pickSoleInstalled } from "./cli-pick.mjs";
+export { pickDefaultInstalled, pickSoleInstalled } from "./cli-pick.ts";
 
 // /api/clis is parsed with a type assertion, not runtime-checked, so a bad
 // entry (null, a string, {id: 123}) would otherwise reach .some()/filter()

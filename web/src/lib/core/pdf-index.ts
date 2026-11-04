@@ -3,9 +3,9 @@ import { pathToFileURL } from "node:url";
 import { careerOpsRoot } from "@/lib/career-ops";
 
 /**
- * ACL for the core's `resolvePdfIndexPath`/`resolveTrackerPath` (tracker-utils.mjs)
- * — the shared manifest-path resolver merge-tracker.mjs, sync-pdf-flags.mjs, and
- * find.mjs all use (#2471).
+ * ACL for the core's `resolvePdfIndexPath`/`resolveTrackerPath` (tracker-utils.ts)
+ * — the shared manifest-path resolver merge-tracker.ts, sync-pdf-flags.ts, and
+ * find.ts all use (#2471).
  *
  * DERIVED, NOT COPIED (#2369, #2666). The manifest path used to be rebuilt from a
  * `"data/pdf-index.tsv"` literal in each reader, and each picked its own base
@@ -36,7 +36,7 @@ let warned = false;
  *  callers must treat null as "can't resolve" rather than guessing a path. */
 export async function resolvePdfIndexPath(): Promise<string | null> {
   const root = careerOpsRoot();
-  const file = path.join(root, "tracker-utils.mjs");
+  const file = path.join(root, "tracker-utils.ts");
   const hit = modCache.get(file);
   if (hit) return hit.resolvePdfIndexPath(hit.resolveTrackerPath(root));
   try {

@@ -1,10 +1,10 @@
-import { spawnHeadlessCli } from "@/lib/spawn-cli.mjs";
+import { spawnHeadlessCli } from "@/lib/spawn-cli.ts";
 import type { Frame } from "playwright-core";
 import { resolveCli } from "@/lib/clis";
 import { careerOpsRoot } from "@/lib/career-ops";
 import type { ApplyField } from "./extract";
-import { CAPS } from "../worker-capabilities.mjs";
-import { scopeFrom } from "../claude-invocation.mjs";
+import { CAPS } from "../worker-capabilities.ts";
+import { scopeFrom } from "../claude-invocation.ts";
 
 // Deny list DERIVED, never hand-written: every one of the six advisor argvs
 // that spelled its own omitted MultiEdit, which --permission-mode acceptEdits

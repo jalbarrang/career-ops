@@ -7,7 +7,7 @@
 import { getContext, setContext } from "svelte";
 import { scoreTone } from "@/lib/format";
 import { resolveCliId } from "@/lib/saved-cli";
-import { readJobStream } from "@/lib/job-stream.mjs";
+import { readJobStream } from "@/lib/job-stream.ts";
 
 export type JobStep = { kind: "tool" | "status"; label: string; ts: number };
 export type JobResult = { score: number | null; summary: string; tone: "good" | "warn" | "bad" | "muted" };

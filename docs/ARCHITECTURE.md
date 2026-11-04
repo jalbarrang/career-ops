@@ -54,9 +54,9 @@ system/user data-contract layers live in [../ARCHITECTURE.md](../ARCHITECTURE.md
 5. **Score**: One global score (1-5), a holistic judgment across 5 dimensions
    with no arithmetic formula; blocks A-H are not averaged (`modes/_shared.md` → Scoring System)
 6. **Report**: Save as `reports/{num}-{company}-{date}.md`
-7. **PDF**: Generate ATS-optimized CV (`generate-pdf.mjs`)
+7. **PDF**: Generate ATS-optimized CV (`generate-pdf.ts`)
 8. **Track**: New entries via TSV in `batch/tracker-additions/` merged by
-   `merge-tracker.mjs`; status updates to existing rows via `set-status.mjs`
+   `merge-tracker.ts`; status updates to existing rows via `set-status.ts`
 
 ## Batch Processing
 
@@ -100,12 +100,12 @@ Scripts maintain data consistency:
 
 | Script | Purpose |
 |--------|---------|
-| `merge-tracker.mjs` | Merges batch TSV additions into applications.md |
-| `verify-pipeline.mjs` | Health check: statuses, duplicates, links |
-| `dedup-tracker.mjs` | Removes duplicate entries by company+role |
-| `normalize-statuses.mjs` | Maps status aliases to canonical values |
-| `fix-report-links.mjs` | Rewrites Report cells that link to a missing file to `—` (previewable, backed up) |
-| `cv-sync-check.mjs` | Validates setup consistency |
+| `merge-tracker.ts` | Merges batch TSV additions into applications.md |
+| `verify-pipeline.ts` | Health check: statuses, duplicates, links |
+| `dedup-tracker.ts` | Removes duplicate entries by company+role |
+| `normalize-statuses.ts` | Maps status aliases to canonical values |
+| `fix-report-links.ts` | Rewrites Report cells that link to a missing file to `—` (previewable, backed up) |
+| `cv-sync-check.ts` | Validates setup consistency |
 
 ## Dashboard TUI
 

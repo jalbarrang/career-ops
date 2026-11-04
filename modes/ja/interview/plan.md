@@ -14,7 +14,7 @@
 6. **プロファイル**（`config/profile.yml` + `modes/_profile.md`）— narrative、archetype、ターゲットを読み取る
 7. **ストーリーバンク**（`interview-prep/story-bank.md`）— 既存の STAR+R ストーリー
 8. **質問バンク**（`interview-prep/question-bank.md`）— 既存のギャップ（ファイルが存在すれば）
-9. **過去に提示済みの報酬** — tracker# が分かれば `node salary-gap.mjs --stated-for <tracker#>` を実行する（トークン消費ゼロ）。過去の `stated` 観測値は、候補者が以前のラウンドで特定の面接官に対してすでに口にした数字である。これを Step 4 の速査ページに反映し、候補者が口径を保てるようにする — 無意識に再交渉してしまう事態を防ぐ。
+9. **過去に提示済みの報酬** — tracker# が分かれば `bun salary-gap.ts --stated-for <tracker#>` を実行する（トークン消費ゼロ）。過去の `stated` 観測値は、候補者が以前のラウンドで特定の面接官に対してすでに口にした数字である。これを Step 4 の速査ページに反映し、候補者が口径を保てるようにする — 無意識に再交渉してしまう事態を防ぐ。
 
 ---
 

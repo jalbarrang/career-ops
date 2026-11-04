@@ -4,7 +4,7 @@
   import { DEFAULT_FILTERS, type ExploreFilters } from "@/lib/explore";
   import FilterBuilder from "@/components/explore/filter-builder.svelte";
   import ScheduledOverlay from "./scheduled-overlay.svelte";
-  import { cadenceMinimum, cadenceValueForUnit, createScheduledJobRequest } from "@/lib/scheduled-job-client.mjs";
+  import { cadenceMinimum, cadenceValueForUnit, createScheduledJobRequest } from "@/lib/scheduled-job-client.ts";
 
   let {
     isopen,

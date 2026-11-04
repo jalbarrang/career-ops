@@ -1,19 +1,19 @@
 # Templates
 
-System-layer template files used by career-ops scripts and modes. These files are auto-updated when you run `npm run update` -- put user customizations in the user-layer files instead (see DATA_CONTRACT.md).
+System-layer template files used by career-ops scripts and modes. These files are auto-updated when you run `bun run update` -- put user customizations in the user-layer files instead (see DATA_CONTRACT.md).
 
 ## Files
 
 | File | Used By | Purpose |
 |------|---------|---------|
-| `cv-template.html` | `generate-pdf.mjs` | HTML/CSS template for ATS-optimized CV PDFs |
-| `cv-template.{compact,executive,jake,leadership,modern}.html` | `generate-pdf.mjs`, `build-cv-html.mjs` (via `cv-templates.mjs`) | Named CV variants selectable per CV or as a `cv.template` default. Same placeholder tokens and ATS rules as `cv-template.html`. See detailed section below. |
-| `resume-template.html` | `build-cv-html.mjs` (template path as its optional third argument) | Resume-branded variant of `cv-template.html`. Same layout and placeholder tokens; differs in: `<title>` reads "Resume" instead of "CV", omits Certifications section (but keeps Awards & Honors), targets 1–2 page US/industry format. See detailed section below. |
-| `cv-template.tex` | `generate-latex.mjs` | LaTeX/Overleaf template for ATS-optimized CV PDFs |
-| `cv-template.cjk.tex` | `build-cv-latex.mjs --template=cjk`, `generate-latex.mjs` | CJK (Chinese/Japanese/Korean) variant of `cv-template.tex` — loads `fontspec`+`xeCJK`. Requires the `tectonic` engine (XeTeX backend); pdflatex still cannot render CJK. See "CJK variant" below and `modes/latex.md`. |
+| `cv-template.html` | `generate-pdf.ts` | HTML/CSS template for ATS-optimized CV PDFs |
+| `cv-template.{compact,executive,jake,leadership,modern}.html` | `generate-pdf.ts`, `build-cv-html.ts` (via `cv-templates.ts`) | Named CV variants selectable per CV or as a `cv.template` default. Same placeholder tokens and ATS rules as `cv-template.html`. See detailed section below. |
+| `resume-template.html` | `build-cv-html.ts` (template path as its optional third argument) | Resume-branded variant of `cv-template.html`. Same layout and placeholder tokens; differs in: `<title>` reads "Resume" instead of "CV", omits Certifications section (but keeps Awards & Honors), targets 1–2 page US/industry format. See detailed section below. |
+| `cv-template.tex` | `generate-latex.ts` | LaTeX/Overleaf template for ATS-optimized CV PDFs |
+| `cv-template.cjk.tex` | `build-cv-latex.ts --template=cjk`, `generate-latex.ts` | CJK (Chinese/Japanese/Korean) variant of `cv-template.tex` — loads `fontspec`+`xeCJK`. Requires the `tectonic` engine (XeTeX backend); pdflatex still cannot render CJK. See "CJK variant" below and `modes/latex.md`. |
 | `portals.example.yml` | Onboarding | Example portal scanner configuration (copy to `portals.yml` to activate) |
-| `states.yml` | `verify-pipeline.mjs`, `normalize-statuses.mjs`, `merge-tracker.mjs` | Canonical application states and their aliases |
-| `ats-rules.yml` | `cv-templates.mjs` (`atsLint`), `modes/pdf.md` | The ATS rules from `modes/pdf.md` as data: per rule an `id`, the `source` bullet it enforces quoted verbatim, a `severity`, a `detect` name (or `null` for a rule with no detector yet), and a **`must_not_flag`** contract saying what a check for it must stay quiet about. Plus `cannot_catch` — the two measured classes a static HTML check cannot see, which need a rendered PDF and `pdftotext -layout`. Rules are quoted, never cited by line number: the citations in #3109 were written as line numbers and one inserted bullet moved five of seven. `tests/ats-lint.test.mjs` fails when a quote no longer appears in `modes/pdf.md`, and `tests/ats-lint-shipped-templates.test.mjs` runs the lint over every shipped template on each PR. Contribution rule: no rule without a verbatim `modes/pdf.md` quote and a `must_not_flag` clause; a rule the shipped templates violate is a rule the project does not hold, so fix the template or change the rule — never silence the detector. |
+| `states.yml` | `verify-pipeline.ts`, `normalize-statuses.ts`, `merge-tracker.ts` | Canonical application states and their aliases |
+| `ats-rules.yml` | `cv-templates.ts` (`atsLint`), `modes/pdf.md` | The ATS rules from `modes/pdf.md` as data: per rule an `id`, the `source` bullet it enforces quoted verbatim, a `severity`, a `detect` name (or `null` for a rule with no detector yet), and a **`must_not_flag`** contract saying what a check for it must stay quiet about. Plus `cannot_catch` — the two measured classes a static HTML check cannot see, which need a rendered PDF and `pdftotext -layout`. Rules are quoted, never cited by line number: the citations in #3109 were written as line numbers and one inserted bullet moved five of seven. `tests/ats-lint.test.ts` fails when a quote no longer appears in `modes/pdf.md`, and `tests/ats-lint-shipped-templates.test.ts` runs the lint over every shipped template on each PR. Contribution rule: no rule without a verbatim `modes/pdf.md` quote and a `must_not_flag` clause; a rule the shipped templates violate is a rule the project does not hold, so fix the template or change the rule — never silence the detector. |
 | `restrictive-covenants.yml` | `modes/offer-prep.md` (statutory-context notes) | Jurisdiction-keyed table of restrictive-covenant statutory rules, per covenant type (v1: non-compete only — seeds US-CA B&P §16600/§16600.5 and Ontario ESA s.67.2). Status spectrum: `prohibited` / `allowed_with_mandatory_compensation` / `allowed_with_limits` / `common_law_reasonableness`. Prompt-level data reference — no script reads it; local lookup, never online research. Feeds statutory-context notes and targeted lawyer questions; never a verdict about the candidate's clause. Contribution rule: no entry without a citable legal source, an effective date, and an `as_of` verification date; covenant types are never conflated. |
 | `protected-grounds.yml` | `modes/interview-redflag.md` (Step 2c — protected-grounds question detection) | Jurisdiction-keyed table of protected grounds / do-not-ask topics in hiring (seeds: CA-ON — Ontario Human Rights Code s.5(1), 16 grounds; JP — MHLW 公正な採用選考 fair-hiring 14-item do-not-ask list, bilingual Japanese terms + English glosses). Prompt-level data reference — no script reads it; local lookup over local transcripts, nothing leaves the machine. Feeds topic-match observations weighed by the mode's existing evidence tiers; per-ground `legitimate_contexts` (BFOR, accommodation, post-offer) prevent false flags. Never a legal verdict — "touches {ground}, protected under {legal basis}", never "this was illegal". Contribution rule: no entry without a citable legal source (regulator/ministry guidance preferred) and an `as_of` verification date. |
 | `agency-licensing.yml` | `modes/oferta.md` (Block G signal 10) | Jurisdiction-keyed table of agency/recruiter licensing regimes with official public registry lookups (e.g. Ontario THA/recruiter licensing mandatory since 2024-07-01, ministry status checker on ontario.ca). Prompt-level data reference — no script reads it, nothing ever fetches or scrapes a registry URL. Contribution rule: no entry without a regulator-grade source, an effective date, an `as_of` verification date, and an official government registry URL (never a third-party mirror). |
@@ -28,7 +28,7 @@ System-layer template files used by career-ops scripts and modes. These files ar
 | `jurisdiction-candidate-fees.yml` | `modes/oferta.md` (Block G signal 21) | Jurisdiction-keyed table of rules on fees charged to job candidates (rows: Ontario, Employment Protection for Foreign Nationals Act, 2009 ss. 1 (1), 7, 7.1, 8 and 9, which protect foreign nationals, i.e. not Canadian citizens or permanent residents, and Employment Standards Act, 2000 s. 74.8 (1) paras. 1, 2, 3 and 5 for temporary-help-agency assignment employees; and Great Britain (`UK`), Employment Agencies Act 1973 s. 6 and Conduct Regulations 2003 reg. 26, which protect every work-seeker in England, Wales and Scotland, not Northern Ireland; Australia, Singapore, US and ILO C181 are commented candidates only, not verified). Presence-based and warn-only: a posting or message asking the candidate to pay gets a factual note on whom the rule covers plus a scam-pattern note; a posting silent about fees gets nothing. Prompt-level data reference, zero-fetch, no script reads it. Contribution rule: no entry without a regulator-grade source, an effective date, an `as_of` verification date, and an official `official_source.url`. |
 
 | `jurisdiction-prohibited-content.yml` | `modes/oferta.md` (Block G signal 10), `modes/apply.md` (Step 5c) | Jurisdiction-keyed table of content employers are legally prohibited from requiring/asking for (e.g. "Canadian experience" in Ontario postings, salary-history questions in California). Prompt-level data reference, agent-judged matching — no script reads it. Contribution rule: no entry without a citable legal source and effective date. |
-| `jurisdiction-relocation-tax.yml` | `salary-gap.mjs` (`loadRelocationTable`/`matchJurisdiction`/`computeRelocationAdjustment`), `modes/oferta.md` (Block G signal 16) | Jurisdiction-keyed table of federal + provincial/state marginal tax brackets (v1 seeds: CRA federal + Ontario, Nova Scotia, Alberta, British Columbia — 2026 rates). Script-driven, unlike most tables here: `salary-gap.mjs` reads it to compute a transparent, bracket-only relocation purchasing-power comparison when a posting's `posting_location` differs from the candidate's home province/state. Deliberately simplified (no basic personal amount, credits, CPP/EI, surtaxes, or cost-of-living index — the last scoped out as a v1 limitation, see the file's own header) and explicitly not financial/tax advice. Contribution rule: no entry without a regulator-grade source, an explicit `tax_year`, an `as_of` verification date, and an official tax-authority `official_source.url`. |
+| `jurisdiction-relocation-tax.yml` | `salary-gap.ts` (`loadRelocationTable`/`matchJurisdiction`/`computeRelocationAdjustment`), `modes/oferta.md` (Block G signal 16) | Jurisdiction-keyed table of federal + provincial/state marginal tax brackets (v1 seeds: CRA federal + Ontario, Nova Scotia, Alberta, British Columbia — 2026 rates). Script-driven, unlike most tables here: `salary-gap.ts` reads it to compute a transparent, bracket-only relocation purchasing-power comparison when a posting's `posting_location` differs from the candidate's home province/state. Deliberately simplified (no basic personal amount, credits, CPP/EI, surtaxes, or cost-of-living index — the last scoped out as a v1 limitation, see the file's own header) and explicitly not financial/tax advice. Contribution rule: no entry without a regulator-grade source, an explicit `tax_year`, an `as_of` verification date, and an official tax-authority `official_source.url`. |
 
 ### cv-template.html
 
@@ -40,17 +40,17 @@ The HTML template rendered by Playwright into PDF. Uses placeholder tokens (`{{N
 
 **Opt-in footer slots:** `{{PHOTO}}` (DACH/European markets, #264) and `{{CONSENT}}` (GDPR/RODO consent text) are both off by default — empty/absent renders no visible element, so existing CVs are byte-identical to a pre-slot layout.
 
-**Optional sections:** Professional Summary, Core Competencies, Work Experience, Projects, Education, Certifications, Awards & Honors, and Skills are dropped in full — section header included — when the payload carries no entries for them (see `cv-sections-core.mjs`). The summary is text, so it is dropped when that text is empty or whitespace-only. Their markers (`<!-- PROFESSIONAL SUMMARY -->`, `<!-- WORK EXPERIENCE -->`, `<!-- PROJECTS -->`, …) are what the strip matches on, so renaming or removing a marker disables the strip for that section. Note that Work Experience being *strippable* does not make `{{EXPERIENCE}}` optional in a custom template — `cv-templates.mjs` still requires the placeholder; it is the payload's `experience` array that may be empty.
+**Optional sections:** Professional Summary, Core Competencies, Work Experience, Projects, Education, Certifications, Awards & Honors, and Skills are dropped in full — section header included — when the payload carries no entries for them (see `cv-sections-core.ts`). The summary is text, so it is dropped when that text is empty or whitespace-only. Their markers (`<!-- PROFESSIONAL SUMMARY -->`, `<!-- WORK EXPERIENCE -->`, `<!-- PROJECTS -->`, …) are what the strip matches on, so renaming or removing a marker disables the strip for that section. Note that Work Experience being *strippable* does not make `{{EXPERIENCE}}` optional in a custom template — `cv-templates.ts` still requires the placeholder; it is the payload's `experience` array that may be empty.
 
 **The `<!-- END -->` sentinel (custom templates, read this):** Skills is the last section in the shipped templates, so it has no following section marker for the strip to stop at. A template that renders a Skills section must therefore place a literal `<!-- END -->` comment immediately after it (`%%%%  END  %%%%` in the LaTeX template) — that sentinel is what bounds the strip.
 
-Getting this wrong is safe, by design. If the sentinel is missing, the empty-Skills strip simply does not run: the template is left byte-for-byte untouched and the Skills section renders as a bare header. That is a cosmetic bug, deliberately chosen over the alternative — without the sentinel *and* without this fail-safe, the strip would run to end-of-file and delete the closing `</div></body></html>` (`\end{document}`), producing a truncated document. Custom templates are validated only for `{{NAME}}`, `{{EXPERIENCE}}`, and `{{EDUCATION}}` (see `cv-templates.mjs`); the sentinel is not required, precisely because its absence degrades gracefully.
+Getting this wrong is safe, by design. If the sentinel is missing, the empty-Skills strip simply does not run: the template is left byte-for-byte untouched and the Skills section renders as a bare header. That is a cosmetic bug, deliberately chosen over the alternative — without the sentinel *and* without this fail-safe, the strip would run to end-of-file and delete the closing `</div></body></html>` (`\end{document}`), producing a truncated document. Custom templates are validated only for `{{NAME}}`, `{{EXPERIENCE}}`, and `{{EDUCATION}}` (see `cv-templates.ts`); the sentinel is not required, precisely because its absence degrades gracefully.
 
 The summary strip follows the same rule. It stops at the next section marker, so a template with no marker after its summary keeps the bare header instead of losing everything below it.
 
 ### Named CV templates
 
-Five alternatives to the base design, discovered by filename (`cv-template.<name>.html`) and resolved by `cv-templates.mjs`:
+Five alternatives to the base design, discovered by filename (`cv-template.<name>.html`) and resolved by `cv-templates.ts`:
 
 | Name | Design | Suits |
 |------|--------|-------|
@@ -68,17 +68,17 @@ cv:
 ```
 
 ```bash
-node cv-templates.mjs list cv            # names + display names
-node cv-templates.mjs resolve cv modern  # absolute path to fill
+bun cv-templates.ts list cv            # names + display names
+bun cv-templates.ts resolve cv modern  # absolute path to fill
 ```
 
-**These are not "just CSS".** Each carries the same contract as the base template, and `tests/cv-named-templates.test.mjs` enforces it: the `{{NAME}}`/`{{EXPERIENCE}}`/`{{EDUCATION}}` placeholders, every optional-section marker plus the `<!-- END -->` sentinel described above, a static system font stack (no bundled woff2), and ligatures disabled. Copy an existing variant when adding a sixth — a template that only looks right will drop a candidate's awards or leave a bare Skills heading.
+**These are not "just CSS".** Each carries the same contract as the base template, and `tests/cv-named-templates.test.ts` enforces it: the `{{NAME}}`/`{{EXPERIENCE}}`/`{{EDUCATION}}` placeholders, every optional-section marker plus the `<!-- END -->` sentinel described above, a static system font stack (no bundled woff2), and ligatures disabled. Copy an existing variant when adding a sixth — a template that only looks right will drop a candidate's awards or leave a bare Skills heading.
 
 **Single column, always.** All colour in these variants is decoration over a strictly top-to-bottom text flow, so PDF extraction order is unaffected. Multi-column page layouts are the classic ATS parse failure and none of these use one.
 
 ### Template packs
 
-A template that needs its own **DOM**, not just its own CSS, ships as a pack: a subdirectory of `templates/` holding `cv-template.<name>.html` next to its own `sections/`. `build-cv-html.mjs` resolves section partials relative to the template file, so a pack gets its own markup without touching the `templates/sections/` every flat template shares. The name still comes from the filename, never the directory, and a name claimed by both a flat file and a pack is an error at discovery (`cv-templates.mjs`).
+A template that needs its own **DOM**, not just its own CSS, ships as a pack: a subdirectory of `templates/` holding `cv-template.<name>.html` next to its own `sections/`. `build-cv-html.ts` resolves section partials relative to the template file, so a pack gets its own markup without touching the `templates/sections/` every flat template shares. The name still comes from the filename, never the directory, and a name claimed by both a flat file and a pack is an error at discovery (`cv-templates.ts`).
 
 The one shipped so far is `templates/ats/` (`cv-template.ats.html`, name `ats`): a single-column layout with every section one block element per line, for ATS parsers that walk the DOM rather than the page. No grid anywhere, and the one `display: flex` is `.contact-row`, which pairs it with `flex-direction: column` to put each contact item on its own line — those children are inline elements, so without it they run together on a single line (#3838). A flex *column* is not a parallel column: nothing is placed side by side, which is what the `single-column-layout` rule in `ats-rules.yml` asks for ("no sidebars, no parallel columns"). A `display: flex` that introduces a **row** is the thing this pack exists to avoid; a column that stacks one datum per line is the pack doing its job.
 
@@ -104,10 +104,10 @@ Resume-branded variant of `cv-template.html` for US/industry job applications. K
 
 Otherwise uses the same placeholder tokens (`{{NAME}}`, `{{SUMMARY_TEXT}}`, etc.) and is fully compatible with the existing PDF pipeline.
 
-**Usage:** `cv-templates.mjs` only discovers files named `cv-template*`, so this template is not selectable by name or through `cv.template`. Pass its path to `build-cv-html.mjs` instead, then render the HTML with `generate-pdf.mjs` as usual:
+**Usage:** `cv-templates.ts` only discovers files named `cv-template*`, so this template is not selectable by name or through `cv.template`. Pass its path to `build-cv-html.ts` instead, then render the HTML with `generate-pdf.ts` as usual:
 
 ```bash
-node build-cv-html.mjs payload.json output/resume.html templates/resume-template.html
+bun build-cv-html.ts payload.json output/resume.html templates/resume-template.html
 ```
 
 **Keep in sync:** When updating `cv-template.html`, apply matching changes to `resume-template.html` (preserving the differences noted above).
@@ -121,10 +121,10 @@ LaTeX template for Overleaf-compatible CV generation. Based on the [sb2nov/resum
 **Usage:**
 ```bash
 # Validate and compile .tex → .pdf (requires pdflatex on PATH)
-node generate-latex.mjs output/cv-name-company-date.tex
+bun generate-latex.ts output/cv-name-company-date.tex
 
 # Or specify a custom output path
-node generate-latex.mjs output/cv-name-company-date.tex output/custom-name.pdf
+bun generate-latex.ts output/cv-name-company-date.tex output/custom-name.pdf
 ```
 
 **Prerequisites:** `pdflatex` via [MiKTeX](https://miktex.org/) (Windows) or TeX Live (Linux/macOS). First compilation may auto-install missing LaTeX packages. Alternatively, upload the `.tex` file directly to [Overleaf](https://www.overleaf.com) — no local install needed.
@@ -133,9 +133,9 @@ node generate-latex.mjs output/cv-name-company-date.tex output/custom-name.pdf
 
 ### cv-template.cjk.tex
 
-CJK (Chinese/Japanese/Korean) variant of `cv-template.tex` — same placeholder tokens and structure, plus `fontspec` + `xeCJK` so kana/kanji/hangul render (#3553). Select it explicitly: `node build-cv-latex.mjs <input.json> <output.tex> --template=cjk`.
+CJK (Chinese/Japanese/Korean) variant of `cv-template.tex` — same placeholder tokens and structure, plus `fontspec` + `xeCJK` so kana/kanji/hangul render (#3553). Select it explicitly: `bun build-cv-latex.ts <input.json> <output.tex> --template=cjk`.
 
-**Prerequisite:** a XeTeX-based engine (its backend is XeTeX, unlike pdflatex's pdfTeX). Locally that's the `tectonic` engine — `generate-latex.mjs` only accepts this path when tectonic is the resolved compiler; a pdflatex-only setup still gets redirected to `pdf` mode. **On Overleaf, switch the compiler to XeLaTeX** (Menu → Compiler → XeLaTeX) after uploading — Overleaf's default pdfLaTeX compiler can't build this file either. You also need a CJK-capable font installed system-wide — fontspec/xeCJK read fonts from the OS, tectonic does not download or bundle them. The template defaults `\setCJKmainfont{Noto Serif CJK SC}`; if that font isn't installed, edit that line to a font you have (e.g. "Noto Sans CJK JP", "Microsoft YaHei", "Hiragino Mincho ProN").
+**Prerequisite:** a XeTeX-based engine (its backend is XeTeX, unlike pdflatex's pdfTeX). Locally that's the `tectonic` engine — `generate-latex.ts` only accepts this path when tectonic is the resolved compiler; a pdflatex-only setup still gets redirected to `pdf` mode. **On Overleaf, switch the compiler to XeLaTeX** (Menu → Compiler → XeLaTeX) after uploading — Overleaf's default pdfLaTeX compiler can't build this file either. You also need a CJK-capable font installed system-wide — fontspec/xeCJK read fonts from the OS, tectonic does not download or bundle them. The template defaults `\setCJKmainfont{Noto Serif CJK SC}`; if that font isn't installed, edit that line to a font you have (e.g. "Noto Sans CJK JP", "Microsoft YaHei", "Hiragino Mincho ProN").
 
 ### portals.example.yml
 

@@ -2,11 +2,11 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { json } from "@sveltejs/kit";
-import { resolveCodeRoot } from "@/lib/core/code-root.mjs";
+import { resolveCodeRoot } from "@/lib/core/code-root.ts";
 import { schedulerStatus } from "@/lib/scheduler-status";
 
 function runnerScript() {
-  return path.join(resolveCodeRoot(process.cwd(), process.env), "web", "scripts", "scheduled-jobs-runner.mjs");
+  return path.join(resolveCodeRoot(process.cwd(), process.env), "web", "scripts", "scheduled-jobs-runner.ts");
 }
 
 export async function GET() {

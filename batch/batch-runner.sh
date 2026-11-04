@@ -19,8 +19,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 # Under Git Bash / MSYS, pwd gives a POSIX path (/c/...). Node is a native
 # Windows binary and gets it unconverted when MSYS path conversion is off
-# (MSYS_NO_PATHCONV=1), so every `node "$PROJECT_DIR/..."` call failed with
-# MODULE_NOT_FOUND (#4910). cygpath -m yields C:/... which both bash and node
+# (MSYS_NO_PATHCONV=1), so every `bun "$PROJECT_DIR/..."` call failed with
+# MODULE_NOT_FOUND (#4910). cygpath -m yields C:/... which both bash and bun
 # resolve, as for jd_file below.
 case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*) command -v cygpath >/dev/null 2>&1 && PROJECT_DIR="$(cygpath -m "$PROJECT_DIR")" ;;
@@ -30,13 +30,13 @@ esac
 # can place outside the checkout. Every path here used to be built from
 # PROJECT_DIR, so under an external data root workers were scored against the
 # checkout's template profile, and their reports and tracker lines were looked
-# for in directories reserve-report-num.mjs and merge-tracker.mjs never read
-# (#5115). path-resolver.mjs owns the precedence, so ask it instead of
+# for in directories reserve-report-num.ts and merge-tracker.ts never read
+# (#5115). path-resolver.ts owns the precedence, so ask it instead of
 # re-deriving it in bash. It prints nothing when the data root is the checkout,
 # which keeps DATA_ROOT spelled exactly like PROJECT_DIR in the default layout.
 DATA_ROOT="$PROJECT_DIR"
-if [[ -f "$PROJECT_DIR/path-resolver.mjs" ]]; then
-  if ! resolved_data_root="$(node --input-type=module -e '
+if [[ -f "$PROJECT_DIR/path-resolver.ts" ]]; then
+  if ! resolved_data_root="$(bun --input-type=module -e '
     import { realpathSync } from "node:fs";
     import { dirname } from "node:path";
     import { pathToFileURL } from "node:url";
@@ -47,8 +47,8 @@ if [[ -f "$PROJECT_DIR/path-resolver.mjs" ]]; then
     if (real(root) !== real(dirname(resolver))) {
       process.stdout.write(process.platform === "win32" ? root.replace(/\\/g, "/") : root);
     }
-  ' "$PROJECT_DIR/path-resolver.mjs")"; then
-    echo "ERROR: could not resolve the career-ops data root through path-resolver.mjs" >&2
+  ' "$PROJECT_DIR/path-resolver.ts")"; then
+    echo "ERROR: could not resolve the career-ops data root through path-resolver.ts" >&2
     exit 1
   fi
   if [[ -n "$resolved_data_root" ]]; then
@@ -60,26 +60,26 @@ INPUT_FILE="$BATCH_DIR/batch-input.tsv"
 STATE_FILE="$BATCH_DIR/batch-state.tsv"
 PROMPT_FILE="$BATCH_DIR/batch-prompt.md"
 # The profile follows CAREER_OPS_PROFILE as well as the data root, like every
-# other reader does through path-resolver.mjs (#5144). Building it from the
+# other reader does through path-resolver.ts (#5144). Building it from the
 # data root here left a run reading the data root's profile for spend_tier and
-# for the prompt's personalization while the .mjs readers used the override.
+# for the prompt's personalization while the .ts readers used the override.
 # The .md prompt files still name config/profile.yml; the script-generated
 # runtime block and the injected personalization use $PROFILE_FILE.
 PROFILE_FILE="$DATA_ROOT/config/profile.yml"
 PROFILE_RESOLVED=false
-if [[ -f "$PROJECT_DIR/path-resolver.mjs" ]]; then
-  if ! resolved_profile_file="$(node --input-type=module -e '
+if [[ -f "$PROJECT_DIR/path-resolver.ts" ]]; then
+  if ! resolved_profile_file="$(bun --input-type=module -e '
     import { pathToFileURL } from "node:url";
     const resolver = process.argv[1];
     const { getProfilePath } = await import(pathToFileURL(resolver).href);
     if (typeof getProfilePath !== "function") {
-      process.stderr.write("WARN: path-resolver.mjs has no getProfilePath(), so CAREER_OPS_PROFILE is ignored in this run. Update the install to use the override.\n");
+      process.stderr.write("WARN: path-resolver.ts has no getProfilePath(), so CAREER_OPS_PROFILE is ignored in this run. Update the install to use the override.\n");
     } else {
       const profile = getProfilePath();
       process.stdout.write(process.platform === "win32" ? profile.replace(/\\/g, "/") : profile);
     }
-  ' "$PROJECT_DIR/path-resolver.mjs")"; then
-    echo "ERROR: could not resolve the career-ops profile path through path-resolver.mjs" >&2
+  ' "$PROJECT_DIR/path-resolver.ts")"; then
+    echo "ERROR: could not resolve the career-ops profile path through path-resolver.ts" >&2
     exit 1
   fi
   if [[ -n "$resolved_profile_file" ]]; then
@@ -87,7 +87,7 @@ if [[ -f "$PROJECT_DIR/path-resolver.mjs" ]]; then
     PROFILE_RESOLVED=true
   fi
 elif [[ -n "${CAREER_OPS_PROFILE:-}" ]]; then
-  echo "WARN: no path-resolver.mjs next to this script, so CAREER_OPS_PROFILE is ignored in this run." >&2
+  echo "WARN: no path-resolver.ts next to this script, so CAREER_OPS_PROFILE is ignored in this run." >&2
 fi
 if [[ -n "${CAREER_OPS_PROFILE:-}" && "$PROFILE_RESOLVED" == "true" && ! -f "$PROFILE_FILE" ]]; then
   # Before the override was honored this read the data root's profile anyway.
@@ -99,10 +99,10 @@ DISCARD_LOG="$LOGS_DIR/discard.log"
 TRACKER_DIR="$DATA_ROOT/batch/tracker-additions"
 REPORTS_DIR="$DATA_ROOT/reports"
 # The runner's own bookkeeping (input, state, logs, locks) stays beside the
-# script. reserve-report-num.mjs and merge-tracker.mjs default batch-state.tsv
+# script. reserve-report-num.ts and merge-tracker.ts default batch-state.tsv
 # to the data root, where this runner never writes it, so name the real file
 # for them: both skip report numbers this run recorded as failed. Built from
-# PROJECT_DIR, which is the form node can open under Git Bash (see above).
+# PROJECT_DIR, which is the form bun can open under Git Bash (see above).
 export CAREER_OPS_BATCH_STATE="$PROJECT_DIR/batch/batch-state.tsv"
 # Workers run unattended, so nobody can confirm a change to the user's standing
 # rules. modes/_shared.md tells an agent that sees this flag not to write them.
@@ -180,8 +180,8 @@ Options:
                        page, empty shell): 'webfetch' (default) spawns the worker and
                        lets it try WebFetch; 'skip' records the offer as skipped with
                        a needs-playwright marker and spawns no worker; 'browser-extract'
-                       renders the page with browser-extract.mjs (headless Chromium,
-                       zero model tokens, needs 'npx playwright install chromium') and
+                       renders the page with browser-extract.ts (headless Chromium,
+                       zero model tokens, needs 'bunx playwright install chromium') and
                        hands the recovered text to the worker
   --rate-limit-sleep N Maximum adaptive retry delay in seconds; 0 pauses immediately
                        (default: 300; range: 0–2147483647; claude only)
@@ -349,8 +349,8 @@ check_prerequisites() {
     exit 1
   fi
 
-  if [[ "$THIN_ACTION" == "browser-extract" && ! -f "$PROJECT_DIR/browser-extract.mjs" ]]; then
-    echo "ERROR: --thin-action browser-extract needs browser-extract.mjs (and 'npx playwright install chromium')."
+  if [[ "$THIN_ACTION" == "browser-extract" && ! -f "$PROJECT_DIR/browser-extract.ts" ]]; then
+    echo "ERROR: --thin-action browser-extract needs browser-extract.ts (and 'bunx playwright install chromium')."
     exit 1
   fi
 
@@ -977,24 +977,24 @@ reserve_report_num_unlocked() {
   local id="$1" url="$2" started="$3" retries="$4"
 
   # Use the shared, cross-process-atomic reservation system (O_CREAT|O_EXCL
-  # sentinel files in reserve-report-num.mjs) instead of the old bash-native
+  # sentinel files in reserve-report-num.ts) instead of the old bash-native
   # max(existing report files, batch-state.tsv numbers)+1 scan. The bash-native
   # version had zero visibility into reservations made by any OTHER process
-  # calling `node reserve-report-num.mjs` directly -- e.g. an interactively
+  # calling `bun reserve-report-num.ts` directly -- e.g. an interactively
   # dispatched Agent evaluating one offer with a browser tool while a batch
   # run is in flight. Both could independently compute the same "next" number
   # and collide on disk. Found 2026-07-30: two separate collisions (report
   # 049, report 051) in one batch run for exactly this reason -- routing every
-  # caller through the same node script means they all share one real lock.
+  # caller through the same bun process means they all share one real lock.
   local report_num=""
-  report_num=$(node "$PROJECT_DIR/reserve-report-num.mjs" 2>/dev/null | tr -d '[:space:]') || report_num=""
+  report_num=$(bun "$PROJECT_DIR/reserve-report-num.ts" 2>/dev/null | tr -d '[:space:]') || report_num=""
   # No number means the allocator failed (lock timeout, unwritable reports/,
   # exhausted retries). Returning success with an empty number let the caller
   # launch a paid worker with a blank "Report number:" and write an empty
   # report_num cell into batch-state.tsv; the retry wrapper below is what
   # handles a failed reservation, so fail here and let it.
   if [[ ! "$report_num" =~ ^[0-9]+$ ]]; then
-    echo "    ❌ reserve-report-num.mjs returned no report number for offer id=$id" >&2
+    echo "    ❌ reserve-report-num.ts returned no report number for offer id=$id" >&2
     return 1
   fi
   update_state_unlocked "$id" "$url" "processing" "$started" "-" "$report_num" "-" "-" "$retries"
@@ -1008,7 +1008,7 @@ reserve_report_num_unlocked() {
 release_report_num() {
   local report_num="$1"
   [[ -n "$report_num" && "$report_num" != "-" ]] || return 0
-  node "$PROJECT_DIR/reserve-report-num.mjs" --release "$report_num" >/dev/null 2>&1 || true
+  bun "$PROJECT_DIR/reserve-report-num.ts" --release "$report_num" >/dev/null 2>&1 || true
 }
 
 reserve_report_num() {
@@ -1016,14 +1016,14 @@ reserve_report_num() {
 }
 
 # Succeed if reports/ holds a real report for this number. The reservation
-# sentinel ({num}-RESERVED.md) never counts: reserve-report-num.mjs creates it
+# sentinel ({num}-RESERVED.md) never counts: reserve-report-num.ts creates it
 # before the worker runs, so counting it would mark a no-op worker completed.
 #
 # A plain glob loop, not `compgen -G`: compgen exists only when bash is built
 # with programmable completion, and some distro builds (NixOS among them) omit
 # it from non-interactive shells. There, compgen fails, the check sees no
 # report, and every worker is recorded as failed even though its report is on
-# disk. merge-tracker.mjs then refuses those reports as possibly fabricated.
+# disk. merge-tracker.ts then refuses those reports as possibly fabricated.
 has_report_file() {
   local report_num="$1" f
   for f in "$REPORTS_DIR/${report_num}"-*.md; do
@@ -1119,7 +1119,7 @@ process_offer() {
     local redirect_headers
     local redirect_location
     while :; do
-      _url_safe=$(node -e "
+      _url_safe=$(bun -e "
       try {
         const u = new URL(process.argv[1]);
         const h = u.hostname.toLowerCase().replace(/\.\$/, '');
@@ -1141,7 +1141,7 @@ process_offer() {
         # Headers are read by curl/bash only — never by the worker — so this one
         # stays on ${TMPDIR:-/tmp} and the expression stays self-contained (the
         # prefetch block is extracted and run in isolation by
-        # tests/batch-runner-jd-prefetch.test.mjs, where $jd_tmp_dir is not set).
+        # tests/batch-runner-jd-prefetch.test.ts, where $jd_tmp_dir is not set).
         redirect_headers="$(mktemp "${TMPDIR:-/tmp}/batch-jd-headers.XXXXXX")"
         curl_status=0
         curl --silent --show-error --location --max-redirs 0 \
@@ -1164,7 +1164,7 @@ process_offer() {
             echo "    ℹ️  JD prefetch: too many redirects — worker will WebFetch"
             break
           fi
-          current_url="$(node -e "
+          current_url="$(bun -e "
             try { process.stdout.write(new URL(process.argv[2], process.argv[1]).href); }
             catch (e) { process.stdout.write(''); }
           " "$current_url" "$redirect_location" 2>/dev/null)"
@@ -1183,12 +1183,12 @@ process_offer() {
     done
       # Keep the bytes curl downloaded: the strip below discards <script> blocks,
       # which is where a JS-rendered board keeps its JD (schema.org JobPosting,
-      # hydration payload), so jd-rescue.mjs reads this copy, not the stripped text.
+      # hydration payload), so jd-rescue.ts reads this copy, not the stripped text.
       jd_raw_file="${jd_file}.raw"
       cp "$jd_file" "$jd_raw_file" 2>/dev/null || true
       # Strip HTML tags and count visible words to distinguish a real JD (hundreds
       # of words) from a JS shell (near zero visible text).
-      jd_prefetch_words=$(node -e "
+      jd_prefetch_words=$(bun -e "
         const fs = require('fs');
         try {
           const text = fs.readFileSync(process.argv[1], 'utf-8')
@@ -1211,8 +1211,8 @@ process_offer() {
       # already shipped in the bytes above. It only replaces the text when the page
       # is thin or the rescued JD is longer, and it fails open (any failure leaves
       # the stripped text as is, and the checks below decide as before).
-      if [[ -f "$BATCH_DIR/jd-rescue.mjs" && -s "$jd_raw_file" ]]; then
-        if _rs_line=$(node "$BATCH_DIR/jd-rescue.mjs" "$url" "$jd_raw_file" "$jd_file" "$jd_prefetch_words" 2>/dev/null); then
+      if [[ -f "$BATCH_DIR/jd-rescue.ts" && -s "$jd_raw_file" ]]; then
+        if _rs_line=$(bun "$BATCH_DIR/jd-rescue.ts" "$url" "$jd_raw_file" "$jd_file" "$jd_prefetch_words" 2>/dev/null); then
           IFS=$'\t' read -r _rs_words _rs_method <<< "$_rs_line"
           _rs_words="${_rs_words//[^0-9]/}"
           _rs_words="${_rs_words:-0}"
@@ -1233,24 +1233,24 @@ process_offer() {
 
   # ATS API fallback (#4246). When the static fetch above left $jd_file empty
   # (thin JS shell, curl failure, curl absent), ask the ATS's own public API
-  # through fetch-jd.mjs before the worker falls back to WebFetch, which hits
+  # through fetch-jd.ts before the worker falls back to WebFetch, which hits
   # the same unrendered shell on Ashby and embedded Greenhouse boards.
   # The call lives here and not in the worker prompt on purpose: the offer URL
   # is untrusted, and here it travels as one argv element ("$url"), never as
-  # text inside a shell command the worker composes. fetch-jd.mjs only talks to
+  # text inside a shell command the worker composes. fetch-jd.ts only talks to
   # the known ATS API hosts it resolves from the URL, so a private or unknown
   # host is a miss (exit 1), not a request.
   local jd_api_words=0
-  if [[ ! -s "$jd_file" && -f "$PROJECT_DIR/fetch-jd.mjs" ]]; then
+  if [[ ! -s "$jd_file" && -f "$PROJECT_DIR/fetch-jd.ts" ]]; then
     local jd_api_tmp
     jd_api_tmp="$(mktemp "${TMPDIR:-/tmp}/batch-jd-api.XXXXXX")"
-    if node "$PROJECT_DIR/fetch-jd.mjs" "$url" > "$jd_api_tmp" 2>/dev/null; then
+    if bun "$PROJECT_DIR/fetch-jd.ts" "$url" > "$jd_api_tmp" 2>/dev/null; then
       jd_api_words=$(wc -w < "$jd_api_tmp" 2>/dev/null) || jd_api_words=0
       jd_api_words="${jd_api_words//[^0-9]/}"
       jd_api_words="${jd_api_words:-0}"
       if [[ "$jd_api_words" -ge "$prefetch_min_words" ]]; then
         cat "$jd_api_tmp" > "$jd_file"
-        echo "    ℹ️  JD prefetch: ${jd_api_words} words from the ATS API (fetch-jd.mjs)"
+        echo "    ℹ️  JD prefetch: ${jd_api_words} words from the ATS API (fetch-jd.ts)"
       fi
     fi
     rm -f "$jd_api_tmp"
@@ -1262,7 +1262,7 @@ process_offer() {
   # here; the skip is recorded after the "Processing offer" line below.
   local jd_thin_skip=0 jd_thin_note="" jd_thin_retryable=0
   if [[ ! -s "$jd_file" && "$THIN_ACTION" != "webfetch" ]]; then
-    if [[ "$THIN_ACTION" == "browser-extract" && -f "$PROJECT_DIR/browser-extract.mjs" ]]; then
+    if [[ "$THIN_ACTION" == "browser-extract" && -f "$PROJECT_DIR/browser-extract.ts" ]]; then
       # Real-browser read: zero model tokens, ~5-15s of Chromium. Success is
       # compact JSON on stdout, a failure is exit 1 with a JSON error on stderr.
       # A near-empty or taken-down page is a failure there, so the word floor
@@ -1270,8 +1270,8 @@ process_offer() {
       local be_out be_err be_words=0 be_code=""
       be_out="$(mktemp "${TMPDIR:-/tmp}/batch-jd-browser.XXXXXX")"
       be_err="$(mktemp "${TMPDIR:-/tmp}/batch-jd-browser-err.XXXXXX")"
-      if node "$PROJECT_DIR/browser-extract.mjs" "$url" --mode jd > "$be_out" 2> "$be_err"; then
-        node -e '
+      if bun "$PROJECT_DIR/browser-extract.ts" "$url" --mode jd > "$be_out" 2> "$be_err"; then
+        bun -e '
           let d = "";
           process.stdin.on("data", (c) => d += c);
           process.stdin.on("end", () => {
@@ -1289,7 +1289,7 @@ process_offer() {
         fi
       else
         : > "$jd_file"
-        be_code=$(node -e '
+        be_code=$(bun -e '
           let d = "";
           process.stdin.on("data", (c) => d += c);
           process.stdin.on("end", () => { try { process.stdout.write(String(JSON.parse(d).code || "")); } catch { /* none */ } });
@@ -1301,7 +1301,7 @@ process_offer() {
         case "$be_code" in
           no_playwright)
             jd_thin_retryable=1
-            jd_thin_note="browser-extract: Playwright is not installed — run 'npx playwright install chromium' and retry"
+            jd_thin_note="browser-extract: Playwright is not installed — run 'bunx playwright install chromium' and retry"
             ;;
           empty_text|navigation_error)
             jd_thin_retryable=1
@@ -1390,7 +1390,7 @@ process_offer() {
       printf 'This install keeps the user layer in a separate data root. The profile for this run is `%s`. Where this prompt names `config/profile.yml`, read that file instead. Wherever this prompt names one of the paths below, resolve it under the data root, not the working directory:\n\n' "$PROFILE_FILE"
       printf 'Data root: %s\n\n' "$DATA_ROOT"
       printf '`cv.md`, `article-digest.md`, `modes/_profile.md`, `modes/_custom.md`, `reports/`, `output/`, `data/`, `interview-prep/`, `batch/tracker-additions/`\n\n'
-      printf 'Write the report under `reports/` in the data root and the tracker TSV under `batch/tracker-additions/` in the data root, and give scripts absolute data-root paths for these files. Markdown links written inside the report and the tracker TSV keep the relative form this prompt shows (`reports/...`). Every other path (`templates/`, the `.mjs` scripts, the other `modes/` files) stays relative to the working directory.\n'
+      printf 'Write the report under `reports/` in the data root and the tracker TSV under `batch/tracker-additions/` in the data root, and give scripts absolute data-root paths for these files. Markdown links written inside the report and the tracker TSV keep the relative form this prompt shows (`reports/...`). Every other path (`templates/`, the `.ts` scripts, the other `modes/` files) stays relative to the working directory.\n'
     } >> "$resolved_prompt"
   fi
 
@@ -1494,7 +1494,7 @@ process_offer() {
       break
     fi
 
-    # Check for Claude Code npm shim swap (exit code 127 + command not found)
+    # Check for a Claude Code install-shim swap (exit code 127 + command not found)
     if [[ $exit_code -eq 127 ]] && grep -qE "(claude: command not found|claude:.*not found|cannot find.*claude)" "$log_file" && (( shim_retries < max_shim_retries )); then
       shim_retries=$((shim_retries + 1))
       echo "    ⏳ Claude command not found (shim swap detected). Retrying in 30s (attempt $shim_retries/$max_shim_retries)..."
@@ -1550,7 +1550,7 @@ process_offer() {
     # Without this check such offers were silently marked "completed" with no
     # report file on disk and score "-" (found 2026-07-29, offer id 6 / report
     # 019 — Deepgram JD unextractable in headless mode). Only the downstream
-    # reconcile-pipeline.mjs safety net (which leaves an entry in Pending when
+    # reconcile-pipeline.ts safety net (which leaves an entry in Pending when
     # its report file is missing) prevented the offer from being lost.
     # Extract only the LAST ```json fenced block in the log -- that's the
     # worker's one authoritative final result (batch-prompt.md Step 6), not
@@ -1578,7 +1578,7 @@ process_offer() {
     local parsed_status="" parsed_error="" parsed_score=""
     if [[ -n "$worker_result_json" ]]; then
       local parsed
-      parsed=$(printf '%s' "$worker_result_json" | node -e '
+      parsed=$(printf '%s' "$worker_result_json" | bun -e '
         let data = "";
         process.stdin.on("data", d => data += d);
         process.stdin.on("end", () => {
@@ -1618,7 +1618,7 @@ process_offer() {
       local question="${parsed_error:-Which agency did this posting come through?}"
       # A malformed/misattributed handoff stays held, never becomes retryable
       # and never supplies an agency answer for a different posting.
-      if ! node -e '
+      if ! bun -e '
         const result = JSON.parse(process.argv[1]);
         process.exit(result.reason === "agency_confirmation" &&
           result.url === process.argv[2] && String(result.id) === process.argv[3] ? 0 : 1);
@@ -1679,7 +1679,7 @@ process_offer() {
         shopt -u nullglob
       fi
       if (( ${#skip_reports[@]} == 0 )); then
-        skip_rule=$(node -e '
+        skip_rule=$(bun -e '
           const fs = require("fs");
           const [json, url, id, tsv, reserved] = process.argv.slice(1);
           const flat = (s) => String(s).replace(/[\x00-\x1f\x7f]+/g, " ").replace(/ +/g, " ").trim();
@@ -1785,9 +1785,9 @@ process_offer() {
 merge_tracker() {
   echo ""
   echo "=== Merging tracker additions ==="
-  node "$PROJECT_DIR/merge-tracker.mjs"
+  bun "$PROJECT_DIR/merge-tracker.ts"
   # A dealbreaker SKIP row holds its report number until it is merged. The
-  # tracker row now holds it for reserve-report-num.mjs, so drop the sentinel.
+  # tracker row now holds it for reserve-report-num.ts, so drop the sentinel.
   if [[ -f "$STATE_FILE" ]]; then
     local mid mstatus mnum merror
     while IFS=$'\t' read -r mid _ mstatus _ _ mnum _ merror _; do
@@ -1798,10 +1798,10 @@ merge_tracker() {
   fi
   echo ""
   echo "=== Reconciling pipeline.md ==="
-  node "$PROJECT_DIR/reconcile-pipeline.mjs" || echo "⚠️  Pipeline reconcile had issues (see above)"
+  bun "$PROJECT_DIR/reconcile-pipeline.ts" || echo "⚠️  Pipeline reconcile had issues (see above)"
   echo ""
   echo "=== Verifying pipeline integrity ==="
-  node "$PROJECT_DIR/verify-pipeline.mjs" || echo "⚠️  Verification found issues (see above)"
+  bun "$PROJECT_DIR/verify-pipeline.ts" || echo "⚠️  Verification found issues (see above)"
 }
 
 report_progress() {
@@ -1859,8 +1859,8 @@ print_summary() {
     echo "Average score: $avg/5 ($score_count scored)"
   fi
 
-  if [[ -f "$BATCH_DIR/aggregate-tokens.mjs" ]]; then
-    if ! node "$BATCH_DIR/aggregate-tokens.mjs"; then
+  if [[ -f "$BATCH_DIR/aggregate-tokens.ts" ]]; then
+    if ! bun "$BATCH_DIR/aggregate-tokens.ts"; then
       echo "Warning: token aggregation failed." >&2
     fi
   fi
@@ -1976,11 +1976,11 @@ watch_status() {
   echo "Showing final status:"
   print_status_table full
 
-  # Chain verify-pipeline.mjs
-  if [[ -f "$PROJECT_DIR/verify-pipeline.mjs" ]]; then
+  # Chain verify-pipeline.ts
+  if [[ -f "$PROJECT_DIR/verify-pipeline.ts" ]]; then
     echo ""
     echo "=== Running pipeline verification ==="
-    node "$PROJECT_DIR/verify-pipeline.mjs" || echo "⚠️  Verification found issues"
+    bun "$PROJECT_DIR/verify-pipeline.ts" || echo "⚠️  Verification found issues"
   fi
 }
 
@@ -2045,12 +2045,12 @@ main() {
   local -a pending_sources=()
   local -a pending_notes=()
 
-  # --company: resolve the matching ids ONCE (batch/company-scope.mjs), then skip
+  # --company: resolve the matching ids ONCE (batch/company-scope.ts), then skip
   # every other row before --limit is counted.
   local scope_ids=""
   if [[ -n "$SCOPE_COMPANY" ]]; then
-    if ! scope_ids=$(node "$BATCH_DIR/company-scope.mjs" --input "$INPUT_FILE" --company "$SCOPE_COMPANY"); then
-      echo "ERROR: could not resolve --company scope (company-scope.mjs failed)." >&2
+    if ! scope_ids=$(bun "$BATCH_DIR/company-scope.ts" --input "$INPUT_FILE" --company "$SCOPE_COMPANY"); then
+      echo "ERROR: could not resolve --company scope (company-scope.ts failed)." >&2
       exit 1
     fi
     scope_ids=" $(echo "$scope_ids" | tr '\n' ' ') "

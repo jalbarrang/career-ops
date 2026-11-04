@@ -4,8 +4,9 @@ import { parseGreenhouse, fetchGreenhouseSchema } from "./greenhouse";
 import { statusBlock, dismissConsent, tryApplyTrigger, dropNewTabs, classifyEmpty, captchaWarning, multiStepInfo, verifyFill, type ApplyIssue } from "./diagnose";
 import { interpretFormWithAgent } from "./agent-interpret";
 import { resolveCli } from "../clis";
-import { fencingReport } from "../cli-fencing.mjs";
-import { CAPS } from "../worker-capabilities.mjs";
+import { fencingReport } from "../cli-fencing.ts";
+import { CAPS } from "../worker-capabilities.ts";
+import { resolveRootScript } from "../core/code-root.ts";
 
 /** The frame with the most interactive controls — where the agentic interpreter
  *  should look when deterministic extraction found nothing usable. */
@@ -125,23 +126,42 @@ declare global {
 }
 const SESSIONS: Map<string, Session> = (globalThis.__coApplySessions ??= new Map());
 
+/**
+ * Launch options for the headed Chrome the apply flow drives. Mirrors core
+ * apply-scope.ts's HEADED_APPLY_LAUNCH: a browser THIS project launches, never
+ * an attached one. The scope guard in apply-scope.ts forbids attaching, and
+ * tests/apply-scope.test.ts checks this file for the forbidden spellings.
+ *
+ * `resolveRootScript` is imported for the same reason: the consumer of these
+ * options is the root checkout the web writes into, so the launch object and
+ * the script resolution come from one place rather than a bare relative path.
+ */
+export const HEADED_APPLY_LAUNCH = {
+  channel: "chrome",
+  headless: false,
+  args: ["--window-position=-3200,-3200", "--window-size=1280,940"],
+} as const;
+
+/** The bundled-Chromium fallback when system Chrome is absent. */
+export const BUNDLED_HEADED_LAUNCH = {
+  headless: false,
+  args: ["--window-position=-3200,-3200", "--window-size=1280,940"],
+} as const;
+
 async function headedBrowser(): Promise<Browser> {
   const b = globalThis.__coHeadedBrowser;
   if (b && b.isConnected()) return b;
   let nb: Browser;
   try {
-    nb = await chromium.launch({
-      channel: "chrome",
-      headless: false,
-      args: ["--window-position=-3200,-3200", "--window-size=1280,940"], // off-screen during fill; moved on-screen at handoff
-    });
+    // Off-screen during fill; moved on-screen at handoff.
+    nb = await chromium.launch(HEADED_APPLY_LAUNCH);
   } catch {
     // No system Google Chrome → fall back to Playwright's bundled Chromium if
     // present; otherwise a clear, actionable error.
     try {
-      nb = await chromium.launch({ headless: false, args: ["--window-position=-3200,-3200", "--window-size=1280,940"] });
+      nb = await chromium.launch(BUNDLED_HEADED_LAUNCH);
     } catch {
-      throw new Error("The apply feature needs Google Chrome. Install Chrome (or run: npx playwright install chromium) and try again.");
+      throw new Error("The apply feature needs Google Chrome. Install Chrome (or run: bunx playwright install chromium) and try again.");
     }
   }
   globalThis.__coHeadedBrowser = nb;

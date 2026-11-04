@@ -11,12 +11,12 @@ database, no server. If you never run it, nothing about your CLI workflow change
 
 ## Quick start
 
-Requires Node 22.6+ (see [Tests](#tests) — `npm test` needs glob discovery, and `--experimental-strip-types` for the suites that import `.ts` modules directly; the flag landed in 22.6.0).
+Requires Bun 1.4.3+ (see [Tests](#tests) — `engines.bun` in `web/package.json` and `lib/bun-floor.ts` in the core state the same floor).
 
 ```bash
 cd web
-npm ci
-npm run dev
+bun install --frozen-lockfile
+bun run dev
 ```
 
 Open http://localhost:3000. The app reads the career-ops checkout it lives in
@@ -42,7 +42,7 @@ The server binds IPv4 loopback, so reach it as `localhost` or `127.0.0.1`;
 
 - **Local-first:** the local web app runs entirely on your machine — no cloud,
   no account needed. Your CV and data stay in your own files.
-- **Loopback by default:** `npm run dev` and `npm start` bind `127.0.0.1`, so
+- **Loopback by default:** `bun run dev` and `bun start` bind `127.0.0.1`, so
   nothing else on your network can reach the dashboard. It has no login — the
   bind is the access control. Opt out deliberately with
   `CAREER_OPS_WEB_ALLOWED_HOSTS` ([below](#exposing-it-beyond-this-machine)).
@@ -73,7 +73,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File web/scripts/install-scan
 ```
 
 Remove it with `web/scripts/uninstall-scan-schedule.ps1`. It runs in the current user's interactive session, so the user must be logged in. The task runs only
-`web/scripts/scheduled-jobs-runner.mjs`; it never evaluates roles, applies, or invokes
+`web/scripts/scheduled-jobs-runner.ts`; it never evaluates roles, applies, or invokes
 an AI model. Job definitions and run history stay in the gitignored `data/`
 directory.
 
@@ -86,20 +86,20 @@ through **Paraglide JS**; see [AGENTS.md](AGENTS.md) for the rules that keep bot
 coherent.
 
 ```bash
-npm run dev          # dev server (SvelteKit + Vite)
-npm test             # unit suites (node --test, no framework)
-npm run typecheck    # svelte-check (compiles the i18n messages first)
-npm run build        # production build → build/ (`npm start` serves it)
-npm run check:i18n   # lint the translation catalogue
+bun run dev          # dev server (SvelteKit + Vite)
+bun test             # unit suites (written against node:test, run by Bun, no framework)
+bun run typecheck    # svelte-check (compiles the i18n messages first)
+bun run build        # production build → build/ (`bun start` serves it)
+bun run check:i18n   # lint the translation catalogue
 ```
 
 Set `CAREER_OPS_ROOT=/path/to/checkout` in `web/.env.local` to point the app at
 a different career-ops directory (useful for testing against sample data).
-Root scripts such as `doctor.mjs` run from the checkout that holds `web/`, not
+Root scripts such as `doctor.ts` run from the checkout that holds `web/`, not
 from `CAREER_OPS_ROOT`; set `CAREER_OPS_CODE_ROOT` when the app runs outside it.
 
 Every route but build assets is gated by the same-origin + loopback guard in
-`src/lib/origin-guard.mjs`. Two opt-ins widen it, both unset by default and both in `web/.env.local`:
+`src/lib/origin-guard.ts`. Two opt-ins widen it, both unset by default and both in `web/.env.local`:
 `CAREER_OPS_WEB_ALLOWED_HOSTS` names extra non-loopback hosts the dashboard may
 answer on, and `CAREER_OPS_ALLOWED_ORIGINS` names origins allowed to call the
 API from outside the app — a comma- or space-separated list, no trailing slash.
@@ -108,7 +108,7 @@ from a `chrome-extension://` origin, which Fetch Metadata always reports as
 `cross-site`, so the guard refuses it unless the id is named here. The host
 layer still applies to an allowlisted origin.
 
-Pass one-off flags through npm's `--`: `npm run dev -- -p 4000`.
+Pass one-off flags through `bun run`'s `--`: `bun run dev -- -p 4000`.
 
 ### Exposing it beyond this machine
 
@@ -118,7 +118,7 @@ already reach on loopback and the socket opens, with the guard answering for
 loopback and the hosts you named:
 
 ```bash
-CAREER_OPS_WEB_ALLOWED_HOSTS="192.168.1.50" npm run dev
+CAREER_OPS_WEB_ALLOWED_HOSTS="192.168.1.50" bun run dev
 ```
 
 It is not an on/off switch, and it is not read as one: `off`, `false`, `no` and
@@ -183,7 +183,7 @@ falls back to every interface, which is what a namespace needs. A forwarded port
 the guard admits, so the port publication is the whole of the access control
 there: publish it on `127.0.0.1:3000:3000`, not `0.0.0.0`.
 
-You can also override the bind directly — `npm run dev -- --host 0.0.0.0`. When you
+You can also override the bind directly — `bun run dev -- --host 0.0.0.0`. When you
 pass `--host` (or the older `-H` / `--hostname` spellings, which the launcher
 accepts), the launcher injects nothing of its own: that value is the bind, so the
 startup line says the run may be reachable rather than claiming an address it
@@ -200,29 +200,27 @@ all and keeps the bind on loopback.
 ### Tests
 
 Suites live in `web/tests/`, mirroring the path of what they test under
-`web/src/` — so `src/lib/clean-chips.mjs` is tested by
-`tests/lib/clean-chips.test.mjs`. Name the file `{module}.test.mjs`.
+`web/src/` — so `src/lib/clean-chips.ts` is tested by
+`tests/lib/clean-chips.test.ts`. Name the file `{module}.test.ts`.
 
-Root-level scripts are the one exception: `server.mjs` is tested by
-`tests/lib/server-launcher.test.mjs`, because `test-all.mjs`'s parity check gates
+Root-level scripts are the one exception: `server.ts` is tested by
+`tests/lib/server-launcher.test.ts`, because `test-all.ts`'s parity check gates
 only `web/tests/lib/` and a suite outside it would never run in the required check.
 
-`npm test` discovers them with a glob (`tests/**/*.test.mjs`), so a new suite
-needs **no registration** — just add the file. **Requires Node ≥ 22**: earlier
-versions don't expand CLI globs for `node --test`, so `npm test` prints
-`Could not find '…'`, runs nothing and exits 1. Hence `engines.node` in
-`web/package.json` — a higher floor than `vite` itself asks for.
+`bun test` discovers them recursively (`tests/**/*.test.*`), so a new suite
+needs **no registration** — just add the file. `engines.bun` in
+`web/package.json` (1.4.3+, the same floor as the core's `lib/bun-floor.ts`)
+is what CI enforces.
 
 Three constraints follow from all this:
 
 - **Keep tests out of `src/`.** `src/` is the SvelteKit app's own tree, processed
   by `vite build` and typechecked by `svelte-check`; test files there entangle
   fixtures with build and route conventions.
-- **Use `.mjs`, not `.ts`.** There is no test framework and no TypeScript loader
-  by design — `node --test` cannot run a `.ts` suite, so one would look like
-  coverage and never execute. Extract the logic under test into a plain `.mjs`
-  module (the pattern `src/lib/pdf-paths.mjs` and `src/lib/pdf-render.mjs`
-  already follow) and import it from the test.
+- **Use `.ts`, not `.ts`.** There is no test framework by design, and the
+  suites stay plain `.ts` so they run on a bare checkout. Extract the logic
+  under test into a plain `.ts` module (the pattern `src/lib/pdf-paths.ts`
+  and `src/lib/pdf-render.ts` already follow) and import it from the test.
 - **Web suites use `node:test`; core suites don't.** Here you write
   `import { test } from "node:test"` with `node:assert/strict`. The root
   `tests/` suite deliberately uses neither — it has its own `pass`/`fail`
@@ -230,8 +228,8 @@ Three constraints follow from all this:
   requires the core suite to run on a bare clone with "no framework, not even
   `node:test`". Don't carry either style across the boundary.
 
-`tests/web-test-layout.test.mjs` in the **root** suite enforces all of the above
-on every PR, including that `npm test` never goes back to listing suites by name
+`tests/web-test-layout.test.ts` in the **root** suite enforces all of the above
+on every PR, including that `bun test` never goes back to listing suites by name
 ([#2360](https://github.com/career-ops-hq/career-ops/issues/2360)).
 
 ### Assistant conversations

@@ -4,11 +4,11 @@ import { pathToFileURL } from "node:url";
 import { careerOpsRoot } from "@/lib/career-ops";
 
 /**
- * ACL for the core's follow-ups file lock (`followup-seed.mjs`).
+ * ACL for the core's follow-ups file lock (`followup-seed.ts`).
  *
  * WHY A WEB ROUTE NEEDS IT. `data/follow-ups.md` is a read-modify-write from
  * two directions: the web's log/override routes AND the core's cadence seeder
- * (`followup-seed.mjs`, which takes this same lock). `atomicWrite` makes the
+ * (`followup-seed.ts`, which takes this same lock). `atomicWrite` makes the
  * WRITE atomic, not the read-modify-write around it — two writers each read the
  * whole file, each edit, each rename their full copy back, and one change
  * silently reverts. Same failure family as the tracker (#2900), same cure.
@@ -20,7 +20,7 @@ import { careerOpsRoot } from "@/lib/career-ops";
  * `withFollowupsWrite`), neither substitutes for the other.
  *
  * WE DO NOT DERIVE THE LOCK DIRECTORY. The core computes it from a sha256 of the
- * resolved path, entirely inside `followup-seed.mjs`. We import `withFollowupsLock`
+ * resolved path, entirely inside `followup-seed.ts`. We import `withFollowupsLock`
  * and pass our path; the core resolves the path and the lockDir. Recomputing the
  * hash web-side would birth a second body of the same truth that has to stay in
  * sync forever — the exact class of bug this whole change closes (#3034).
@@ -52,13 +52,13 @@ const modCache = new Map<string, CoreWithFollowupsLock>();
  *  exclude cross-process and the in-process queue alone is correct — see
  *  `withFollowupsLock` below. */
 async function loadCoreLock(): Promise<CoreWithFollowupsLock | null> {
-  const file = path.join(careerOpsRoot(), "followup-seed.mjs");
+  const file = path.join(careerOpsRoot(), "followup-seed.ts");
   const cached = modCache.get(file);
   if (cached) return cached;
   if (!fs.existsSync(file)) return null;
   const mod = await import(/* webpackIgnore: true */ pathToFileURL(file).href);
   if (typeof mod.withFollowupsLock !== "function") {
-    throw new Error("followup-seed.mjs has no withFollowupsLock export");
+    throw new Error("followup-seed.ts has no withFollowupsLock export");
   }
   const api = mod.withFollowupsLock as CoreWithFollowupsLock;
   modCache.set(file, api);

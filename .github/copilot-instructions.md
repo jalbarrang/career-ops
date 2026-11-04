@@ -8,17 +8,17 @@ This repository is two things at once, and which one you are working on depends 
 
 ## Setup, build and validate
 
-- Install: `npm install --ignore-scripts` (there is no lock file in the repo). Never install without `--ignore-scripts`, never add or upgrade dependencies.
-- Full suite: `node test-all.mjs --quick` (skips the dashboard build). Run it before you finish, every time.
-- One area: `node test-all.mjs --only <substring>` (for example `--only providers/themuse`).
-- Syntax: `npm run lint`.
-- Dashboard (Go): when you touched `dashboard/` or `templates/states.yml`, run `go test ./...` from `dashboard/`. CI runs it on every pull request, and it is the only check that the dashboard accepts every state in `templates/states.yml`; `node test-all.mjs` does not run it. Add `npm run build:dashboard` when you touched `dashboard/`.
-- New tests go in their own file under `tests/**/*.test.mjs` (auto-discovered). Never add a numbered section to `test-all.mjs`.
+- Install: `bun install --frozen-lockfile --ignore-scripts`. Never install without `--ignore-scripts`, never add or upgrade dependencies. `bun.lock` is committed; never replace it with another package manager's lockfile.
+- Full suite: `bun test-all.ts --quick` (skips the dashboard build). Run it before you finish, every time.
+- One area: `bun test-all.ts --only <substring>` (for example `--only providers/themuse`).
+- Syntax: `bun run lint`.
+- Dashboard (Go): when you touched `dashboard/` or `templates/states.yml`, run `go test ./...` from `dashboard/`. CI runs it on every pull request, and it is the only check that the dashboard accepts every state in `templates/states.yml`; `bun test-all.ts` does not run it. Add `bun run build:dashboard` when you touched `dashboard/`.
+- New tests go in their own file under `tests/**/*.test.ts` (auto-discovered). Never add a numbered section to `test-all.ts`.
 
 ## Files you must not touch
 
 - The **user layer** defined in `DATA_CONTRACT.md`: `cv.md`, `config/profile.yml`, `modes/_profile.md`, `modes/_custom.md`, `article-digest.md`, `portals.yml`, `data/`, `documents/`, `reports/`, `output/`, `interview-prep/`. These are the user's private files even when the repo ships an example.
-- The **control files**: `CLAUDE.md`, `AGENTS.md`, `modes/_shared.md`, `DATA_CONTRACT.md`, `update-system.mjs`, `updater-migration-tests.mjs`, anything under `.github/`, `package.json`, `package-lock.json`, everything under `plugins-registry/`, `plugins/_*.mjs`.
+- The **control files**: `CLAUDE.md`, `AGENTS.md`, `modes/_shared.md`, `DATA_CONTRACT.md`, `update-system.ts`, `updater-migration-tests.ts`, anything under `.github/`, `package.json`, `package-lock.json`, everything under `plugins-registry/`, `plugins/_*.ts`.
 - Anything under `web/` (owned by a separate track).
 
 If the task cannot be completed without touching one of these, stop and explain why in your report instead of doing it.
@@ -29,7 +29,7 @@ If the task cannot be completed without touching one of these, stop and explain 
 - Explain the root cause before the change. A symptom fix without a cause is not done.
 - Add a regression test for every bug fix when a test can express it.
 - Read the existing tests for the code you change before changing it.
-- Match the spelling of the codebase: ESM `.mjs`, no TypeScript, no new build steps.
+- Match the spelling of the codebase: ESM `.ts`, no TypeScript, no new build steps.
 - Never comment on issues or pull requests written by other people. Never close, label or assign anything. A human maintainer does all of that.
 - If the issue or pull request you were given has the label `good first issue`, `first-timers-only` or `help wanted`, or has an assignee, or the pull request belongs to another author: stop, do not modify anything, and report that the task is reserved for a person.
 

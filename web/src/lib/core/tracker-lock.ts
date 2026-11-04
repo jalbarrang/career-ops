@@ -3,7 +3,7 @@ import { pathToFileURL } from "node:url";
 import { careerOpsRoot } from "@/lib/career-ops";
 
 /**
- * ACL for the core's tracker lock (`tracker-utils.mjs`).
+ * ACL for the core's tracker lock (`tracker-utils.ts`).
  *
  * WHY A WEB ROUTE NEEDS IT. `atomicWrite` makes the WRITE atomic, not the
  * read-modify-write around it. Two writers each read the whole tracker, each
@@ -15,7 +15,7 @@ import { careerOpsRoot } from "@/lib/career-ops";
  *   row 2 → Evaluated   (wanted Interview)   ← lost, no error anywhere
  *
  * The other writer is not hypothetical: the web exists to be used ALONGSIDE the
- * CLI, and `set-status.mjs`, `mark-pdf-ready.mjs` and `reserve-report-num.mjs`
+ * CLI, and `set-status.ts`, `mark-pdf-ready.ts` and `reserve-report-num.ts`
  * all take this lock already.
  *
  * NOT `run-registry`'s acquireTrackerWrite(): that is an in-memory counter which
@@ -24,7 +24,7 @@ import { careerOpsRoot } from "@/lib/career-ops";
  * route looked protected.
  *
  * THE LOCK IS NOT REENTRANT (checked: no owner/pid self-check in
- * tracker-utils.mjs). So a caller holding it must never invoke a core script
+ * tracker-utils.ts). So a caller holding it must never invoke a core script
  * that takes it too — that self-deadlocks until the timeout. Direct writers only.
  *
  * A crashed holder does NOT wedge the tracker: `lockCanRecover` reads the
@@ -41,12 +41,12 @@ type LockDirFn = (trackerPath: string) => string;
 const modCache = new Map<string, { acquire: AcquireFn; lockDirFor: LockDirFn }>();
 
 async function loadCoreLock() {
-  const file = path.join(careerOpsRoot(), "tracker-utils.mjs");
+  const file = path.join(careerOpsRoot(), "tracker-utils.ts");
   const cached = modCache.get(file);
   if (cached) return cached;
   const mod = await import(/* webpackIgnore: true */ pathToFileURL(file).href);
   if (typeof mod.acquireTrackerLock !== "function" || typeof mod.trackerLockDirFor !== "function") {
-    throw new Error("tracker-utils.mjs has no acquireTrackerLock/trackerLockDirFor");
+    throw new Error("tracker-utils.ts has no acquireTrackerLock/trackerLockDirFor");
   }
   const api = { acquire: mod.acquireTrackerLock as AcquireFn, lockDirFor: mod.trackerLockDirFor as LockDirFn };
   modCache.set(file, api);
@@ -83,7 +83,7 @@ export async function withTrackerLock<T>(trackerFile: string, fn: () => T | Prom
     });
   } catch (e) {
     // The core tags ONLY the genuine-contention timeout with code LOCK_TIMEOUT
-    // (tracker-utils.mjs's own comment: "so callers can tell 'lock is busy,
+    // (tracker-utils.ts's own comment: "so callers can tell 'lock is busy,
     // retry later' apart from filesystem/configuration failures rethrown out
     // of the loop above"). A bare catch here converted EVERY error — including
     // ENOENT from a missing lock-dir parent, a broken checkout — into
@@ -91,7 +91,7 @@ export async function withTrackerLock<T>(trackerFile: string, fn: () => T | Prom
     // those never resolve by retrying. Anything not tagged propagates as-is.
     //
     // EACCES/EPERM is its own case, not "propagates as-is" like ENOENT: the
-    // core's isMkdirContention (pipeline-lock.mjs) treats EACCES/EPERM as
+    // core's isMkdirContention (pipeline-lock.ts) treats EACCES/EPERM as
     // contention too, because on Windows a lock dir mid-create/mid-remove by
     // another process answers with exactly those codes (#2777) — there is no
     // way to tell that apart from a genuine permission problem by code alone.

@@ -11,7 +11,7 @@ import (
 //
 // AGENTS.md and DATA_CONTRACT.md both say a relative CAREER_OPS_ROOT /
 // CAREER_OPS_TRACKER is "resolved relative to the repository root", and
-// path-resolver.mjs does that with no reference to cwd — it resolves against
+// path-resolver.ts does that with no reference to cwd — it resolves against
 // its own __dirname. This walker is what a relative CAREER_OPS_TRACKER goes
 // through, and main.go now defers to it rather than keeping a second search,
 // so the data root and the tracker cannot anchor to different directories.

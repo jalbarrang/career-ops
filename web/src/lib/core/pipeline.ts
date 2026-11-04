@@ -8,7 +8,7 @@ import type { DiscoveredOffer } from "./scan";
 /**
  * "Add to pipeline" — appends user-selected discovered offers to data/pipeline.md
  * AND records them in data/scan-history.tsv (so future scans dedup them). We reuse
- * the CANONICAL writers exported by the core's scan.mjs (`appendToPipeline`,
+ * the CANONICAL writers exported by the core's scan.ts (`appendToPipeline`,
  * `appendToScanHistory`) instead of re-implementing the line format / section
  * markers — single source of truth, per the web↔core contract. We invoke them in
  * a short-lived node process (cwd = the user's career-ops root) so the core's own
@@ -34,14 +34,14 @@ export function addOffersToPipeline(offers: DiscoveredOffer[]): Promise<AddResul
     }));
   if (clean.length === 0) return Promise.resolve({ added: 0 });
 
-  // Data-only / pre-scan-ats checkout has no scan.mjs writers → fail with an
+  // Data-only / pre-scan-ats checkout has no scan.ts writers → fail with an
   // actionable message instead of a silent added:0.
   if (!fs.existsSync(rootScript("scan"))) {
-    return Promise.resolve({ added: 0, error: "This checkout is data-only — the pipeline writer (scan.mjs) isn't available." });
+    return Promise.resolve({ added: 0, error: "This checkout is data-only — the pipeline writer (scan.ts) isn't available." });
   }
 
   const scanUrl = pathToFileURL(rootScript("scan")).href;
-  const localTodayUrl = pathToFileURL(path.join(careerOpsRoot(), "lib", "local-today.mjs")).href;
+  const localTodayUrl = pathToFileURL(path.join(careerOpsRoot(), "lib", "local-today.ts")).href;
   const code = `
 import { appendToPipeline, appendToScanHistory } from ${JSON.stringify(scanUrl)};
 import { localToday } from ${JSON.stringify(localTodayUrl)};
@@ -53,7 +53,7 @@ process.stdin.on("end", async () => {
     const offers = JSON.parse(input);
     // LOCAL calendar day, not the UTC one — west of Greenwich, an evening
     // add would otherwise stamp scan-history.tsv's first_seen a day ahead,
-    // opening scan.mjs's recheck/cooldown gate a day late for this row (#3070).
+    // opening scan.ts's recheck/cooldown gate a day late for this row (#3070).
     const date = localToday();
     await appendToPipeline(offers);
     await appendToScanHistory(offers, date, "added");

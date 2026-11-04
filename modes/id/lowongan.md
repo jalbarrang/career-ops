@@ -103,7 +103,7 @@ Sertakan juga:
 
 Simpan evaluasi lengkap ke `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
-- `{###}` = nomor urut berikutnya (3 digit, zero-padded). Untuk mengalokasikannya secara atomik dan menghindari race condition, kamu harus menjalankan `node reserve-report-num.mjs` untuk memesan nomor (stdout mengembalikan `{###}`), menulis report, lalu menjalankan `node reserve-report-num.mjs --release {###}` untuk melepas sentinel.
+- `{###}` = nomor urut berikutnya (3 digit, zero-padded). Untuk mengalokasikannya secara atomik dan menghindari race condition, kamu harus menjalankan `bun reserve-report-num.ts` untuk memesan nomor (stdout mengembalikan `{###}`), menulis report, lalu menjalankan `bun reserve-report-num.ts --release {###}` untuk melepas sentinel.
 - `{company-slug}` = nama perusahaan huruf kecil, tanpa spasi (gunakan tanda hubung)
 - `{YYYY-MM-DD}` = tanggal hari ini
 
@@ -152,7 +152,7 @@ Simpan evaluasi lengkap ke `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
 ### 2. Catat ke tracker
 
-**SELALU** catat ke tracker. Tulis TSV (aturan 9 di `_shared.md`) dan gabungkan dengan `node merge-tracker.mjs`; jangan pernah menulis baris langsung ke `data/applications.md`. Field:
+**SELALU** catat ke tracker. Tulis TSV (aturan 9 di `_shared.md`) dan gabungkan dengan `bun merge-tracker.ts`; jangan pernah menulis baris langsung ke `data/applications.md`. Field:
 - Nomor urut berikutnya
 - Tanggal hari ini
 - Perusahaan

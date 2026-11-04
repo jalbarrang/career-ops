@@ -19,5 +19,11 @@ RUN rm -f /etc/apt/sources.list /etc/apt/sources.list.d/nodesource.list \
     && fc-cache -f \
     && rm -rf /var/lib/apt/lists/*
 
+# Bun is this repository's package manager and script runner. Copied from the
+# official image rather than installed with `curl … | bash`, so the build never
+# runs a remote install script and the version is pinned by the image tag.
+COPY --from=oven/bun:1.4.3-debian /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx
+
 ENV TZ=UTC LANG=C.UTF-8 LC_ALL=C.UTF-8 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 WORKDIR /work

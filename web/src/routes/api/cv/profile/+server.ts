@@ -6,13 +6,13 @@ import os from "node:os";
 import path from "node:path";
 import * as yaml from "js-yaml";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
-import { rootScriptEnv } from "@/lib/core/root-env.mjs";
+import { rootScriptEnv } from "@/lib/core/root-env.ts";
 import { atomicWriteWithBackup } from "@/lib/core/safe-write";
-import { emptyProfile, ensureShape, parseValidationErrors, profileCounts, totalFacts, unverifiedCount } from "@/lib/cv-profile.mjs";
+import { emptyProfile, ensureShape, parseValidationErrors, profileCounts, totalFacts, unverifiedCount } from "@/lib/cv-profile.ts";
 
 // Read and write `data/career-profile.yml` for the builder.
 //
-// The core owns the schema and its validation (`career-profile.mjs validate`),
+// The core owns the schema and its validation (`career-profile.ts validate`),
 // so a save is only committed after the core has accepted the exact bytes about
 // to be written: dump -> temp file -> validate -> atomic replace. This module
 // never reimplements `validateProfile`, which is the rule that keeps a profile
@@ -39,7 +39,7 @@ type Validation = { checked: boolean; valid: boolean; errors: string[] };
 function validateWithCore(script: string, root: string, file: string): Promise<Validation> {
   return new Promise((resolve) => {
     execFile(
-      "node",
+      "bun",
       [script, "validate", file],
       { cwd: root, env: rootScriptEnv(root), timeout: VALIDATE_TIMEOUT_MS, maxBuffer: 1024 * 1024 },
       (err, stdout, stderr) => {

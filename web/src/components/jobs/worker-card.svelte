@@ -3,9 +3,9 @@
   import { AlertTriangle, Check, Loader2 } from "@lucide/svelte";
   import type { Job } from "@/lib/jobs.svelte";
   import { TONE, pillTone } from "@/lib/jobs-tone";
-  import { jobErrorHint } from "@/lib/job-error-hint.mjs";
+  import { jobErrorHint } from "@/lib/job-error-hint.ts";
   import { cn } from "@/lib/cn";
-  import { isFencingNotice } from "@/lib/cli-fencing.mjs";
+  import { isFencingNotice } from "@/lib/cli-fencing.ts";
   import type { Snippet } from "svelte";
 
   // Humanize raw agent tool names into what the user actually cares about, so a

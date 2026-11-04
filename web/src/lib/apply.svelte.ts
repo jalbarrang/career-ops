@@ -10,7 +10,7 @@ import { getContext, setContext } from "svelte";
 import { browser } from "$app/env";
 import type { ApplyField } from "@/lib/apply/extract";
 import type { ApplyIssue, DriveStep } from "@/lib/apply/issue";
-import { resolveLateSession } from "@/lib/apply/exit.mjs";
+import { resolveLateSession } from "@/lib/apply/exit.ts";
 
 export type FillStep = { fieldId: string; label: string; ok: boolean; thumb?: string };
 type Meta = { needsConfirmation?: boolean };

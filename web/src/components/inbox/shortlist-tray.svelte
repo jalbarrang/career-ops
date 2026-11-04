@@ -7,7 +7,7 @@
   import CompanyLogo from "@/components/company-logo.svelte";
   import CostBadge from "@/components/cost/cost-badge.svelte";
   import { cn } from "@/lib/cn";
-  import { formatRunCostEstimate } from "@/lib/run-cost-estimate.mjs";
+  import { formatRunCostEstimate } from "@/lib/run-cost-estimate.ts";
 
   // The persistent shortlist tray — bottom-sheet on mobile (thumb-zone), floating card
   // on desktop. "Score shortlist" is the ONLY token spend in the whole inbox: cost is

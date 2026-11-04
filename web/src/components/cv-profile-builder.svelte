@@ -41,7 +41,7 @@
     updateEntryLabel,
     updateFactText,
     updateRoleField,
-  } from "@/lib/cv-profile.mjs";
+  } from "@/lib/cv-profile.ts";
 
   type Fact = { id: string; text: string; review_status?: string; evidence?: { source?: string; line?: number; quote?: string } };
   type Evidence = { source?: string; line?: number; quote?: string };

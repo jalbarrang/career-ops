@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { resolveTailoredCover } from "@/lib/apply/cover";
-import { companySlug } from "@/lib/company-slug.mjs";
+import { companySlug } from "@/lib/company-slug.ts";
 
 // Serve the tailored cover letter the `cover` mode wrote to output/ for a given
 // offer. Inline so it opens in the browser. Local-first: reads the user's own

@@ -20,9 +20,9 @@
     isVerdictHeading,
     splitSections,
     verdictReason,
-  } from "@/lib/report-sections.mjs";
-  import { isStarTableHeader, parsePipeTable } from "@/lib/report-tables.mjs";
-  import { companyPresentation } from "@/lib/company-presentation.mjs";
+  } from "@/lib/report-sections.ts";
+  import { isStarTableHeader, parsePipeTable } from "@/lib/report-tables.ts";
+  import { companyPresentation } from "@/lib/company-presentation.ts";
 
   // Progressive disclosure of the report. Current oferta.md writes letter F as
   // Interview Plan (STAR+R), not a verdict — never promote by letter (#3416).

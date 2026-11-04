@@ -3,10 +3,10 @@ import { execFile, spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
-import { rootScriptEnv } from "@/lib/core/root-env.mjs";
-import { buildReviewInput, parseImportPreview, summarizeImportRun } from "@/lib/cv-import.mjs";
+import { rootScriptEnv } from "@/lib/core/root-env.ts";
+import { buildReviewInput, parseImportPreview, summarizeImportRun } from "@/lib/cv-import.ts";
 
-// The web review queue over `career-profile.mjs import --review`.
+// The web review queue over `career-profile.ts import --review`.
 //
 // The importer is the only thing that decides ids, evidence, merge rules and
 // the write (under the pipeline lock). This route runs it — GET for the preview
@@ -32,7 +32,7 @@ type RunResult = { code: number | null; stdout: string; stderr: string; error: s
 function runPreview(script: string, root: string): Promise<RunResult> {
   return new Promise((resolve) => {
     execFile(
-      "node",
+      "bun",
       [script, "import"],
       { cwd: root, env: rootScriptEnv(root), timeout: RUN_TIMEOUT_MS, maxBuffer: 8 * 1024 * 1024 },
       (err, stdout, stderr) => {
@@ -50,7 +50,7 @@ function runPreview(script: string, root: string): Promise<RunResult> {
 
 function runReview(script: string, root: string, input: string): Promise<RunResult> {
   return new Promise((resolve) => {
-    const child = spawn("node", [script, "import", "--review"], { cwd: root, env: rootScriptEnv(root) });
+    const child = spawn("bun", [script, "import", "--review"], { cwd: root, env: rootScriptEnv(root) });
     let stdout = "";
     let stderr = "";
     let settled = false;
@@ -91,7 +91,7 @@ export async function GET() {
   const root = careerOpsRoot();
   const script = rootScript("career-profile");
   if (!fs.existsSync(script)) {
-    return Response.json({ error: "career-profile.mjs is not in this checkout" }, { status: 501 });
+    return Response.json({ error: "career-profile.ts is not in this checkout" }, { status: 501 });
   }
 
   const run = await runPreview(script, root);
@@ -139,7 +139,7 @@ export async function POST({ request }: { request: Request }) {
   const root = careerOpsRoot();
   const script = rootScript("career-profile");
   if (!fs.existsSync(script)) {
-    return Response.json({ error: "career-profile.mjs is not in this checkout" }, { status: 501 });
+    return Response.json({ error: "career-profile.ts is not in this checkout" }, { status: 501 });
   }
 
   // Re-parse from the same command the decisions came from: positions are what

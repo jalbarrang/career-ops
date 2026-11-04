@@ -71,7 +71,7 @@ list — this system optimizes for quality, not quantity.
 ## Filters (apply BEFORE showing suggestions)
 
 1. **Dedup against existing coverage.** Mirror the matcher semantics in
-   `scan.mjs` (`buildTitleFilter` / `compileKeyword`): the scanner lowercases
+   `scan.ts` (`buildTitleFilter` / `compileKeyword`): the scanner lowercases
    both sides and keeps a job when any positive keyword is a
    case-insensitive substring of the title (2–3 letter keywords match on word
    boundaries instead). So drop any candidate title that an existing positive
@@ -198,7 +198,7 @@ a `-` at the start of a line.
 
 ## Error Handling
 
-- `cv.md` missing → stop and point at onboarding (`node doctor.mjs --json`).
+- `cv.md` missing → stop and point at onboarding (`bun doctor.ts --json`).
   There is no evidence base to suggest from, and inventing one is forbidden.
 - `portals.yml` missing, or `title_filter` / `title_filter.positive` absent or
   empty → **derive the list from `cv.md` here rather than sending the user away
@@ -214,7 +214,7 @@ a `-` at the start of a line.
   above all — is outside this mode's ownership and must survive the write
   unchanged.
 - `config/profile.yml` or `modes/_profile.md` missing → **hard stop**: do not
-  generate suggestions. Point at onboarding (`node doctor.mjs --json`) and
+  generate suggestions. Point at onboarding (`bun doctor.ts --json`) and
   stop, then re-run this mode once both files exist — the same
   fix-first-then-re-run behavior as a missing `portals.yml` above.
   Deal-breakers live in `modes/_profile.md` — suggestions generated without

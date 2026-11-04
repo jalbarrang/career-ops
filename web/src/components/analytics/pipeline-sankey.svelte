@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { buildPipelineSankey, layoutSankey } from "@/lib/pipeline-sankey.mjs";
+  import { buildPipelineSankey, layoutSankey } from "@/lib/pipeline-sankey.ts";
   import { cn } from "@/lib/cn";
 
   const TONE_NODE: Record<string, string> = {

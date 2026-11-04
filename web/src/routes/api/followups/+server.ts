@@ -1,10 +1,10 @@
 import { execFile } from "node:child_process";
 import fs from "node:fs";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
-import { selectDueFollowups, pickNextUpcoming } from "@/lib/core/followup-view.mjs";
+import { selectDueFollowups, pickNextUpcoming } from "@/lib/core/followup-view.ts";
 
 // The DEMAND loop: surface follow-ups due, via the core's own
-// followup-cadence.mjs --json (the SAME calculator the CLI uses) — we never
+// followup-cadence.ts --json (the SAME calculator the CLI uses) — we never
 // reimplement the cadence logic, we read its verdict (mirrors /api/doctor).
 // Default: capped list for the home card. `?full=1`: the complete cadence
 // (entries + metadata + cadenceConfig) for the /followups tracker page.
@@ -13,7 +13,7 @@ export async function GET({ url }: { url: URL }) {
   const script = rootScript("followup-cadence");
   if (!fs.existsSync(script)) return Response.json({ available: false, metadata: null, entries: [], nextUpcoming: null });
   const stdout = await new Promise<string>((resolve) => {
-    execFile("node", [script, "--json"], { cwd: careerOpsRoot(), timeout: 12_000 }, (err, out) => resolve(err ? "" : out || ""));
+    execFile("bun", [script, "--json"], { cwd: careerOpsRoot(), timeout: 12_000 }, (err, out) => resolve(err ? "" : out || ""));
   });
   try {
     const start = stdout.indexOf("{");

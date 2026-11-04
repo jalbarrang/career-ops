@@ -1,15 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { progressModel } from "@/lib/analytics/view-model.mjs";
+  import { progressModel } from "@/lib/analytics/view-model.ts";
 
-  // The cumulative funnel and its conversion rates, straight from stats.mjs via
-  // /api/stats. A client island rather than server-read because stats.mjs is
+  // The cumulative funnel and its conversion rates, straight from stats.ts via
+  // /api/stats. A client island rather than server-read because stats.ts is
   // spawned per request and can take a second on a large tracker — the rest of
   // Analytics should not wait behind it.
   //
   // Every number here is the core's. What this component decides is only whether
   // a number may be shown at all, and that decision lives in
-  // lib/analytics/view-model.mjs where it is unit-tested.
+  // lib/analytics/view-model.ts where it is unit-tested.
   let phase = $state<"loading" | "ready" | "unavailable">("loading");
   let model = $state<ReturnType<typeof progressModel> | null>(null);
 
@@ -31,7 +31,7 @@
     };
   });
 
-  // Quiet only for the one case that deserves it: stats.mjs not being reachable
+  // Quiet only for the one case that deserves it: stats.ts not being reachable
   // at all is an installation fact, and a red panel for it would be louder than
   // the fact deserves. An empty tracker is NOT that case — it is where every new
   // user starts, and rendering nothing there means the Conversion block simply
@@ -69,12 +69,12 @@
         <h2 class="font-display text-lg text-landing">Conversion</h2>
         <p class="text-xs text-faint">
           Cumulative — reaching a stage counts every stage before it, matching{" "}
-          <code class="text-muted">stats.mjs</code>
+          <code class="text-muted">stats.ts</code>
         </p>
       </div>
 
       {#if model.provisional}
-        <!-- stats.mjs's own smallSample flag. Said plainly, because three
+        <!-- stats.ts's own smallSample flag. Said plainly, because three
              percentages off a handful of applications look like a finding. -->
         <p class="mt-2 text-xs text-muted">
           Small sample so far — these rates will move a lot with each new outcome.

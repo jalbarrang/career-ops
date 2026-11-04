@@ -19,7 +19,7 @@ Aktif başvurular için takip ritmini (cadence) izle. Gecikmiş (overdue) takipl
 Şunu çalıştır:
 
 ```bash
-node followup-cadence.mjs
+bun followup-cadence.ts
 ```
 
 JSON çıktısını ayrıştır. Şunları içerir:
@@ -129,7 +129,7 @@ Her taslak için şunu göster:
 
 Kullanıcı inceleyip bir takip gönderdiğini söyledikten sonra, bunu kaydet:
 
-1. Eğer `data/follow-ups.md` yoksa, oluştur (tam olarak bu başlıkla — web arayüzünün yazdığıyla aynı; `followup-cadence.mjs` bu sütunları ayrıştırır):
+1. Eğer `data/follow-ups.md` yoksa, oluştur (tam olarak bu başlıkla — web arayüzünün yazdığıyla aynı; `followup-cadence.ts` bu sütunları ayrıştırır):
 
    ```markdown
    # Follow-ups
@@ -162,7 +162,7 @@ Kullanıcı inceleyip bir takip gönderdiğini söyledikten sonra, bunu kaydet:
 
 `#42` başvuru numarasıdır, ilk tarih sabitlenmiş (pinned) SONRAKİ takip tarihidir ve `(set …)` sabitlemenin yapıldığı gündür. Sabitlemeler, ayarlanan tarih veya sonrasında bir takip kaydedilene kadar hesaplanan programdan önceliklidir; başvuru başına en son sabitleme geçerli olur; satırı silmek sabitlemeyi temizler.
 
-Bir başvuru "Applied" (Başvuruldu) durumuna geçtiğinde sabitlemeler OTOMATİK olarak eklenebilir (seeded) — `apply` modunun Adım 9'u tarafından çalıştırılan `node followup-seed.mjs <num>`, ilk takibi "başvuru tarihi + `applied_first` ritmi" şeklinde planlayan bir sabitleme ekler. Ekleme (seeding) idempotenttır (tekrarı aynı sonucu verir) ve daha sonraki bir Rejected/Discarded geçişi tarafından geride bırakılan geçersiz bir sabitleme zararsızdır, çünkü ritim analizi eyleme dönüştürülemeyen durumları yok sayar.
+Bir başvuru "Applied" (Başvuruldu) durumuna geçtiğinde sabitlemeler OTOMATİK olarak eklenebilir (seeded) — `apply` modunun Adım 9'u tarafından çalıştırılan `bun followup-seed.ts <num>`, ilk takibi "başvuru tarihi + `applied_first` ritmi" şeklinde planlayan bir sabitleme ekler. Ekleme (seeding) idempotenttır (tekrarı aynı sonucu verir) ve daha sonraki bir Rejected/Discarded geçişi tarafından geride bırakılan geçersiz bir sabitleme zararsızdır, çünkü ritim analizi eyleme dönüştürülemeyen durumları yok sayar.
 
 ## Adım 6 — Özet
 
@@ -185,4 +185,4 @@ Tüm taslakları gösterdikten sonra özetle:
 | Responded | 1 gün (acil yanıt) | Her 3 günde bir | Sınır yok |
 | Interview | 1 gün sonra (teşekkür) | Her 3 günde bir | Sınır yok |
 
-Bu varsayılanlar `node followup-cadence.mjs --applied-days N` komutu ile geçersiz kılınabilir (override).
+Bu varsayılanlar `bun followup-cadence.ts --applied-days N` komutu ile geçersiz kılınabilir (override).

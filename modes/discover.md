@@ -47,20 +47,20 @@ reusable tool that feeds the scanner.
 
 You don't have to hand-write `companies.yml`. The scanners already log every
 company they touch in `data/scan-history.tsv`, including employers not yet in
-`portals.yml`. `discover-new-companies.mjs` reads that log, subtracts everything
+`portals.yml`. `discover-new-companies.ts` reads that log, subtracts everything
 already tracked, and emits the remainder in exactly the `companies: [{name}]`
 shape this mode consumes:
 
 ```bash
-node discover-new-companies.mjs --out /tmp/new.yml   # candidate list, writes nothing else
-node discover-ats.mjs --in /tmp/new.yml --summary     # preview boards, writes nothing
-node discover-ats.mjs --in /tmp/new.yml --write       # only after you review
+bun discover-new-companies.ts --out /tmp/new.yml   # candidate list, writes nothing else
+bun discover-ats.ts --in /tmp/new.yml --summary     # preview boards, writes nothing
+bun discover-ats.ts --in /tmp/new.yml --write       # only after you review
 ```
 
 Companies on `data/blacklist.md` (by name, or a domain-scope host on any of
 their history rows) are subtracted too, and counted as `blacklistedSkipped`.
 It writes only the candidate list; `portals.yml` stays touched exclusively by
-`discover-ats.mjs --write`. Companies are deduped on their canonical name (via
+`discover-ats.ts --write`. Companies are deduped on their canonical name (via
 `buildCompanyCanonicalizer`), so alias drift doesn't resurface a configured
 board. Useful flags: `--since <days>`, `--min-rows <n>`, `--added-only`,
 `--limit <n>`, `--summary`, `--json`.
@@ -70,7 +70,7 @@ board. Useful flags: `--since <days>`, `--min-rows <n>`, `--added-only`,
 Preview (the default — writes nothing, prints the entries it would add):
 
 ```bash
-node discover-ats.mjs --in companies.yml
+bun discover-ats.ts --in companies.yml
 ```
 
 Write — the user must explicitly opt in with `--write` to modify `portals.yml`
@@ -78,21 +78,21 @@ Write — the user must explicitly opt in with `--write` to modify `portals.yml`
 it does not create a Git commit:
 
 ```bash
-node discover-ats.mjs --in companies.yml --write
+bun discover-ats.ts --in companies.yml --write
 ```
 
 Other forms:
 
 ```bash
-node discover-ats.mjs Stripe Ramp Mollie          # names as positional args
-node discover-ats.mjs --in companies.yml --summary # human-readable table
-node discover-ats.mjs --in companies.yml --vendors gh,ashby  # restrict probes
-node discover-ats.mjs --in companies.yml --vendors workday   # Workday only
-node discover-ats.mjs --in companies.yml --small-threshold 10 # what counts as a small board
+bun discover-ats.ts Stripe Ramp Mollie          # names as positional args
+bun discover-ats.ts --in companies.yml --summary # human-readable table
+bun discover-ats.ts --in companies.yml --vendors gh,ashby  # restrict probes
+bun discover-ats.ts --in companies.yml --vendors workday   # Workday only
+bun discover-ats.ts --in companies.yml --small-threshold 10 # what counts as a small board
 ```
 
 A resolved board that lists few postings (5 or fewer by default, the same
-threshold `audit-portals.mjs` uses; `--small-threshold 0` turns it off) is still
+threshold `audit-portals.ts` uses; `--small-threshold 0` turns it off) is still
 resolved, but it is flagged: `smallBoard: true` in the JSON, a
 `[small board — verify ownership]` marker in `--summary`, and a `# verify:`
 comment on the entry `--write` appends. It is a prompt to check the board is the

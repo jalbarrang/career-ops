@@ -12,7 +12,7 @@
   import TriageRow, { type RowScore } from "./triage-row.svelte";
   import ShortlistTray, { type ShortItem } from "./shortlist-tray.svelte";
   import { cn } from "@/lib/cn";
-  import { estimateRunCost } from "@/lib/run-cost-estimate.mjs";
+  import { estimateRunCost } from "@/lib/run-cost-estimate.ts";
 
   const SHORTLIST_KEY = "career-ops:shortlist";
   const HIDDEN_KEY = "career-ops:hidden";

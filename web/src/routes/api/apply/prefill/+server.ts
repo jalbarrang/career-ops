@@ -5,10 +5,10 @@ import { cliSubstitutionNotice, cliUnavailableError, resolveCliOrFallback } from
 import { careerOpsRoot, readMemory } from "@/lib/career-ops";
 import { getSession } from "@/lib/apply/session";
 import { resolveSessionCv } from "@/lib/apply/cv";
-import { applyCvSource } from "@/lib/apply/cv-source.mjs";
-import { buildAnswerPrompt } from "@/lib/apply/answer-prompt.mjs";
+import { applyCvSource } from "@/lib/apply/cv-source.ts";
+import { buildAnswerPrompt } from "@/lib/apply/answer-prompt.ts";
 import { runPlanner } from "@/lib/apply/planner";
-import { extractJsonObject } from "@/lib/extract-json-object.mjs";
+import { extractJsonObject } from "@/lib/extract-json-object.ts";
 
 // AI pre-fill (STREAMING NDJSON). The user's BYO CLI (read-only PLANNER — no
 // browser access) drafts an answer per field from cv.md / profile / the job's

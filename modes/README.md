@@ -65,7 +65,7 @@ table in `AGENTS.md` (mirrored in `CLAUDE.md`).
 | `_writing.md` | Shared writing guidance (Voice DNA, writing style, ATS rules) loaded by modes that write candidate-facing prose |
 
 Your copies (`_profile.md`, `_custom.md`, `_brief.md`) are user-layer files: gitignored
-and never touched by `update-system.mjs` (see
+and never touched by `update-system.ts` (see
 [DATA_CONTRACT.md](../DATA_CONTRACT.md)).
 
 ## Subdirectories

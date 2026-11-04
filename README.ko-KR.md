@@ -98,7 +98,7 @@
 오늘 밤 지원하려던 공고 하나를 붙여 넣어 보세요. <em>지원하지 않음</em>으로 돌아오면, 방금 그 밤을 되찾은 겁니다. 계획과 함께 돌아오면, 다음에 할 일을 아는 겁니다.
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 <p align="center"><sub>오픈 소스. 로컬 실행. 이미 쓰고 있는 AI CLI 안에서. <a href="docs/RUNNING_ON_A_BUDGET.md">무료 모델과 로컬 모델 포함.</a></sub></p>
@@ -159,7 +159,7 @@ career-ops는 구직자에게 영원히 무료입니다. 다음 기업들이 이
 
 ## career-ops가 하지 않는 일
 
-- **지원서를 자동으로 제출하기.** 모든 항목의 답변 초안을 씁니다. 검토하고 제출 버튼을 누르는 것은 당신입니다. 스크립트는 절대 POST를 보내지 않습니다 (`prepare-application.mjs`).
+- **지원서를 자동으로 제출하기.** 모든 항목의 답변 초안을 씁니다. 검토하고 제출 버튼을 누르는 것은 당신입니다. 스크립트는 절대 POST를 보내지 않습니다 (`prepare-application.ts`).
 - **이메일 발송.** 초안만 작성합니다. 이 코드베이스 어디에도 메일 전송 기능은 없습니다.
 - **외부로 데이터 전송.** 텔레메트리도, 우리 쪽 백엔드도 없습니다. 당신의 이력서는 당신의 컴퓨터에서 당신이 고른 AI 제공자에게만 갑니다. 유일한 공개 기록은 이 저장소, 즉 `HIRED.md`와 그 이슈들입니다.
 - **4.0/5 미만 공고에 지원하라고 재촉.** 지원하지 말라고 말합니다. 무시할 수 있고, 그러면 그렇다고 알려줍니다.
@@ -175,7 +175,7 @@ career-ops는 구직자에게 영원히 무료입니다. 다음 기업들이 이
 | **ATS PDF 생성**       | 당신 자신의 경험을 바탕으로 JD마다 맞춘, ATS가 읽을 수 있는 이력서 (Space Grotesk + DM Sans 디자인)                                   |
 | **자기소개서 생성기**  | 리서치 기반 자기소개서: 키워드 미러링, 네 가지 대화형 관점 질문(이유/문제/접근/톤), 채팅 내 초안 승인 게이트, 이력서와 동일한 HTML + Playwright 파이프라인을 통한 A4 PDF. 평가할 때마다 자동으로 초안을 만들고, `/career-ops cover`로 필요할 때 완성하고 생성합니다 |
 | **이력서 너머**        | 기업 리서치([`deep`](modes/deep.md))는 AI 전략, 최근 동향, 엔지니어링 문화, 그리고 당신의 프로필이 취해야 할 각도를 드러냅니다. 연락처 발굴([`contacto`](modes/contacto.md))은 연락할 가치가 있는 채용 매니저, 리크루터, 팀 동료를 찾아내고 연락처 유형에 맞춘 300자 이하의 LinkedIn 메시지 초안을 작성합니다. 정식 지원 이메일 초안([`email`](modes/email.md))은 평가된 리포트나 붙여넣은 JD를 제목, 본문, 첨부 체크리스트로 바꿔주되 아무것도 보내거나 제출하거나 클릭하지 않습니다. 지원서는 당신을 대기열에 넣어주고, 리서치는 대화를 만들어 줍니다. |
-| **패턴 분석**          | 거절 패턴과 ATS 채널별 진행률(`analyze-patterns.mjs`), 전체 구직 퍼널 통계(`stats.mjs`), 유령 채용의 신호일 수 있는 재게시 감지(`detect-reposts.mjs`) |
+| **패턴 분석**          | 거절 패턴과 ATS 채널별 진행률(`analyze-patterns.ts`), 전체 구직 퍼널 통계(`stats.ts`), 유령 채용의 신호일 수 있는 재게시 감지(`detect-reposts.ts`) |
 
 <details>
 <summary><b>그 밖에 하는 모든 것</b></summary>
@@ -192,8 +192,8 @@ career-ops는 구직자에게 영원히 무료입니다. 다음 기업들이 이
 | **Dashboard TUI**      | 터미널 UI에서 파이프라인 탐색, 필터링, 정렬                                                                                         |
 | **파이프라인 무결성**  | 자동 병합, 중복 제거, 상태 정규화, 헬스 체크                                                                                        |
 | **면접 스위트**        | 시간 블록 단위의 준비 계획, 피드백이 있는 연습 세션, 면접 후 디브리핑([`interview/`](modes/interview/README.md)), 그리고 기업 위험 신호 감지기([`interview-redflag`](modes/interview-redflag.md)) |
-| **오퍼 단계**          | 계약서 읽기 도우미: 조항별 검토와 변호사에게 물어볼 질문 목록([`offer-prep`](modes/offer-prep.md)), 그리고 희망/공고/실제 연봉 격차 분석기(`salary-gap.mjs`) |
-| **팔로업과 답신**      | 팔로업 주기 계산기와 미리 심어둔 리마인더(`followup-cadence.mjs`, `followup-seed.mjs`); 고용주 답신을 트래커 업데이트로 분류([`reply-watch`](modes/reply-watch.md)) |
+| **오퍼 단계**          | 계약서 읽기 도우미: 조항별 검토와 변호사에게 물어볼 질문 목록([`offer-prep`](modes/offer-prep.md)), 그리고 희망/공고/실제 연봉 격차 분석기(`salary-gap.ts`) |
+| **팔로업과 답신**      | 팔로업 주기 계산기와 미리 심어둔 리마인더(`followup-cadence.ts`, `followup-seed.ts`); 고용주 답신을 트래커 업데이트로 분류([`reply-watch`](modes/reply-watch.md)) |
 | **플러그인 시스템**    | 선택적 연동(Gmail, Notion, Apify + 커뮤니티 레지스트리), 기본적으로 비활성화. [docs/PLUGINS.md](docs/PLUGINS.md) 참고               |
 
 </details>
@@ -203,7 +203,7 @@ career-ops는 구직자에게 영원히 무료입니다. 다음 기업들이 이
 **가장 빠른 방법, 명령 하나로:**
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 > 💡 `npx`는 [Node.js](https://nodejs.org)에 포함되어 있습니다: 전역으로 아무것도 설치하지 않고
@@ -224,8 +224,8 @@ claude   # or codex / qwen / opencode / agy / grok — open your AI CLI here
 
 ```bash
 git clone https://github.com/career-ops-hq/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # only needed for PDF generation
+cd career-ops && bun install
+bunx playwright install chromium   # only needed for PDF generation
 # On a non-Debian/Ubuntu Linux distro (Fedora, Arch, ...), Chromium's system
 # libraries aren't installed by the line above — install them yourself with
 # your distro's package manager if PDF generation fails to launch the browser
@@ -256,14 +256,14 @@ claude   # or codex / opencode / qwen / agy / grok
 ### 전역 설치
 
 ```bash
-npm i -g @santifer/career-ops
+bun add -g @santifer/career-ops
 ```
 
 이렇게 하면 `career-ops` 바이너리가 전역으로 설치되어 `npx` 없이 `career-ops init [folder]`를 실행할 수 있습니다. `init`이 유일한 명령입니다. 작업 공간을 만들 뿐이며, 그 이후의 모든 작업은 이 바이너리가 아니라 AI 코딩 CLI 안에서 이루어집니다(아래 사용법 참고).
 
 **어떤 것을 써야 할까요?**
-- `npx @santifer/career-ops init`: 처음 사용할 때 가장 좋습니다. 전용 프로젝트 폴더를 만듭니다.
-- `npm i -g @santifer/career-ops`: `npx` 형식보다 `career-ops init`을 입력하는 편이 좋을 때. 다른 명령은 추가되지 않습니다.
+- `bunx @santifer/career-ops init`: 처음 사용할 때 가장 좋습니다. 전용 프로젝트 폴더를 만듭니다.
+- `bun add -g @santifer/career-ops`: `npx` 형식보다 `career-ops init`을 입력하는 편이 좋을 때. 다른 명령은 추가되지 않습니다.
 
 > **이 시스템은 당신의 AI 코딩 CLI가 직접 커스터마이즈하도록 설계되었습니다.** 모드, 아키타입, 점수 가중치, 협상 스크립트: 바꿔 달라고 말하기만 하면 됩니다. CLI가 자신이 사용하는 파일을 그대로 읽기 때문에 무엇을 편집해야 하는지 정확히 알고 있습니다.
 
@@ -454,13 +454,13 @@ cp .env.example .env
 # Edit .env, set GEMINI_API_KEY=your_key_here
 
 # 2. Install dependencies
-npm install
+bun install
 
 # 3. Evaluate a job description
-node gemini-eval.mjs "We are looking for a Senior AI Engineer..."
-node gemini-eval.mjs --file ./jds/my-job.txt
-node agent-inbox.mjs add "..."   # queue a request for the next session
-npm run gemini:eval -- "JD text here"
+bun gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun gemini-eval.ts --file ./jds/my-job.txt
+bun agent-inbox.ts add "..."   # queue a request for the next session
+bun run gemini:eval -- "JD text here"
 ```
 
 > **무료 티어:** 두 옵션 모두 결제 없이 동작합니다. 네이티브 CLI는 Google OAuth를 사용하고, API 스크립트는 `gemini-3.6-flash`를 사용합니다(요청 제한은 모델과 티어에 따라 다르며, 현재 쿼터는 Google AI 문서를 참고하세요).
@@ -480,10 +480,10 @@ npm run gemini:eval -- "JD text here"
 
 **검색되는 채용 사이트:** 55개 이상의 프로바이더 모듈이 ATS API, 사이트 전체 피드, XML/RSS 피드, 마크다운 피드, 로컬 파서를 다룹니다. 전체 표는 [지원되는 채용 사이트](docs/SUPPORTED_JOB_BOARDS.md)를 참고하세요.
 
-기본적으로 `node scan.mjs`(즉 `npm run scan`)는 각 ATS 피드가 반환하는 내용을 신뢰합니다. 일부 기업은 채용이 끝난 뒤에도 공개 API에 오래된 공고를 남겨두기 때문에, 만료된 항목이 `pipeline.md`로 흘러들 수 있습니다. `--verify`를 넘기면 API 단계 후에 Playwright를 실행해 만료된 공고가 파이프라인에 들어가기 전에 걸러냅니다:
+기본적으로 `bun scan.ts`(즉 `bun run scan`)는 각 ATS 피드가 반환하는 내용을 신뢰합니다. 일부 기업은 채용이 끝난 뒤에도 공개 API에 오래된 공고를 남겨두기 때문에, 만료된 항목이 `pipeline.md`로 흘러들 수 있습니다. `--verify`를 넘기면 API 단계 후에 Playwright를 실행해 만료된 공고가 파이프라인에 들어가기 전에 걸러냅니다:
 
 ```bash
-node scan.mjs --verify          # zero-token discovery + Playwright liveness check
+bun scan.ts --verify          # zero-token discovery + Playwright liveness check
 ```
 
 검증은 순차적으로, 새 공고에 대해서만(중복 제거 후) 실행되므로 비용은 제한적입니다.
@@ -493,8 +493,8 @@ node scan.mjs --verify          # zero-token discovery + Playwright liveness che
 내장된 터미널 대시보드로 파이프라인을 시각적으로 탐색할 수 있습니다:
 
 ```bash
-npm run serve:dashboard   # launch the TUI
-npm run build:dashboard   # optional: build the standalone binary
+bun run serve:dashboard   # launch the TUI
+bun run build:dashboard   # optional: build the standalone binary
 ```
 
 기능: 10개의 필터 탭, 8가지 정렬 모드, 그룹/플랫 보기, 지연 로딩 미리보기, 인라인 상태 변경.
@@ -556,9 +556,9 @@ career-ops/
 
 - **트래커 재정의:** `CAREER_OPS_TRACKER`를 설정해 지원 트래커 파일 경로를 직접 지정할 수도 있습니다.
 - **쓰기:** 모든 쓰기 작업(병합 등)은 표준적으로 `{DATA_ROOT}/data/applications.md`를 대상으로 합니다.
-- **스캐너 설정:** `portals.yml`은 `{DATA_ROOT}/portals.yml`에서 읽고 검증하므로, `node validate-portals.mjs`는 `scan.mjs`가 읽는 것과 같은 파일을 검사합니다.
+- **스캐너 설정:** `portals.yml`은 `{DATA_ROOT}/portals.yml`에서 읽고 검증하므로, `bun validate-portals.ts`는 `scan.ts`가 읽는 것과 같은 파일을 검사합니다.
 - **생성된 문서:** 맞춤 이력서와 자기소개서는 `{DATA_ROOT}/output/` 아래에 쓰이고, 이를 리포트와 연결하는 PDF 매니페스트는 `{DATA_ROOT}/data/pdf-index.tsv`에 있습니다. `CAREER_OPS_TRACKER`가 설정되지 않은 동안에는 이런 쓰기의 범위를 정하는 트래커 작업 공간이 체크아웃이 아니라 데이터 루트입니다.
-- **트래커 재정의 시의 PDF:** `generate-pdf.mjs`는 작업 공간을 정하기 전에 `CAREER_OPS_TRACKER`를 먼저 확인하므로, 재정의가 설정되어 있으면 작업 공간은 그 트래커가 있는 폴더(트래커가 `data/` 폴더에 있으면 그 상위 폴더)가 됩니다. 이때 이력서의 HTML과 모든 PDF는 그 작업 공간 안에 있어야 하며, 매니페스트는 그곳의 `data/pdf-index.tsv`로 옮겨집니다. 자기소개서는 계속 `{DATA_ROOT}/output/`을 대상으로 하므로, 그 폴더가 트래커 작업 공간 밖에 있으면 거부됩니다.
+- **트래커 재정의 시의 PDF:** `generate-pdf.ts`는 작업 공간을 정하기 전에 `CAREER_OPS_TRACKER`를 먼저 확인하므로, 재정의가 설정되어 있으면 작업 공간은 그 트래커가 있는 폴더(트래커가 `data/` 폴더에 있으면 그 상위 폴더)가 됩니다. 이때 이력서의 HTML과 모든 PDF는 그 작업 공간 안에 있어야 하며, 매니페스트는 그곳의 `data/pdf-index.tsv`로 옮겨집니다. 자기소개서는 계속 `{DATA_ROOT}/output/`을 대상으로 하므로, 그 폴더가 트래커 작업 공간 밖에 있으면 거부됩니다.
 - **코드 계층은 그대로:** `node_modules/`, `providers/`, `modes/`, 그리고 스크립트 자체는 항상 저장소를 기준으로 찾으며, 데이터 루트를 기준으로 하지 않습니다.
 
 Go 대시보드 TUI, Node.js 스크립트, AI 에이전트 모드 모두 이 결정 순서를 자동으로 따릅니다.
@@ -617,7 +617,7 @@ Go 대시보드 TUI, Node.js 스크립트, AI 에이전트 모드 모두 이 결
 career-ops([career-ops.org](https://career-ops.org), **careerops**라고도 부릅니다)는 당신의 AI 코딩 CLI(Claude Code, Codex, OpenCode 등) 안에서 로컬로 실행되는 오픈 소스 AI 구직 도구로, 모든 결정을 당신에게 맡깁니다. 이력서 기준으로 채용 공고를 평가하고, ATS 맞춤 PDF를 생성하고, 연락할 적임자를 찾고, 모든 것을 한곳에서 추적합니다: 최종 결정은 항상 당신의 몫입니다. [CareerOps 매니페스토](https://career-ops.org/manifesto)의 첫 번째 참조 구현입니다.
 
 **맞춤 이력서가 없는 내용을 지어낼 수 있나요?**
-그래서는 안 되며, 프롬프트에도 그렇게 적혀 있습니다: 다듬되, 절대 지어내지 않는다. `generate-pdf`는 당신의 원본 자료에 없는 숫자나 사실이 담긴 이력서를 막습니다(`--skip-fact-check`를 넘기지 않는 한). `pdf` 모드는 `cv-title-check.mjs`도 실행합니다. 맞춤 이력서의 각 직함을 cv.md에 적힌 같은 경력(회사와 기간으로 대조)의 직함과 비교하고, 다른 것이 있으면 유지할지 되돌릴지 묻습니다. 직함을 달리 표현하는 것이 당신의 선택일 때도 있으므로 경고만 하고 막지는 않습니다. 바꿔 쓴 표현을 판단하는 검사는 아직 없습니다: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (실패 시 차단하는 충실도 검사)이 이를 추적합니다. 그때까지는 보내기 전에 모든 이력서를 읽어보세요. [법적 고지](LEGAL_DISCLAIMER.md)에도 같은 내용이 더 길게 적혀 있습니다.
+그래서는 안 되며, 프롬프트에도 그렇게 적혀 있습니다: 다듬되, 절대 지어내지 않는다. `generate-pdf`는 당신의 원본 자료에 없는 숫자나 사실이 담긴 이력서를 막습니다(`--skip-fact-check`를 넘기지 않는 한). `pdf` 모드는 `cv-title-check.ts`도 실행합니다. 맞춤 이력서의 각 직함을 cv.md에 적힌 같은 경력(회사와 기간으로 대조)의 직함과 비교하고, 다른 것이 있으면 유지할지 되돌릴지 묻습니다. 직함을 달리 표현하는 것이 당신의 선택일 때도 있으므로 경고만 하고 막지는 않습니다. 바꿔 쓴 표현을 판단하는 검사는 아직 없습니다: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (실패 시 차단하는 충실도 검사)이 이를 추적합니다. 그때까지는 보내기 전에 모든 이력서를 읽어보세요. [법적 고지](LEGAL_DISCLAIMER.md)에도 같은 내용이 더 길게 적혀 있습니다.
 
 **career-ops를 무료로, 또는 더 저렴한 모델이나 로컬 모델로 쓸 수 있나요?**
 네. career-ops는 CLI에 종속되지 않으며 무료 및 로컬 모델(OpenRouter 무료 모델, Ollama, 또는 OpenAI 호환 엔드포인트)에서 실행되므로 유료 구독에 묶이지 않습니다. 전체 설정은 [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md)를 참고하세요.

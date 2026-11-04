@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { codexStreamArgs, isFatalClaudeStderr, isFatalCodexStderr, parseClaudeEvent, parseCodexEvent, parseGrokEvent } from "./run-cli-support.mjs";
-import { installedCliIds, pickUsableCli } from "./cli-pick.mjs";
+import { codexStreamArgs, isFatalClaudeStderr, isFatalCodexStderr, parseClaudeEvent, parseCodexEvent, parseGrokEvent } from "./run-cli-support.ts";
+import { installedCliIds, pickUsableCli } from "./cli-pick.ts";
 
 // Server-only (node imports). The agnostic runtimes career-ops can delegate to
 // in headless mode (AGENTS.md). Install URLs from career-ops-docs.
@@ -21,14 +21,14 @@ export type CliSpec = {
    * understands events. Absent → that caller falls back to `args`.
    *
    * INVARIANT: `parseEvent` only applies to output produced by THIS argv (for
-   * claude, by claude-invocation.mjs's `claudeCliArgs`, which spells its own
+   * claude, by claude-invocation.ts's `claudeCliArgs`, which spells its own
    * `--output-format stream-json`). Pairing one CLI's parser with a plain-text
    * invocation yields a silent stream of unparseable lines. */
   streamArgs?: (prompt: string) => string[];
   /** Structured-output CLIs only: parse one stdout line into dashboard events.
    * Absent → the route streams stdout as raw text (the default for every CLI
    * without its own structured output format). */
-  parseEvent?: (line: string) => import("./run-cli-support.mjs").ParsedEvent | null;
+  parseEvent?: (line: string) => import("./run-cli-support.ts").ParsedEvent | null;
   /** Structured-output CLIs only: decide whether a stderr line is fatal.
    * Absent → the route falls back to the shared generic error regex. */
   stderrIsFatal?: (line: string) => boolean;
@@ -39,7 +39,7 @@ export type CliSpec = {
  *
  * The permission model is per-worker AND per-CLI, but only one axis is written
  * down: WRITE_CAPABLE_TOOLS and the per-kind deny lists live in
- * claude-invocation.mjs — i.e. on Claude's path. A new CLI arriving with a
+ * claude-invocation.ts — i.e. on Claude's path. A new CLI arriving with a
  * blanket auto-approve flag (`--always-approve`, `--yolo`,
  * `--dangerously-skip-permissions`, `--yes`) is not breaking that rule; it is
  * entering where the rule does not exist.
@@ -54,7 +54,7 @@ export type CliSpec = {
  * to make a runtime work is a core architecture issue, not a line inside a
  * CLI-support PR.
  *
- * Enforced by tests/lib/clis-permissions.test.mjs, because a rule that only
+ * Enforced by tests/lib/clis-permissions.test.ts, because a rule that only
  * lives in a comment is a rule the next contributor may never read.
  */
 export const KNOWN: CliSpec[] = [
