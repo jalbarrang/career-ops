@@ -20,7 +20,7 @@ import assert from "node:assert/strict";
 import { evaluatedKeys, isEvaluated, suppressionKey } from "../../src/lib/whats-new-suppression.ts";
 import { normalizeTextKey as norm } from "../../src/lib/core/normalize-text-key.ts";
 
-const evaluatedAt = (...pairs) => evaluatedKeys(pairs.map(([company, role]) => ({ company, role })), norm);
+const evaluatedAt = (...pairs: Array<[string, string]>) => evaluatedKeys(pairs.map(([company, role]) => ({ company, role })), norm);
 
 test("a sibling role at an evaluated employer is NOT suppressed", () => {
   // The bug: evaluating one Google role hid every Google role forever.
@@ -87,5 +87,5 @@ test("missing rows and fields do not throw", () => {
   assert.equal(evaluatedKeys(undefined, norm).size, 0);
   assert.equal(evaluatedKeys([{}], norm).size, 0);
   const keys = evaluatedAt(["Acme", "Staff Engineer"]);
-  assert.equal(isEvaluated(keys, norm, undefined, undefined), false);
+  assert.equal(isEvaluated(keys, norm, "", ""), false);
 });

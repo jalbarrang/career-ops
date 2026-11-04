@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { reviewHeadline, summarizeCheck, summarizeDoctor, toDetailLines } from "../../src/lib/cv-review.ts";
+import {
+  reviewHeadline,
+  summarizeCheck,
+  summarizeDoctor,
+  toDetailLines,
+  type ReviewCheck,
+} from "../../src/lib/cv-review.ts";
 
 // The fixtures below are verbatim output from the three core commands, run
 // against a real cv.md and against a scratch data root. They are here because
@@ -105,10 +111,10 @@ test("doctor's structured arrays become one row, and missing files outrank warni
 });
 
 test("reviewHeadline ranks failures over warnings, and an all-skip run is not a pass", () => {
-  const pass = { id: "a", label: "A", status: "pass", summary: "", details: [] };
-  const warn = { ...pass, id: "b", status: "warn" };
-  const fail = { ...pass, id: "c", status: "fail" };
-  const skip = { ...pass, id: "d", status: "skip" };
+  const pass: ReviewCheck = { id: "a", label: "A", status: "pass", summary: "", details: [] };
+  const warn: ReviewCheck = { ...pass, id: "b", status: "warn" };
+  const fail: ReviewCheck = { ...pass, id: "c", status: "fail" };
+  const skip: ReviewCheck = { ...pass, id: "d", status: "skip" };
 
   assert.equal(reviewHeadline([pass, warn, fail]), "1 check(s) failed");
   assert.equal(reviewHeadline([pass, warn]), "1 check(s) need a look");
@@ -122,5 +128,7 @@ test("toDetailLines de-duplicates and caps without pretending the list is comple
   const lines = toDetailLines(`dup\ndup\n${many}`);
   assert.equal(lines.filter((line) => line === "dup").length, 1);
   assert.equal(lines.length, 40);
-  assert.match(lines.at(-1), /more finding\(s\) not shown$/);
+  const last = lines.at(-1);
+  assert.ok(last, "the capped list must not be empty");
+  assert.match(last, /more finding\(s\) not shown$/);
 });

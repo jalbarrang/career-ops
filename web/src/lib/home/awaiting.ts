@@ -4,7 +4,7 @@ import { canonStatus } from "../status-alias.ts";
 // anyway ("Evaluated 2026-08-21") and /^evaluat/i tolerated that. canonStatus()
 // is an exact-match alias table, so the date comes off before folding —
 // otherwise this narrows the very case the existing suite already pins.
-const baseStatus = (s) => String(s ?? "").replace(/\s+\d{4}-\d{2}-\d{2}\s*$/, "").trim();
+const baseStatus = (s: unknown): string => String(s ?? "").replace(/\s+\d{4}-\d{2}-\d{2}\s*$/, "").trim();
 
 /**
  * Which scored-but-undecided applications the Today page shows, and in what
@@ -38,10 +38,14 @@ const baseStatus = (s) => String(s ?? "").replace(/\s+\d{4}-\d{2}-\d{2}\s*$/, ""
  * @param {number} [limit]  how many cards the caller renders
  * @returns {T[]}
  */
-export function pickAwaitingDecision(applications, scoreOf, limit = 6) {
+export function pickAwaitingDecision<T extends { date?: string; score?: string; status?: string }>(
+  applications: readonly T[],
+  scoreOf: (score: string) => number,
+  limit: number = 6,
+): T[] {
   // -1, not -Infinity: two unscored rows would subtract to NaN, and a NaN
   // comparator leaves the sort order undefined rather than merely arbitrary.
-  const rank = (s) => {
+  const rank = (s: string | undefined): number => {
     const n = scoreOf(s ?? "");
     return Number.isNaN(n) ? -1 : n;
   };

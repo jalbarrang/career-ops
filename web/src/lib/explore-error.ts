@@ -31,7 +31,7 @@
 // own, so a new 400 added tomorrow is a plain failure by default rather than
 // silently inheriting the panel.
 //
-// This mirrors { code: "MODE_MISSING" } in app/api/explore/ai/route.ts, which is
+// This mirrors { code: "MODE_MISSING" } in routes/api/explore/ai/+server.ts, which is
 // the established pattern for this in the app.
 
 /** Machine-readable marker for "the scanner is absent from this checkout". */
@@ -67,10 +67,10 @@ export function scannerMissingBody(message = SCANNER_MISSING_MESSAGE) {
  *
  * @param {unknown} body Parsed JSON response body.
  */
-export function isScannerMissing(body) {
+export function isScannerMissing(body: unknown): boolean {
   return (
     typeof body === "object" &&
     body !== null &&
-    /** @type {{code?: unknown}} */ (body).code === SCANNER_MISSING_CODE
+    (body as { code?: unknown }).code === SCANNER_MISSING_CODE
   );
 }

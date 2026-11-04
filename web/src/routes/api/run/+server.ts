@@ -23,8 +23,9 @@ import { resolveCvTemplate } from "@/lib/core/cv-template.ts";
 import { acquireTrackerWrite, releaseTrackerWrite } from "@/lib/core/run-registry";
 import { createRunFinalizer } from "@/lib/run-finalizer.ts";
 
-// The Next route declared maxDuration = 800 here: a real oferta evaluation /
-// pdf-mode CV tailoring + render is heavy and multi-step.
+// A real oferta evaluation / pdf-mode CV tailoring + render is heavy and
+// multi-step. The SvelteKit dev server has no per-request cap; the worker's own
+// kill timer bounds the run.
 export async function POST({ request }: { request: Request }) {
   let body: { kind?: string; input?: string; cliId?: string };
   try {
@@ -66,9 +67,9 @@ export async function POST({ request }: { request: Request }) {
   // CAREER_OPS_ROOT is runtime user data, not a build input. Tracing this
   // dynamic path would copy the whole web project into every server bundle.
   const requiredPath = required
-    ? path.join(/* turbopackIgnore: true */ careerOpsRoot(), required)
+    ? path.join(/* @vite-ignore */ careerOpsRoot(), required)
     : "";
-  if (required && !fs.existsSync(/* turbopackIgnore: true */ requiredPath)) {
+  if (required && !fs.existsSync(/* @vite-ignore */ requiredPath)) {
     return new Response(
       JSON.stringify({
         error: `This needs a complete career-ops checkout (${required}). CAREER_OPS_ROOT has data only — point it at a full checkout.`,

@@ -40,7 +40,7 @@ export async function getNormalizeTextKey(): Promise<NormalizeTextKey> {
   const hit = modCache.get(file);
   if (hit) return hit;
   try {
-    const mod = await import(/* webpackIgnore: true */ pathToFileURL(file).href);
+    const mod = await import(/* @vite-ignore */ pathToFileURL(file).href);
     const fn = mod?.normalizeTextKey;
     if (typeof fn === "function") {
       modCache.set(file, fn); // only successes are cached (#2590)

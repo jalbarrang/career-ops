@@ -2,7 +2,7 @@
  * title-fit.ts — banded title-vs-profile-role estimate for discovery cards.
  *
  * Deliberately mirrors the tokenizer style of profile-keywords.ts /
- * jd-similarity.ts instead of importing them: the Turbopack root is pinned
+ * jd-similarity.ts instead of importing them: the web build root is pinned
  * to web/, which makes repo-root .ts imports impossible, and this module must
  * stay unit-testable under plain Node (tests/title-fit.test.ts).
  *
@@ -47,7 +47,7 @@ const SENIORITY = new Set([
   "entry", "level", "ii", "iii", "iv",
 ]);
 
-function tokens(text) {
+function tokens(text: string): string[] {
   const raw = String(text ?? "").toLowerCase().match(TOKEN_RE) ?? [];
   return raw
     // TOKEN_RE keeps sentence-ending periods so dotted names survive intact
@@ -57,7 +57,12 @@ function tokens(text) {
     .filter((t) => t.length > 1 && !SENIORITY.has(t));
 }
 
-export function titleFit(title, targets) {
+export interface TitleFit {
+  band: "strong" | "related" | "weak";
+  score: number;
+}
+
+export function titleFit(title: string, targets: readonly string[]): TitleFit | null {
   const titleTokens = new Set(tokens(title));
   if (!titleTokens.size || !Array.isArray(targets)) return null;
 

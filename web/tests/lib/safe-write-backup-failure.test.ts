@@ -5,7 +5,7 @@ import path from "node:path";
 import { tmpdir } from "node:os";
 import { atomicWriteWithBackup } from "../../src/lib/core/safe-write.ts";
 
-function fixture(t, content = "ORIGINAL\n") {
+function fixture(t: import("node:test").TestContext, content: string | Buffer = "ORIGINAL\n") {
   const dir = fs.mkdtempSync(path.join(tmpdir(), "web-backup-failure-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const file = path.join(dir, "cv.md");
@@ -18,9 +18,9 @@ for (const code of ["EACCES", "ENOSPC", "ENOENT"]) {
     const { dir, file } = fixture(t);
     const originalWrite = fs.writeFileSync;
     const error = Object.assign(new Error(`backup ${code}`), { code });
-    t.mock.method(fs, "writeFileSync", (target, ...args) => {
+    t.mock.method(fs, "writeFileSync", (target: string, ...args: unknown[]) => {
       if (String(target).startsWith(`${file}.bak-`)) throw error;
-      return originalWrite(target, ...args);
+      return (originalWrite as (...a: unknown[]) => unknown)(target, ...args);
     });
     assert.throws(() => atomicWriteWithBackup(file, "REPLACED"), (e) => e === error);
     assert.equal(fs.readFileSync(file, "utf8"), "ORIGINAL\n");
@@ -32,9 +32,9 @@ test("an unreadable existing source is not treated as missing", (t) => {
   const { dir, file } = fixture(t);
   const originalRead = fs.readFileSync;
   const error = Object.assign(new Error("source EACCES"), { code: "EACCES" });
-  t.mock.method(fs, "readFileSync", (target, ...args) => {
+  t.mock.method(fs, "readFileSync", (target: string, ...args: unknown[]) => {
     if (target === file) throw error;
-    return originalRead(target, ...args);
+    return (originalRead as (...a: unknown[]) => unknown)(target, ...args);
   });
   assert.throws(() => atomicWriteWithBackup(file, "REPLACED"), (e) => e === error);
   assert.equal(originalRead(file, "utf8"), "ORIGINAL\n");

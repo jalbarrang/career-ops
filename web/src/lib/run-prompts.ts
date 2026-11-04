@@ -25,7 +25,7 @@ import { DEFAULT_PROFILE_REF, profileNote } from "./core/profile-path.ts";
  * @param {string} name
  * @returns {boolean}
  */
-export function isShellSafeCompanyName(name) {
+export function isShellSafeCompanyName(name: unknown): boolean {
   return typeof name === "string"
     && name.length > 0
     && name.length <= 80
@@ -95,7 +95,7 @@ const CV_TEMPLATE_RE =
  * unrecognized value falls back to the base template rather than throwing,
  * because a CV the user can still send beats a run that dies on their config.
  */
-function safeCvTemplate(value) {
+function safeCvTemplate(value: unknown): string {
   return typeof value === "string" && !value.includes("..") && CV_TEMPLATE_RE.test(value)
     ? value
     : BASE_CV_TEMPLATE;

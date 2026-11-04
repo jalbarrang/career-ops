@@ -7,10 +7,10 @@
  * @param {string} line
  * @returns {string[]}
  */
-export function pipeCells(line) {
+export function pipeCells(line: unknown): string[] {
   const t = String(line ?? "").trim();
   if (!t.startsWith("|")) return [];
-  const parts = [];
+  const parts: string[] = [];
   let buf = "";
   // GFM: a pipe is escaped only after an odd run of backslashes (`\|`).
   // Even runs (`\\|`) are a literal backslash plus a real column delimiter.
@@ -51,8 +51,8 @@ export function pipeCells(line) {
  * @param {string[]} header
  * @returns {boolean}
  */
-export function isStarTableHeader(header) {
-  const n = (header || []).map((h) => String(h).trim().toLowerCase());
+export function isStarTableHeader(header: readonly string[]): boolean {
+  const n = (header || []).map((h: string) => String(h).trim().toLowerCase());
   if (n.length < 6) return false;
   const hasS = n.includes("s");
   const hasT = n.includes("t");
@@ -69,7 +69,7 @@ export function isStarTableHeader(header) {
  * @param {unknown} text
  * @returns {"good" | "warn" | "bad" | "muted" | null}
  */
-export function fitTone(text) {
+export function fitTone(text: unknown): "good" | "warn" | "bad" | "muted" | null {
   const raw = String(text ?? "").replace(/\*+/g, "").trim();
   if (!raw || raw.length > 48) return null;
   const t = raw.toLowerCase();
@@ -85,14 +85,11 @@ export function fitTone(text) {
  * @param {string} md
  * @returns {{ type: "md" | "table", text: string }[]}
  */
-export function splitPipeTables(md) {
+export function splitPipeTables(md: unknown): Array<{ type: "md" | "table"; text: string }> {
   const lines = String(md ?? "").split("\n");
-  /** @type {{ type: "md" | "table", text: string }[]} */
-  const out = [];
-  /** @type {string[]} */
-  let buf = [];
-  /** @type {string[]} */
-  let table = [];
+  const out: Array<{ type: "md" | "table"; text: string }> = [];
+  let buf: string[] = [];
+  let table: string[] = [];
   const flushMd = () => {
     const text = buf.join("\n");
     if (text.trim()) out.push({ type: "md", text });
@@ -102,7 +99,7 @@ export function splitPipeTables(md) {
     if (table.length) out.push({ type: "table", text: table.join("\n") });
     table = [];
   };
-  const isTableLine = (l) => /^\s*\|/.test(l);
+  const isTableLine = (l: string): boolean => /^\s*\|/.test(l);
   for (const line of lines) {
     if (isTableLine(line)) {
       if (buf.length) flushMd();
@@ -121,7 +118,7 @@ export function splitPipeTables(md) {
  * @param {string} block
  * @returns {{ header: string[], rows: string[][] } | null}
  */
-export function parsePipeTable(block) {
+export function parsePipeTable(block: unknown): { header: string[]; rows: string[][] } | null {
   const lines = String(block ?? "")
     .split("\n")
     .map((l) => l.trim())
@@ -139,8 +136,8 @@ export function parsePipeTable(block) {
  * @param {string[]} names
  * @returns {number}
  */
-export function colIndex(header, names) {
-  const n = header.map((h) => String(h).trim().toLowerCase());
+export function colIndex(header: readonly string[], names: readonly string[]): number {
+  const n = header.map((h: string) => String(h).trim().toLowerCase());
   for (const name of names) {
     const want = name.toLowerCase();
     // Single-letter STAR cols must be exact: "s" must not match "STAR+R story".
@@ -155,6 +152,6 @@ export function colIndex(header, names) {
  * @param {string[]} header
  * @returns {number}
  */
-export function fitColumnIndex(header) {
-  return (header || []).findIndex((h) => String(h).trim().toLowerCase() === "fit");
+export function fitColumnIndex(header: readonly string[]): number {
+  return (header || []).findIndex((h: string) => String(h).trim().toLowerCase() === "fit");
 }

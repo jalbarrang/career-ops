@@ -70,6 +70,30 @@ export const CV_ENVELOPE_INSTRUCTION =
  * @property {string[]} warnings - Non-fatal issues to surface in the run log.
  */
 
+/** A parsed, renderable CV envelope. */
+export interface CvEnvelope {
+  ok: true;
+  /** The tailored CV HTML, byte-exact as emitted. */
+  html: string;
+  /** Page format for generate-pdf.ts. */
+  format: "a4" | "letter";
+  /** Non-fatal issues to surface in the run log. */
+  warnings: string[];
+}
+
+/** Parse result: the envelope, or why it could not be read. */
+export type CvEnvelopeResult = CvEnvelope | { ok: false; error: string };
+
+/** The streaming filter's surface. */
+export interface CvEnvelopeFilter {
+  /** Text safe to display; the envelope body is swallowed. */
+  push: (chunk: unknown) => string;
+  /** Anything still held at end of stream. */
+  flush: () => string;
+  /** Parse everything pushed so far. */
+  result: () => CvEnvelopeResult;
+}
+
 /**
  * Extract the tailored CV HTML and page format from an agent's full output.
  *
@@ -80,7 +104,7 @@ export const CV_ENVELOPE_INSTRUCTION =
  * @param {string} text - Everything the agent emitted, concatenated.
  * @returns {CvEnvelope | {ok: false, error: string}}
  */
-export function parseCvEnvelope(text) {
+export function parseCvEnvelope(text: unknown): CvEnvelopeResult {
   if (typeof text !== "string") {
     return { ok: false, error: "No agent output to read a CV envelope from." };
   }
@@ -119,14 +143,14 @@ export function parseCvEnvelope(text) {
     return { ok: false, error: "The CV was cut off before its closing </html> tag — the output is incomplete." };
   }
 
-  const warnings = [];
+  const warnings: string[] = [];
   const declared = opener[1];
-  let format = DEFAULT_PAGE_FORMAT;
+  let format: "a4" | "letter" = DEFAULT_PAGE_FORMAT;
   if (declared === undefined) {
     warnings.push(`The agent declared no page format; defaulting to ${DEFAULT_PAGE_FORMAT}.`);
   } else {
     const lower = declared.trim().toLowerCase();
-    if (PAGE_FORMATS.has(lower)) format = lower;
+    if (PAGE_FORMATS.has(lower)) format = lower === "letter" ? "letter" : "a4";
     else warnings.push(`Unrecognized page format "${declared}"; defaulting to ${DEFAULT_PAGE_FORMAT}.`);
   }
 
@@ -142,7 +166,7 @@ export function parseCvEnvelope(text) {
  * @param {string} line - The unterminated final line.
  * @returns {boolean}
  */
-function couldBecomeMarker(line) {
+function couldBecomeMarker(line: string): boolean {
   return (
     // Still growing into a marker (`<`, `<<c`)...
     OPEN_MARK.startsWith(line) || CLOSE_MARK.startsWith(line) ||
@@ -162,7 +186,7 @@ function couldBecomeMarker(line) {
  * @param {string} s
  * @returns {{start: number, end: number} | null} `end` consumes the newline.
  */
-function completeMarker(re, s) {
+function completeMarker(re: RegExp, s: string): { start: number; end: number } | null {
   for (const m of s.matchAll(re)) {
     const after = m.index + m[0].length;
     if (s[after] === "\n") return { start: m.index, end: after + 1 };
@@ -183,14 +207,14 @@ function completeMarker(re, s) {
  *   `push` returns the text safe to display, `flush` releases anything still
  *   held at end of stream, `result` parses everything pushed so far.
  */
-export function createCvEnvelopeFilter() {
+export function createCvEnvelopeFilter(): CvEnvelopeFilter {
   let raw = "";       // everything pushed, verbatim — what result() parses
   let pending = "";   // display work buffer (CRLF-normalized so lines match)
   let carry = "";     // a trailing "\r" whose "\n" may be in the next chunk
   let inBody = false;
 
   return {
-    push(chunk) {
+    push(chunk: unknown): string {
       const text = String(chunk ?? "");
       raw += text;
       // Normalizing per chunk is not enough: a CRLF split across two pushes would

@@ -22,7 +22,7 @@ export const MAX_OFFER_LIMIT = 200;
  * back. `Number.isInteger` also rejects Infinity, so the unbounded sentinel
  * cannot slip back in through the query string.
  */
-export function resolveOfferLimit(raw) {
+export function resolveOfferLimit(raw: unknown): number {
   if (raw == null) return DEFAULT_OFFER_LIMIT;
   const text = String(raw).trim();
   if (text === "") return DEFAULT_OFFER_LIMIT;
@@ -49,13 +49,30 @@ const EXPIRED_STATUS = /expired/i;
  * caller asked to render. This prevents a UI card limit from masquerading as
  * the number of matches found.
  */
-export function collectWhatsNew(rows, { cutoff, toOffer, offerLimit = DEFAULT_OFFER_LIMIT, fallbackLimit = 12 }) {
-  const seen = new Set();
-  const offers = [];
+/** A fresh offer the feed renders; `url` is the dedup key. */
+export interface WhatsNewOffer {
+  url: string;
+  [key: string]: unknown;
+}
+
+/** Inputs the route passes; `toOffer` turns one row's cells into an offer. */
+export interface CollectWhatsNewOptions<T extends WhatsNewOffer> {
+  cutoff: number;
+  toOffer: (columns: string[]) => T | null | undefined;
+  offerLimit?: number;
+  fallbackLimit?: number;
+}
+
+export function collectWhatsNew<T extends WhatsNewOffer>(
+  rows: readonly string[],
+  { cutoff, toOffer, offerLimit = DEFAULT_OFFER_LIMIT, fallbackLimit = 12 }: CollectWhatsNewOptions<T>,
+): { offers: T[]; count: number } {
+  const seen = new Set<string>();
+  const offers: T[] = [];
   let count = 0;
   let anyDated = false;
 
-  const add = (columns, limit) => {
+  const add = (columns: string[], limit: number): void => {
     // A confirmed-dead row RETIRES its URL for the rest of the walk (#3891).
     // scan-history is append-only, so proving a posting dead adds a row — it
     // cannot edit the `added` row that first surfaced it. Rejecting only the

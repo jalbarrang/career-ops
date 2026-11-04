@@ -5,7 +5,7 @@
  *  mistaken for a link and resolve to the wrong report: this number selects
  *  which tailored CV gets attached to a real application, and a wrong CV
  *  attached silently is worse than no CV found. */
-export function reportNumberFromCell(cell) {
+export function reportNumberFromCell(cell: unknown): number | null {
   const match = /\[(\d+)\]\(/.exec(String(cell ?? ""));
   return match ? Number.parseInt(match[1], 10) : null;
 }
@@ -23,7 +23,13 @@ export function reportNumberFromCell(cell) {
  *  A row with no kind is a CV. The manifest held nothing else before the column
  *  existed, so reading it as unknown would strand every pre-#3959 artifact.
  */
-export function pdfIndexEntryForReport(indexText, reportNumber, kind = "cv") {
+/** A manifest lookup result. */
+export interface PdfIndexEntry {
+  found: boolean;
+  path: string | null;
+}
+
+export function pdfIndexEntryForReport(indexText: unknown, reportNumber: number, kind: string = "cv"): PdfIndexEntry {
   if (!Number.isInteger(reportNumber)) return { found: false, path: null };
   const wanted = kind === "cover" ? "cover" : "cv";
   for (const line of String(indexText ?? "").split(/\r?\n/)) {
@@ -40,7 +46,7 @@ export function pdfIndexEntryForReport(indexText, reportNumber, kind = "cv") {
 }
 
 /** Resolve the exact PDF path recorded for a report in pdf-index.tsv. */
-export function pdfPathForReport(indexText, reportNumber, kind = "cv") {
+export function pdfPathForReport(indexText: unknown, reportNumber: number, kind: string = "cv"): string | null {
   const entry = pdfIndexEntryForReport(indexText, reportNumber, kind);
   return entry.found ? entry.path : null;
 }

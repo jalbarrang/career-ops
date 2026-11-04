@@ -4,22 +4,31 @@ import test from "node:test";
 import "../helpers/web-ts-alias-loader.ts";
 
 const { dispatch } = await import("../../src/lib/actions/registry.ts");
+type ActionCtx = import("../../src/lib/actions/registry.ts").ActionCtx;
 
-function context(inbox) {
-  const started = [];
+/** The job-start call this suite observes. */
+interface StartedJob {
+  kind: string;
+  n?: number;
+  url?: string;
+  [key: string]: unknown;
+}
+
+function context(inbox: ActionCtx["inbox"]): { started: StartedJob[]; ctx: ActionCtx } {
+  const started: StartedJob[] = [];
   return {
     started,
     ctx: {
       push() {},
       replace() {},
       startJob(opts) {
-        started.push(opts);
+        started.push(opts as StartedJob);
         return `job-${started.length}`;
       },
       inbox,
       applications: [],
       jobForUrl() {},
-      estimateCost(_kind, count) {
+      estimateCost(_kind: string, count: number) {
         return { tokens: count * 12_000, usd: count * 0.12 };
       },
       rememberFact() {},
@@ -30,7 +39,7 @@ function context(inbox) {
   };
 }
 
-const posting = (n) => ({ company: "Acme", role: `Engineer ${n}`, url: `https://example.test/${n}`, done: false });
+const posting = (n: number): ActionCtx["inbox"][number] => ({ company: "Acme", role: `Engineer ${n}`, url: `https://example.test/${n}`, done: false });
 
 test("one requested evaluation starts directly", () => {
   const { ctx, started } = context([posting(1)]);
@@ -52,6 +61,6 @@ test("multiple paid workers wait for confirmation and show estimated spend", () 
 
   const confirmed = result.run();
   assert.equal(started.length, 3);
-  assert.equal(confirmed.jobIds.length, 3);
+  assert.equal(confirmed.jobIds?.length, 3);
   assert.ok(confirmed.batchId);
 });

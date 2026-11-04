@@ -15,8 +15,8 @@ const IN_FLIGHT = new Set(["opening", "driving", "prefilling", "filling"]);
  * running. A form that was read but never touched backs out in one click, so
  * the confirm stays meaningful instead of becoming something to click through.
  */
-export function needsLeaveConfirmation({ status, answers } = {}) {
-  if (IN_FLIGHT.has(status)) return true;
+export function needsLeaveConfirmation({ status, answers }: { status?: string; answers?: Record<string, unknown> } = {}): boolean {
+  if (IN_FLIGHT.has(status ?? "")) return true;
   return Object.values(answers ?? {}).some((v) => typeof v === "string" && v.trim() !== "");
 }
 
@@ -27,7 +27,7 @@ export function needsLeaveConfirmation({ status, answers } = {}) {
  * Apply page itself (which would reload rather than exit), falls back to the
  * tracker.
  */
-export function resolveReturnPath(from) {
+export function resolveReturnPath(from: unknown): string {
   if (typeof from !== "string") return DEFAULT_RETURN_PATH;
   const path = from.trim();
   if (!path.startsWith("/")) return DEFAULT_RETURN_PATH;
@@ -50,7 +50,7 @@ export function resolveReturnPath(from) {
  *
  * @returns {"apply"|"close"|"discard"}
  */
-export function resolveLateSession({ stale, sessionId } = {}) {
+export function resolveLateSession({ stale, sessionId }: { stale?: boolean; sessionId?: string | null } = {}): "apply" | "close" | "discard" {
   if (!stale) return "apply";
   return sessionId ? "close" : "discard";
 }

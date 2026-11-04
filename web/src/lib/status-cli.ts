@@ -36,14 +36,13 @@ const GENERIC_FAILURE = "status update failed";
  * @param {string} stdout
  * @returns {Record<string, unknown> | null}
  */
-export function parseCliJson(stdout) {
+export function parseCliJson(stdout: unknown): Record<string, unknown> | null {
   const lines = String(stdout ?? "").split("\n");
-  /** @param {string} candidate */
-  const asObject = (candidate) => {
+  const asObject = (candidate: string): Record<string, unknown> | null => {
     try {
       const parsed = JSON.parse(candidate);
       if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        return /** @type {Record<string, unknown>} */ (parsed);
+        return parsed as Record<string, unknown>;
       }
     } catch {
       /* not the document */
@@ -81,7 +80,7 @@ export function parseCliJson(stdout) {
  * @param {string} [_stderr] Deliberately unused; log it at the call site.
  * @returns {string}
  */
-export function clientErrorMessage(parsed, _stderr) {
+export function clientErrorMessage(parsed: Record<string, unknown> | null, _stderr?: string): string {
   return typeof parsed?.error === "string" ? parsed.error : GENERIC_FAILURE;
 }
 
@@ -101,7 +100,7 @@ export function clientErrorMessage(parsed, _stderr) {
  * @param {unknown} n
  * @returns {string | null}
  */
-export function trackerRowArg(n) {
+export function trackerRowArg(n: unknown): string | null {
   if (typeof n !== "string" && typeof n !== "number") return null;
   const row = String(n).trim();
   return /^\d+$/.test(row) ? row : null;

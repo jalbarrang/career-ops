@@ -46,7 +46,7 @@ try {
  * directory, which also gives cv-templates.ts a fresh module URL — it caches its
  * default profile path at load, so a shared copy would freeze the first case's env.
  */
-function fakeCheckout({ profileAt = "config/profile.yml", template = "mine", pack = null } = {}) {
+function fakeCheckout({ profileAt = "config/profile.yml", template = "mine", pack = null }: { profileAt?: string; template?: string; pack?: string | null } = {}): string {
   // realpath: macOS symlinks /var → /private/var, and path.relative() against an
   // unresolved base would compare two spellings of the same directory.
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "cv-template-")));
@@ -100,7 +100,11 @@ function fakeCheckout({ profileAt = "config/profile.yml", template = "mine", pac
 }
 
 /** Run `fn` as the dashboard does: cwd `<root>/web`, with this CAREER_OPS_PROFILE. */
-async function asDashboard(root, profileEnv, fn) {
+async function asDashboard<T>(
+  root: string,
+  profileEnv: string | undefined,
+  fn: () => Promise<T>,
+): Promise<T> {
   const priorCwd = process.cwd();
   const priorEnv = process.env.CAREER_OPS_PROFILE;
   const priorRoot = process.env.CAREER_OPS_ROOT;

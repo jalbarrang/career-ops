@@ -7,7 +7,18 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import "../helpers/web-ts-alias-loader.ts";
-import { classifyLeaf, buildPipelineSankey, layoutSankey, parseStatusLog, statusToken } from "../../src/lib/pipeline-sankey.ts";
+import {
+  classifyLeaf,
+  buildPipelineSankey,
+  layoutSankey,
+  parseStatusLog,
+  statusToken,
+  type SankeyApp,
+  type SankeyLogRow,
+} from "../../src/lib/pipeline-sankey.ts";
+
+/** A status-log row, as the tests spell one inline. */
+const logRow = (num: number, from: string, to: string): SankeyLogRow => ({ num, from, to });
 
 test("statusToken uses canonStatus aliases (same map as Analytics)", () => {
   assert.equal(statusToken("Interview"), "INTERVIEW");
@@ -64,7 +75,7 @@ test("Discarded after reaching Applied or later stays under Submitted", () => {
 });
 
 test("buildPipelineSankey conserves tracked = skip + evaluated + submitted", () => {
-  const apps = [
+  const apps: SankeyApp[] = [
     { n: 1, status: "SKIP" },
     { n: 2, status: "Evaluated" },
     { n: 3, status: "Applied" },
@@ -94,19 +105,17 @@ test("buildPipelineSankey conserves tracked = skip + evaluated + submitted", () 
 });
 
 test("buildPipelineSankey keeps pre-application Discarded rows out of Submitted", () => {
-  const apps = [
+  const apps: SankeyApp[] = [
     { n: 1, status: "Applied" },
     { n: 2, status: "Discarded" }, // posting closed before applying
     { n: 3, status: "Discarded" }, // withdrew after applying
     { n: 4, status: "—" }, // folds to Discarded, no history
   ];
-  const log = [
-    { num: 2, from: "Evaluated", to: "Discarded" },
-    { num: 3, from: "Applied", to: "Discarded" },
-  ];
+  const log: SankeyLogRow[] = [logRow(2, "Evaluated", "Discarded"), logRow(3, "Applied", "Discarded")];
   const g = buildPipelineSankey(apps, log);
-  const v = Object.fromEntries(g.nodes.map((n) => [n.id, n.value]));
-  const flow = (source, target) => g.links.find((l) => l.source === source && l.target === target)?.value;
+  const v: Record<string, number> = Object.fromEntries(g.nodes.map((n) => [n.id, n.value]));
+  const flow = (source: string, target: string): number | undefined =>
+    g.links.find((l) => l.source === source && l.target === target)?.value;
   assert.equal(v.tracked, 4);
   assert.equal(v.discardedEarly, 2);
   assert.equal(v.submitted, 2);
@@ -157,9 +166,17 @@ test("layoutSankey positions nodes and draws a path per live link", () => {
 // in career-ops.ts, reached through the shared @/ alias hook, with
 // CAREER_OPS_ROOT pointed at a scratch data root.
 const skipTs = !process.features?.typescript && "this Node cannot import career-ops.ts (no type stripping)";
-const { readStatusLog, readApplicationStatusLog } = skipTs ? {} : await import("@/lib/career-ops");
 
-function withDataRoot(setup, fn) {
+/** The two ledger readers from career-ops.ts; every case using them skips without it. */
+type LedgerModule = {
+  readStatusLog: () => SankeyLogRow[];
+  readApplicationStatusLog: () => string;
+};
+const ledger = (skipTs ? {} : await import("@/lib/career-ops")) as Partial<LedgerModule>;
+const readStatusLog = ledger.readStatusLog!;
+const readApplicationStatusLog = ledger.readApplicationStatusLog!;
+
+function withDataRoot<T>(setup: (data: string) => void, fn: () => T): T {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "sankey-status-log-"));
   fs.mkdirSync(path.join(root, "data"));
   fs.writeFileSync(path.join(root, "data/applications.md"), "");
@@ -190,18 +207,19 @@ test("Sankey and cumulative tiles read the same active tracker's ledger", { skip
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "sankey-tracker-"));
   const priorRoot = process.env.CAREER_OPS_ROOT;
   const priorTracker = process.env.CAREER_OPS_TRACKER;
-  const ledger = (num) => `${num}\t2026-08-26\tOffer\tRejected\tset-status\t\n`;
+  const ledgerRow = (num: number): string => `${num}\t2026-08-26\tOffer\tRejected\tset-status\t\n`;
   try {
     process.env.CAREER_OPS_ROOT = root;
     delete process.env.CAREER_OPS_TRACKER;
-    for (const [dir, num] of [["", 1], ["data", 2], ["custom", 3]]) {
+    const cases: Array<[string, number]> = [["", 1], ["data", 2], ["custom", 3]];
+    for (const [dir, num] of cases) {
       fs.mkdirSync(path.join(root, dir), { recursive: true });
       fs.writeFileSync(path.join(root, dir, "applications.md"), "");
-      fs.writeFileSync(path.join(root, dir, "status-log.tsv"), ledger(num));
+      fs.writeFileSync(path.join(root, dir, "status-log.tsv"), ledgerRow(num));
     }
-    const check = (num) => {
-      assert.equal(readApplicationStatusLog(), ledger(num));
-      assert.deepEqual(readStatusLog(), parseStatusLog(ledger(num)));
+    const check = (num: number): void => {
+      assert.equal(readApplicationStatusLog(), ledgerRow(num));
+      assert.deepEqual(readStatusLog(), parseStatusLog(ledgerRow(num)));
     };
     check(2);
     fs.unlinkSync(path.join(root, "data/applications.md"));
@@ -218,7 +236,8 @@ test("Sankey and cumulative tiles read the same active tracker's ledger", { skip
     try {
       fs.symlinkSync(custom, path.join(root, "linked.md"));
     } catch (e) {
-      if (e?.code !== "EPERM" || e?.syscall !== "symlink") throw e;
+      const info = e as { code?: string; syscall?: string } | null;
+      if (info?.code !== "EPERM" || info?.syscall !== "symlink") throw e;
       linked = false;
       t.diagnostic("symlinked-tracker leg skipped: no symlink privilege (EPERM)");
     }
@@ -239,6 +258,9 @@ test("readStatusLog: an unreadable log throws instead of reading as empty", { sk
   // A directory where the file should be: EISDIR, a read failure that is not ENOENT.
   withDataRoot(
     (data) => fs.mkdirSync(path.join(data, "status-log.tsv")),
-    () => assert.throws(() => readStatusLog(), (err) => err?.code !== undefined && err.code !== "ENOENT"),
+    () => assert.throws(() => readStatusLog(), (err) => {
+      const info = err as { code?: string } | null;
+      return info?.code !== undefined && info.code !== "ENOENT";
+    }),
   );
 });

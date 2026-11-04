@@ -31,9 +31,9 @@ const HANDWRITTEN = `# Profile customization
 - The 40% latency figure covers one service, not the whole platform.
 `;
 
-const ROOTS = [];
+const ROOTS: string[] = [];
 
-function makeRoot({ profile, legacy } = {}) {
+function makeRoot({ profile, legacy }: { profile?: string; legacy?: string } = {}): string {
   const root = mkdtempSync(join(tmpdir(), "co-profile-mem-"));
   ROOTS.push(root);
   if (profile !== undefined) {
@@ -152,11 +152,11 @@ test("a file where modes/ belongs is an error, not silence", () => {
   // The errno is probed rather than a platform list pinned, so the assertion
   // stays live wherever the distinction exists and degrades honestly where it
   // does not.
-  let probe = null;
+  let probe: string | null = null;
   try {
     readFileSync(join(root, "modes", "_profile.md"), "utf8");
   } catch (err) {
-    probe = err?.code ?? null;
+    probe = (err as { code?: string } | null)?.code ?? null;
   }
 
   // The fixture is only meaningful while the read actually fails. If it ever
@@ -173,7 +173,7 @@ test("a file where modes/ belongs is an error, not silence", () => {
   } else {
     assert.throws(
       () => readProfileMemory(root),
-      (err) => err.code === probe,
+      (err) => (err as { code?: string }).code === probe,
       `a file standing where modes/ belongs is a broken path, not a fresh install (expected ${probe})`,
     );
   }
@@ -189,7 +189,7 @@ test("a profile that exists and cannot be read is an error, not silence", () => 
   // Returning "" here would be the #4003 failure one layer down. buildPrompt()
   // omits the notes section for an empty memory, so guardrails that exist and
   // could not be read would look exactly like guardrails nobody ever wrote.
-  assert.throws(() => readProfileMemory(root), (err) => err.code === "EISDIR");
+  assert.throws(() => readProfileMemory(root), (err) => (err as { code?: string }).code === "EISDIR");
 });
 
 test("the profile lands in the prompt buildPrompt() actually sends", () => {

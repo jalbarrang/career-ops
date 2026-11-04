@@ -6,8 +6,8 @@
  * `tracker-aliases.json` in the career-ops root — the same single source
  * tracker-parse.ts exports as HEADER_ALIASES — so the web reader and the Node
  * tracker tooling can never drift (PR #1598 review). A build-time import of the
- * core module is impossible: Turbopack's root is pinned to web/ (see
- * next.config.ts) and refuses modules outside it, so the shared source is a
+ * core module is impossible: the web build's root is pinned to web/ and refuses
+ * modules outside it, so the shared source is a
  * JSON file read with fs, like every other career-ops file this app consumes.
  *
  * Plain .ts (same pattern as clean-chips.ts) so tests/tracker-columns.test.ts can
@@ -24,7 +24,10 @@ import path from "node:path";
  * in tracker-aliases.json.
  * @type {Record<string, string>}
  */
-const WEB_FIELD = {
+/** One parsed tracker row: every field in WEB_FIELD, all strings. */
+export type TrackerTableRow = Record<string, string>;
+
+const WEB_FIELD: Record<string, string> = {
   num: "n", date: "date", company: "company", via: "via", role: "role", location: "location",
   score: "score", status: "status", pdf: "pdf", report: "report", notes: "notes",
   // The tracker's Apply Link / Follow-up columns (already in the shared alias
@@ -42,10 +45,9 @@ const WEB_FIELD = {
  * checking fields one at a time.
  * @type {string[]}
  */
-export const WEB_FIELD_NAMES = Object.values(WEB_FIELD);
+export const WEB_FIELD_NAMES: string[] = Object.values(WEB_FIELD);
 
-/** @type {Map<string, {mtimeMs: number, size: number, aliases: Record<string, string>}>} */
-const aliasCache = new Map();
+const aliasCache = new Map<string, { mtimeMs: number; size: number; aliases: Record<string, string> }>();
 
 /** Canonical fields detectColumnMap needs to recognize a header row. */
 const REQUIRED_FIELDS = ["num", "company", "role", "score", "status"];
@@ -62,15 +64,14 @@ const REQUIRED_FIELDS = ["num", "company", "role", "score", "status"];
  * @param {string} [fallbackRootDir] - running system checkout.
  * @returns {Record<string, string>}
  */
-export function loadHeaderAliases(rootDir, fallbackRootDir) {
-  const roots = [...new Set([rootDir, fallbackRootDir].filter(Boolean))];
+export function loadHeaderAliases(rootDir: string, fallbackRootDir?: string): Record<string, string> {
+  const roots = [...new Set([rootDir, fallbackRootDir].filter((root): root is string => Boolean(root)))];
   for (const [i, root] of roots.entries()) {
     const file = path.resolve(root, "tracker-aliases.json");
     try {
       const { mtimeMs, size } = fs.statSync(file);
       const cached = aliasCache.get(file);
-      /** @type {Record<string, string>} */
-      let aliases;
+      let aliases: Record<string, string>;
       if (cached && cached.mtimeMs === mtimeMs && cached.size === size) {
         aliases = cached.aliases;
       } else {
@@ -79,7 +80,7 @@ export function loadHeaderAliases(rootDir, fallbackRootDir) {
           aliasCache.delete(file);
           continue;
         }
-        aliases = parsed;
+        aliases = parsed as Record<string, string>;
         aliasCache.set(file, { mtimeMs, size, aliases });
       }
       // A table that cannot map the required columns (e.g. `{}`) would push
@@ -106,8 +107,8 @@ export function loadHeaderAliases(rootDir, fallbackRootDir) {
  * @param {string} line
  * @returns {string[]}
  */
-function trackerCells(line) {
-  const parts = line.split("|").map((c) => c.trim());
+function trackerCells(line: string): string[] {
+  const parts = line.split("|").map((c: string) => c.trim());
   return parts.slice(1, line.trimEnd().endsWith("|") ? -1 : undefined);
 }
 
@@ -120,13 +121,12 @@ function trackerCells(line) {
  * @param {Record<string, string>} aliases - from loadHeaderAliases().
  * @returns {Record<string, number> | null}
  */
-export function detectColumnMap(lines, aliases) {
+export function detectColumnMap(lines: readonly string[], aliases: Record<string, string>): Record<string, number> | null {
   for (const raw of lines) {
     const line = raw.trim();
     if (!line.startsWith("|")) continue;
     const cells = trackerCells(line);
-    /** @type {Record<string, number>} */
-    const m = {};
+    const m: Record<string, number> = {};
     cells.forEach((c, i) => {
       const k = WEB_FIELD[aliases[c.toLowerCase()]];
       if (k) m[k] = i; // unconditional: last occurrence wins, same as detectColumns
@@ -160,7 +160,7 @@ export function detectColumnMap(lines, aliases) {
  * @param {string} raw
  * @returns {string}
  */
-function cellUrl(raw) {
+function cellUrl(raw: unknown): string {
   const value = String(raw ?? "").trim();
   if (!value) return "";
   let cursor = 0;
@@ -207,18 +207,17 @@ function cellUrl(raw) {
  * @param {(field: string) => string} pick
  * @returns {Record<string, string>}
  */
-function emptyRow(pick) {
-  /** @type {Record<string, string>} */
-  const row = {};
+function emptyRow(pick: (field: string) => string): TrackerTableRow {
+  const row: TrackerTableRow = {};
   for (const field of Object.values(WEB_FIELD)) row[field] = pick(field);
   return row;
 }
 
-export function parseApplications(md, rootDir, systemRootDir) {
+export function parseApplications(md: string, rootDir: string, systemRootDir?: string): TrackerTableRow[] {
   const lines = md.split("\n");
   const map = detectColumnMap(lines, loadHeaderAliases(rootDir, systemRootDir));
   const mappedWidth = map ? Math.max(...Object.values(map)) + 1 : 0;
-  const rows = [];
+  const rows: TrackerTableRow[] = [];
   for (const raw of lines) {
     const line = raw.trim();
     if (!line.startsWith("|")) continue;
@@ -231,7 +230,7 @@ export function parseApplications(md, rootDir, systemRootDir) {
       // for every mapped column. Without this the reader rendered a
       // pre-`--migrate-via` row with Score in Role and Status in Score (#2369).
       if (cells.length < mappedWidth) continue;
-      const at = (/** @type {string} */ k) => (map[k] == null ? "" : cells[map[k]] ?? "");
+      const at = (k: string): string => (map[k] == null ? "" : cells[map[k]] ?? "");
       if (!/^\d+$/.test(at("n"))) continue; // header / separator / malformed
       // Derived from WEB_FIELD, never listed by hand: a column the alias table
       // resolves has to REACH the caller, not merely be recognized. Spelling
@@ -247,7 +246,7 @@ export function parseApplications(md, rootDir, systemRootDir) {
       // Same derivation, then the positional fields on top: everything the
       // fixed layout does not carry (via, location, applyLink, followUp)
       // stays "" without anyone having to remember to write it down.
-      const positional = { n, date, company, role, score, status, pdf, report, notes: rest.join(" | ") };
+      const positional: Record<string, string> = { n, date, company, role, score, status, pdf, report, notes: rest.join(" | ") };
       rows.push(emptyRow((k) => positional[k] ?? ""));
     }
   }

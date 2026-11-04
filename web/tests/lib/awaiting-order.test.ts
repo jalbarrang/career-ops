@@ -15,12 +15,13 @@ import { pickAwaitingDecision } from "../../src/lib/home/awaiting.ts";
 // The real parser is lib/format.ts's scoreNum, which a .ts test cannot import.
 // This stub must stay behaviourally identical for the cases below: a leading
 // number wins, anything unparseable is NaN.
-const scoreOf = (s) => {
+const scoreOf = (s: string): number => {
   const m = String(s).match(/(\d+(?:\.\d+)?)/);
   return m ? parseFloat(m[1]) : NaN;
 };
 
-const row = (date, score, status = "Evaluated") => ({ date, score, status, company: `${date}|${score}` });
+const row = (date: string, score: string, status: string = "Evaluated") =>
+  ({ date, score, status, company: `${date}|${score}` });
 
 test("only scored-but-undecided rows are offered", () => {
   const rows = [row("2026-08-20", "4.0/5"), row("2026-08-21", "4.0/5", "Applied"), row("2026-08-22", "4.0/5", "Rejected")];

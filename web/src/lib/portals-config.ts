@@ -11,7 +11,9 @@ export class PortalsConfigError extends Error {
    * @param {"invalid-user-config" | "read-failed" | "invalid-template"} kind
    * @param {unknown} [cause]
    */
-  constructor(message, kind, cause) {
+  kind: "invalid-user-config" | "read-failed" | "invalid-template";
+
+  constructor(message: string, kind: "invalid-user-config" | "read-failed" | "invalid-template", cause?: unknown) {
     super(message, { cause });
     this.name = "PortalsConfigError";
     this.kind = kind;
@@ -19,7 +21,7 @@ export class PortalsConfigError extends Error {
 }
 
 /** @param {unknown} value */
-export function isMapping(value) {
+export function isMapping(value: unknown): value is Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const prototype = Object.getPrototypeOf(value);
   return prototype === Object.prototype || prototype === null;
@@ -33,14 +35,14 @@ export function isMapping(value) {
  * @param {string} templateFile
  * @returns {{ doc: Record<string, unknown>, seeded: boolean }}
  */
-export function loadPortalsDocument(file, templateFile) {
+export function loadPortalsDocument(file: string, templateFile: string): { doc: Record<string, unknown>; seeded: boolean } {
   let source;
   let seeded = false;
 
   try {
     source = fs.readFileSync(file, "utf8");
   } catch (error) {
-    if (!error || typeof error !== "object" || error.code !== "ENOENT") {
+    if (!error || typeof error !== "object" || (error as { code?: string }).code !== "ENOENT") {
       throw new PortalsConfigError("could not read portals.yml", "read-failed", error);
     }
 
@@ -81,7 +83,7 @@ export function loadPortalsDocument(file, templateFile) {
  * @param {string[]} roles
  * @param {string[] | undefined} locations
  */
-export function mergePortalFilters(doc, roles, locations) {
+export function mergePortalFilters(doc: Record<string, unknown>, roles: readonly string[], locations?: readonly string[]): Record<string, unknown> {
   const merged = { ...doc };
   const titleFilter = isMapping(doc.title_filter) ? { ...doc.title_filter } : {};
   titleFilter.positive = [...roles];

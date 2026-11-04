@@ -18,7 +18,13 @@ import path from "node:path";
  * @returns {{ command: string, args: string[] }}
  * @throws {Error} On Windows, for a .cmd/.bat/.ps1 wrapper it cannot resolve.
  */
-export function prepareCliLaunch(binPath, args, platform = process.platform) {
+/** The command and argv spawn() should actually run. */
+export interface CliLaunch {
+  command: string;
+  args: string[];
+}
+
+export function prepareCliLaunch(binPath: string, args: string[], platform: string = process.platform): CliLaunch {
   if (platform !== "win32") return { command: binPath, args };
 
   const ext = path.extname(binPath).toLowerCase();
@@ -30,7 +36,7 @@ export function prepareCliLaunch(binPath, args, platform = process.platform) {
   // may still find a .exe beside it), but a .cmd/.bat/.ps1 needs a shell, which
   // is what this avoids: spawned as-is it only fails (EINVAL for .cmd/.bat), so
   // refuse it with the reason instead.
-  const unresolved = () => {
+  const unresolved = (): CliLaunch => {
     if (!ext) return { command: binPath, args };
     throw new Error(
       `Cannot launch ${binPath} without a shell: no npm PowerShell shim beside it names the CLI's real .js or .exe. ` +

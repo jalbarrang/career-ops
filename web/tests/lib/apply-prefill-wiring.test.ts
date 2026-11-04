@@ -92,14 +92,14 @@ function promptArgs() {
 }
 
 /** The JSON.stringify({...}) argument of the fetch to `path`. */
-function callBody(path) {
+function callBody(path: string): string {
   const at = provider.indexOf(`"${path}"`);
   assert.notEqual(at, -1, `no fetch to ${path} in apply-provider.tsx`);
   return objectArg(provider.slice(at), "JSON.stringify({", `the JSON body of the fetch to ${path}`);
 }
 
 /** The body of the `{...}` literal opened by `opener`, up to its `})`. */
-function objectArg(text, opener, what) {
+function objectArg(text: string, opener: string, what: string): string {
   const open = text.indexOf(opener);
   assert.notEqual(open, -1, `could not find ${what}`);
   const close = text.indexOf("})", open);

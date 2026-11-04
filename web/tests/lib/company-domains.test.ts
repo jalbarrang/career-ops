@@ -19,7 +19,7 @@ import assert from "node:assert/strict";
 import { companyDomains } from "../../src/lib/core/company-domains.ts";
 import { COMPANY_KEY_VERSION } from "../../src/lib/core/logo-cache-key.ts";
 
-const first = (name) => companyDomains(name)[0] ?? null;
+const first = (name: string): string | null => companyDomains(name)[0] ?? null;
 
 // EXACT membership, deliberately not `list.includes(domain)`. CodeQL reads an
 // `includes` whose argument looks like a host as js/incomplete-url-substring-
@@ -28,7 +28,7 @@ const first = (name) => companyDomains(name)[0] ?? null;
 // array, not a substring test against a URL — but Set.has says what is actually
 // meant, so the query has nothing to misread and the assertion gets stricter
 // rather than merely quieter.
-const offers = (list, domain) => new Set(list).has(domain);
+const offers = (list: string[], domain: string): boolean => new Set(list).has(domain);
 
 test("an accented name resolves the domain it actually has", () => {
   for (const [name, domain] of [
@@ -80,7 +80,7 @@ test("a name with no Latin content yields no stems rather than a bad guess", () 
 });
 
 test("a curated brand domain still wins, and comes first", () => {
-  const curated = (n) => (n === "Notion" ? "notion.so" : null);
+  const curated = (n: string): string | null => (n === "Notion" ? "notion.so" : null);
   const out = companyDomains("Notion", curated);
   assert.equal(out[0], "notion.so", "the curated map must outrank the slug guesses");
   assert.ok(offers(out, "notion.com"), "the slug guesses are still offered as fallbacks");

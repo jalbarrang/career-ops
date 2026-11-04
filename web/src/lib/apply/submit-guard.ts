@@ -47,11 +47,26 @@
  *             name?: string, title?: string, alt?: string }} ElementFacts
  */
 
+/** What the page says about one control, as far as this guard reads it. */
+export interface ElementFacts {
+  tag?: string;
+  type?: string;
+  role?: string;
+  inForm?: boolean;
+  aria?: string;
+  placeholder?: string;
+  text?: string;
+  value?: string;
+  name?: string;
+  title?: string;
+  alt?: string;
+}
+
 // Whitespace-collapsed, uncapped: what the guard classifies on.
-const collapse = (s) => (s || "").replace(/\s+/g, " ").trim();
+const collapse = (s: unknown): string => (typeof s === "string" ? s : "").replace(/\s+/g, " ").trim();
 // The 80-char cap is for the snapshot line the planner reads, never for the
 // decision: a submit term past the cap must still be seen by the guard.
-const clean = (s) => collapse(s).slice(0, 80);
+const clean = (s: unknown): string => collapse(s).slice(0, 80);
 
 /**
  * The label the planner is shown for an element, and therefore a string the
@@ -63,11 +78,11 @@ const clean = (s) => collapse(s).slice(0, 80);
  *
  * @param {ElementFacts} [facts]
  */
-export function snapshotLabel(facts = {}) {
+export function snapshotLabel(facts: ElementFacts = {}): string {
   return clean(labelSource(facts));
 }
 
-const labelSource = (facts) => facts.aria || facts.placeholder || facts.text || facts.value || facts.name;
+const labelSource = (facts: ElementFacts): string | undefined => facts.aria || facts.placeholder || facts.text || facts.value || facts.name;
 
 /**
  * Every string that names this control, for classification only.
@@ -87,9 +102,9 @@ const labelSource = (facts) => facts.aria || facts.placeholder || facts.text || 
  * `snapshotLabel` below, where guessing wrong just shows the planner a worse
  * fallback label, never a false submit refusal.
  */
-const names = (facts) => {
-  const seen = new Set();
-  const out = [];
+const names = (facts: ElementFacts): string[] => {
+  const seen = new Set<string>();
+  const out: string[] = [];
   for (const raw of [facts.aria, facts.placeholder, facts.text, facts.value, facts.title, facts.alt]) {
     const s = collapse(raw);
     if (s && !seen.has(s)) {
@@ -178,7 +193,7 @@ const CJK_IN_FORM_TERMS = [
   "지원",
 ];
 
-const wordRx = (terms) => new RegExp(`(^|[^\\p{L}])(${terms.join("|")})($|[^\\p{L}])`, "iu");
+const wordRx = (terms: readonly string[]): RegExp => new RegExp(`(^|[^\\p{L}])(${terms.join("|")})($|[^\\p{L}])`, "iu");
 
 /**
  * Matches a label naming the submit action.
@@ -193,7 +208,7 @@ export const SUBMIT_RX = wordRx(SUBMIT_TERMS);
 /** Matches the in-form tier: refused only on a clickable inside a form. */
 export const IN_FORM_RX = wordRx(IN_FORM_TERMS);
 
-const substringRx = (terms) => new RegExp(terms.join("|"), "u");
+const substringRx = (terms: readonly string[]): RegExp => new RegExp(terms.join("|"), "u");
 
 /** The CJK submit tier: no word boundaries, see CJK_SUBMIT_TERMS. */
 export const CJK_SUBMIT_RX = substringRx(CJK_SUBMIT_TERMS);
@@ -201,8 +216,8 @@ export const CJK_SUBMIT_RX = substringRx(CJK_SUBMIT_TERMS);
 /** The CJK in-form tier. */
 export const CJK_IN_FORM_RX = substringRx(CJK_IN_FORM_TERMS);
 
-const namesSubmit = (s) => SUBMIT_RX.test(s) || CJK_SUBMIT_RX.test(s);
-const namesInFormAction = (s) => IN_FORM_RX.test(s) || CJK_IN_FORM_RX.test(s);
+const namesSubmit = (s: string): boolean => SUBMIT_RX.test(s) || CJK_SUBMIT_RX.test(s);
+const namesInFormAction = (s: string): boolean => IN_FORM_RX.test(s) || CJK_IN_FORM_RX.test(s);
 
 /**
  * A control a click can act on. The in-form tier is held to this, so a checkbox
@@ -210,7 +225,7 @@ const namesInFormAction = (s) => IN_FORM_RX.test(s) || CJK_IN_FORM_RX.test(s);
  * stays fillable: neither can file an application, and refusing them would cost
  * the loop a turn for nothing.
  */
-const isClickable = (tag, type, role) =>
+const isClickable = (tag: string, type: string, role: string): boolean =>
   tag === "button" || tag === "a" || role === "button" || role === "link" || (tag === "input" && ["button", "submit", "reset", "image"].includes(type));
 
 /**
@@ -225,7 +240,7 @@ const isClickable = (tag, type, role) =>
  *
  * @param {ElementFacts} [facts]
  */
-export function isSubmitControl(facts = {}) {
+export function isSubmitControl(facts: ElementFacts = {}): boolean {
   const tag = (facts.tag || "").toLowerCase();
   const type = (facts.type || "").toLowerCase();
   const role = (facts.role || "").toLowerCase();

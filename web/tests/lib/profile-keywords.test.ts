@@ -21,7 +21,10 @@ import { profileTargetKeywords } from "../../src/lib/profile-keywords.ts";
 test("the shipped config/profile.example.yml yields its roles", () => {
   // Not a synthetic fixture: if the template's shape changes, this fails here
   // rather than silently emptying the fallback again.
-  const doc = yaml.load(readFileSync(new URL("../../../config/profile.example.yml", import.meta.url), "utf8"));
+  interface ExampleProfile {
+  target_roles: { primary: string[]; archetypes: Array<{ name: string }> };
+}
+const doc = yaml.load(readFileSync(new URL("../../../config/profile.example.yml", import.meta.url), "utf8")) as ExampleProfile;
   const kws = profileTargetKeywords(doc);
   assert.ok(kws.length >= 2, `expected the template's roles, got ${JSON.stringify(kws)}`);
   for (const k of kws) assert.equal(typeof k, "string");

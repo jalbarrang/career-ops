@@ -14,12 +14,13 @@
 //
 // Run:  bun test tests/lib/apply-agent-interpret-fencing.test.ts
 
-import { test } from "node:test";
+import { test, type TestContext } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import type { Frame } from "playwright-core";
 
 const SRC = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "src");
 
@@ -29,7 +30,7 @@ const skip = !canImportTs && "this Node cannot import agent-interpret.ts (no typ
 
 // tsconfig lets app code import "@/lib/clis" and "./extract" without an
 // extension; Node's ESM loader does not, so the hook adds the one that exists.
-const withExtension = (href) => {
+const withExtension = (href: string): string => {
   const file = fileURLToPath(href);
   if (path.extname(file)) return href;
   for (const ext of [".ts", ".ts", ".js"]) if (fs.existsSync(file + ext)) return pathToFileURL(file + ext).href;
@@ -52,17 +53,23 @@ if (canImportTs) registerHooks({
   },
 });
 
-const { interpretFormWithAgent, agentInterpretForm } = canImportTs
-  ? await import("../../src/lib/apply/agent-interpret.ts")
-  : { interpretFormWithAgent: null, agentInterpretForm: null };
+/** Just the export this suite drives; every case using it skips without the module. */
+type AgentInterpretModule = {
+  interpretFormWithAgent: typeof import("../../src/lib/apply/agent-interpret.ts")["interpretFormWithAgent"];
+  agentInterpretForm: typeof import("../../src/lib/apply/agent-interpret.ts")["agentInterpretForm"];
+};
+const agentInterpret = (canImportTs ? await import("../../src/lib/apply/agent-interpret.ts") : {}) as Partial<AgentInterpretModule>;
+const interpretFormWithAgent = agentInterpret.interpretFormWithAgent!;
+const agentInterpretForm = agentInterpret.agentInterpretForm!;
 
 /** A frame stand-in: the interpreter only calls evaluate() on it. */
-const frameOf = (candidates) => ({
-  evaluate: async () => {
-    if (candidates instanceof Error) throw candidates;
-    return candidates;
-  },
-});
+const frameOf = (candidates: unknown): Frame =>
+  ({
+    evaluate: async () => {
+      if (candidates instanceof Error) throw candidates;
+      return candidates;
+    },
+  }) as unknown as Frame;
 
 const ONE_CONTROL = [{ n: 0, tag: "input", type: "text", name: "first", placeholder: "", aria: "", req: true, ctx: "First name", opts: [] }];
 
@@ -71,7 +78,7 @@ const ONE_CONTROL = [{ n: 0, tag: "input", type: "text", name: "first", placehol
  * JSON, so the interpreter's "launched but nothing usable" path is reachable
  * without a real CLI. Restores PATH and CAREER_OPS_ROOT afterwards.
  */
-function withStubClaude(t) {
+function withStubClaude(t: TestContext): { launches: () => number } {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "career-ops-agent-interpret-"));
   const log = path.join(dir, "launches.log");
   const bin = path.join(dir, "claude");

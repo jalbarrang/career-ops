@@ -6,10 +6,10 @@ import { resolveDataRoot } from "@/lib/core/data-root.ts";
 import { readTrackerFile } from "@/lib/core/tracker-files.ts";
 import { resolveCodeRoot, resolveRootScript } from "@/lib/core/code-root.ts";
 import { parseApplications } from "@/lib/tracker-table.ts";
-import { parseStatusLog } from "@/lib/pipeline-sankey.ts";
+import { parseStatusLog, type SankeyLogRow } from "@/lib/pipeline-sankey.ts";
 // Pipeline rows are parsed in a plain .ts for the same reason as
 // tracker-table.ts: so `node --test` can exercise the real parser.
-import { parseInbox, splitLines } from "@/lib/pipeline-table.ts";
+import { parseInbox, splitLines, type InboxRow } from "@/lib/pipeline-table.ts";
 // One definition of the `{n}-RESERVED.md` convention, shared with
 // run-cli-support.ts — see report-files.ts for why it lives there.
 import { isReservedReportFile } from "@/lib/report-files.ts";
@@ -32,7 +32,7 @@ import { getProfilePath } from "@/lib/core/profile-path.ts";
  * checkout — see web/.env.local.
  */
 export function careerOpsRoot(): string {
-  // `process.cwd()` is `<core>/web` for `next dev`/`next start`, so its parent is
+  // `process.cwd()` is `<core>/web` for the dev server, so its parent is
   // the core checkout — the same directory `path-resolver.ts` calls `__dirname`.
   // resolveDataRoot() needs it explicitly because relative env values and marker
   // contents resolve against it; see data-root.ts for why that base matters.
@@ -62,7 +62,7 @@ export function careerOpsRoot(): string {
 /**
  * Absolute path to a core root script (e.g. doctor, verify-portals). The `.ts`
  * is assembled here from the bare name so the literal never appears as a direct
- * `execFile`/`spawn` argument — Next's bundler statically traces such literals
+ * `execFile`/`spawn` argument — the bundler statically traces such literals
  * as module imports and fails the production build otherwise.
  *
  * Scripts live in the engine checkout — never in the data root. Under the #524
@@ -73,7 +73,7 @@ export function careerOpsRoot(): string {
  */
 export function rootScript(nameNoExt: string): string {
   // resolveRootScript() already returns the absolute `<checkout>/<name>.ts`, and
-  // its path.join carries the Turbopack ignore: the core checkout is selected at
+  // its path.join carries the bundler ignore: the core checkout is selected at
   // runtime and must not be bundled into the web server output.
   return resolveRootScript(resolveCodeRoot(process.cwd(), process.env), nameNoExt);
 }
@@ -97,7 +97,7 @@ function read(rel: string): string | null {
   }
 }
 
-export type InboxJob = { url: string; company: string; role: string; location?: string; compensation?: string; done: boolean; postedAt?: string };
+export type InboxJob = InboxRow;
 
 /** Parse data/pipeline.md. The row grammar and its labeled-segment handling
  *  live in pipeline-table.ts — see there for the column rules (#1015, #1017). */
@@ -175,14 +175,8 @@ export function readApplications(): Application[] {
   return parseApplications(md, careerOpsRoot(), path.resolve(process.cwd(), "..")) as Application[];
 }
 
-export type StatusLogRow = {
-  num: number;
-  date: string;
-  from: string;
-  to: string;
-  source: string;
-  note: string;
-};
+/** The ledger row shape is pipeline-sankey.ts's, since that is what parses it. */
+export type StatusLogRow = SankeyLogRow;
 
 /** Append-only transitions beside the active tracker. A missing log is
  *  normal (no status change recorded yet) and yields []. Any other read failure
@@ -409,7 +403,7 @@ export function readReport(n: string): ReportData | null {
   try {
     // Reports live in the user's runtime checkout, outside the web build graph.
     return {
-      content: fs.readFileSync(/* turbopackIgnore: true */ file, "utf8"),
+      content: fs.readFileSync(/* @vite-ignore */ file, "utf8"),
       file: path.basename(file),
     };
   } catch {

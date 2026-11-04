@@ -29,7 +29,7 @@ const claudeArgv = (allowed = "Read,Glob,Grep") => {
 };
 
 /** Read a `-c key=value` override back out of a built argv. */
-function configValue(args, key) {
+function configValue(args: string[], key: string): string | null {
   for (let i = 0; i < args.length - 1; i++) {
     if (args[i] === "-c" && args[i + 1].startsWith(`${key}=`)) return args[i + 1].slice(key.length + 1);
   }
@@ -114,7 +114,7 @@ test("no capability ever yields an unsandboxed run", () => {
     // disables the sandbox entirely; no worker has a reason to ask for it, and a
     // run that quietly received it would look fenced while being anything but.
     const mode = configValue(args, "sandbox_mode");
-    assert.ok(["read-only", "workspace-write"].includes(mode), `${name} produced sandbox_mode=${mode}`);
+    assert.ok(["read-only", "workspace-write"].includes(mode ?? ""), `${name} produced sandbox_mode=${mode}`);
   }
 });
 
@@ -511,11 +511,12 @@ test("each notice is detectable by the UI and names the runtime", () => {
 
   // Then BOTH shapes are detectable — a predicate that knew only the first would
   // go stale the day the second was added, which is why it is not a bare marker.
-  for (const [name, report] of [["unfenced", unfenced], ["partial", partial]]) {
+  const reports: Array<[string, ReturnType<typeof fencingReport>]> = [["unfenced", unfenced], ["partial", partial]];
+  for (const [name, report] of reports) {
     assert.ok(isFencingNotice(report.notice), `${name} notice must be detectable`);
   }
-  assert.ok(unfenced.notice.includes("Gemini CLI"), "notice must name the runtime");
-  assert.ok(partial.notice.includes("Codex"), "notice must name the runtime");
+  assert.ok(unfenced.notice?.includes("Gemini CLI"), "notice must name the runtime");
+  assert.ok(partial.notice?.includes("Codex"), "notice must name the runtime");
   // And a plain step label is not mistaken for one.
   assert.equal(isFencingNotice("Reading your CV & profile"), false);
   assert.equal(isFencingNotice(undefined), false);

@@ -9,7 +9,7 @@ import {
   PortalsConfigError,
 } from "../../src/lib/portals-config.ts";
 
-const fixtureDirs = [];
+const fixtureDirs: string[] = [];
 
 function fixture() {
   const dir = mkdtempSync(path.join(tmpdir(), "career-ops-portals-"));

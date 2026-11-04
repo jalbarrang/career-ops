@@ -1,4 +1,4 @@
-// Guards the ReadableStream in src/app/api/apply/drive/route.ts (issue #3966).
+// Guards the ReadableStream in src/routes/api/apply/drive/+server.ts (issue #3966).
 //
 // The stream's `start(controller)` wraps the whole drive in try/catch/finally
 // and closes the controller in the `finally`. Two success paths inside the
@@ -56,7 +56,7 @@ function tryAndFinally() {
 }
 
 const closeRe = /\bcontroller\s*\.\s*close\s*\(/g;
-const count = (s) => (s.match(closeRe) ?? []).length;
+const count = (s: string): number => (s.match(closeRe) ?? []).length;
 
 test("self-check: the anchors this test reads still exist", () => {
   assert.match(src, /new ReadableStream/, "route.ts no longer builds a ReadableStream");

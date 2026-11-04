@@ -11,17 +11,17 @@
  * all.
  */
 
-/**
- * @typedef {Object} ExtractedJson
- * @property {Record<string, unknown> | null} obj
- * @property {boolean} truncated
- */
+/** The parsed object plus whether the answer was cut short. */
+export interface ExtractedJson {
+  obj: Record<string, unknown> | null;
+  truncated: boolean;
+}
 
 /**
  * @param {string} text
  * @returns {ExtractedJson}
  */
-export function extractJsonObject(text) {
+export function extractJsonObject(text: unknown): ExtractedJson {
   // Strip only a fence that WRAPS the message, never every fence in it.
   //
   // A global strip reaches inside JSON string values: an answer containing a
@@ -34,7 +34,7 @@ export function extractJsonObject(text) {
   // string is neither at the start nor the end of the message. Prose before the
   // fence is fine either way: the scanner below seeks the first `{`, and a
   // trailing fence sits past the matching `}`.
-  const s = text
+  const s = String(text ?? "")
     .replace(/^\s*```(?:json)?[^\S\n]*\n?/i, "")
     .replace(/\n?[^\S\n]*```\s*$/, "");
   const start = s.indexOf("{");
@@ -122,7 +122,7 @@ export function extractJsonObject(text) {
       else if (c === "}") depth2--;
     }
   }
-  const lastStructuralComma = (before) => {
+  const lastStructuralComma = (before: number): number => {
     for (let i = before - 1; i >= 0; i--) {
       if (frag[i] === "," && structural[i] && depths[i] === 1) return i;
     }

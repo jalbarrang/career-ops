@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import { jobErrorHint } from "../../src/lib/job-error-hint.ts";
 
 /** Build a minimal error job whose terminal step carries `label`. */
-function errorJob(label, text = "") {
+function errorJob(label: string, text: string = ""): { status: string; steps: Array<Record<string, unknown>>; [key: string]: unknown } {
   return {
     status: "error",
     text,

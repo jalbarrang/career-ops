@@ -15,8 +15,8 @@
  * @param {string | undefined | null} company
  * @returns {{ slug: string, first: string } | null}
  */
-export function companySlug(company) {
-  const c = (company ?? "").trim();
+export function companySlug(company: unknown): { slug: string; first: string } | null {
+  const c = String(company ?? "").trim();
   if (!c) return null;
   const slug = (c.toLowerCase().match(/[a-z0-9]+/g) ?? []).join("-");
   if (!slug) return null;

@@ -10,6 +10,9 @@ import {
   isSafeScheduledId,
   withResourceLock,
   withScheduledStore,
+  type ScheduledJob,
+  type ScheduledQueueItem,
+  type ScheduledStore,
 } from "../src/lib/scheduled-jobs-store.ts";
 import { nextScheduledRun } from "../src/lib/scheduled-cadence.ts";
 import { isMainModule } from "../../lib/is-main-module.ts";
@@ -23,11 +26,68 @@ export const SCAN_TIMEOUT_MS = 25 * 60 * 1_000;
 const MAX_OUTPUT_BYTES = 10 * 1024 * 1024;
 export const QUEUE_CLAIM_STALE_MS = 30 * 1_000;
 
-const nowIso = () => new Date().toISOString();
+const nowIso = (): string => new Date().toISOString();
+
+/** What a scanner child reports back; the test suite substitutes this. */
+export interface SpawnResult {
+  status?: number | null;
+  stdout?: string | Buffer | null;
+  stderr?: string | Buffer | null;
+  error?: { message?: string } | null;
+}
+
+/** How the scanner is started; injected so tests never spawn a process. */
+export type RunnerSpawn = (
+  command: string,
+  args: string[],
+  options: {
+    cwd: string;
+    env: Record<string, string | undefined>;
+    encoding: "utf8";
+    timeout: number;
+    maxBuffer: number;
+    windowsHide: boolean;
+  },
+) => SpawnResult;
+
+/** One scanner invocation: a root script plus its argv. */
+export interface ScanCommand {
+  script: string;
+  args: string[];
+}
+
+/** A queue item claimed for one worker, with the job it belongs to. */
+export interface JobClaim {
+  job: ScheduledJob;
+  queueId: string;
+  runId: string;
+  claimToken: string;
+}
+
+/** What one execution produced. */
+export interface JobResult {
+  state: "success" | "failed";
+  attempt: number;
+  rolesFound: number;
+  durationMs: number;
+  message: string;
+}
+
+/** Narrow an unknown YAML/JSON value to a record. */
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+/** The non-empty strings in an unknown list. */
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string" && item.trim() !== "") : [];
+}
 
 export const nextFutureRun = nextScheduledRun;
 
-export function enqueueDueJobs(store, nowMs = Date.now()) {
+export function enqueueDueJobs(store: ScheduledStore, nowMs: number = Date.now()): number {
   let queued = 0;
   for (const job of store.jobs) {
     if (job.status !== "active") continue;
@@ -47,13 +107,13 @@ export function enqueueDueJobs(store, nowMs = Date.now()) {
   return queued;
 }
 
-function claimIsStale(item, nowMs) {
+function claimIsStale(item: ScheduledQueueItem, nowMs: number): boolean {
   if (!item.claimToken || !item.claimedAt) return false;
   const claimedMs = Date.parse(item.claimedAt);
   return !Number.isFinite(claimedMs) || nowMs - claimedMs >= QUEUE_CLAIM_STALE_MS;
 }
 
-function claimQueueItem(store, item, job, nowMs) {
+function claimQueueItem(store: ScheduledStore, item: ScheduledQueueItem, job: ScheduledJob, nowMs: number): JobClaim | null {
   if (item.claimToken && !claimIsStale(item, nowMs)) return null;
   if (item.claimToken) {
     const staleRun = item.runId && store.runs.find((run) => run.id === item.runId);
@@ -77,7 +137,7 @@ function claimQueueItem(store, item, job, nowMs) {
   return { job: structuredClone(job), queueId: item.id, runId: item.runId, claimToken };
 }
 
-export function claimDueJob(store, nowMs = Date.now()) {
+export function claimDueJob(store: ScheduledStore, nowMs: number = Date.now()): JobClaim | null {
   for (const item of store.queue) {
     const job = store.jobs.find((candidate) => candidate.id === item.jobId && candidate.status === "active");
     if (!job) continue;
@@ -87,7 +147,7 @@ export function claimDueJob(store, nowMs = Date.now()) {
   return null;
 }
 
-export function claimManualJob(store, jobId, nowMs = Date.now()) {
+export function claimManualJob(store: ScheduledStore, jobId: string, nowMs: number = Date.now()): JobClaim | null {
   const job = store.jobs.find((candidate) => candidate.id === jobId && candidate.status !== "deleted");
   if (!job) return null;
   let item = store.queue.find((candidate) => candidate.jobId === jobId);
@@ -100,14 +160,14 @@ export function claimManualJob(store, jobId, nowMs = Date.now()) {
 
 export const runnerResourcePath = scheduledRunnerResourcePath;
 
-function numericFilter(value, fallback, minimum, maximum = Number.POSITIVE_INFINITY) {
+function numericFilter(value: unknown, fallback: number, minimum: number, maximum: number = Number.POSITIVE_INFINITY): number {
   if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) return fallback;
   const number = Number(value);
   if (!Number.isFinite(number)) return fallback;
   return Math.min(maximum, Math.max(minimum, Math.round(number)));
 }
 
-export function buildScanCommand(job) {
+export function buildScanCommand(job: ScheduledJob): ScanCommand {
   const filters = job.filters || {};
   const sinceDays = numericFilter(filters.sinceDays, 7, 1);
   if (job.engine === "portals") {
@@ -117,9 +177,8 @@ export function buildScanCommand(job) {
     };
   }
 
-  const ats = Array.isArray(filters.ats) && filters.ats.length
-    ? filters.ats.join(",")
-    : "greenhouse,lever,ashby,workday";
+  const atsList = stringList(filters.ats);
+  const ats = atsList.length ? atsList.join(",") : "greenhouse,lever,ashby,workday";
   const limit = numericFilter(filters.limitPerAts, 150, 50, 500);
   return {
     script: "scan-ats-full.ts",
@@ -127,10 +186,10 @@ export function buildScanCommand(job) {
   };
 }
 
-export function extractRolesFound(engine, stdout) {
+export function extractRolesFound(engine: string, stdout: string): number {
   if (engine === "full") {
     try {
-      const result = JSON.parse(stdout);
+      const result = JSON.parse(stdout) as Record<string, unknown>;
       return Number.isFinite(Number(result.postingsKept)) ? Number(result.postingsKept) : 0;
     } catch {
       return 0;
@@ -140,19 +199,16 @@ export function extractRolesFound(engine, stdout) {
   return match ? Number(match[1]) : 0;
 }
 
-function writeJobPortals(root, job) {
+function writeJobPortals(root: string, job: ScheduledJob): string {
   if (!isSafeScheduledId(job.id)) throw new Error("Invalid scheduled job identifier.");
   const portalsPath = path.join(root, "portals.yml");
-  const base = yaml.load(fs.readFileSync(portalsPath, "utf8"));
-  if (!base || typeof base !== "object") throw new Error("portals.yml must contain a mapping");
+  const parsed = yaml.load(fs.readFileSync(portalsPath, "utf8"));
+  const base = asRecord(parsed);
+  if (!base) throw new Error("portals.yml must contain a mapping");
 
   const filters = job.filters || {};
-  const positive = Array.isArray(filters.positive)
-    ? filters.positive.filter((value) => typeof value === "string" && value.trim())
-    : [];
-  const fallbackPositive = Array.isArray(base.title_filter?.positive)
-    ? base.title_filter.positive.filter((value) => typeof value === "string" && value.trim())
-    : [];
+  const positive = stringList(filters.positive);
+  const fallbackPositive = stringList(asRecord(base.title_filter)?.positive);
   if (!positive.length && !fallbackPositive.length) {
     throw new Error("Scheduled scans require title keywords in the job or portals.yml title_filter.positive.");
   }
@@ -161,7 +217,8 @@ function writeJobPortals(root, job) {
     positive: positive.length ? positive : fallbackPositive,
     negative: Array.isArray(filters.negative) ? filters.negative : [],
   };
-  if (base.title_filter_full) base.title_filter_full = { ...base.title_filter_full, ...base.title_filter };
+  const titleFilterFull = asRecord(base.title_filter_full);
+  if (titleFilterFull) base.title_filter_full = { ...titleFilterFull, ...(base.title_filter as Record<string, unknown>) };
   base.location_filter = {
     ...(base.location_filter || {}),
     allow: Array.isArray(filters.allow) ? filters.allow : [],
@@ -177,8 +234,8 @@ function writeJobPortals(root, job) {
   return tempPath;
 }
 
-function firstErrorLine(result) {
-  const raw = result.stderr || result.error?.message || `scanner exit ${result.status ?? "unknown"}`;
+function firstErrorLine(result: SpawnResult): string {
+  const raw = String(result.stderr ?? "") || result.error?.message || `scanner exit ${result.status ?? "unknown"}`;
   return String(raw).split(/\r?\n/).find(Boolean)?.slice(0, 300) || "Scan failed";
 }
 
@@ -188,8 +245,8 @@ function firstErrorLine(result) {
  * still runs before the next attempt.
  */
 
-export function executeJob(root, job, options = {}) {
-  const spawnFn = options.spawnFn || spawnSync;
+export function executeJob(root: string, job: ScheduledJob, options: { spawnFn?: RunnerSpawn } = {}): JobResult {
+  const spawnFn: RunnerSpawn = options.spawnFn || (spawnSync as unknown as RunnerSpawn);
   const startedAt = Date.now();
   let lastError = "Scan failed";
 
@@ -212,7 +269,7 @@ export function executeJob(root, job, options = {}) {
       );
 
       if (result.status === 0) {
-        const rolesFound = extractRolesFound(job.engine || "full", result.stdout || "");
+        const rolesFound = extractRolesFound(job.engine || "full", String(result.stdout ?? ""));
         return {
           state: "success",
           attempt,
@@ -223,7 +280,7 @@ export function executeJob(root, job, options = {}) {
       }
       lastError = firstErrorLine(result);
     } catch (error) {
-      lastError = firstErrorLine({ error });
+      lastError = firstErrorLine({ error: { message: error instanceof Error ? error.message : String(error) } });
     } finally {
       if (tempPortals) {
         try {
@@ -244,9 +301,9 @@ export function executeJob(root, job, options = {}) {
   };
 }
 
-export async function recordCompletion(storePath, claim, result, inMemoryStore = null) {
+export async function recordCompletion(storePath: string, claim: JobClaim, result: JobResult, inMemoryStore: ScheduledStore | null = null): Promise<void> {
   const at = nowIso();
-  const apply = (store) => {
+  const apply = (store: ScheduledStore): void => {
     const job = claim.job;
     const queueItem = claim.queueId && store.queue.find((item) => item.id === claim.queueId && item.claimToken === claim.claimToken);
     // A stale worker may finish after another worker reclaimed the item. Its
@@ -271,14 +328,14 @@ export async function recordCompletion(storePath, claim, result, inMemoryStore =
   else await withScheduledStore(storePath, apply);
 }
 
-async function takeDueJob(storePath) {
+async function takeDueJob(storePath: string): Promise<JobClaim | null> {
   return withScheduledStore(storePath, (store) => {
     enqueueDueJobs(store);
     return claimDueJob(store);
   });
 }
 
-function requestedJobId(args) {
+function requestedJobId(args: string[]): string | null {
   const index = args.indexOf("--job");
   return index >= 0 ? args[index + 1] || null : null;
 }
@@ -295,7 +352,7 @@ async function main() {
       let claim;
       if (manualJobId) {
         if (!isSafeScheduledId(manualJobId)) throw new Error("Invalid scheduled job identifier.");
-        claim = await withScheduledStore(storePath, (store) => {
+        claim = await withScheduledStore<JobClaim>(storePath, (store) => {
           const job = store.jobs.find((item) => item.id === manualJobId && item.status !== "deleted");
           if (!job) throw new Error("Scheduled job not found.");
           const manualClaim = claimManualJob(store, manualJobId);

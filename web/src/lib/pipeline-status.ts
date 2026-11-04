@@ -1,7 +1,18 @@
 /** Stable across status changes, sorting and filtering; not just a row position.
  * @param {{n: string, company: string, role: string, date: string, report: string}} row
  */
-export function applicationKey(row) {
+/** The fields that identify one application independently of its status. */
+export interface ApplicationIdentity {
+  n: string;
+  company: string;
+  role: string;
+  date: string;
+  report: string;
+  /** Not part of the key: a status change must not change identity. */
+  status?: string;
+}
+
+export function applicationKey(row: ApplicationIdentity): string {
   return JSON.stringify([row.n, row.company, row.role, row.date, row.report]);
 }
 
@@ -12,25 +23,41 @@ export function applicationKey(row) {
  * @param {{key: string, status: string}} saved
  * @returns {T[]}
  */
-export function applySavedStatus(rows, saved) {
+export function applySavedStatus<T extends ApplicationIdentity & { status: string }>(
+  rows: readonly T[],
+  saved: { key: string; status: string },
+): T[] {
   return rows.map((row) => applicationKey(row) === saved.key ? { ...row, status: saved.status } : row);
 }
+
+/** The POST this module issues, narrow enough for a test to stub. */
+export type StatusRequest = (
+  url: string,
+  init: { method: string; headers: Record<string, string>; body: string },
+) => Promise<{ ok: boolean; json: () => Promise<unknown> }>;
 
 /** The existing status endpoint is the only writer. A 200 alone is not a save.
  * @param {string} n
  * @param {string} current
  * @param {string} next
- * @param {typeof fetch} [request]
+ * @param {StatusRequest} [request]
  * @returns {Promise<string | null>}
  */
-export async function saveStatus(n, current, next, request = fetch) {
+export async function saveStatus(
+  n: string,
+  current: string,
+  next: string,
+  request: StatusRequest = fetch,
+): Promise<string | null> {
   if (next === current) return null;
   const response = await request("/api/status", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ n, status: next }),
   });
-  const result = await response.json().catch(() => null);
+  const result = await response.json().catch(() => null) as
+    | { error?: unknown; ok?: unknown; status?: unknown }
+    | null;
   if (!response.ok) {
     throw new Error(typeof result?.error === "string" ? result.error : "Could not save status. Please try again.");
   }

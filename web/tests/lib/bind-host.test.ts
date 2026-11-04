@@ -20,14 +20,24 @@ import { parseAllowedHosts, isLoopbackHost } from "../../src/lib/origin-guard.ts
 import {
   LOOPBACK_BIND,
   ALL_INTERFACES_BIND,
-  NEXT_COMMANDS,
+  RUN_COMMANDS,
   validateAllowedHosts,
   resolveBindHost,
   isWidenedBind,
   isWildcardAddress,
   hasHostFlag,
-  planNextRun,
+  planDevRun,
+  type DevRunInput,
+  type DevRunPlan,
 } from "../../src/lib/bind-host.ts";
+
+/** The runnable half of a plan. `assert.ok` is what narrows the union, so every
+ *  success assertion below reads a value TypeScript knows has argv/bindHost. */
+function runnable(input: DevRunInput): Extract<DevRunPlan, { ok: true }> {
+  const plan = planDevRun(input);
+  assert.ok(plan.ok, "expected a runnable plan");
+  return plan;
+}
 
 // --- validateAllowedHosts -------------------------------------------------
 
@@ -108,7 +118,7 @@ test("multicast and limited-broadcast addresses are refused before planning a bi
   for (const envValue of ["224.0.0.1", "239.255.255.250", "255.255.255.255", "ff02::1", "ff0e::dead:beef"]) {
     // When the value is validated directly and through the public planner
     const validation = validateAllowedHosts(envValue);
-    const plan = planNextRun({ command: "dev", envValue });
+    const plan = planDevRun({ command: "dev", envValue });
     // Then neither path produces a bind target
     assert.equal(validation.ok, false, `${envValue} must be refused`);
     assert.match(validation.error, /not a unicast address/);
@@ -134,7 +144,7 @@ test("every spelling of every-interface is recognised as a wildcard", () => {
 
 test("a wildcard bind is never reported as costing loopback", () => {
   // Given the wildcard bind an opt-in can still produce, via a hostname
-  const plan = planNextRun({ command: "dev", envValue: "nas.local, 10.0.0.4" });
+  const plan = runnable({ command: "dev", envValue: "nas.local, 10.0.0.4" });
   // When the run is planned
   // Then it widens but does not claim localhost stops answering
   assert.equal(plan.bindHost, ALL_INTERFACES_BIND);
@@ -284,13 +294,13 @@ test("argv without a hostname flag is left alone", () => {
   }
 });
 
-// --- planNextRun ----------------------------------------------------------
+// --- planDevRun ----------------------------------------------------------
 
 test("an unknown or missing command is refused with usage", () => {
   // Given argv that names no next subcommand
   for (const command of [undefined, "", "serve", "--help"]) {
     // When a run is planned
-    const plan = planNextRun({ command, envValue: undefined });
+    const plan = planDevRun({ command, envValue: undefined });
     // Then nothing is spawned and the caller is told how to invoke it
     assert.equal(plan.ok, false, `${JSON.stringify(command)} must not produce a runnable plan`);
     assert.ok(plan.error.includes("Usage: bun server.ts"), "the refusal must name the usage");
@@ -299,7 +309,7 @@ test("an unknown or missing command is refused with usage", () => {
 
 test("an unreadable opt-in refuses the run rather than starting a widened server", () => {
   // Given a value that cannot be a host list
-  const plan = planNextRun({ command: "dev", envValue: "off" });
+  const plan = planDevRun({ command: "dev", envValue: "off" });
   // When a run is planned
   // Then there is no argv to spawn — failing fast beats binding every interface
   assert.equal(plan.ok, false);
@@ -308,9 +318,9 @@ test("an unreadable opt-in refuses the run rather than starting a widened server
 
 test("each supported command builds argv with the bind ahead of forwarded flags", () => {
   // Given a supported command and a caller's own flag
-  for (const command of NEXT_COMMANDS) {
+  for (const command of RUN_COMMANDS) {
     // When a run is planned with no opt-in
-    const plan = planNextRun({ command, extra: ["-p", "4000"], envValue: undefined });
+    const plan = runnable({ command, extra: ["-p", "4000"], envValue: undefined });
     // Then next is told the bind first, and the caller's flags survive verbatim
     assert.equal(plan.ok, true);
     assert.deepEqual(plan.argv, [command, "-H", LOOPBACK_BIND, "-p", "4000"]);
@@ -321,11 +331,11 @@ test("each supported command builds argv with the bind ahead of forwarded flags"
 
 test("an opt-in that widens is reported along with the hosts that caused it", () => {
   // Given a real opt-in that cannot resolve to a single address
-  const plan = planNextRun({ command: "start", envValue: "nas.local, 10.0.0.4" });
+  const plan = runnable({ command: "dev", envValue: "nas.local, 10.0.0.4" });
   // When the run is planned
   // Then the caller has everything needed to explain the exposure
   assert.equal(plan.ok, true);
-  assert.deepEqual(plan.argv, ["start", "-H", ALL_INTERFACES_BIND]);
+  assert.deepEqual(plan.argv, ["dev", "-H", ALL_INTERFACES_BIND]);
   assert.equal(plan.widened, true);
   assert.equal(plan.hostFlagSupplied, false);
   assert.equal(plan.loopbackUnreachable, false, "0.0.0.0 still answers on loopback");
@@ -334,7 +344,7 @@ test("an opt-in that widens is reported along with the hosts that caused it", ()
 
 test("a single-address bind is flagged as costing loopback", () => {
   // Given the opt-in that now binds one address instead of every interface
-  const plan = planNextRun({ command: "dev", envValue: "192.168.1.50" });
+  const plan = runnable({ command: "dev", envValue: "192.168.1.50" });
   // When the run is planned
   // Then the caller is told localhost will stop answering — the symptom
   // otherwise looks like a server that failed to start
@@ -352,7 +362,7 @@ test("a caller's own hostname flag hands the bind decision to next", () => {
     ["-H", ""], ["--hostname="], ["-H"], ["-H", "0.0.0.0", "-H", "127.0.0.1"],
   ]) {
     // When the run is planned
-    const plan = planNextRun({ command: "dev", extra, envValue: undefined });
+    const plan = runnable({ command: "dev", extra, envValue: undefined });
     // Then argv carries the caller's flag and nothing else, so there is no
     // duplicate for commander to resolve and no bind for the launcher to assert
     assert.equal(plan.ok, true, `${extra.join(" ")} must still produce a runnable plan`);
@@ -364,7 +374,7 @@ test("a caller's own hostname flag hands the bind decision to next", () => {
 
 test("a caller's flag does not silence the resolved bind, it replaces the claim", () => {
   // Given an override alongside an opt-in that would have widened
-  const plan = planNextRun({ command: "dev", extra: ["-H", "127.0.0.1"], envValue: "nas.local" });
+  const plan = runnable({ command: "dev", extra: ["-H", "127.0.0.1"], envValue: "nas.local" });
   // When the run is planned
   // Then the launcher injects nothing and reports that next owns the bind. The
   // resolved value is still there for context, but hostFlagSupplied is what any
@@ -378,7 +388,7 @@ test("a caller's flag does not silence the resolved bind, it replaces the claim"
 test("an allow-list of only loopback hosts grants nothing new", () => {
   // Given an opt-in naming hosts the guard already admits, plus a caller's flag
   // that may open the socket — the state that used to print no second notice
-  const plan = planNextRun({
+  const plan = runnable({
     command: "dev",
     extra: ["-H", "0.0.0.0"],
     envValue: "localhost, 127.0.0.1, ::1",
@@ -392,7 +402,7 @@ test("an allow-list of only loopback hosts grants nothing new", () => {
 
 test("an allow-list naming a reachable host does grant something", () => {
   // Given an opt-in that names a host loopback cannot serve
-  const plan = planNextRun({ command: "dev", envValue: "nas.local" });
+  const plan = runnable({ command: "dev", envValue: "nas.local" });
   // When the run is planned
   // Then the filter is meaningful and the second notice must not fire
   assert.equal(plan.grantsNoNewHost, false);

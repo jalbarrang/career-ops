@@ -22,7 +22,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { installedCliIds, pickUsableCli } from "../../src/lib/cli-pick.ts";
 
-const clis = (...installed) =>
+const clis = (...installed: string[]): Array<{ id: string; installed: boolean }> =>
   ["claude", "codex", "opencode"].map((id) => ({ id, installed: installed.includes(id) }));
 
 test("an installed id is used as-is, with no substitution", () => {
@@ -50,7 +50,7 @@ test("installedCliIds lists only installed entries, for the 404 body", () => {
 });
 
 const API = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "src", "routes", "api");
-const read = (rel) => readFileSync(join(API, rel), "utf8");
+const read = (rel: string): string => readFileSync(join(API, rel), "utf8");
 
 // Routes that spawn the CLI they resolve. Each must rebind cliId to the resolved
 // spec's id before anything keyed on it runs.

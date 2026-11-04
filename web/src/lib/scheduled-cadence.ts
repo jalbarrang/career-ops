@@ -1,4 +1,14 @@
-function intervalMs(every, unit) {
+/** One wall-clock reading in the job timezone. */
+interface LocalParts {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+}
+
+function intervalMs(every: unknown, unit: unknown): number | null {
   const amount = Number(every);
   if (!Number.isFinite(amount) || amount <= 0) return null;
   if (unit === "days") return amount * 86_400_000;
@@ -7,17 +17,17 @@ function intervalMs(every, unit) {
   return null;
 }
 
-function localParts(epochMs, timezone) {
+function localParts(epochMs: number, timezone: string): LocalParts {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
     year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
   }).formatToParts(new Date(epochMs));
-  const values = Object.fromEntries(parts.filter((part) => part.type !== "literal").map((part) => [part.type, Number(part.value)]));
+  const values: Record<string, number> = Object.fromEntries(parts.filter((part) => part.type !== "literal").map((part) => [part.type, Number(part.value)]));
   return { year: values.year, month: values.month, day: values.day, hour: values.hour, minute: values.minute, second: values.second };
 }
 
-function localToEpochMs(parts, timezone) {
+function localToEpochMs(parts: LocalParts, timezone: string): number {
   const wall = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
   let guess = wall;
   for (let i = 0; i < 3; i += 1) {
@@ -28,7 +38,7 @@ function localToEpochMs(parts, timezone) {
   return guess;
 }
 
-function nextDailyRun(startAt, every, timezone, nowMs) {
+function nextDailyRun(startAt: string, every: number, timezone: string, nowMs: number): string | null {
   try {
     const start = localParts(Date.parse(startAt), timezone);
     const current = localParts(nowMs, timezone);
@@ -52,7 +62,13 @@ function nextDailyRun(startAt, every, timezone, nowMs) {
   }
 }
 
-export function nextScheduledRun(startAt, every, unit, nowMs = Date.now(), timezone = "UTC") {
+export function nextScheduledRun(
+  startAt: string,
+  every: number,
+  unit: string,
+  nowMs: number = Date.now(),
+  timezone: string = "UTC",
+): string | null {
   const first = Date.parse(startAt);
   const interval = intervalMs(every, unit);
   if (!Number.isFinite(first) || !interval) return null;

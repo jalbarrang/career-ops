@@ -20,7 +20,7 @@ test("slugify: trims leading/trailing hyphens", () => {
 });
 
 // Given a career-ops root with a report on disk and a profile.yml naming the candidate
-function makeRoot({ profileYaml } = {}) {
+function makeRoot({ profileYaml }: { profileYaml?: string | null } = {}): string {
   const root = mkdtempSync(join(tmpdir(), "co-pdfpaths-"));
   mkdirSync(join(root, "config"), { recursive: true });
   if (profileYaml !== null) {
@@ -32,7 +32,8 @@ function makeRoot({ profileYaml } = {}) {
 test("resolvePdfPaths: happy path builds html + finalPdf from report + profile", () => {
   // Given a root with a resolvable report and a named candidate
   const root = makeRoot();
-  const findReportFile = (input) => (input === "018" ? join(root, "reports", "018-acme-2026-07-01.md") : null);
+  const findReportFile = (input: string): string | null =>
+    input === "018" ? join(root, "reports", "018-acme-2026-07-01.md") : null;
   try {
     // When resolving paths for report #018
     const result = resolvePdfPaths("018", "2026-07-26", root, findReportFile);
@@ -85,7 +86,7 @@ test("resolvePdfPaths: no matching report -> ok:false, no directories created", 
 test("resolvePdfPaths: missing profile.yml falls back to the default candidate slug", () => {
   // Given a root with a resolvable report but no profile.yml at all
   const root = makeRoot({ profileYaml: null });
-  const findReportFile = (input) => (input === "5" ? join(root, "reports", "5-globex-2026-07-01.md") : null);
+  const findReportFile = (input: string): string | null => (input === "5" ? join(root, "reports", "5-globex-2026-07-01.md") : null);
   try {
     // When resolving paths for report #5
     const result = resolvePdfPaths("5", "2026-07-26", root, findReportFile);
@@ -101,7 +102,7 @@ test("resolvePdfPaths: missing profile.yml falls back to the default candidate s
 test("resolvePdfPaths: malformed profile.yml falls back to the default candidate slug", () => {
   // Given a root with a resolvable report and an unparseable profile.yml
   const root = makeRoot({ profileYaml: "candidate: [unterminated" });
-  const findReportFile = (input) => (input === "5" ? join(root, "reports", "5-globex-2026-07-01.md") : null);
+  const findReportFile = (input: string): string | null => (input === "5" ? join(root, "reports", "5-globex-2026-07-01.md") : null);
   try {
     // When resolving paths for report #5
     const result = resolvePdfPaths("5", "2026-07-26", root, findReportFile);
@@ -117,7 +118,7 @@ test("resolvePdfPaths: malformed profile.yml falls back to the default candidate
 test("resolvePdfPaths: report filename that doesn't match the expected pattern falls back to the default company slug", () => {
   // Given findReportFile resolves to a filename that doesn't match ^\d+-(.+)-YYYY-MM-DD.md$
   const root = makeRoot();
-  const findReportFile = (input) => (input === "7" ? join(root, "reports", "not-the-expected-shape.md") : null);
+  const findReportFile = (input: string): string | null => (input === "7" ? join(root, "reports", "not-the-expected-shape.md") : null);
   try {
     // When resolving paths for report #7
     const result = resolvePdfPaths("7", "2026-07-26", root, findReportFile);
@@ -133,7 +134,7 @@ test("resolvePdfPaths: report filename that doesn't match the expected pattern f
 test("resolvePdfPaths: profile.yml present but candidate.full_name empty falls back to the default candidate slug", () => {
   // Given a profile.yml with a candidate block but no usable full_name
   const root = makeRoot({ profileYaml: 'candidate:\n  full_name: ""\n  email: "jane@example.com"\n' });
-  const findReportFile = (input) => (input === "5" ? join(root, "reports", "5-globex-2026-07-01.md") : null);
+  const findReportFile = (input: string): string | null => (input === "5" ? join(root, "reports", "5-globex-2026-07-01.md") : null);
   try {
     // When resolving paths for report #5
     const result = resolvePdfPaths("5", "2026-07-26", root, findReportFile);

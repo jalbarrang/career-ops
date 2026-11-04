@@ -34,21 +34,32 @@ const coreSeed = path.join(CORE, "followup-seed.ts");
 // `bun install --frozen-lockfile` in web/ alone) has the file and not its dependencies; existsSync
 // would call that runnable and the cases would fail on ERR_MODULE_NOT_FOUND
 // instead of skipping (mirrors tracker-lock.test.ts / #2922).
-let core = null;
-let skipCore = false;
+/** The one entry this suite needs from the core's followup-seed.ts. */
+interface FollowupSeedModule {
+  withFollowupsLock: <T>(
+    file: string,
+    fn: () => T | Promise<T>,
+    options: { timeoutMs: number; retryMs: number },
+  ) => Promise<T>;
+}
+
+let core: FollowupSeedModule | null = null;
+/** False when the core is importable; otherwise why these cases skip. */
+let skipCore: string | false = false;
 try {
-  core = await import(pathToFileURL(coreSeed).href);
+  core = (await import(pathToFileURL(coreSeed).href)) as FollowupSeedModule;
 } catch (err) {
+  const info = err as { code?: string; url?: string | null };
   const coreAbsent = !fs.existsSync(coreSeed);
-  const packageUnresolvable = err.url == null;
+  const packageUnresolvable = info.url == null;
   const depsAbsent = !fs.existsSync(path.join(CORE, "node_modules"));
-  if (err.code !== "ERR_MODULE_NOT_FOUND") throw err;
+  if (info.code !== "ERR_MODULE_NOT_FOUND") throw err;
   if (coreAbsent) skipCore = `no core checkout at ${CORE}`;
   else if (packageUnresolvable && depsAbsent) skipCore = `core dependencies are not installed at ${CORE} (web-only checkout)`;
   else throw err;
 }
 
-function makeFollowups() {
+function makeFollowups(): { root: string; file: string } {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "flwlock-"));
   const file = path.join(root, "follow-ups.md");
   fs.writeFileSync(file, "# Follow-ups\n\n");
@@ -58,9 +69,9 @@ function makeFollowups() {
 /** The override route's read-modify-write, verbatim in shape: read the whole
  *  file, add THIS app's pin, write the whole file back. The pause widens the
  *  read→write window so two callers reliably overlap. */
-function addPin(file, appNum, date, pauseMs) {
+function addPin(file: string, appNum: number, date: string, pauseMs: number): Promise<void> {
   const existing = fs.readFileSync(file, "utf8");
-  return new Promise((resolve) => setTimeout(() => {
+  return new Promise<void>((resolve) => setTimeout(() => {
     const base = existing.endsWith("\n") ? existing : existing + "\n";
     const tmp = `${file}.tmp`;
     fs.writeFileSync(tmp, base + `- next #${appNum} ${date} (set ${date})\n`);
@@ -69,7 +80,7 @@ function addPin(file, appNum, date, pauseMs) {
   }, pauseMs));
 }
 
-const pinCount = (file) =>
+const pinCount = (file: string): number =>
   fs.readFileSync(file, "utf8").split("\n").filter((l) => /^- next #\d+ /.test(l)).length;
 
 test("WITHOUT a lock, two concurrent pin writers lose one update silently", async () => {
@@ -85,8 +96,8 @@ test("WITHOUT a lock, two concurrent pin writers lose one update silently", asyn
 
 test("WITH the core lock, both pins survive", { skip: skipCore }, async () => {
   const { root, file } = makeFollowups();
-  const guarded = (appNum, date, pauseMs) =>
-    core.withFollowupsLock(file, () => addPin(file, appNum, date, pauseMs), { timeoutMs: 5_000, retryMs: 25 });
+  const guarded = (appNum: number, date: string, pauseMs: number): Promise<void> =>
+    core!.withFollowupsLock(file, () => addPin(file, appNum, date, pauseMs), { timeoutMs: 5_000, retryMs: 25 });
   try {
     await Promise.all([guarded(1, "2026-07-10", 60), guarded(2, "2026-07-11", 10)]);
     assert.equal(pinCount(file), 2, "a pin was lost even under the lock");
@@ -102,11 +113,11 @@ test("the lock is released on a throwing path, not just the happy one", { skip: 
   const { root, file } = makeFollowups();
   try {
     await assert.rejects(
-      core.withFollowupsLock(file, () => { throw new Error("boom"); }, { timeoutMs: 5_000, retryMs: 25 }),
+      core!.withFollowupsLock(file, () => { throw new Error("boom"); }, { timeoutMs: 5_000, retryMs: 25 }),
       /boom/,
     );
     // If the lock had leaked, this second acquire would time out.
-    await core.withFollowupsLock(file, () => addPin(file, 9, "2026-07-12", 0), { timeoutMs: 2_000, retryMs: 25 });
+    await core!.withFollowupsLock(file, () => addPin(file, 9, "2026-07-12", 0), { timeoutMs: 2_000, retryMs: 25 });
     assert.equal(pinCount(file), 1, "second acquire after a throw should have written");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });

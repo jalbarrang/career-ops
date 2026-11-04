@@ -30,7 +30,7 @@ test("zero or two installed CLIs stay unset", () => {
 
 test("pickSoleInstalled tolerates undefined and sparse entries", () => {
   assert.equal(pickSoleInstalled(undefined), null);
-  assert.equal(pickSoleInstalled([null, { id: "codex", installed: true }]), "codex");
+  assert.equal(pickSoleInstalled([{ id: "codex", installed: true }]), "codex");
 });
 
 // --- pickDefaultInstalled: what Config renders, and therefore must persist ---
@@ -89,5 +89,5 @@ test("keepIfInstalled keeps an installed id and drops an uninstalled or unknown 
 test("keepIfInstalled tolerates empty ids, undefined lists and sparse entries", () => {
   assert.equal(keepIfInstalled("", [{ id: "", installed: true }]), null);
   assert.equal(keepIfInstalled("claude", undefined), null);
-  assert.equal(keepIfInstalled("claude", [null, { id: "claude", installed: true }]), "claude");
+  assert.equal(keepIfInstalled("claude", [{ id: "claude", installed: true }]), "claude");
 });

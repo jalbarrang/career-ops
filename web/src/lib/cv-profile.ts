@@ -53,6 +53,115 @@ export const ROLE_FIELDS = ["name", "period", "location"];
 
 export const STATUSES = ["needs_review", "verified"];
 
+/** A record's review state: imported and unreviewed, or confirmed by the user. */
+export type ReviewStatus = "needs_review" | "verified";
+
+/** Where in a source file a statement was found, so it can be re-checked. */
+export interface ProfileEvidence {
+  source: string;
+  line: number;
+  quote: string;
+}
+
+/** One statement in a flat section, or under a role/entry. */
+export interface ProfileFact {
+  id: string;
+  text: string;
+  review_status: ReviewStatus;
+  evidence: ProfileEvidence;
+  [key: string]: unknown;
+}
+
+/** A labelled entry in `projects` / `education`, with the facts under it. */
+export interface ProfileLabeledEntry {
+  id: string;
+  label: string;
+  review_status?: ReviewStatus;
+  evidence: ProfileEvidence;
+  facts: ProfileFact[];
+  [key: string]: unknown;
+}
+
+/** One role held at a company. An empty `name` is allowed on purpose. */
+export interface ProfileRole {
+  id: string;
+  name: string;
+  period?: string;
+  location?: string;
+  review_status?: ReviewStatus;
+  evidence: ProfileEvidence;
+  facts: ProfileFact[];
+  [key: string]: unknown;
+}
+
+/** One employer card: the company record plus its roles. */
+export interface ProfileCompany {
+  id: string;
+  company: { name: string; evidence?: ProfileEvidence; [key: string]: unknown };
+  roles: ProfileRole[];
+  [key: string]: unknown;
+}
+
+/** The whole schema-v2 document the builder edits. */
+export interface CareerProfile {
+  schema_version: number;
+  candidate: Record<string, unknown>;
+  summary: ProfileFact[];
+  experiences: ProfileCompany[];
+  projects: ProfileLabeledEntry[];
+  education: ProfileLabeledEntry[];
+  certifications: ProfileFact[];
+  skills: ProfileFact[];
+  [key: string]: unknown;
+}
+
+/** Where a fact lives: a flat section, a role, or a labelled entry. */
+export interface FactScope {
+  section: string;
+  companyId?: string;
+  roleId?: string;
+  entryId?: string;
+}
+
+export interface AddFactScope extends FactScope {
+  text: string;
+  date: string;
+}
+
+export interface FactMutationScope extends FactScope {
+  factId: string;
+  text?: string;
+  status?: string;
+  direction?: Direction;
+}
+
+export type Direction = "up" | "down";
+
+export interface PeriodSide {
+  year: number;
+  month: number | null;
+}
+
+export interface ParsedPeriod {
+  start: PeriodSide;
+  end: PeriodSide | null;
+  present: boolean;
+}
+
+export interface PeriodValue {
+  startMonth?: number | null;
+  startYear?: number | null;
+  endMonth?: number | null;
+  endYear?: number | null;
+  present?: boolean;
+}
+
+export interface SectionCount {
+  entries: number;
+  facts: number;
+  roles?: number;
+}
+
 /** Render order used by the builder's nav. */
 export const PROFILE_SECTIONS = ["summary", EXPERIENCE_SECTION, "projects", "education", "certifications", "skills"];
 
@@ -60,7 +169,7 @@ export const PROFILE_SECTIONS = ["summary", EXPERIENCE_SECTION, "projects", "edu
  * A schema-v2 profile with no content. Mirrors `emptyProfile()` in the engine's
  * lib/career-profile.ts so a file created here is one the validator accepts.
  */
-export function emptyProfile() {
+export function emptyProfile(): CareerProfile {
   return {
     schema_version: SCHEMA_VERSION,
     candidate: {},
@@ -81,21 +190,28 @@ export function emptyProfile() {
  * filled and everything present is left exactly as it is — a read convenience,
  * never a migration.
  */
-export function ensureShape(profile) {
+export function ensureShape(profile: unknown): CareerProfile {
   const base = emptyProfile();
   if (!profile || typeof profile !== "object" || Array.isArray(profile)) return base;
-  const source = profile;
-  const shaped = { ...base, ...source, schema_version: SCHEMA_VERSION };
-  shaped.candidate = source.candidate && typeof source.candidate === "object" && !Array.isArray(source.candidate) ? source.candidate : {};
-  for (const section of PROFILE_SECTIONS) {
-    shaped[section] = Array.isArray(source[section]) ? source[section] : [];
-  }
-  shaped.experiences = shaped.experiences.map((company) => ({
-    ...company,
-    company: company?.company && typeof company.company === "object" ? company.company : { name: "" },
-    roles: Array.isArray(company?.roles) ? company.roles : [],
-  }));
-  return shaped;
+  const source = profile as Record<string, unknown>;
+  const listAs = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+  const candidate = source.candidate && typeof source.candidate === "object" && !Array.isArray(source.candidate)
+    ? (source.candidate as Record<string, unknown>)
+    : {};
+  return {
+    schema_version: SCHEMA_VERSION,
+    candidate,
+    summary: listAs<ProfileFact>(source.summary),
+    experiences: listAs<ProfileCompany>(source.experiences).map((company) => ({
+      ...company,
+      company: company?.company && typeof company.company === "object" ? company.company : { name: "" },
+      roles: Array.isArray(company?.roles) ? company.roles : [],
+    })),
+    projects: listAs<ProfileLabeledEntry>(source.projects),
+    education: listAs<ProfileLabeledEntry>(source.education),
+    certifications: listAs<ProfileFact>(source.certifications),
+    skills: listAs<ProfileFact>(source.skills),
+  };
 }
 
 /**
@@ -106,7 +222,7 @@ export function ensureShape(profile) {
  * ids are opaque to every consumer (`validateProfile` only requires uniqueness),
  * so the two schemes coexist and neither needs to recompute the other's.
  */
-export function makeId(kind, parts = []) {
+export function makeId(kind: string, parts: readonly unknown[] = []): string {
   let hash = 0x811c9dc5;
   const input = parts.join("\u0000");
   for (let i = 0; i < input.length; i += 1) {
@@ -127,10 +243,10 @@ export function makeId(kind, parts = []) {
  * `validateProfile` requires uniqueness ACROSS the whole document, not within a
  * section, so this walks the same nesting `allRoles`/`unverifiedCount` do.
  */
-function usedIds(profile) {
+function usedIds(profile: unknown): Set<string> {
   const shaped = ensureShape(profile);
-  const ids = new Set();
-  const add = (item) => {
+  const ids = new Set<string>();
+  const add = (item: { id?: string; facts?: readonly ProfileFact[] } | null | undefined): void => {
     if (item?.id) ids.add(item.id);
     for (const fact of item?.facts ?? []) if (fact?.id) ids.add(fact.id);
   };
@@ -153,7 +269,7 @@ function usedIds(profile) {
  * `{#each}` block. The counter is only mixed in when the base id is taken, so an
  * id minted into an empty or unrelated profile keeps the importer's shape.
  */
-export function makeUniqueId(profile, kind, parts = []) {
+export function makeUniqueId(profile: unknown, kind: string, parts: readonly unknown[] = []): string {
   const taken = usedIds(profile);
   let id = makeId(kind, parts);
   for (let n = 2; taken.has(id); n += 1) id = makeId(kind, [...parts, `#${n}`]);
@@ -161,15 +277,19 @@ export function makeUniqueId(profile, kind, parts = []) {
 }
 
 /** Evidence for something typed here, rather than imported from cv.md. */
-export function userEvidence(text, date) {
+export function userEvidence(text: string, date: string): ProfileEvidence {
   return { source: `user-stated ${date}`, line: 1, quote: text };
 }
 
-export function cleanText(text) {
+export function cleanText(text: unknown): string {
   return String(text ?? "").replace(/\s+/g, " ").trim();
 }
 
-const items = (profile, section) => (Array.isArray(profile?.[section]) ? profile[section] : []);
+function items<T>(profile: unknown, section: string): T[] {
+  if (!profile || typeof profile !== "object") return [];
+  const value = (profile as Record<string, unknown>)[section];
+  return Array.isArray(value) ? (value as T[]) : [];
+}
 
 /** Month labels the CV prints, and the picker offers. */
 export const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -198,13 +318,13 @@ const SEPARATOR = /\s+-\s+|\s+to\s+/i;
  * @param {string} text
  * @returns {{ start: { year: number, month: number | null }, end: { year: number, month: number | null } | null, present: boolean } | null}
  */
-export function parsePeriod(text) {
+export function parsePeriod(text: unknown): ParsedPeriod | null {
   const raw = String(text ?? "").replace(/[\u2010-\u2015]/g, "-").trim();
   if (!raw) return null;
   // "Currently working here" spelled any of the ways a CV does.
   const present = /\b(present|current|currently|now|today|actualidad|actualmente|hoy|atual|atualmente)\b/i.test(raw);
 
-  const side = (value) => {
+  const side = (value: string): PeriodSide | null => {
     const year = value.match(/\b(19|20)\d{2}\b/);
     if (!year) return null;
     const named = value.slice(0, year.index).match(MONTH_NAME);
@@ -235,10 +355,10 @@ export function parsePeriod(text) {
  * @param {{ startMonth?: number | null, startYear?: number | null, endMonth?: number | null, endYear?: number | null, present?: boolean }} value
  * @returns {string | null}
  */
-export function formatPeriod(value = {}) {
-  const asYear = (input) => (Number.isInteger(input) && input >= 1900 && input <= 2100 ? String(input) : null);
-  const asMonth = (input) => (Number.isInteger(input) && input >= 1 && input <= 12 ? MONTH_LABELS[input - 1] : null);
-  const side = (monthInput, yearInput) => {
+export function formatPeriod(value: PeriodValue = {}): string | null {
+  const asYear = (input: unknown): string | null => (typeof input === "number" && Number.isInteger(input) && input >= 1900 && input <= 2100 ? String(input) : null);
+  const asMonth = (input: unknown): string | null => (typeof input === "number" && Number.isInteger(input) && input >= 1 && input <= 12 ? MONTH_LABELS[input - 1] : null);
+  const side = (monthInput: unknown, yearInput: unknown): string | null => {
     const year = asYear(yearInput);
     if (!year) return null;
     const month = asMonth(monthInput);
@@ -259,31 +379,35 @@ export function formatPeriod(value = {}) {
  * section, `{ section: 'experiences', companyId, roleId }` for a role, or
  * `{ section: 'projects', entryId }` for a labelled entry.
  */
-export function factsOf(profile, scope = {}) {
-  const { section } = scope;
-  if (FLAT_SECTIONS.includes(section)) return items(profile, section);
+export function factsOf(profile: unknown, scope: Partial<FactScope> = {}): ProfileFact[] {
+  const { section = "" } = scope;
+  if (FLAT_SECTIONS.includes(section)) return items<ProfileFact>(profile, section);
   if (section === EXPERIENCE_SECTION) {
-    const company = items(profile, section).find((item) => item?.id === scope.companyId);
+    const company = items<ProfileCompany>(profile, section).find((item) => item?.id === scope.companyId);
     const role = (company?.roles ?? []).find((item) => item?.id === scope.roleId);
     return Array.isArray(role?.facts) ? role.facts : [];
   }
   if (LABEL_SECTIONS.includes(section)) {
-    const entry = items(profile, section).find((item) => item?.id === scope.entryId);
+    const entry = items<ProfileLabeledEntry>(profile, section).find((item) => item?.id === scope.entryId);
     return Array.isArray(entry?.facts) ? entry.facts : [];
   }
   return [];
 }
 
 /** Apply a change only to the targeted scope, leaving everything else untouched. */
-function withFacts(profile, scope, transform) {
+function withFacts(
+  profile: CareerProfile,
+  scope: FactScope,
+  transform: (facts: ProfileFact[]) => ProfileFact[],
+): CareerProfile {
   const { section } = scope;
   if (FLAT_SECTIONS.includes(section)) {
-    return { ...profile, [section]: transform(items(profile, section)) };
+    return { ...profile, [section]: transform(items<ProfileFact>(profile, section)) };
   }
   if (section === EXPERIENCE_SECTION) {
     return {
       ...profile,
-      [section]: items(profile, section).map((company) =>
+      [section]: items<ProfileCompany>(profile, section).map((company) =>
         company?.id === scope.companyId
           ? {
               ...company,
@@ -298,7 +422,7 @@ function withFacts(profile, scope, transform) {
   if (LABEL_SECTIONS.includes(section)) {
     return {
       ...profile,
-      [section]: items(profile, section).map((entry) =>
+      [section]: items<ProfileLabeledEntry>(profile, section).map((entry) =>
         entry?.id === scope.entryId ? { ...entry, facts: transform(Array.isArray(entry.facts) ? entry.facts : []) } : entry,
       ),
     };
@@ -307,7 +431,7 @@ function withFacts(profile, scope, transform) {
 }
 
 /** Facts identical to one already in the same scope are not stored twice. */
-function isDuplicate(facts, text) {
+function isDuplicate(facts: readonly ProfileFact[], text: unknown): boolean {
   const clean = cleanText(text).toLowerCase();
   return facts.some((fact) => cleanText(fact?.text).toLowerCase() === clean);
 }
@@ -317,7 +441,7 @@ function isDuplicate(facts, text) {
  * @param {{ section: string, companyId?: string, roleId?: string, entryId?: string, text: string, date: string }} params
  * @returns {{ profile: object, fact: object | null, added: boolean, reason?: string }}
  */
-export function addFact(profile, scope) {
+export function addFact(profile: CareerProfile, scope: AddFactScope): { profile: CareerProfile; fact: ProfileFact | null; added: boolean; reason?: string } {
   const { section, text, date } = scope;
   if (!PROFILE_SECTIONS.includes(section)) return { profile, fact: null, added: false, reason: "unknown section" };
   const clean = cleanText(text);
@@ -327,9 +451,9 @@ export function addFact(profile, scope) {
   if (isDuplicate(existing, clean)) return { profile, fact: null, added: false, reason: "duplicate" };
 
   const parent = section === EXPERIENCE_SECTION
-    ? String(items(profile, section).find((company) => company?.id === scope.companyId)?.roles?.find((role) => role?.id === scope.roleId)?.name ?? "")
-    : String(items(profile, section).find((entry) => entry?.id === scope.entryId)?.label ?? "");
-  const fact = {
+    ? String(items<ProfileCompany>(profile, section).find((company) => company?.id === scope.companyId)?.roles?.find((role) => role?.id === scope.roleId)?.name ?? "")
+    : String(items<ProfileLabeledEntry>(profile, section).find((entry) => entry?.id === scope.entryId)?.label ?? "");
+  const fact: ProfileFact = {
     id: makeUniqueId(profile, section, [clean, parent, `user-stated ${date}`]),
     text: clean,
     review_status: "verified",
@@ -346,7 +470,7 @@ export function addFact(profile, scope) {
  *
  * @param {{ section: string, companyId?: string, roleId?: string, entryId?: string, factId: string, text?: string, status?: string, direction?: string }} params
  */
-export function updateFactText(profile, scope) {
+export function updateFactText(profile: CareerProfile, scope: FactMutationScope): CareerProfile {
   const { factId, text } = scope;
   const clean = cleanText(text);
   if (!clean) return profile;
@@ -358,9 +482,9 @@ export function updateFactText(profile, scope) {
  *
  * @param {{ section: string, companyId?: string, roleId?: string, entryId?: string, factId: string, text?: string, status?: string, direction?: string }} params
  */
-export function setFactStatus(profile, scope) {
+export function setFactStatus(profile: CareerProfile, scope: FactMutationScope): CareerProfile {
   const { factId, status } = scope;
-  if (!STATUSES.includes(status)) return profile;
+  if (status !== "needs_review" && status !== "verified") return profile;
   return withFacts(profile, scope, (facts) => facts.map((fact) => (fact.id === factId ? { ...fact, review_status: status } : fact)));
 }
 
@@ -369,7 +493,7 @@ export function setFactStatus(profile, scope) {
  *
  * @param {{ section: string, companyId?: string, roleId?: string, entryId?: string, factId: string, text?: string, status?: string, direction?: string }} params
  */
-export function removeFact(profile, scope) {
+export function removeFact(profile: CareerProfile, scope: FactMutationScope): CareerProfile {
   const { factId } = scope;
   return withFacts(profile, scope, (facts) => facts.filter((fact) => fact.id !== factId));
 }
@@ -379,7 +503,7 @@ export function removeFact(profile, scope) {
  *
  * @param {{ section: string, companyId?: string, roleId?: string, entryId?: string, factId: string, direction: "up" | "down" }} params
  */
-export function moveFact(profile, scope) {
+export function moveFact(profile: CareerProfile, scope: FactMutationScope): CareerProfile {
   const { factId, direction } = scope;
   const shift = direction === "up" ? -1 : 1;
   return withFacts(profile, scope, (facts) => {
@@ -399,14 +523,14 @@ export function moveFact(profile, scope) {
  * validator requires it. Roles are added separately, so a company can exist
  * before its first role is typed.
  */
-export function addCompany(profile, { name, date }) {
+export function addCompany(profile: CareerProfile, { name, date }: { name: string; date: string }): { profile: CareerProfile; company: ProfileCompany | null; added: boolean; reason?: string } {
   const clean = cleanText(name);
   if (!clean) return { profile, company: null, added: false, reason: "empty" };
-  const existing = items(profile, EXPERIENCE_SECTION);
+  const existing = items<ProfileCompany>(profile, EXPERIENCE_SECTION);
   if (existing.some((company) => cleanText(company?.company?.name).toLowerCase() === clean.toLowerCase())) {
     return { profile, company: null, added: false, reason: "duplicate" };
   }
-  const company = {
+  const company: ProfileCompany = {
     id: makeUniqueId(profile, EXPERIENCE_SECTION, [clean, `user-stated ${date}`]),
     company: { name: clean, evidence: userEvidence(clean, date) },
     roles: [],
@@ -414,12 +538,12 @@ export function addCompany(profile, { name, date }) {
   return { profile: { ...profile, [EXPERIENCE_SECTION]: [...existing, company] }, company, added: true };
 }
 
-export function updateCompanyName(profile, { companyId, name }) {
+export function updateCompanyName(profile: CareerProfile, { companyId, name }: { companyId: string; name: string }): CareerProfile {
   const clean = cleanText(name);
   if (!clean) return profile;
   return {
     ...profile,
-    [EXPERIENCE_SECTION]: items(profile, EXPERIENCE_SECTION).map((company) =>
+    [EXPERIENCE_SECTION]: items<ProfileCompany>(profile, EXPERIENCE_SECTION).map((company) =>
       company?.id === companyId
         ? { ...company, company: { ...company.company, name: clean } }
         : company,
@@ -428,11 +552,11 @@ export function updateCompanyName(profile, { companyId, name }) {
 }
 
 /** Drop a company and every role and fact under it. The caller confirms first. */
-export function removeCompany(profile, { companyId }) {
-  return { ...profile, [EXPERIENCE_SECTION]: items(profile, EXPERIENCE_SECTION).filter((company) => company?.id !== companyId) };
+export function removeCompany(profile: CareerProfile, { companyId }: { companyId: string }): CareerProfile {
+  return { ...profile, [EXPERIENCE_SECTION]: items<ProfileCompany>(profile, EXPERIENCE_SECTION).filter((company) => company?.id !== companyId) };
 }
 
-export function moveCompany(profile, { companyId, direction }) {
+export function moveCompany(profile: CareerProfile, { companyId, direction }: { companyId: string; direction: Direction }): CareerProfile {
   return moveWithin(profile, EXPERIENCE_SECTION, companyId, direction);
 }
 
@@ -441,15 +565,15 @@ export function moveCompany(profile, { companyId, direction }) {
  * with a company and dates but no title line, and the builder flags the empty
  * field rather than refusing to save.
  */
-export function addRole(profile, { companyId, name = "", date }) {
-  const company = items(profile, EXPERIENCE_SECTION).find((item) => item?.id === companyId);
+export function addRole(profile: CareerProfile, { companyId, name = "", date }: { companyId: string; name?: string; date: string }): { profile: CareerProfile; role: ProfileRole | null; added: boolean; reason?: string } {
+  const company = items<ProfileCompany>(profile, EXPERIENCE_SECTION).find((item) => item?.id === companyId);
   if (!company) return { profile, role: null, added: false, reason: "unknown company" };
   const clean = cleanText(name);
   const roles = Array.isArray(company.roles) ? company.roles : [];
   if (clean && roles.some((role) => cleanText(role?.name).toLowerCase() === clean.toLowerCase())) {
     return { profile, role: null, added: false, reason: "duplicate" };
   }
-  const role = {
+  const role: ProfileRole = {
     id: makeUniqueId(profile, EXPERIENCE_SECTION, [clean, company.company?.name ?? "", `user-stated ${date}`]),
     name: clean,
     review_status: "verified",
@@ -459,7 +583,7 @@ export function addRole(profile, { companyId, name = "", date }) {
   return {
     profile: {
       ...profile,
-      [EXPERIENCE_SECTION]: items(profile, EXPERIENCE_SECTION).map((item) =>
+      [EXPERIENCE_SECTION]: items<ProfileCompany>(profile, EXPERIENCE_SECTION).map((item) =>
         item?.id === companyId ? { ...item, roles: [...roles, role] } : item,
       ),
     },
@@ -468,10 +592,10 @@ export function addRole(profile, { companyId, name = "", date }) {
   };
 }
 
-export function updateRoleField(profile, { companyId, roleId, field, value }) {
+export function updateRoleField(profile: CareerProfile, { companyId, roleId, field, value }: { companyId: string; roleId: string; field: string; value: string }): CareerProfile {
   if (!ROLE_FIELDS.includes(field)) return profile;
   const clean = cleanText(value);
-  const companies = items(profile, EXPERIENCE_SECTION);
+  const companies = items<ProfileCompany>(profile, EXPERIENCE_SECTION);
   if (!companies.some((company) => company?.id === companyId)) return profile;
   return {
     ...profile,
@@ -492,20 +616,20 @@ export function updateRoleField(profile, { companyId, roleId, field, value }) {
   };
 }
 
-export function removeRole(profile, { companyId, roleId }) {
+export function removeRole(profile: CareerProfile, { companyId, roleId }: { companyId: string; roleId: string }): CareerProfile {
   return {
     ...profile,
-    [EXPERIENCE_SECTION]: items(profile, EXPERIENCE_SECTION).map((company) =>
+    [EXPERIENCE_SECTION]: items<ProfileCompany>(profile, EXPERIENCE_SECTION).map((company) =>
       company?.id === companyId ? { ...company, roles: (company.roles ?? []).filter((role) => role?.id !== roleId) } : company,
     ),
   };
 }
 
-export function moveRole(profile, { companyId, roleId, direction }) {
+export function moveRole(profile: CareerProfile, { companyId, roleId, direction }: { companyId: string; roleId: string; direction: Direction }): CareerProfile {
   const shift = direction === "up" ? -1 : 1;
   return {
     ...profile,
-    [EXPERIENCE_SECTION]: items(profile, EXPERIENCE_SECTION).map((company) => {
+    [EXPERIENCE_SECTION]: items<ProfileCompany>(profile, EXPERIENCE_SECTION).map((company) => {
       if (company?.id !== companyId) return company;
       const roles = [...(company.roles ?? [])];
       const from = roles.findIndex((role) => role?.id === roleId);
@@ -518,24 +642,24 @@ export function moveRole(profile, { companyId, roleId, direction }) {
 }
 
 /** Rename a labelled entry (projects / education). */
-export function updateEntryLabel(profile, { section, entryId, label }) {
+export function updateEntryLabel(profile: CareerProfile, { section, entryId, label }: { section: string; entryId: string; label: string }): CareerProfile {
   const clean = cleanText(label);
   if (!clean) return profile;
   return {
     ...profile,
-    [section]: items(profile, section).map((entry) => (entry?.id === entryId ? { ...entry, label: clean } : entry)),
+    [section]: items<ProfileLabeledEntry>(profile, section).map((entry) => (entry?.id === entryId ? { ...entry, label: clean } : entry)),
   };
 }
 
-export function addEntry(profile, { section, label, date }) {
+export function addEntry(profile: CareerProfile, { section, label, date }: { section: string; label: string; date: string }): { profile: CareerProfile; entry: ProfileLabeledEntry | null; added: boolean; reason?: string } {
   if (!LABEL_SECTIONS.includes(section)) return { profile, entry: null, added: false, reason: "not a labelled section" };
   const clean = cleanText(label);
   if (!clean) return { profile, entry: null, added: false, reason: "empty" };
-  const entries = items(profile, section);
+  const entries = items<ProfileLabeledEntry>(profile, section);
   if (entries.some((entry) => cleanText(entry?.label).toLowerCase() === clean.toLowerCase())) {
     return { profile, entry: null, added: false, reason: "duplicate" };
   }
-  const entry = {
+  const entry: ProfileLabeledEntry = {
     id: makeUniqueId(profile, section, [clean, `user-stated ${date}`]),
     label: clean,
     review_status: "verified",
@@ -545,17 +669,17 @@ export function addEntry(profile, { section, label, date }) {
   return { profile: { ...profile, [section]: [...entries, entry] }, entry, added: true };
 }
 
-export function removeEntry(profile, { section, entryId }) {
-  return { ...profile, [section]: items(profile, section).filter((entry) => entry?.id !== entryId) };
+export function removeEntry(profile: CareerProfile, { section, entryId }: { section: string; entryId: string }): CareerProfile {
+  return { ...profile, [section]: items<ProfileLabeledEntry>(profile, section).filter((entry) => entry?.id !== entryId) };
 }
 
-export function moveEntry(profile, { section, entryId, direction }) {
+export function moveEntry(profile: CareerProfile, { section, entryId, direction }: { section: string; entryId: string; direction: Direction }): CareerProfile {
   return moveWithin(profile, section, entryId, direction);
 }
 
-function moveWithin(profile, section, id, direction) {
+function moveWithin(profile: CareerProfile, section: string, id: string, direction: Direction): CareerProfile {
   const shift = direction === "up" ? -1 : 1;
-  const list = [...items(profile, section)];
+  const list = [...items<{ id?: string }>(profile, section)];
   const from = list.findIndex((item) => item?.id === id);
   const to = from + shift;
   if (from === -1 || to < 0 || to >= list.length) return profile;
@@ -570,7 +694,7 @@ function moveWithin(profile, section, id, direction) {
  * on stderr or stdout depending on the outcome. Reading only the `- ` lines
  * keeps the parse independent of which stream carried them.
  */
-export function parseValidationErrors(output = "") {
+export function parseValidationErrors(output = ""): string[] {
   return String(output)
     .replace(/\r\n?/g, "\n")
     .split("\n")
@@ -584,9 +708,9 @@ export function parseValidationErrors(output = "") {
  * Per-section totals for the nav: companies and roles for experiences, entries
  * for the labelled sections, facts for the flat ones.
  */
-export function profileCounts(profile) {
+export function profileCounts(profile: unknown): Record<string, SectionCount> {
   const shaped = ensureShape(profile);
-  const counts = {};
+  const counts: Record<string, SectionCount> = {};
   for (const section of PROFILE_SECTIONS) {
     if (section === EXPERIENCE_SECTION) {
       const companies = shaped.experiences;
@@ -599,33 +723,43 @@ export function profileCounts(profile) {
         ),
       };
     } else if (LABEL_SECTIONS.includes(section)) {
-      const entries = shaped[section];
-      counts[section] = { entries: entries.length, facts: entries.reduce((total, entry) => total + (entry.facts?.length ?? 0), 0) };
+      const entries: ProfileLabeledEntry[] = section === "projects" ? shaped.projects : shaped.education;
+      counts[section] = {
+        entries: entries.length,
+        facts: entries.reduce((total: number, entry) => total + entry.facts.length, 0),
+      };
     } else {
-      counts[section] = { entries: 0, facts: shaped[section].length };
+      const facts: ProfileFact[] = section === "summary"
+        ? shaped.summary
+        : section === "certifications" ? shaped.certifications : shaped.skills;
+      counts[section] = { entries: 0, facts: facts.length };
     }
   }
   return counts;
 }
 
-export function totalFacts(profile) {
+export function totalFacts(profile: unknown): number {
   return Object.values(profileCounts(profile)).reduce((total, count) => total + count.facts, 0);
 }
 
 /** Facts imported from cv.md but never reviewed, so a library is not mistaken for a reviewed one. */
-export function unverifiedCount(profile) {
+export function unverifiedCount(profile: unknown): number {
   const shaped = ensureShape(profile);
   let count = 0;
-  const check = (fact) => {
+  const check = (fact: ProfileFact | null | undefined): void => {
     if (fact?.review_status !== "verified") count += 1;
   };
   for (const section of PROFILE_SECTIONS) {
     if (section === EXPERIENCE_SECTION) {
       for (const company of shaped.experiences) for (const role of company.roles ?? []) for (const fact of role.facts ?? []) check(fact);
     } else if (LABEL_SECTIONS.includes(section)) {
-      for (const entry of shaped[section]) for (const fact of entry.facts ?? []) check(fact);
+      const entries: ProfileLabeledEntry[] = section === "projects" ? shaped.projects : shaped.education;
+      for (const entry of entries) for (const fact of entry.facts) check(fact);
     } else {
-      for (const fact of shaped[section]) check(fact);
+      const facts: ProfileFact[] = section === "summary"
+        ? shaped.summary
+        : section === "certifications" ? shaped.certifications : shaped.skills;
+      for (const fact of facts) check(fact);
     }
   }
   return count;
@@ -637,9 +771,9 @@ export function unverifiedCount(profile) {
  * CV generation and any picker work on roles, so this is the one place that
  * knows how to walk the nesting.
  */
-export function allRoles(profile) {
+export function allRoles(profile: unknown): Array<{ company: ProfileCompany; role: ProfileRole }> {
   const shaped = ensureShape(profile);
-  const roles = [];
+  const roles: Array<{ company: ProfileCompany; role: ProfileRole }> = [];
   for (const company of shaped.experiences) {
     for (const role of company.roles ?? []) roles.push({ company, role });
   }

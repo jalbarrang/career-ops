@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
@@ -7,8 +7,12 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { readChat, listChats, saveChat, deleteChat } from '../../src/lib/assistant-chat-store.ts';
-const messages = [{ role: 'user', parts: [{ type: 'text', text: 'My first conversation' }] }];
-function fixture(t) { const root = mkdtempSync(join(tmpdir(), 'assistant-chats-')); t.after(() => rmSync(root, { recursive: true, force: true })); return root; }
+import type { ChatMessage } from '../../src/lib/assistant-history.ts';
+
+/** One user turn, reused by every case that needs a saveable conversation. */
+const messages: ChatMessage[] = [{ role: 'user', parts: [{ type: 'text', text: 'My first conversation' }] }];
+
+function fixture(t: TestContext): string { const root = mkdtempSync(join(tmpdir(), 'assistant-chats-')); t.after(() => rmSync(root, { recursive: true, force: true })); return root; }
 test('disk conversations survive independent reads, rename, switching and delete', t => {
   const root = fixture(t), first = randomUUID(), second = randomUUID();
   assert.deepEqual(listChats(root), { chats: [], errors: [] });
@@ -19,8 +23,8 @@ test('disk conversations survive independent reads, rename, switching and delete
   assert.equal(listChats(root).chats.length, 2);
   const renamed = saveChat(root, first, { revision: 1, messages, title: 'Career plans' });
   assert.equal(renamed.revision, 2);
-  assert.deepEqual(readChat(root, first).messages, messages);
-  assert.equal(readChat(root, first).title, 'Career plans');
+  assert.deepEqual(readChat(root, first)!.messages, messages);
+  assert.equal(readChat(root, first)!.title, 'Career plans');
   deleteChat(root, first, 2);
   assert.equal(readChat(root, first), null);
   assert.equal(listChats(root).chats.length, 1);
@@ -32,7 +36,7 @@ test('stale tabs and deletes cannot overwrite newer messages', t => {
   saveChat(root, id, { revision: 1, messages: next });
   assert.throws(() => saveChat(root, id, { revision: 1, messages }), /another tab/);
   assert.throws(() => deleteChat(root, id, 1), /another tab/);
-  assert.equal(readChat(root, id).messages.length, 2);
+  assert.equal(readChat(root, id)!.messages.length, 2);
 });
 test('migration retries do not duplicate a conversation or increment its revision', t => {
   const root = fixture(t), id = randomUUID();
@@ -60,7 +64,7 @@ test('an in-progress writer is reported rather than bypassed', t => {
   saveChat(root, id, { revision: 0, messages });
   writeFileSync(join(root, '.career-ops-web', 'chats', `${id}.json.lock`), '');
   assert.throws(() => saveChat(root, id, { revision: 1, messages }), /busy/);
-  assert.equal(readChat(root, id).revision, 1);
+  assert.equal(readChat(root, id)!.revision, 1);
 });
 
 // Bun does not implement node:module's syncBuiltinESMExports(): its `node:fs`
@@ -76,30 +80,30 @@ test('lock and temp cleanup errors do not replace a saved conversation', { skip:
   const root = fixture(t), lockId = randomUUID(), tempId = randomUUID();
   const lockPath = join(root, '.career-ops-web', 'chats', `${lockId}.json.lock`);
   const originalOpenSync = fs.openSync, originalCloseSync = fs.closeSync, originalUnlinkSync = fs.unlinkSync, originalConsoleError = console.error;
-  const logged = [];
-  let lockFd;
-  fs.openSync = (path, ...args) => {
-    const fd = originalOpenSync(path, ...args);
+  const logged: unknown[][] = [];
+  let lockFd: number | undefined;
+  fs.openSync = ((path: string, ...args: unknown[]) => {
+    const fd = (originalOpenSync as (...a: unknown[]) => number)(path, ...args);
     if (String(path) === lockPath) lockFd = fd;
     return fd;
-  };
-  fs.closeSync = fd => {
+  }) as typeof fs.openSync;
+  fs.closeSync = ((fd: number) => {
     originalCloseSync(fd);
     if (fd === lockFd) throw new Error('simulated close failure');
-  };
-  fs.unlinkSync = path => {
+  }) as typeof fs.closeSync;
+  fs.unlinkSync = ((path: string) => {
     const target = String(path);
     if (target === lockPath) throw Object.assign(new Error('simulated lock unlink failure'), { code: 'EACCES' });
     if (target.endsWith('.tmp')) throw Object.assign(new Error('simulated temp unlink failure'), { code: 'EACCES' });
     return originalUnlinkSync(path);
-  };
-  console.error = (...args) => logged.push(args);
+  }) as typeof fs.unlinkSync;
+  console.error = (...args: unknown[]) => { logged.push(args); };
   syncBuiltinESMExports();
   try {
     assert.equal(saveChat(root, lockId, { revision: 0, messages }).revision, 1);
-    assert.equal(readChat(root, lockId).revision, 1);
+    assert.equal(readChat(root, lockId)!.revision, 1);
     assert.equal(saveChat(root, tempId, { revision: 0, messages }).revision, 1);
-    assert.equal(readChat(root, tempId).revision, 1);
+    assert.equal(readChat(root, tempId)!.revision, 1);
     assert.deepEqual(logged.map(([message]) => message), ['chat temp cleanup failed', 'chat lock release failed', 'chat temp cleanup failed']);
   } finally {
     fs.openSync = originalOpenSync;
@@ -107,7 +111,7 @@ test('lock and temp cleanup errors do not replace a saved conversation', { skip:
     fs.unlinkSync = originalUnlinkSync;
     console.error = originalConsoleError;
     syncBuiltinESMExports();
-    try { originalUnlinkSync(lockPath); } catch (err) { if (err.code !== 'ENOENT') throw err; }
+    try { originalUnlinkSync(lockPath); } catch (err) { if ((err as { code?: string }).code !== 'ENOENT') throw err; }
   }
 });
 

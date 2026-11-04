@@ -7,7 +7,7 @@
  * token" fallback that let a multi-word company match a cv-*.pdf that was
  * never tailored for it, and it hand-rolled its own copy of the matching
  * regex that could drift from the twin resolver in
- * web/src/app/api/cv-pdf/route.ts. Both now import the SAME contract from
+ * web/src/routes/api/cv-pdf/+server.ts. Both now import the SAME contract from
  * web/src/lib/apply/cv-match.ts — see that file's header comment.
  *
  * Lives under web/tests/ so the web CI collects it and the core runner never
@@ -16,7 +16,7 @@
  * present when this suite runs.
  *
  * resolveTailoredCv() is TypeScript that reaches web/src/lib/career-ops via
- * the `@/` path alias (Next's tsconfig paths). Node 22 type-strips .ts on
+ * the `@/` path alias (the app's `@/` path alias). Node 22 type-strips .ts on
  * import, but it does NOT understand that alias — `bun test` here is plain
  * `node --test`, with no webpack/SWC in the loop. The tiny inline loader
  * below teaches node:module's resolution hook to resolve `@/*` to web/src/*
@@ -65,7 +65,10 @@ const { sortNewestFirst } = await import('../../src/lib/apply/cv-match.ts');
 // Provision a throwaway career-ops root with an output/ dir, redirected via
 // the same CAREER_OPS_ROOT override career-ops.ts's careerOpsRoot() reads
 // (see web/src/lib/career-ops.ts) — no monkeypatching fs needed.
-async function withFixture(files, fn) {
+async function withFixture<T>(
+  files: ReadonlyArray<readonly [string, number?]>,
+  fn: (outputDir: string) => T | Promise<T>,
+): Promise<T> {
   const root = mkdtempSync(join(tmpdir(), 'cv-resolver-'));
   const outputDir = join(root, 'output');
   mkdirSync(outputDir, { recursive: true });

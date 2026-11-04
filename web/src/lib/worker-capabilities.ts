@@ -41,6 +41,15 @@
  * @property {WebAccess} network - How does the worker need to reach the web?
  */
 
+/** How a worker reaches the web: no, search only, or fetch a named url. */
+export type WebAccess = false | "search" | "fetch";
+
+/** What one worker kind needs. */
+export interface Capabilities {
+  writes: boolean;
+  network: WebAccess;
+}
+
 /**
  * The four records any call site needs, named so a reader sees the intent
  * rather than a struct. Frozen: these are shared singletons, and a caller
@@ -68,7 +77,7 @@ export const CAPS = Object.freeze({
  * Lives here rather than in claude-invocation.ts because it is a fact about the
  * run route's workers, not about Claude. Re-exported there for existing importers.
  */
-export const KNOWN_KINDS = Object.freeze(["pdf", "research", "evaluate", "fix-portal"]);
+export const KNOWN_KINDS = Object.freeze(["pdf", "research", "evaluate", "fix-portal"] as const);
 
 /**
  * What each run-route kind needs. Derived from what its prompt actually does
@@ -87,7 +96,7 @@ export const KNOWN_KINDS = Object.freeze(["pdf", "research", "evaluate", "fix-po
  * posting, the board). CAPS.webSearchOnly belongs to AI search, which is a route
  * of its own and declares its record inline.
  */
-const KIND_CAPABILITIES = Object.freeze({
+const KIND_CAPABILITIES: Record<string, Capabilities> = Object.freeze({
   pdf: CAPS.localReadOnly,
   research: CAPS.networkReadOnly,
   evaluate: CAPS.networkReadOnly,
@@ -104,7 +113,7 @@ const KIND_CAPABILITIES = Object.freeze({
  * @param {string} kind - Worker kind ("pdf", "research", "evaluate", …).
  * @returns {Capabilities}
  */
-export function capabilitiesFor(kind) {
+export function capabilitiesFor(kind: string): Capabilities {
   // Object.hasOwn, not `?? fallback`: a bare lookup resolves inherited
   // Object.prototype members, so a kind of "constructor" or "toString" returns a
   // truthy non-record instead of falling back to the least-capable default.

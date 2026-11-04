@@ -157,7 +157,10 @@ check('JSON hashing ignores object key order but rejects lossy and cyclic values
   }
 });
 
-const root = mkdtempSync(join(tmpdir(), 'profile selection data '));
+// No spaces in the prefix: the CLI spawns below pass this directory as a
+// `file://` preload URL, and Bun rejects a percent-encoded path (`%20`) before
+// any project code runs.
+const root = mkdtempSync(join(tmpdir(), 'profile-selection-data-'));
 const save = (file, value) => writeFileSync(join(root, file), JSON.stringify(value, null, 2));
 const networkGuard = join(root, 'offline.ts');
 writeFileSync(networkGuard, `

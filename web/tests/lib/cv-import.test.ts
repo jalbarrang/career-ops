@@ -8,6 +8,7 @@ import {
   parseImportPreview,
   suggestEntryFields,
   summarizeImportRun,
+  type ImportDecision,
 } from "../../src/lib/cv-import.ts";
 
 // Real preview output, trimmed to the shapes that matter: a section the
@@ -69,7 +70,7 @@ test("a count that disagrees with the parsed rows is flagged", () => {
 
 test("every candidate gets exactly one answer, in order, headings included", () => {
   const { candidates } = parseImportPreview(PREVIEW);
-  const decisions = candidates.map(() => ({ action: "skip" }));
+  const decisions: ImportDecision[] = candidates.map(() => ({ action: "skip" }));
   // The CLI prompts for a heading too (approve keeps the entry, skip drops it);
   // only the facts UNDER a skipped heading go unprompted.
   const { stdin, prompted, swallowed } = buildReviewInput(candidates, decisions);
@@ -87,7 +88,7 @@ test("every candidate gets exactly one answer, in order, headings included", () 
  */
 test("skipping a heading does not queue answers for the facts it swallows", () => {
   const { candidates } = parseImportPreview(PREVIEW);
-  const decisions = [
+  const decisions: ImportDecision[] = [
     { action: "approve" }, // summary
     { action: "skip" }, // heading: Series Entertainment
     { action: "approve" }, // would have been "Shipped Creator Quests" — never prompted
@@ -107,7 +108,7 @@ test("skipping a heading does not queue answers for the facts it swallows", () =
 
 test("approving a heading keeps its facts in the queue", () => {
   const { candidates } = parseImportPreview(PREVIEW);
-  const decisions = candidates.map((candidate) => ({ action: candidate.isHeading ? "approve" : "approve" }));
+  const decisions: ImportDecision[] = candidates.map(() => ({ action: "approve" }));
   const { stdin, prompted, swallowed } = buildReviewInput(candidates, decisions);
 
   assert.deepEqual(swallowed, []);
@@ -117,7 +118,7 @@ test("approving a heading keeps its facts in the queue", () => {
 
 test("a blank rewrite becomes a skip, because the CLI would re-prompt and desync", () => {
   const { candidates } = parseImportPreview(PREVIEW);
-  const decisions = candidates.map(() => ({ action: "skip" }));
+  const decisions: ImportDecision[] = candidates.map(() => ({ action: "skip" }));
   decisions[0] = { action: "edit", text: "   " };
   const { stdin } = buildReviewInput(candidates, decisions);
   assert.equal(stdin, "n\nn\nn\nn\n");
@@ -150,7 +151,7 @@ test("a job split into company / role / dates is one block, owned by the heading
   const { candidates } = parseImportPreview(PREVIEW);
   const blocks = groupImportBlocks(candidates);
 
-  const series = blocks.find((block) => block.kind === "entry");
+  const series = blocks.find((block) => block.kind === "entry")!;
   assert.deepEqual(series.headingIndices, [1]);
   assert.equal(series.ownerIndex, 1);
   assert.deepEqual(series.factIndices, [2, 3]);
@@ -239,7 +240,7 @@ test("skipping a block queues ONE answer for it, because the importer drops the 
 test("a per-fact edit survives a later block-level change to its siblings", () => {
   const { candidates } = parseImportPreview(PREVIEW);
   const blocks = groupImportBlocks(candidates);
-  const withEdit = [];
+  const withEdit: ImportDecision[] = [];
   withEdit[2] = { action: "edit", text: "Sharper wording." };
 
   const decided = applyBlockDecision(blocks[1], "approve", withEdit);

@@ -29,7 +29,7 @@
 export const CHIP_CAP = 512;
 
 /** Trim, drop empties, de-dupe case-insensitively, cap length. */
-export function cleanChips(v) {
+export function cleanChips(v: unknown): string[] {
   if (v == null) return [];
   const arr = Array.isArray(v) ? v : [v];
   const seen = new Set();

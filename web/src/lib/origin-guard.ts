@@ -43,7 +43,7 @@
 // already trusts.
 
 /** Lowercase a Host/authority, drop the port, unwrap a bracketed IPv6 literal. */
-export function normalizeHost(hostHeader) {
+export function normalizeHost(hostHeader: unknown): string {
   if (!hostHeader) return "";
   const host = String(hostHeader).trim().toLowerCase();
   if (host.startsWith("[")) {
@@ -57,7 +57,7 @@ export function normalizeHost(hostHeader) {
 }
 
 /** True for localhost, the whole 127.0.0.0/8 range, and the IPv6 loopback. */
-export function isLoopbackHost(host) {
+export function isLoopbackHost(host: unknown): boolean {
   const h = normalizeHost(host);
   if (h === "localhost" || h === "::1") return true;
   return /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h);
@@ -75,7 +75,7 @@ export function isLoopbackHost(host) {
  * Anything the URL parser refuses falls back to the plain string form, so an
  * unparseable entry still matches itself rather than vanishing from the list.
  */
-export function normalizeOrigin(origin) {
+export function normalizeOrigin(origin: unknown): string {
   if (!origin) return "";
   const plain = String(origin).trim().replace(/\/+$/, "").toLowerCase();
   if (!plain) return "";
@@ -96,8 +96,8 @@ export function normalizeOrigin(origin) {
  * into a Set. Unset or blank means an empty Set: no extra origin is trusted
  * unless the user names it, so the guard's default behaviour is unchanged.
  */
-export function parseAllowedOrigins(envValue) {
-  const out = new Set();
+export function parseAllowedOrigins(envValue: string | undefined): Set<string> {
+  const out = new Set<string>();
   if (!envValue) return out;
   for (const token of String(envValue).split(/[\s,]+/)) {
     const o = normalizeOrigin(token);
@@ -107,8 +107,8 @@ export function parseAllowedOrigins(envValue) {
 }
 
 /** Parse the opt-in env value ("host1, host2:port host3") into a Set of hosts. */
-export function parseAllowedHosts(envValue) {
-  const out = new Set();
+export function parseAllowedHosts(envValue: string | undefined): Set<string> {
+  const out = new Set<string>();
   if (!envValue) return out;
   for (const token of String(envValue).split(/[\s,]+/)) {
     const h = normalizeHost(token);
@@ -117,7 +117,23 @@ export function parseAllowedHosts(envValue) {
   return out;
 }
 
-function block(reason) {
+/** A refused request, with the reason the caller reports. */
+export interface GuardRefusal {
+  ok: false;
+  status: number;
+  reason: string;
+}
+
+/** The request fields the guard reads. */
+export interface GuardInput {
+  secFetchSite?: string | null;
+  origin?: string | null;
+  host?: string | null;
+  allowedHosts?: ReadonlySet<string> | null;
+  allowedOrigins?: ReadonlySet<string> | null;
+}
+
+function block(reason: string): GuardRefusal {
   return { ok: false, status: 403, reason };
 }
 
@@ -131,7 +147,7 @@ function block(reason) {
  * @param {Set<string>} [req.allowedOrigins] extra origins allowed to call the API
  * @returns {{ok: true} | {ok: false, status: number, reason: string}}
  */
-export function checkRequest({ secFetchSite, origin, host, allowedHosts, allowedOrigins }) {
+export function checkRequest({ secFetchSite, origin, host, allowedHosts, allowedOrigins }: GuardInput): { ok: true } | GuardRefusal {
   // Host filter (see header — NOT the LAN control): loopback, or an opted-in
   // host. A direct client picks its own Host, so this cannot be what closes F2.
   const normalizedHost = normalizeHost(host);

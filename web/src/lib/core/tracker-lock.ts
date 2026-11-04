@@ -44,7 +44,7 @@ async function loadCoreLock() {
   const file = path.join(careerOpsRoot(), "tracker-utils.ts");
   const cached = modCache.get(file);
   if (cached) return cached;
-  const mod = await import(/* webpackIgnore: true */ pathToFileURL(file).href);
+  const mod = await import(/* @vite-ignore */ pathToFileURL(file).href);
   if (typeof mod.acquireTrackerLock !== "function" || typeof mod.trackerLockDirFor !== "function") {
     throw new Error("tracker-utils.ts has no acquireTrackerLock/trackerLockDirFor");
   }

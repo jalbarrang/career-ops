@@ -14,7 +14,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { makeAiStreamParser, canon } from "../../src/lib/explore-ai.ts";
 
-const envelope = (offer) => `<<offer:${JSON.stringify(offer)}>>`;
+const envelope = (offer: unknown): string => `<<offer:${JSON.stringify(offer)}>>`;
 
 test("two distinct postings that share host+path but differ by a functional query id are BOTH kept", () => {
   const parser = makeAiStreamParser();

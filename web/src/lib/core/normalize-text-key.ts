@@ -24,7 +24,7 @@
  * @param {string} [separator='']
  * @returns {string}
  */
-export function normalizeTextKey(value, separator = "") {
+export function normalizeTextKey(value: unknown, separator: string = ""): string {
   return String(value ?? "")
     .normalize("NFKC")
     .toLowerCase()

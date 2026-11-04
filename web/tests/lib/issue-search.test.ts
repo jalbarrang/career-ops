@@ -14,9 +14,9 @@ import { searchIssues, _resetCache } from "../../src/lib/beta/issue-search.ts";
 
 beforeEach(() => _resetCache());
 
-const ok = (items) => async () => ({ ok: true, json: async () => ({ items }) });
-const status = (code) => async () => ({ ok: false, status: code, json: async () => ({}) });
-const item = (n) => ({ number: n, title: `bug ${n}`, html_url: `https://example.test/${n}` });
+const ok = (items: unknown) => async () => ({ ok: true, json: async () => ({ items }) });
+const status = (code: number) => async () => ({ ok: false, status: code, json: async () => ({}) });
+const item = (n: number) => ({ number: n, title: `bug ${n}`, html_url: `https://example.test/${n}` });
 
 test("a search that ran and found nothing is an empty array, not null", () => {
   return searchIssues("q", "o/r", ok([])).then((r) => assert.deepEqual(r, []));
@@ -60,9 +60,9 @@ test("a FAILURE is never cached, so the retry the user is invited to make actual
   // make the retry a no-op — the #2590 lesson, in a place where the user can
   // see the consequence.
   let calls = 0;
-  const failThenSucceed = async (...args) => {
+  const failThenSucceed = async (url: string) => {
     calls += 1;
-    return calls === 1 ? status(422)(...args) : ok([item(1)])(...args);
+    return calls === 1 ? status(422)() : ok([item(1)])();
   };
   assert.equal(await searchIssues("same-q", "o/r", failThenSucceed), null);
   assert.deepEqual(await searchIssues("same-q", "o/r", failThenSucceed), [
@@ -73,9 +73,9 @@ test("a FAILURE is never cached, so the retry the user is invited to make actual
 
 test("a SUCCESS is cached, so typing on does not hammer an unauthenticated API", async () => {
   let calls = 0;
-  const counting = async (...args) => {
+  const counting = async () => {
     calls += 1;
-    return ok([item(2)])(...args);
+    return ok([item(2)])();
   };
   await searchIssues("cached-q", "o/r", counting);
   await searchIssues("cached-q", "o/r", counting);
@@ -86,7 +86,7 @@ test("the repo qualifier reaches the URL, and the query is encoded once", async 
   // The moved-org bug was a wrong value in exactly this position, so assert the
   // value rather than that a request merely happened.
   let seen = "";
-  const capture = async (url) => {
+  const capture = async (url: string) => {
     seen = url;
     return { ok: true, json: async () => ({ items: [] }) };
   };

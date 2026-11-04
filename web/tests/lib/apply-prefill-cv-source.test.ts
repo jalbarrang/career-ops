@@ -73,7 +73,17 @@ const MANIFEST_HEADER = "# report\tpdf\thtml\tformat\tdate — written by genera
 
 /** A throwaway workspace holding one tailored CV and the manifest row that
  *  generate-pdf.ts writes for it, redirected through CAREER_OPS_ROOT. */
-async function withWorkspace(fn, { html = true, manifest = true, outsideHtml = false, coverRow = false } = {}) {
+interface WorkspaceOptions {
+  html?: boolean;
+  manifest?: boolean;
+  outsideHtml?: boolean;
+  coverRow?: boolean;
+}
+
+async function withWorkspace<T>(
+  fn: (root: string) => Promise<T>,
+  { html = true, manifest = true, outsideHtml = false, coverRow = false }: WorkspaceOptions = {},
+): Promise<T> {
   const root = mkdtempSync(join(tmpdir(), "prefill-cv-"));
   mkdirSync(join(root, "output"), { recursive: true });
   mkdirSync(join(root, "data"), { recursive: true });
@@ -121,6 +131,7 @@ test("the prefill prompt names the very document the fill route attaches", async
     assert.ok(attached, "fixture is wrong: the fill route found no tailored CV to attach");
 
     const cvSource = applyCvSource(root, attached);
+    assert.ok(cvSource, "fixture is wrong: the attached CV resolved to no source");
     const prompt = buildAnswerPrompt({ title: "Acme Corp — Staff Engineer", fields: FIELDS, cvSource });
 
     assert.ok(

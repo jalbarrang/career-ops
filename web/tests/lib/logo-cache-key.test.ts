@@ -11,6 +11,15 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { COMPANY_KEY_VERSION, companyCacheKey } from "../../src/lib/core/logo-cache-key.ts";
 
+/** The key for a company that must be cacheable. The suites below assert
+ *  non-null separately; this makes the narrowing explicit rather than assumed. */
+function keyOf(company: string): string {
+  const key = companyCacheKey(company);
+  assert.notEqual(key, null, `expected a cache key for ${JSON.stringify(company)}`);
+  if (key === null) throw new Error("unreachable: asserted non-null above");
+  return key;
+}
+
 test("punctuation, case and spacing variants of one brand share a key", () => {
   const variants = ["Acme, Inc.", "acme inc", "ACME   Inc", "A.C.M.E. Inc!"];
   const keys = new Set(variants.map(companyCacheKey));
@@ -63,14 +72,14 @@ test("keys are filesystem-safe and cannot escape the cache directory", () => {
 
 test("the version prefix is part of every key", () => {
   assert.match(COMPANY_KEY_VERSION, /^v\d+$/);
-  assert.ok(companyCacheKey("Notion").startsWith(`co_${COMPANY_KEY_VERSION}_`));
+  assert.ok(keyOf("Notion").startsWith(`co_${COMPANY_KEY_VERSION}_`));
 });
 
 test("bumping the version changes every key", () => {
   // Guards the invalidation contract: entries cached under an older resolver
   // must become unreachable, not merely stale. If this ever fails, a candidate
   // generation fix would be invisible on any machine with a warm cache.
-  const key = companyCacheKey("Notion");
+  const key = keyOf("Notion");
   assert.ok(!key.includes("_v0_"), "keys must not carry a stale version token");
   assert.equal(key.split("_")[1], COMPANY_KEY_VERSION);
 });
@@ -79,8 +88,8 @@ test("Škoda and Koda do not collide (the [^a-z0-9] regression this fix stops)",
   // Pre-fix: both stripped to "koda" and hashed identically — one company
   // silently wore the other's logo forever, with no expiry to correct it
   // (requirement 2 in this file's own header).
-  const a = companyCacheKey("Škoda");
-  const b = companyCacheKey("Koda");
+  const a = keyOf("Škoda");
+  const b = keyOf("Koda");
   // notEqual(null, "key") also passes, which would hide a DIFFERENT
   // regression — one side wrongly becoming uncacheable — as if it were this
   // test's collision guarantee holding. Both sides must be real keys first.
@@ -90,8 +99,8 @@ test("Škoda and Koda do not collide (the [^a-z0-9] regression this fix stops)",
 });
 
 test("Zürich Re and a plain-ASCII near-miss do not collide", () => {
-  const a = companyCacheKey("Zürich Re");
-  const b = companyCacheKey("Zurich Re");
+  const a = keyOf("Zürich Re");
+  const b = keyOf("Zurich Re");
   assert.notEqual(a, null);
   assert.notEqual(b, null);
   assert.notEqual(a, b);
@@ -100,14 +109,13 @@ test("Zürich Re and a plain-ASCII near-miss do not collide", () => {
 test("CJK company names are cacheable, not rejected as empty", () => {
   // Pre-fix: [^a-z0-9] erased CJK entirely, so companyCacheKey returned null
   // and the name was never cached — silently ineligible, not merely slower.
-  const key = companyCacheKey("日本電産");
-  assert.notEqual(key, null);
+  const key = keyOf("日本電産");
   assert.match(key, /^co_v\d+_日本電産_[0-9a-f]{10}$/);
 });
 
 test("two distinct CJK companies get distinct keys", () => {
-  const a = companyCacheKey("日本電産");
-  const b = companyCacheKey("本田技研工業");
+  const a = keyOf("日本電産");
+  const b = keyOf("本田技研工業");
   assert.notEqual(a, null);
   assert.notEqual(b, null);
   assert.notEqual(a, b);
@@ -121,8 +129,7 @@ test("a non-BMP letter landing on the 40-char truncation boundary does not split
   // boundary: 39 ASCII letters, then the astral letter at position 40.
   const astralLetter = "\u{20000}"; // 𠀀 — CJK Extension B, \p{L}
   const name = "a".repeat(39) + astralLetter + "trailing text past the cut";
-  const key = companyCacheKey(name);
-  assert.notEqual(key, null);
+  const key = keyOf(name);
   // A lone (unpaired) surrogate anywhere in the key means the pair was split.
   assert.doesNotMatch(
     key,

@@ -56,7 +56,7 @@ async function loadCoreLock(): Promise<CoreWithFollowupsLock | null> {
   const cached = modCache.get(file);
   if (cached) return cached;
   if (!fs.existsSync(file)) return null;
-  const mod = await import(/* webpackIgnore: true */ pathToFileURL(file).href);
+  const mod = await import(/* @vite-ignore */ pathToFileURL(file).href);
   if (typeof mod.withFollowupsLock !== "function") {
     throw new Error("followup-seed.ts has no withFollowupsLock export");
   }

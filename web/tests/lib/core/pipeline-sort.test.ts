@@ -30,11 +30,31 @@ const skipTs = tsSkipReason();
 
 // Dynamic imports on purpose: a static specifier resolves before the loader
 // hook above is installed, so format.ts would fail as an unresolved "@/lib".
-const { scoreNum } = skipTs ? { scoreNum: null } : await import('../../../src/lib/format.ts');
+const { scoreNum } = skipTs
+  ? { scoreNum: null as ((score: string) => number) | null }
+  : await import('../../../src/lib/format.ts');
 const { sortRows } = await import('../../../src/lib/core/pipeline-sort.ts');
 
+/** The real parser, or NaN when this Node cannot load it (those cases skip). */
+const scoreOf = (score: string): number => (scoreNum ? scoreNum(score) : Number.NaN);
+
 /** A tracker row, with only the fields these tests care about. */
-const row = (n, date, over = {}) => ({
+// A `type`, not an `interface`: SortableRow is `Record<string, unknown>`, and
+// only type literals get the implicit index signature that satisfies it.
+type TrackerRow = {
+  n: string;
+  date: string;
+  company: string;
+  via: string;
+  role: string;
+  score: string;
+  status: string;
+  pdf: string;
+  report: string;
+  notes: string;
+};
+
+const row = (n: string | number, date: string, over: Partial<TrackerRow> = {}): TrackerRow => ({
   n: String(n),
   date,
   company: `Company ${n}`,
@@ -50,37 +70,37 @@ const row = (n, date, over = {}) => ({
 
 /** A row the tracker never numbered: its n cell is blank, so it ties on the
  *  row-number key with every row it meets. */
-const unnumbered = (date, role) => ({ ...row('', date), n: '', role });
+const unnumbered = (date: string, role: string): TrackerRow => ({ ...row('', date), n: '', role });
 
-const names = (rows) => rows.map((r) => r.role);
+const names = (rows: readonly TrackerRow[]): string[] => rows.map((r) => r.role);
 
 // The reported symptom, in the reporter's own terms: several jobs on one date,
 // sorted newest-first.
 const SAME_DAY = [row(3, '2026-09-18'), row(1, '2026-09-18'), row(2, '2026-09-18')];
 
 test('newest-first puts the latest-added row first within one date', () => {
-  const result = sortRows(SAME_DAY, { key: 'date', dir: -1 }, scoreNum);
+  const result = sortRows(SAME_DAY, { key: 'date', dir: -1 }, scoreOf);
   assert.deepEqual(names(result), ['Role 3', 'Role 2', 'Role 1']);
 });
 
 test('oldest-first reverses the same-day order, so dir actually applies', () => {
-  const result = sortRows(SAME_DAY, { key: 'date', dir: 1 }, scoreNum);
+  const result = sortRows(SAME_DAY, { key: 'date', dir: 1 }, scoreOf);
   assert.deepEqual(names(result), ['Role 1', 'Role 2', 'Role 3']);
 });
 
 test('the input order does not decide the output', () => {
   const shuffled = [row(2, '2026-09-18'), row(3, '2026-09-18'), row(1, '2026-09-18')];
-  assert.deepEqual(names(sortRows(shuffled, { key: 'date', dir: -1 }, scoreNum)), ['Role 3', 'Role 2', 'Role 1']);
-  assert.deepEqual(names(sortRows(shuffled, { key: 'date', dir: 1 }, scoreNum)), ['Role 1', 'Role 2', 'Role 3']);
+  assert.deepEqual(names(sortRows(shuffled, { key: 'date', dir: -1 }, scoreOf)), ['Role 3', 'Role 2', 'Role 1']);
+  assert.deepEqual(names(sortRows(shuffled, { key: 'date', dir: 1 }, scoreOf)), ['Role 1', 'Role 2', 'Role 3']);
 });
 
 test('dates still order before the tie-break', () => {
   const rows = [row(1, '2026-09-17'), row(5, '2026-09-18'), row(2, '2026-09-17')];
   // Newest date first, and within 09-17 the higher row number first.
-  assert.deepEqual(names(sortRows(rows, { key: 'date', dir: -1 }, scoreNum)), ['Role 5', 'Role 2', 'Role 1']);
+  assert.deepEqual(names(sortRows(rows, { key: 'date', dir: -1 }, scoreOf)), ['Role 5', 'Role 2', 'Role 1']);
   // Oldest date first, and within 09-17 the lower row number first, since the
   // tie-break follows the active direction rather than always descending.
-  assert.deepEqual(names(sortRows(rows, { key: 'date', dir: 1 }, scoreNum)), ['Role 1', 'Role 2', 'Role 5']);
+  assert.deepEqual(names(sortRows(rows, { key: 'date', dir: 1 }, scoreOf)), ['Role 1', 'Role 2', 'Role 5']);
 });
 
 test('the tie-break applies to every column, not just date', () => {
@@ -89,7 +109,7 @@ test('the tie-break applies to every column, not just date', () => {
     row(3, '2026-09-18', { company: 'Acme' }),
     row(2, '2026-09-18', { company: 'Acme' }),
   ];
-  assert.deepEqual(names(sortRows(rows, { key: 'company', dir: 1 }, scoreNum)), ['Role 1', 'Role 2', 'Role 3']);
+  assert.deepEqual(names(sortRows(rows, { key: 'company', dir: 1 }, scoreOf)), ['Role 1', 'Role 2', 'Role 3']);
 });
 
 test('score ordering is unchanged, and ties break the same way', { skip: skipTs }, () => {
@@ -98,13 +118,13 @@ test('score ordering is unchanged, and ties break the same way', { skip: skipTs 
     row(3, '2026-09-18', { score: '9' }),
     row(2, '2026-09-18', { score: '9' }),
   ];
-  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: -1 }, scoreNum)), ['Role 3', 'Role 2', 'Role 1']);
+  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: -1 }, scoreOf)), ['Role 3', 'Role 2', 'Role 1']);
 });
 
 test('a non-numeric score sorts last rather than as zero', { skip: skipTs }, () => {
   const rows = [row(1, '2026-09-18', { score: '' }), row(2, '2026-09-18', { score: '7' })];
-  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: -1 }, scoreNum)), ['Role 2', 'Role 1']);
-  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: 1 }, scoreNum)), ['Role 1', 'Role 2']);
+  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: -1 }, scoreOf)), ['Role 2', 'Role 1']);
+  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: 1 }, scoreOf)), ['Role 1', 'Role 2']);
 });
 
 // The regression from #4333: the tracker stores scores as "4.2/5", and a
@@ -116,14 +136,14 @@ test('a real tracker score, X.X/5, orders and breaks ties', { skip: skipTs }, ()
     row(3, '2026-09-18', { score: '4.2/5' }),
     row(2, '2026-09-18', { score: '4.2/5' }),
   ];
-  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: -1 }, scoreNum)), ['Role 3', 'Role 2', 'Role 1']);
-  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: 1 }, scoreNum)), ['Role 1', 'Role 2', 'Role 3']);
+  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: -1 }, scoreOf)), ['Role 3', 'Role 2', 'Role 1']);
+  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: 1 }, scoreOf)), ['Role 1', 'Role 2', 'Role 3']);
 });
 
 test('the score parser is the caller\'s, since it is a parameter', () => {
   // A caller with another score vocabulary keeps its own parser and the
   // ordering rule does not need to know the format.
-  const letters = (s) => (s === 'A' ? 5 : 1);
+  const letters = (s: string): number => (s === 'A' ? 5 : 1);
   const rows = [row(1, '2026-09-18', { score: 'A' }), row(2, '2026-09-18', { score: 'B' })];
   assert.deepEqual(names(sortRows(rows, { key: 'score', dir: -1 }, letters)), ['Role 1', 'Role 2']);
 });
@@ -134,8 +154,8 @@ test('two unusable scores reach the row-number tie-break, both directions', { sk
   // -Infinity minus -Infinity is NaN, which is not a "less than", and the
   // tie-break would never be reached.
   const rows = [row(1, '2026-09-18'), row(3, '2026-09-18')];
-  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: -1 }, scoreNum)), ['Role 3', 'Role 1']);
-  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: 1 }, scoreNum)), ['Role 1', 'Role 3']);
+  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: -1 }, scoreOf)), ['Role 3', 'Role 1']);
+  assert.deepEqual(names(sortRows(rows, { key: 'score', dir: 1 }, scoreOf)), ['Role 1', 'Role 3']);
 });
 
 test('a row without a usable n keeps its position while the numbered rows sort', () => {
@@ -143,10 +163,10 @@ test('a row without a usable n keeps its position while the numbered rows sort',
   // row ties with both neighbours, so the numbered rows can be left unordered
   // ([2, '', 3] descending) unless they are compared past it.
   const rows = [row(2, '2026-09-18'), unnumbered('2026-09-18', 'Role 1'), row(3, '2026-09-18')];
-  const desc = sortRows(rows, { key: 'date', dir: -1 }, scoreNum);
+  const desc = sortRows(rows, { key: 'date', dir: -1 }, scoreOf);
   assert.deepEqual(desc.map((r) => r.role), ['Role 3', 'Role 1', 'Role 2']);
   assert.equal(desc[1].n, '', 'the unnumbered row must stay in its own slot');
-  const asc = sortRows(rows, { key: 'date', dir: 1 }, scoreNum);
+  const asc = sortRows(rows, { key: 'date', dir: 1 }, scoreOf);
   assert.deepEqual(asc.map((r) => r.role), ['Role 2', 'Role 1', 'Role 3']);
   assert.equal(asc[1].n, '', 'the unnumbered row must stay in its own slot');
 });
@@ -160,36 +180,38 @@ test('an unnumbered row at one end of its date does not get moved inward', () =>
     row(4, '2026-09-18', { role: 'Role 4' }),
     row(3, '2026-09-18', { role: 'Role 3' }),
   ];
-  assert.deepEqual(names(sortRows(rows, { key: 'date', dir: -1 }, scoreNum)), ['Unnumbered', 'Role 4', 'Role 3', 'Role 2']);
-  assert.deepEqual(names(sortRows(rows, { key: 'date', dir: 1 }, scoreNum)), ['Unnumbered', 'Role 2', 'Role 3', 'Role 4']);
+  assert.deepEqual(names(sortRows(rows, { key: 'date', dir: -1 }, scoreOf)), ['Unnumbered', 'Role 4', 'Role 3', 'Role 2']);
+  assert.deepEqual(names(sortRows(rows, { key: 'date', dir: 1 }, scoreOf)), ['Unnumbered', 'Role 2', 'Role 3', 'Role 4']);
 });
 
 test('a row whose n is not numeric is unnumbered, not row 0', () => {
   const rows = [row(2, '2026-09-18'), { ...row(1, '2026-09-18'), n: 'n/a' }, row(3, '2026-09-18')];
-  const desc = sortRows(rows, { key: 'date', dir: -1 }, scoreNum);
+  const desc = sortRows(rows, { key: 'date', dir: -1 }, scoreOf);
   assert.deepEqual(desc.map((r) => r.n), ['3', 'n/a', '2']);
 });
 
 test('the input array is not mutated', () => {
   const rows = [row(1, '2026-09-18'), row(2, '2026-09-18')];
   const before = rows.map((r) => r.n);
-  sortRows(rows, { key: 'date', dir: -1 }, scoreNum);
+  sortRows(rows, { key: 'date', dir: -1 }, scoreOf);
   assert.deepEqual(rows.map((r) => r.n), before);
 });
 
 test('company sorting uses the label the caller supplies', () => {
   const rows = [row(1, '2026-09-18'), row(2, '2026-09-18')];
-  const byLabel = (r) => (r.n === '1' ? 'Zeta' : 'Alpha');
-  assert.deepEqual(names(sortRows(rows, { key: 'company', dir: 1 }, scoreNum, byLabel)), ['Role 2', 'Role 1']);
+  const byLabel = (r: TrackerRow): string => (r.n === '1' ? 'Zeta' : 'Alpha');
+  assert.deepEqual(names(sortRows(rows, { key: 'company', dir: 1 }, scoreOf, byLabel)), ['Role 2', 'Role 1']);
 });
 
 test('the tracker column compares numerically, and follows the direction', () => {
   const rows = [row(1, '2026-09-18'), row(10, '2026-09-18'), row(2, '2026-09-18')];
-  assert.deepEqual(names(sortRows(rows, { key: 'tracker', dir: -1 }, scoreNum)), ['Role 10', 'Role 2', 'Role 1']);
-  assert.deepEqual(names(sortRows(rows, { key: 'tracker', dir: 1 }, scoreNum)), ['Role 1', 'Role 2', 'Role 10']);
+  assert.deepEqual(names(sortRows(rows, { key: 'tracker', dir: -1 }, scoreOf)), ['Role 10', 'Role 2', 'Role 1']);
+  assert.deepEqual(names(sortRows(rows, { key: 'tracker', dir: 1 }, scoreOf)), ['Role 1', 'Role 2', 'Role 10']);
 });
 
 test('scoreNum reports unusable cells as NaN, never as 0', { skip: skipTs }, () => {
+  // Skipped without the real parser; the assertion below narrows it otherwise.
+  assert.ok(scoreNum, 'the real score parser must be importable here');
   for (const v of ['', 'abc', 'N/A']) assert.ok(Number.isNaN(scoreNum(v)), String(v));
   assert.equal(scoreNum('7'), 7);
   assert.equal(scoreNum('4.2/5'), 4.2);

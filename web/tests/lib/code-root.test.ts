@@ -52,9 +52,12 @@ test("blank CAREER_OPS_CODE_ROOT falls back like an unset var", () => {
 // here as a route runs it: real process.cwd() and process.env. It lives in
 // career-ops.ts, reached through the shared @/ alias hook.
 const skipTs = !process.features?.typescript && "this Node cannot import career-ops.ts (no type stripping)";
-const { rootScript } = skipTs ? {} : await import("@/lib/career-ops");
+const careerOps = (skipTs ? {} : await import("@/lib/career-ops")) as Partial<{
+  rootScript: (name: string) => string;
+}>;
+const rootScript = careerOps.rootScript!;
 
-function tmpdir(prefix) {
+function tmpdir(prefix: string): string {
   // realpath: macOS symlinks /var → /private/var, and process.cwd() reports the
   // resolved spelling after chdir.
   return fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
@@ -69,7 +72,7 @@ function fakeCheckout() {
 }
 
 /** rootScript("doctor") as a route calls it: from `cwd`, with only `env` set. */
-function rootScriptFrom(cwd, env) {
+function rootScriptFrom(cwd: string, env: NodeJS.ProcessEnv): string {
   const keys = ["CAREER_OPS_CODE_ROOT", "CAREER_OPS_ROOT", "CAREER_OPS_DATA_DIR"];
   const saved = Object.fromEntries(keys.map((k) => [k, process.env[k]]));
   const priorCwd = process.cwd();

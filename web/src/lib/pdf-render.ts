@@ -16,6 +16,50 @@
 import fs from "node:fs";
 import path from "node:path";
 
+/** The minimal child-process surface these helpers use; tests inject a fake. */
+export interface PdfDataStream {
+  on(event: "data", listener: (chunk: { toString(): string }) => void): unknown;
+}
+
+export interface PdfChild {
+  stdout: PdfDataStream;
+  stderr: PdfDataStream;
+  on(event: "close", listener: (code: number | null) => void): unknown;
+  on(event: "error", listener: (error: Error) => void): unknown;
+}
+
+/** How a child is started; injected so tests never spawn a real process. */
+export type SpawnFn = (command: string, args: string[], options: { cwd: string }) => PdfChild;
+
+/** The scratch/final paths the backend resolved for this run. */
+export interface PdfPathsLike {
+  html: string;
+  finalPdf: string;
+}
+
+/** parseCvEnvelope's result, as far as this module reads it. */
+export interface PdfEnvelope {
+  ok: boolean;
+  html?: string;
+  error?: string;
+  warnings?: string[];
+}
+
+/** Everything the pdf honesty gate needs to decide. */
+export interface PdfRunSignals {
+  envelope?: PdfEnvelope | null;
+  noOutputMessage: string | null;
+  sawError: boolean;
+  cleanExit: boolean;
+  hasPaths: boolean;
+}
+
+export type PdfRunOutcome = { ok: true } | { ok: false; message: string };
+export type WriteCvResult = { ok: true } | { ok: false; error: string };
+export type RenderResult =
+  | { kind: "render-failed"; error: string }
+  | { kind: "rendered"; warnings: string[] };
+
 /**
  * @typedef {Object} PdfRunSignals
  * @property {object|undefined} envelope - parseCvEnvelope's result for this run.
@@ -45,7 +89,7 @@ import path from "node:path";
  * @param {PdfRunSignals} signals
  * @returns {{ok: true} | {ok: false, message: string}}
  */
-export function pdfRunOutcome({ envelope, noOutputMessage, sawError, cleanExit, hasPaths }) {
+export function pdfRunOutcome({ envelope, noOutputMessage, sawError, cleanExit, hasPaths }: PdfRunSignals): PdfRunOutcome {
   // A CLI that produced nothing at all is a different failure from one that ran
   // and fell short — usually "not installed" or "not authenticated".
   if (noOutputMessage) return { ok: false, message: noOutputMessage };
@@ -76,15 +120,19 @@ export function pdfRunOutcome({ envelope, noOutputMessage, sawError, cleanExit, 
  * @returns {{ok: true} | {ok: false, error: string}} Never throws: the caller
  *   routes the failure through the same honesty gate as every other pdf failure.
  */
-export function writeCvHtml({ pdfPaths, html }) {
+export function writeCvHtml({ pdfPaths, html }: { pdfPaths: PdfPathsLike; html: unknown }): WriteCvResult {
   try {
-    fs.writeFileSync(pdfPaths.html, html, "utf8");
+    // `html` is typed unknown so a non-string value reaches writeFileSync and
+    // fails the way the caller must report (the tests exercise that path);
+    // fs does the rejecting.
+    fs.writeFileSync(pdfPaths.html, html as string, "utf8");
     return { ok: true };
   } catch (err) {
     // err.path when the platform gives it: a non-fs throw (an oversized-content
     // RangeError, a bad argument type) carries none, and "could not save to
     // undefined" tells the user nothing.
-    return { ok: false, error: `Could not save the tailored CV to ${err.path ?? pdfPaths.html}: ${err.message}` };
+    const info = err as { path?: string; message?: string };
+    return { ok: false, error: `Could not save the tailored CV to ${info.path ?? pdfPaths.html}: ${info.message ?? String(err)}` };
   }
 }
 
@@ -93,7 +141,15 @@ export function writeCvHtml({ pdfPaths, html }) {
  * @param {{spawnFn: Function, execPath: string, root: string, html: string, finalPdf: string, format: "letter"|"a4", reportNum: string}} args
  * @returns {Promise<{ok: boolean, stderr: string}>}
  */
-export function spawnGeneratePdf({ spawnFn, execPath, root, html, finalPdf, format, reportNum }) {
+export function spawnGeneratePdf({ spawnFn, execPath, root, html, finalPdf, format, reportNum }: {
+  spawnFn: SpawnFn;
+  execPath: string;
+  root: string;
+  html: string;
+  finalPdf: string;
+  format: "letter" | "a4";
+  reportNum: string;
+}): Promise<{ ok: boolean; stderr: string }> {
   return new Promise((resolve) => {
     const child = spawnFn(
       execPath,
@@ -119,7 +175,12 @@ export function spawnGeneratePdf({ spawnFn, execPath, root, html, finalPdf, form
  * @param {{spawnFn: Function, execPath: string, root: string, reportNum: string}} args
  * @returns {Promise<{ok: boolean, data: object | null, stderr: string}>}
  */
-export function markTrackerReady({ spawnFn, execPath, root, reportNum }) {
+export function markTrackerReady({ spawnFn, execPath, root, reportNum }: {
+  spawnFn: SpawnFn;
+  execPath: string;
+  root: string;
+  reportNum: string;
+}): Promise<{ ok: boolean; data: Record<string, unknown> | null; stderr: string }> {
   return new Promise((resolve) => {
     const child = spawnFn(execPath, [path.join(root, "mark-pdf-ready.ts"), reportNum, "--json"], { cwd: root });
     let stdout = "";
@@ -127,8 +188,11 @@ export function markTrackerReady({ spawnFn, execPath, root, reportNum }) {
     child.stdout.on("data", (d) => { stdout += d.toString(); });
     child.stderr.on("data", (d) => { stderr += d.toString(); });
     child.on("close", (code) => {
-      let data = null;
-      try { data = JSON.parse(stdout); } catch { /* not JSON, or exited before printing any */ }
+      let data: Record<string, unknown> | null = null;
+      try {
+        const parsed: unknown = JSON.parse(stdout);
+        data = parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : null;
+      } catch { /* not JSON, or exited before printing any */ }
       resolve({ ok: code === 0, data, stderr: stderr.trim() });
     });
     child.on("error", (e) => resolve({ ok: false, data: null, stderr: `mark-pdf-ready.ts failed to start: ${e.message}` }));
@@ -146,12 +210,12 @@ export function markTrackerReady({ spawnFn, execPath, root, reportNum }) {
  * @param {string} prefix
  * @returns {void}
  */
-export function cleanupPdfScratch(scratchDir, prefix) {
+export function cleanupPdfScratch(scratchDir: string, prefix: string): void {
   let entries;
   try {
     entries = fs.readdirSync(scratchDir);
   } catch (err) {
-    console.error(`pdf scratch cleanup: could not list ${scratchDir}: ${err.message}`);
+    console.error(`pdf scratch cleanup: could not list ${scratchDir}: ${(err as Error).message}`);
     return;
   }
   for (const f of entries) {
@@ -159,7 +223,7 @@ export function cleanupPdfScratch(scratchDir, prefix) {
     try {
       fs.rmSync(path.join(scratchDir, f), { force: true });
     } catch (err) {
-      console.error(`pdf scratch cleanup: could not remove ${f}: ${err.message}`);
+      console.error(`pdf scratch cleanup: could not remove ${f}: ${(err as Error).message}`);
     }
   }
 }
@@ -188,8 +252,15 @@ export function cleanupPdfScratch(scratchDir, prefix) {
  * @param {{spawnFn: Function, execPath: string, root: string, pdfPaths: {html: string, finalPdf: string}, format: "letter"|"a4", reportNum: string}} args
  * @returns {Promise<RenderResult>}
  */
-export async function renderAndMarkPdf({ spawnFn, execPath, root, pdfPaths, format, reportNum }) {
-  const warnings = [];
+export async function renderAndMarkPdf({ spawnFn, execPath, root, pdfPaths, format, reportNum }: {
+  spawnFn: SpawnFn;
+  execPath: string;
+  root: string;
+  pdfPaths: PdfPathsLike;
+  format: "letter" | "a4";
+  reportNum: string;
+}): Promise<RenderResult> {
+  const warnings: string[] = [];
 
   const render = await spawnGeneratePdf({ spawnFn, execPath, root, html: pdfPaths.html, finalPdf: pdfPaths.finalPdf, format, reportNum });
   cleanupPdfScratch(path.dirname(pdfPaths.html), `cv-web-${reportNum}.`);
@@ -216,10 +287,11 @@ export async function renderAndMarkPdf({ spawnFn, execPath, root, pdfPaths, form
   // run, not just a server-side log nobody sees.
   const mark = await markTrackerReady({ spawnFn, execPath, root, reportNum });
   if (!mark.ok) {
-    console.error(`mark-pdf-ready.ts failed for report #${reportNum}: ${mark.data?.error ?? mark.stderr}`);
+    const reason = typeof mark.data?.error === "string" ? mark.data.error : null;
+    console.error(`mark-pdf-ready.ts failed for report #${reportNum}: ${reason ?? mark.stderr}`);
     warnings.push(
-      mark.data?.error
-        ? `PDF rendered, but the tracker wasn't updated: ${mark.data.error}`
+      reason
+        ? `PDF rendered, but the tracker wasn't updated: ${reason}`
         : `PDF rendered, but the tracker's PDF column wasn't updated automatically — run \`bun mark-pdf-ready.ts ${reportNum}\` manually.`,
     );
   }

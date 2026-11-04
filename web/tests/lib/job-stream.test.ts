@@ -1,17 +1,20 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readJobStream } from "../../src/lib/job-stream.ts";
+import { readJobStream, type JobCompletion, type JobProgress } from "../../src/lib/job-stream.ts";
 
 const encoder = new TextEncoder();
-const record = (event) => `${JSON.stringify(event)}\n`;
+const record = (event: unknown): string => `${JSON.stringify(event)}\n`;
 
-function response(chunks, { error, stayOpen = false } = {}) {
+function response(
+  chunks: ReadonlyArray<string | Uint8Array>,
+  { error, stayOpen = false }: { error?: unknown; stayOpen?: boolean } = {},
+): { stream: ReadableStream<Uint8Array>; cancelled: () => number } {
   let cancelled = 0;
   let index = 0;
-  const stream = new ReadableStream({
+  const stream = new ReadableStream<Uint8Array>({
     pull(controller) {
       if (index < chunks.length) {
-        const chunk = chunks[index++];
+        const chunk = chunks[index++]!;
         controller.enqueue(typeof chunk === "string" ? encoder.encode(chunk) : chunk);
       } else if (error) controller.error(error);
       else if (!stayOpen) controller.close();
@@ -21,9 +24,12 @@ function response(chunks, { error, stayOpen = false } = {}) {
   return { stream, cancelled: () => cancelled };
 }
 
-async function read(chunks, options) {
+async function read(
+  chunks: ReadonlyArray<string | Uint8Array>,
+  options: { error?: unknown; stayOpen?: boolean } = {},
+): Promise<{ result: JobCompletion; progress: JobProgress[]; cancelled: number }> {
   const fixture = response(chunks, options);
-  const progress = [];
+  const progress: JobProgress[] = [];
   const result = await readJobStream(fixture.stream, (event) => progress.push(event));
   assert.equal(fixture.stream.locked, false, "the reader must always release its lock");
   return { result, progress, cancelled: fixture.cancelled() };
@@ -31,7 +37,7 @@ async function read(chunks, options) {
 
 test("a verdict followed by EOF is an interrupted run, never a confirmed score", async () => {
   const { result, progress } = await read([record({ type: "text", text: "VERDICT: 4.8/5 — Fixture fit" })]);
-  assert.equal(progress[0].text, "VERDICT: 4.8/5 — Fixture fit");
+  assert.deepEqual(progress[0], { type: "text", text: "VERDICT: 4.8/5 — Fixture fit" });
   assert.equal(result.status, "error");
   assert.match(result.message, /before the server confirmed completion/);
 });

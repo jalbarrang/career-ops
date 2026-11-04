@@ -19,22 +19,39 @@ import {
   markTrackerReady,
   cleanupPdfScratch,
   renderAndMarkPdf,
+  type PdfChild,
+  type SpawnFn,
 } from "../../src/lib/pdf-render.ts";
+
+interface FakeChildOptions {
+  stdout?: string;
+  stderr?: string;
+  exitCode?: number | null;
+  spawnError?: Error | null;
+}
+
+interface SpawnCall {
+  execPath: string;
+  args: string[];
+  opts: { cwd: string };
+}
 
 // A fake child_process.spawn() result: stdout/stderr emit "data" once, then
 // the child emits "close" (or "error" instead, for a spawn failure) on the
 // next microtask — close enough to the real async timing for these tests.
-function fakeChild({ stdout = "", stderr = "", exitCode = 0, spawnError = null } = {}) {
-  const child = new EventEmitter();
-  child.stdout = new EventEmitter();
-  child.stderr = new EventEmitter();
+function fakeChild({ stdout = "", stderr = "", exitCode = 0, spawnError = null }: FakeChildOptions = {}): PdfChild {
+  const child = new EventEmitter() as EventEmitter & PdfChild;
+  const out = new EventEmitter();
+  const err = new EventEmitter();
+  child.stdout = out;
+  child.stderr = err;
   queueMicrotask(() => {
     if (spawnError) {
       child.emit("error", spawnError);
       return;
     }
-    if (stdout) child.stdout.emit("data", Buffer.from(stdout));
-    if (stderr) child.stderr.emit("data", Buffer.from(stderr));
+    if (stdout) out.emit("data", Buffer.from(stdout));
+    if (stderr) err.emit("data", Buffer.from(stderr));
     child.emit("close", exitCode);
   });
   return child;
@@ -42,9 +59,9 @@ function fakeChild({ stdout = "", stderr = "", exitCode = 0, spawnError = null }
 
 // spawnFn that dispatches based on the script path (args[0]) so a single
 // fake stands in for both generate-pdf.ts and mark-pdf-ready.ts calls.
-function makeRouterSpawn(routes) {
-  const calls = [];
-  const spawnFn = (execPath, args, opts) => {
+function makeRouterSpawn(routes: Record<string, FakeChildOptions>): { spawnFn: SpawnFn; calls: SpawnCall[] } {
+  const calls: SpawnCall[] = [];
+  const spawnFn = (execPath: string, args: string[], opts: { cwd: string }): PdfChild => {
     calls.push({ execPath, args, opts });
     const scriptPath = args[0];
     const route = Object.entries(routes).find(([suffix]) => scriptPath.endsWith(suffix));
@@ -60,8 +77,8 @@ function makeScratchDir() {
 
 test("spawnGeneratePdf: clean exit -> ok:true, invokes generate-pdf.ts with --allow-reorder", async () => {
   // Given generate-pdf.ts will exit cleanly
-  const calls = [];
-  const spawnFn = (execPath, args, opts) => { calls.push({ execPath, args, opts }); return fakeChild({ exitCode: 0 }); };
+  const calls: SpawnCall[] = [];
+  const spawnFn = (execPath: string, args: string[], opts: { cwd: string }): PdfChild => { calls.push({ execPath, args, opts }); return fakeChild({ exitCode: 0 }); };
 
   // When spawning the render
   const result = await spawnGeneratePdf({ spawnFn, execPath: "bun", root: "/root", html: "/root/x.html", finalPdf: "/root/output/x.pdf", format: "letter", reportNum: "018" });
@@ -176,8 +193,8 @@ test("cleanupPdfScratch: missing directory logs but does not throw", () => {
   const parent = makeScratchDir();
   const dir = join(parent, "does-not-exist");
   const originalError = console.error;
-  const logged = [];
-  console.error = (msg) => logged.push(msg);
+  const logged: string[] = [];
+  console.error = (msg: string) => logged.push(msg);
   try {
     // When cleaning up
     // Then it logs the failure instead of throwing, so a caller can't crash on cleanup
@@ -198,8 +215,8 @@ test("cleanupPdfScratch: a single file's removal failure logs but does not throw
   // normal prefixed file that CAN be removed
   const dir = makeScratchDir();
   const originalError = console.error;
-  const logged = [];
-  console.error = (msg) => logged.push(msg);
+  const logged: string[] = [];
+  console.error = (msg: string) => logged.push(msg);
   try {
     mkdirSync(join(dir, "cv-web-3.stuck-dir"));
     writeFileSync(join(dir, "cv-web-3.html"), "x");
@@ -220,7 +237,7 @@ test("cleanupPdfScratch: a single file's removal failure logs but does not throw
 
 // ── renderAndMarkPdf ──
 
-function makePdfPaths(dir, reportNum) {
+function makePdfPaths(dir: string, reportNum: string): { html: string; finalPdf: string } {
   return {
     html: join(dir, `cv-web-${reportNum}.html`),
     finalPdf: join(dir, "output", `cv-jane-acme-2026-07-26.pdf`),

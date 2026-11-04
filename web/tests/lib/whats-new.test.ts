@@ -8,7 +8,17 @@ import {
 } from "../../src/lib/whats-new.ts";
 
 const header = "url\tfirst_seen\tportal\ttitle\tcompany\tstatus\tlocation";
-const toOffer = ([url, , , title, company]) => (url ? { url, title, company } : null);
+
+/** One offer row, as this feed renders it. */
+interface Offer {
+  url: string;
+  title?: string;
+  company?: string;
+  [key: string]: unknown;
+}
+
+const toOffer = ([url, , , title, company]: string[]): Offer | null =>
+  url ? { url, title, company } : null;
 
 test("count is not capped by the card payload limit", () => {
   const rows = [

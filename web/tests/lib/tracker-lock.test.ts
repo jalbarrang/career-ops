@@ -32,8 +32,18 @@ const coreLock = path.join(CORE, "tracker-utils.ts");
 // `bun install --frozen-lockfile` in web/ alone) has the file and not its dependencies, and existsSync
 // called that runnable: the cases failed on ERR_MODULE_NOT_FOUND instead of
 // skipping (#2922).
-let core = null;
-let skipCore = false;
+/** The two entries this suite needs from the core's tracker-utils.ts. */
+interface TrackerUtilsModule {
+  acquireTrackerLock: (
+    dir: string,
+    options: { timeoutMs: number; retryMs: number; tracker: string },
+  ) => Promise<{ release: () => void | Promise<void> }>;
+  trackerLockDirFor: (file: string) => string;
+}
+
+let core: TrackerUtilsModule | null = null;
+/** False when the core is importable; otherwise why these cases skip. */
+let skipCore: string | false = false;
 try {
   core = await import(pathToFileURL(coreLock).href);
 } catch (err) {
@@ -48,17 +58,18 @@ try {
   // uninstalled dependency, which is the failure this guard exists to stop.
   // Anything unrecognized rethrows for the same reason: a loud failure here is
   // recoverable, a silent skip is not.
+  const info = err as { code?: string; url?: string | null };
   const coreAbsent = !fs.existsSync(coreLock);
-  const packageUnresolvable = err.url == null;
+  const packageUnresolvable = info.url == null;
   const depsAbsent = !fs.existsSync(path.join(CORE, "node_modules"));
 
-  if (err.code !== "ERR_MODULE_NOT_FOUND") throw err;
+  if (info.code !== "ERR_MODULE_NOT_FOUND") throw err;
   if (coreAbsent) skipCore = `no core checkout at ${CORE}`;
   else if (packageUnresolvable && depsAbsent) skipCore = `core dependencies are not installed at ${CORE} (web-only checkout)`;
   else throw err;
 }
 
-function makeTracker() {
+function makeTracker(): { root: string; file: string } {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "trklock-"));
   const file = path.join(root, "applications.md");
   fs.writeFileSync(file, [
@@ -71,9 +82,9 @@ function makeTracker() {
 }
 
 /** The route's read-modify-write, verbatim in shape: read all, edit one, write all. */
-function setStatus(file, rowNum, status, pauseMs) {
+function setStatus(file: string, rowNum: number | string, status: string, pauseMs: number): Promise<void> {
   const lines = fs.readFileSync(file, "utf8").split("\n");
-  return new Promise((resolve) => setTimeout(() => {
+  return new Promise<void>((resolve) => setTimeout(() => {
     for (let i = 0; i < lines.length; i++) {
       const parts = lines[i].split("|");
       if (parts.length < 8 || parts[1].trim() !== String(rowNum)) continue;
@@ -87,7 +98,7 @@ function setStatus(file, rowNum, status, pauseMs) {
   }, pauseMs));
 }
 
-const statusOf = (file, n) =>
+const statusOf = (file: string, n: number | string): string | undefined =>
   fs.readFileSync(file, "utf8").split("\n").find((l) => l.split("|")[1]?.trim() === String(n))?.split("|")[6]?.trim();
 
 test("WITHOUT a lock, two concurrent writers lose one update silently", async () => {
@@ -104,9 +115,9 @@ test("WITHOUT a lock, two concurrent writers lose one update silently", async ()
 });
 
 test("WITH the core lock, both updates survive", { skip: skipCore }, async () => {
-  const { acquireTrackerLock, trackerLockDirFor } = core;
+  const { acquireTrackerLock, trackerLockDirFor } = core!;
   const { root, file } = makeTracker();
-  const guarded = async (rowNum, status, pauseMs) => {
+  const guarded = async (rowNum: number, status: string, pauseMs: number): Promise<void> => {
     const lock = await acquireTrackerLock(trackerLockDirFor(file), { timeoutMs: 5_000, retryMs: 25, tracker: file });
     try {
       await setStatus(file, rowNum, status, pauseMs);
@@ -126,7 +137,7 @@ test("WITH the core lock, both updates survive", { skip: skipCore }, async () =>
 test("the lock is released on a throwing path, not just the happy one", { skip: skipCore }, async () => {
   // A leaked lock on a long-lived server is worse than the bug: the holder's pid
   // stays alive, so the core's stale-recovery will not reclaim it.
-  const { acquireTrackerLock, trackerLockDirFor } = core;
+  const { acquireTrackerLock, trackerLockDirFor } = core!;
   const { root, file } = makeTracker();
   try {
     const lock = await acquireTrackerLock(trackerLockDirFor(file), { timeoutMs: 5_000, retryMs: 25, tracker: file });

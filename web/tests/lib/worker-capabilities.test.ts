@@ -35,7 +35,7 @@ test("every known kind has an explicit capability record", () => {
       [false, "search", "fetch"].includes(caps.network),
       `${kind}.network must be false, "search" or "fetch", got ${JSON.stringify(caps.network)}`,
     );
-    assert.ok(Object.values(CAPS).includes(caps), `${kind} must use a declared CAPS record`);
+    assert.ok((Object.values(CAPS) as unknown[]).includes(caps), `${kind} must use a declared CAPS record`);
   }
 });
 

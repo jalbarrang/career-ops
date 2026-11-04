@@ -34,6 +34,7 @@
  */
 
 import { verifyClaudeArgs } from "./claude-invocation.ts";
+import type { Capabilities } from "./worker-capabilities.ts";
 
 /** Codex sandbox policies, in the spelling `sandbox_mode` accepts. */
 const CODEX_READ_ONLY = "read-only";
@@ -51,7 +52,7 @@ const CODEX_WORKSPACE_WRITE = "workspace-write";
  * @param {import("./worker-capabilities.ts").Capabilities} capabilities
  * @returns {boolean}
  */
-export function isCliAllowedForCapabilities(cliId, { writes }) {
+export function isCliAllowedForCapabilities(cliId: string, { writes }: Capabilities): boolean {
   return cliId !== "hermes" || !writes;
 }
 
@@ -84,7 +85,7 @@ export function isCliAllowedForCapabilities(cliId, { writes }) {
  * @param {import("./worker-capabilities.ts").Capabilities} capabilities
  * @returns {string}
  */
-function codexSandboxMode({ writes, network }) {
+function codexSandboxMode({ writes, network }: Capabilities): string {
   return writes || network === "fetch" ? CODEX_WORKSPACE_WRITE : CODEX_READ_ONLY;
 }
 
@@ -104,7 +105,7 @@ function codexSandboxMode({ writes, network }) {
  * @param {import("./worker-capabilities.ts").Capabilities} capabilities
  * @returns {string[]}
  */
-function codexGlobalFencingFlags({ network }) {
+function codexGlobalFencingFlags({ network }: Capabilities): string[] {
   return ["--ask-for-approval", "never", ...(network ? ["--search"] : [])];
 }
 
@@ -124,7 +125,7 @@ function codexGlobalFencingFlags({ network }) {
  * @param {import("./worker-capabilities.ts").Capabilities} capabilities
  * @returns {string[]}
  */
-function codexExecFencingFlags(capabilities) {
+function codexExecFencingFlags(capabilities: Capabilities): string[] {
   const mode = codexSandboxMode(capabilities);
   const flags = ["-c", `sandbox_mode=${mode}`];
   if (mode === CODEX_WORKSPACE_WRITE && capabilities.network === "fetch") {
@@ -184,7 +185,7 @@ const CODEX_PERMISSION_CONFIG_KEYS = Object.freeze([
  * @param {string} payload - A `key=value` config override, flag already stripped.
  * @returns {boolean}
  */
-function setsCodexPermissionKey(payload) {
+function setsCodexPermissionKey(payload: string): boolean {
   const key = payload.split("=")[0].trim();
   return CODEX_PERMISSION_CONFIG_KEYS.some((policyKey) =>
     policyKey.endsWith(".") ? key.startsWith(policyKey) : key === policyKey,
@@ -207,7 +208,7 @@ function setsCodexPermissionKey(payload) {
  * @param {string} arg
  * @returns {string}
  */
-function codexConfigPayload(arg) {
+function codexConfigPayload(arg: string): string {
   if (arg.startsWith("--config=")) return arg.slice("--config=".length);
   if (arg.startsWith("-c") && arg.length > 2) return arg.slice(2);
   return arg;
@@ -236,7 +237,7 @@ function codexConfigPayload(arg) {
  *
  * @param {string[]} args
  */
-function assertCodexArgvUnfenced(args) {
+function assertCodexArgvUnfenced(args: string[]): void {
   const spelled = args
     .slice(0, -1)
     .find(
@@ -275,7 +276,7 @@ function assertCodexArgvUnfenced(args) {
  * @param {import("./worker-capabilities.ts").Capabilities} capabilities
  * @returns {string[]}
  */
-function fenceCodexArgs(args, capabilities) {
+function fenceCodexArgs(args: string[], capabilities: Capabilities): string[] {
   assertCodexArgvUnfenced(args);
   const exec = args.indexOf("exec");
   if (exec === -1 || exec === args.length - 1) {
@@ -334,7 +335,10 @@ export const CODEX_REQUIRED_EXEC_FLAGS = Object.freeze([
  *
  * @type {Record<string, (args: string[], capabilities: import("./worker-capabilities.ts").Capabilities) => string[]>}
  */
-const FENCERS = Object.freeze({
+/** A fencer either rewrites the argv or verifies what the caller spelled. */
+type Fencer = (args: string[], capabilities: Capabilities) => string[];
+
+const FENCERS: Readonly<Record<string, Fencer>> = Object.freeze({
   claude: verifyClaudeArgs,
   codex: fenceCodexArgs,
 });
@@ -361,7 +365,13 @@ const FENCERS = Object.freeze({
  * @param {{cliId: string, cliName: string, capabilities: import("./worker-capabilities.ts").Capabilities}} run
  * @returns {FencingReport}
  */
-export function fencingReport({ cliId, cliName, capabilities }) {
+/** How well this run's capabilities are enforced on the chosen CLI. */
+export interface FencingReport {
+  level: "none" | "partial" | "full";
+  notice: string | null;
+}
+
+export function fencingReport({ cliId, cliName, capabilities }: { cliId: string; cliName: string; capabilities: Capabilities }): FencingReport {
   if (!Object.hasOwn(FENCERS, cliId)) {
     return {
       level: "none",
@@ -399,7 +409,7 @@ const PARTIAL_MARKER = "is only partly restricted";
  * @param {string|undefined} label
  * @returns {boolean}
  */
-export function isFencingNotice(label) {
+export function isFencingNotice(label: string | null | undefined): boolean {
   return typeof label === "string" && (label.includes(UNFENCED_MARKER) || label.includes(PARTIAL_MARKER));
 }
 
@@ -415,7 +425,7 @@ export function isFencingNotice(label) {
  * @param {{cliId: string, args: string[], capabilities: import("./worker-capabilities.ts").Capabilities}} invocation
  * @returns {{args: string[]}}
  */
-export function fenceArgs({ cliId, args, capabilities }) {
+export function fenceArgs({ cliId, args, capabilities }: { cliId: string; args: string[]; capabilities: Capabilities }): { args: string[] } {
   // Object.hasOwn, exactly as fencingReport does. A bare `FENCERS[cliId]` also
   // resolves inherited Object.prototype members, so a cliId of "toString" or
   // "constructor" yields a truthy function that would then be CALLED as a fencer

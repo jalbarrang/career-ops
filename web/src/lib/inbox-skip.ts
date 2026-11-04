@@ -22,7 +22,7 @@ const PENDING_HEADING = /^##\s+(Pending|Pendientes)\s*$/i;
  * @param {unknown} raw
  * @returns {string | null} trimmed URL, or null when it is not a posting URL
  */
-export function postingUrl(raw) {
+export function postingUrl(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
   const s = raw.trim();
   if (!s || s.length > MAX_URL_LEN) return null;
@@ -47,11 +47,11 @@ export function postingUrl(raw) {
  * @param {string} rest text after `- [ ]` / `- [x]`
  * @returns {string | null}
  */
-export function jobUrlFromRest(rest) {
-  return postingUrl(rest.split("|")[0]);
+export function jobUrlFromRest(rest: string): string | null {
+  return postingUrl(rest.split("|")[0] ?? "");
 }
 
-function pendingRange(lines) {
+function pendingRange(lines: readonly string[]): { start: number; end: number } | null {
   let start = -1;
   for (let i = 0; i < lines.length; i++) {
     const t = lines[i].trim();
@@ -67,7 +67,7 @@ function pendingRange(lines) {
   return null; // no Pending heading → every line is a candidate
 }
 
-function inRange(i, range) {
+function inRange(i: number, range: { start: number; end: number } | null): boolean {
   return !range || (i >= range.start && i < range.end);
 }
 
@@ -79,7 +79,11 @@ function inRange(i, range) {
  * @param {boolean} done true = Skip (`[x]`), false = undo (`[ ]`)
  * @returns {{ ok: true, text: string, matched: number, changed: number } | { ok: false, error: string }}
  */
-export function applyInboxSkip(text, url, done) {
+/** What flipping one checkbox produced, or why it could not.
+ */
+export type InboxSkipResult = { ok: true; text: string; matched: number; changed: number } | { ok: false; error: string };
+
+export function applyInboxSkip(text: string, url: string, done: boolean): InboxSkipResult {
   const parsed = postingUrl(url);
   if (!parsed) return { ok: false, error: "invalid-url" };
 
@@ -116,7 +120,7 @@ export function applyInboxSkip(text, url, done) {
   };
 }
 
-function atomicWrite(file, content) {
+function atomicWrite(file: string, content: string): void {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const tmp = `${file}.tmp-${process.pid}-${randomUUID()}`;
   fs.writeFileSync(tmp, content, "utf8");
@@ -131,16 +135,21 @@ function atomicWrite(file, content) {
  * @param {boolean} done
  * @param {{ lockModule?: string, timeoutMs?: number }} [options]
  */
-export async function setInboxSkip(pipelinePath, url, done, options = {}) {
+export async function setInboxSkip(
+  pipelinePath: string,
+  url: string,
+  done: boolean,
+  options: { lockModule?: string; timeoutMs?: number } = {},
+): Promise<InboxSkipResult> {
   const parsed = postingUrl(url);
   if (!parsed) return { ok: false, error: "invalid-url" };
 
-  const run = () => {
+  const run = (): InboxSkipResult => {
     let md;
     try {
       md = fs.readFileSync(pipelinePath, "utf8");
     } catch (err) {
-      if (err && err.code === "ENOENT") return { ok: false, error: "not-found" };
+      if ((err as { code?: string } | null)?.code === "ENOENT") return { ok: false, error: "not-found" };
       throw err;
     }
     const result = applyInboxSkip(md, parsed, done);
@@ -152,7 +161,7 @@ export async function setInboxSkip(pipelinePath, url, done, options = {}) {
   const lockModule = options.lockModule;
   if (!lockModule) return run();
 
-  const mod = await import(/* webpackIgnore: true */ pathToFileURL(lockModule).href);
+  const mod = await import(/* @vite-ignore */ pathToFileURL(lockModule).href);
   if (typeof mod.withPipelineLock !== "function") {
     throw new Error("pipeline-lock.ts has no withPipelineLock");
   }
@@ -162,7 +171,7 @@ export async function setInboxSkip(pipelinePath, url, done, options = {}) {
       retryMs: 50,
     });
   } catch (err) {
-    if (err && err.name === "LockTimeoutError") return { ok: false, error: "busy" };
+    if ((err as { name?: string } | null)?.name === "LockTimeoutError") return { ok: false, error: "busy" };
     throw err;
   }
 }

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { todaySnapshot } from "../../src/lib/home/today-snapshot.ts";
 
-const scoreOf = (score) => Number.parseFloat(score);
+const scoreOf = (score: string): number => Number.parseFloat(score);
 
 test("Today keeps all undecided aliases and saved URLs, without shipping tracker history", () => {
   const applications = [

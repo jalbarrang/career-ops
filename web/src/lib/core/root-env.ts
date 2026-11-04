@@ -25,6 +25,6 @@
  * @param {NodeJS.ProcessEnv} [base] - Defaults to this process's env.
  * @returns {NodeJS.ProcessEnv}
  */
-export function rootScriptEnv(root, base = process.env) {
+export function rootScriptEnv(root: string, base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
   return { ...base, CAREER_OPS_ROOT: root };
 }

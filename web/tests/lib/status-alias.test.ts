@@ -29,10 +29,15 @@ import { readFileSync } from "node:fs";
 import * as yaml from "js-yaml";
 import { STATUS_ALIAS, canonStatus } from "../../src/lib/status-alias.ts";
 
-const states = yaml.load(
+interface StateRow {
+  label: string;
+  aliases?: string[];
+}
+
+const states = (yaml.load(
   readFileSync(new URL("../../../templates/states.yml", import.meta.url), "utf8"),
-).states;
-const STAGES = states.map((s) => s.label.toUpperCase());
+) as { states: StateRow[] }).states;
+const STAGES = states.map((s: StateRow) => s.label.toUpperCase());
 
 test("every states.yml alias resolves to its own canonical stage", () => {
   const broken = [];

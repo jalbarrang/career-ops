@@ -21,6 +21,7 @@
  */
 
 import { capabilitiesFor } from "./worker-capabilities.ts";
+import type { Capabilities } from "./worker-capabilities.ts";
 
 /**
  * Tools that can modify the user's files. `Bash` counts: `sh -c '> cv.md'` is a
@@ -49,7 +50,7 @@ const ALWAYS_DENIED = ["Task"];
  * @param {string} value - A comma-separated --allowedTools/--disallowedTools value.
  * @returns {string[]} Bare tool names, in order.
  */
-export function toolNames(value) {
+export function toolNames(value: unknown): string[] {
   return String(value ?? "")
     .split(",")
     .map((t) => t.trim().replace(/\(.*$/, "").trim())
@@ -61,6 +62,12 @@ export function toolNames(value) {
  * @property {string} allowed - Comma-separated --allowedTools value.
  * @property {string} disallowed - Comma-separated --disallowedTools value.
  */
+
+/** One allow/deny pair, as Claude reads it from argv. */
+export interface ToolScope {
+  allowed: string;
+  disallowed: string;
+}
 
 /**
  * Build a scope from its allow list, denying every write-capable tool it does not
@@ -75,7 +82,7 @@ export function toolNames(value) {
  * @param {string} allowed - Comma-separated --allowedTools value.
  * @returns {ToolScope}
  */
-export function scopeFrom(allowed) {
+export function scopeFrom(allowed: string): ToolScope {
   const granted = toolNames(allowed);
   // Both tool families, not just the write one. A scope that grants no network
   // tool must DENY it rather than omit it, for the same reason a write tool is
@@ -124,7 +131,7 @@ export const TOOL_SCOPES = Object.freeze({
  * @param {string} kind - Worker kind ("pdf", "research", "evaluate", …).
  * @returns {ToolScope}
  */
-export function toolScopeFor(kind) {
+export function toolScopeFor(kind: string): ToolScope {
   const { writes, network } = capabilitiesFor(kind);
   if (writes) return TOOL_SCOPES.persisting;
   return network ? TOOL_SCOPES.networkReadOnly : TOOL_SCOPES.localReadOnly;
@@ -140,7 +147,7 @@ export function toolScopeFor(kind) {
  * @param {ToolScope} scope
  * @returns {boolean}
  */
-export function grantsWriteCapability(scope) {
+export function grantsWriteCapability(scope: ToolScope | null | undefined): boolean {
   const allowed = toolNames(scope?.allowed);
   return WRITE_CAPABLE_TOOLS.some((tool) => allowed.includes(tool));
 }
@@ -154,7 +161,7 @@ export function grantsWriteCapability(scope) {
  * @param {{kind: string, prompt: string}} args
  * @returns {string[]}
  */
-export function claudeCliArgs({ kind, prompt }) {
+export function claudeCliArgs({ kind, prompt }: { kind: string; prompt: string }): string[] {
   const scope = toolScopeFor(kind);
   return [
     "-p", prompt,
@@ -185,7 +192,7 @@ export function claudeCliArgs({ kind, prompt }) {
  * @param {string} flag - e.g. "--allowedTools".
  * @returns {string} The value, or "" when the flag is absent.
  */
-export function argValue(args, flag) {
+export function argValue(args: readonly string[], flag: string): string {
   const i = args.indexOf(flag);
   return i === -1 || i + 1 >= args.length ? "" : args[i + 1];
 }
@@ -212,7 +219,7 @@ export function argValue(args, flag) {
  * @param {import("./worker-capabilities.ts").Capabilities} capabilities
  * @returns {string[]} the argv, unchanged
  */
-export function verifyClaudeArgs(args, capabilities) {
+export function verifyClaudeArgs(args: string[], capabilities: Capabilities): string[] {
   // Every tool the record forbids must be DENIED BY NAME, not merely left out.
   // "Unmentioned" is the one status a forbidden tool must never have: the argvs
   // pair --disallowedTools with --permission-mode acceptEdits, which exists to

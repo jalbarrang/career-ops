@@ -27,9 +27,9 @@ const CASES = [
 ];
 
 test("the web mirror folds identically to the core, in both punctuation modes", () => {
-  const drift = [];
+  const drift: string[] = [];
   for (const value of CASES) {
-    for (const punctuation of ["space", "delete"]) {
+    for (const punctuation of ["space", "delete"] as const) {
       const web = webFold(value, { punctuation });
       const core = coreFold(value, { punctuation });
       if (web !== core) drift.push(`${JSON.stringify(value)} (${punctuation}): web ${JSON.stringify(web)} vs core ${JSON.stringify(core)}`);

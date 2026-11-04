@@ -25,7 +25,7 @@ import path from "node:path";
  * @param {string | undefined | null} pdfPath - The attached CV, absolute or root-relative.
  * @returns {string | null} Root-relative path to the CV to draft from, or null.
  */
-export function applyCvSource(root, pdfPath) {
+export function applyCvSource(root: string, pdfPath: string | null | undefined): string | null {
   const rel = toRootRelative(root, pdfPath);
   if (!rel) return null;
 
@@ -46,8 +46,8 @@ export function applyCvSource(root, pdfPath) {
 
 /** Normalize a PDF path to the root-relative, forward-slash spelling the
  *  manifest stores. Null for a path outside the root. */
-function toRootRelative(root, p) {
-  const s = (p ?? "").trim();
+function toRootRelative(root: string, p: unknown): string | null {
+  const s = String(p ?? "").trim();
   if (!s) return null;
   const abs = path.isAbsolute(s) ? s : path.join(root, s);
   const rel = path.relative(root, abs);
@@ -57,14 +57,14 @@ function toRootRelative(root, p) {
 
 /** The `html` column of the manifest row naming this PDF. Last match wins, so a
  *  regenerated CV supersedes an earlier row for the same file. */
-function manifestHtml(root, relPdf) {
-  let text;
+function manifestHtml(root: string, relPdf: string): string | null {
+  let text: string;
   try {
     text = fs.readFileSync(path.join(root, "data", "pdf-index.tsv"), "utf8");
   } catch {
     return null; // no PDF was ever generated here
   }
-  let html = null;
+  let html: string | null = null;
   for (const line of text.split("\n")) {
     if (!line.trim() || line.startsWith("#")) continue;
     const fields = line.split("\t");
@@ -77,7 +77,7 @@ function manifestHtml(root, relPdf) {
 /** A manifest path is local data, and it is still handed to an agent with read
  *  access. Confirm it resolves to a real file inside the root, following
  *  symlinks, before naming it in a prompt. */
-function keepInsideRoot(root, relCandidate) {
+function keepInsideRoot(root: string, relCandidate: string): string | null {
   let realAbs;
   let realRoot;
   try {

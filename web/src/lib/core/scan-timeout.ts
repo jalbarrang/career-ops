@@ -14,9 +14,13 @@ export const DEFAULT_SCAN_TIMEOUT_MS = 230_000;
  *  `scan.timeout_seconds`. Never throws; falls back to the default for anything
  *  missing, non-numeric, or not strictly positive (a broken config must not
  *  block scanning). Accepts any value so callers can pass an unparsed profile. */
-export function resolveScanTimeoutMs(profile) {
-  const scan = profile && typeof profile === "object" && !Array.isArray(profile) ? profile.scan : undefined;
-  const raw = scan && typeof scan === "object" && !Array.isArray(scan) ? scan.timeout_seconds : undefined;
+export function resolveScanTimeoutMs(profile: unknown): number {
+  const source = profile && typeof profile === "object" && !Array.isArray(profile)
+    ? (profile as { scan?: unknown }).scan
+    : undefined;
+  const raw = source && typeof source === "object" && !Array.isArray(source)
+    ? (source as { timeout_seconds?: unknown }).timeout_seconds
+    : undefined;
   // Accept only numbers and numeric strings — Number(true) is 1, which would
   // otherwise turn `timeout_seconds: true` into a 1s budget instead of the default.
   if (typeof raw !== "number" && typeof raw !== "string") return DEFAULT_SCAN_TIMEOUT_MS;
@@ -27,7 +31,7 @@ export function resolveScanTimeoutMs(profile) {
 
 /** Honest, actionable message when our own timer stopped the scanner before it
  *  finished — distinct from a genuine "no readable output" parse failure. */
-export function scanTimeoutMessage(timeoutMs) {
+export function scanTimeoutMessage(timeoutMs: number): string {
   // Exact, not rounded: a 1.5s budget must not read as 2s, nor 1ms as 0s.
   const secs = timeoutMs / 1000;
   return (

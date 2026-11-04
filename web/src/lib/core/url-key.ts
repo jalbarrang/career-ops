@@ -43,17 +43,18 @@ const TRACKING_PARAMS = [
  *
  * @param {URL} url
  */
-export function promoteKnownFragmentIdentity(url) {
+export function promoteKnownFragmentIdentity(url: URL): URL {
   const match = /^#\/jobs?\/([^/?#]+)(?:\?[^#]*)?$/i.exec(url.hash);
-  if (!match) return;
-  let jobId;
-  try { jobId = decodeURIComponent(match[1]); } catch { return; }
-  if (!jobId) return;
+  if (!match) return url;
+  let jobId: string;
+  try { jobId = decodeURIComponent(match[1]); } catch { return url; }
+  if (!jobId) return url;
   if (url.hostname.toLowerCase() === "app.mokahr.com") {
     url.searchParams.append("mokahr_job_id", jobId);
-    return;
+    return url;
   }
   url.searchParams.append("_career_ops_fragment_job_id", jobId);
+  return url;
 }
 
 /**
@@ -64,7 +65,7 @@ export function promoteKnownFragmentIdentity(url) {
  *   '' means NO KEY — callers must treat it as unknown, never as a value that
  *   can match another ''.
  */
-export function normalizeUrl(raw) {
+export function normalizeUrl(raw: unknown): string {
   if (typeof raw !== "string") return "";
   const s = raw.trim();
   if (!s) return "";

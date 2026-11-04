@@ -8,7 +8,26 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { progressModel, statsModel, rateOrNull, isUnlabelled } from "../../src/lib/analytics/view-model.ts";
+import {
+  progressModel,
+  statsModel,
+  rateOrNull,
+  isUnlabelled,
+  type StatsModel,
+  type StatsSection,
+} from "../../src/lib/analytics/view-model.ts";
+
+type Threshold = Extract<StatsSection, { key: "threshold" }>;
+type Vendor = Extract<StatsSection, { key: "vendor" }>;
+type Breakdown = Extract<StatsSection, { dimension: string }>;
+
+/** The section with this key, narrowed to its own variant. `sections` is a
+ *  union, so a caller that knows which key it asked for says so here. */
+function sectionOf<T extends StatsSection>(model: StatsModel, key: string): T {
+  const found = model.sections.find((section) => section.key === key);
+  assert.ok(found, `expected a "${key}" section`);
+  return found as T;
+}
 
 test("a rate over nothing is absent, not zero", () => {
   // The failure this prevents: a user who has not applied yet being shown
@@ -83,6 +102,7 @@ test("an absent core and an empty tracker are not the same unavailable", () => {
 test("below-threshold is a result, not a failure", () => {
   const m = statsModel({ error: "Not enough data: 4/5 applications sent.", current: 4, threshold: 5 });
   assert.equal(m.state, "below-threshold");
+  assert.ok(m.progress, "below-threshold must carry the progress payload");
   assert.equal(m.progress.current, 4);
   assert.equal(m.progress.threshold, 5);
   assert.match(m.progress.message, /Not enough data/);
@@ -93,14 +113,14 @@ test("an unsupported threshold keeps its reasoning but loses its number", () => 
   const ready = statsModel({
     scoreThreshold: { recommended: 4.7, sufficientSample: true, sampleSize: 12, reasoning: "because" },
   });
-  const t1 = ready.sections.find((s) => s.key === "threshold");
+  const t1 = sectionOf<Threshold>(ready, "threshold");
   assert.equal(t1.value, 4.7);
   assert.equal(t1.provisional, false);
 
   const thin = statsModel({
     scoreThreshold: { recommended: 4.7, sufficientSample: false, sampleSize: 3, reasoning: "because" },
   });
-  const t2 = thin.sections.find((s) => s.key === "threshold");
+  const t2 = sectionOf<Threshold>(thin, "threshold");
   // The number is withheld: "recommended 4.7" off three outcomes reads as a rule
   // rather than as an observation.
   assert.equal(t2.value, null);
@@ -121,8 +141,7 @@ test("an Unknown-only breakdown is not rendered as an insight", () => {
   assert.equal(m.sections.find((s) => s.key === "archetype"), undefined);
   // A breakdown with at least one real label is kept — including its unknown
   // row, so the counts still add up — and marked partial.
-  const remote = m.sections.find((s) => s.key === "remote");
-  assert.ok(remote);
+  const remote = sectionOf<Breakdown>(m, "remote");
   assert.equal(remote.rows.length, 2);
   assert.equal(remote.partial, true);
 });
@@ -131,7 +150,7 @@ test("the ATS panel makes no claim below the core's own sample bar", () => {
   const thin = statsModel({
     vendorAnalysis: { identified: 0, minSampleForClaim: 8, coveragePct: 0, breakdown: [], overallAdvanceRate: 38 },
   });
-  const v1 = thin.sections.find((s) => s.key === "vendor");
+  const v1 = sectionOf<Vendor>(thin, "vendor");
   assert.equal(v1.claimable, false);
   assert.deepEqual(v1.rows, []);
   assert.equal(v1.coveragePct, 0);
@@ -143,7 +162,7 @@ test("the ATS panel makes no claim below the core's own sample bar", () => {
       citation: "Bommasani et al.",
     },
   });
-  const v2 = solid.sections.find((s) => s.key === "vendor");
+  const v2 = sectionOf<Vendor>(solid, "vendor");
   assert.equal(v2.claimable, true);
   assert.equal(v2.rows.length, 1);
   assert.equal(v2.citation, "Bommasani et al.", "the core's citation travels with the claim");

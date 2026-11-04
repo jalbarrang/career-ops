@@ -36,13 +36,27 @@ export function _resetCache() {
   searchCache.clear();
 }
 
+/** One similar issue as the reporter's banner renders it. */
+export interface SimilarIssue {
+  number: number;
+  title: string;
+  url: string;
+}
+
+/** The fetch surface this search needs. Narrow on purpose: a caller (and the
+ *  test suite) can hand over a stub that answers ok/json alone. */
+export type IssueFetch = (
+  url: string,
+  init?: { headers?: Record<string, string> },
+) => Promise<{ ok: boolean; status?: number; json: () => Promise<unknown> }>;
+
 /**
  * @param {string} q  the GitHub search query, minus the repo qualifier
  * @param {string} repo  "owner/name"
- * @param {typeof fetch} fetchFn
+ * @param {IssueFetch} fetchFn
  * @returns {Promise<SimilarIssue[] | null>} items, or null when the search could not run
  */
-export async function searchIssues(q, repo, fetchFn) {
+export async function searchIssues(q: string, repo: string, fetchFn: IssueFetch = fetch): Promise<SimilarIssue[] | null> {
   const cached = searchCache.get(q);
   if (cached) return cached;
   try {
@@ -53,7 +67,7 @@ export async function searchIssues(q, repo, fetchFn) {
     // 422 (bad qualifier — a moved repo), 403 (rate limit), 5xx: all "we don't
     // know", none of them "nothing similar".
     if (!res.ok) return null;
-    const d = await res.json();
+    const d = (await res.json()) as { items?: Array<{ number: number; title: string; html_url: string }> };
     const items = (d.items || []).map((i) => ({ number: i.number, title: i.title, url: i.html_url }));
     searchCache.set(q, items);
     return items;

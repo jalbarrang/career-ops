@@ -6,12 +6,9 @@
 // about to be exposed, and forwards the child's exit status. See that module and
 // origin-guard.ts's header for why the bind is the access control.
 //
-// SvelteKit replaces the two `next` subcommands with two different runners:
-//   dev   → `vite dev --host <addr> --port <n>`  (the bind is a flag)
-//   start → `node build/index.js`                (adapter-node reads HOST / PORT)
-// The bind DECISION is still bind-host.ts's. Only the way it is carried changed,
-// so this file extracts a caller-supplied host once and hands it to whichever
-// runner is in play.
+// The dashboard runs locally only, so there is ONE runner: `vite dev`, with the
+// bind carried as a flag. The bind DECISION is still bind-host.ts's; this file
+// extracts a caller-supplied host once and hands it to the dev server.
 //
 // Imports nothing outside web/: this tree is excluded from the core's packaging
 // and coverage contracts (validate-system-paths-coverage.ts EXCLUDE_PREFIXES),
@@ -23,7 +20,7 @@ import os from "node:os";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { planNextRun } from "./src/lib/bind-host.ts";
+import { planDevRun } from "./src/lib/bind-host.ts";
 
 const requireHere = createRequire(import.meta.url);
 const here = dirname(fileURLToPath(import.meta.url));
@@ -33,7 +30,7 @@ const [command, ...extra] = process.argv.slice(2);
 // docs URL and scripts/ui-server.ts all keep working.
 const DEFAULT_PORT = 3000;
 
-const plan = planNextRun({
+const plan = planDevRun({
   command,
   extra,
   envValue: process.env.CAREER_OPS_WEB_ALLOWED_HOSTS,
@@ -183,13 +180,10 @@ if (command === "dev") {
     label: "the dev server",
   };
 } else {
-  // adapter-node's standalone server reads HOST and PORT from the environment.
-  const entry = join(here, "build", "index.js");
-  child = {
-    argv: [entry, ...rest],
-    env: { ...process.env, ...(bindHost ? { HOST: bindHost } : {}), PORT: String(port) },
-    label: "the SvelteKit server",
-  };
+  // Local-only app: `dev` is the only supported runner. A packaged `start`
+  // (adapter-node) used to live here; it was never reached by `bun run ui`.
+  console.error(`Unknown command "${command}". Usage: bun server.ts dev [--port <n>] [--host <addr>]`);
+  process.exit(2);
 }
 
 // cwd is pinned to this file's directory rather than inherited: career-ops.ts
@@ -206,12 +200,7 @@ const result = spawnSync(process.execPath, child.argv, {
 });
 
 if (result.error) {
-  const missingEntry = command !== "dev" && result.error.code === "ENOENT";
-  console.error(
-    missingEntry
-      ? `Cannot find the production build at ${join(here, "build", "index.js")} — run \`bun run build\` first.`
-      : `Could not start ${child.label}: ${result.error.message}`,
-  );
+  console.error(`Could not start ${child.label}: ${result.error.message}`);
   process.exit(1);
 }
 // A signalled child reports status null. Exiting 128+signal keeps a SIGTERM

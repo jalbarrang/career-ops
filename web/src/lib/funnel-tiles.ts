@@ -31,7 +31,7 @@ import { statusToken } from './pipeline-sankey.ts';
  * @param {string[]} keys - Canonical stage keys to count.
  * @returns {number}
  */
-function countOf(canonStatuses, keys) {
+function countOf(canonStatuses: readonly string[], keys: readonly string[]): number {
   return canonStatuses.filter((s) => keys.some((k) => s.includes(k))).length;
 }
 
@@ -41,8 +41,8 @@ function countOf(canonStatuses, keys) {
  * @param {string[]} canonStatuses - Canonicalized statuses, one per application.
  * @returns {{interviews: number, offers: number}}
  */
-export function cumulativeTiles(canonStatuses) {
-  const list = Array.isArray(canonStatuses) ? canonStatuses : [];
+export function cumulativeTiles(canonStatuses: unknown): { interviews: number; offers: number } {
+  const list: string[] = Array.isArray(canonStatuses) ? (canonStatuses as string[]) : [];
   return {
     interviews: countOf(list, ["INTERVIEW", "OFFER", "HIRED"]),
     offers: countOf(list, ["OFFER", "HIRED"]),
@@ -55,16 +55,24 @@ export function cumulativeTiles(canonStatuses) {
  * @param {string|null} content
  * @param {string} [coreRoot] Code checkout, never the separate user data root.
  */
-export async function cumulativeTilesWithHistory(applications, content, coreRoot = resolveCodeRoot(process.cwd())) {
-  // Turbopack is intentionally confined to web/ for Windows stability. Load
+export async function cumulativeTilesWithHistory(
+  applications: readonly { n?: string; status: string }[],
+  content: string | null,
+  coreRoot: string = resolveCodeRoot(process.cwd(), process.env),
+): Promise<{ interviews: number; offers: number }> {
+  // The web build is intentionally confined to web/ for Windows stability. Load
   // the core at runtime, as the other core accessors do; do not widen its root
   // or silently substitute a second engine if the installation is incomplete.
   const file = path.join(coreRoot, 'funnel-stages.ts');
-  const { parseStatusLogStages, recoverFunnelStages } = await import(/* webpackIgnore: true */ pathToFileURL(file).href);
-  const statuses = new Map();
+  const { parseStatusLogStages, recoverFunnelStages } = await import(/* @vite-ignore */ pathToFileURL(file).href);
+  const statuses = new Map<number, string>();
+  // Non-numeric backfill IDs retain snapshot counts but cannot join history.
+  // Distinct NEGATIVE keys give each one its own slot: ledger numbers are
+  // positive, so none of them can ever match a history row.
+  let synthetic = 0;
   for (const app of applications) {
-    // Non-numeric backfill IDs retain snapshot counts but cannot join history.
-    const id = /^\d+$/.test(app.n) ? Number(app.n) : Symbol();
+    const n = app.n;
+    const id = typeof n === "string" && /^\d+$/.test(n) ? Number(n) : -1 - synthetic++;
     statuses.set(id, statusToken(app.status));
   }
   const values = [...recoverFunnelStages(statuses, parseStatusLogStages(content)).values()];

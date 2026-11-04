@@ -25,6 +25,9 @@
 // so web dedup always matches CLI dedup. A second key helper here is exactly
 // the local reimplementation #2666 removed.
 
+/** The core's text-key normalizer (normalizeTextKey). */
+export type Norm = (value: unknown, separator?: string) => string;
+
 /**
  * Suppression key for one company/role pair.
  *
@@ -37,7 +40,7 @@
  * @param {string} role
  * @returns {string}
  */
-export function suppressionKey(norm, company, role) {
+export function suppressionKey(norm: Norm, company: string, role: string): string {
   return `${norm(company, " ")}|${norm(role, " ")}`;
 }
 
@@ -52,8 +55,8 @@ export function suppressionKey(norm, company, role) {
  * @param {(value: unknown, separator?: string) => string} norm
  * @returns {Set<string>}
  */
-export function evaluatedKeys(applications, norm) {
-  const keys = new Set();
+export function evaluatedKeys(applications: readonly { company?: string; role?: string }[] | null | undefined, norm: Norm): Set<string> {
+  const keys = new Set<string>();
   for (const app of applications ?? []) {
     if (!norm(app?.company, " ")) continue;
     keys.add(suppressionKey(norm, app?.company ?? "", app?.role ?? ""));
@@ -70,7 +73,7 @@ export function evaluatedKeys(applications, norm) {
  * @param {string} title - Scan-history title cell.
  * @returns {boolean}
  */
-export function isEvaluated(keys, norm, company, title) {
+export function isEvaluated(keys: ReadonlySet<string>, norm: Norm, company: string, title: string): boolean {
   if (!company || !norm(company, " ")) return false;
   return keys.has(suppressionKey(norm, company, title));
 }

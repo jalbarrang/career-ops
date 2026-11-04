@@ -79,15 +79,23 @@ const CORE =
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const coreLock = path.join(CORE, "tracker-utils.ts");
 
-let acquireTrackerLock = null;
-let skipCore = false;
+/** The one entry this suite needs from the core's tracker-utils.ts. */
+type AcquireTrackerLock = (
+  dir: string,
+  options: { timeoutMs: number; retryMs: number },
+) => Promise<{ release: () => void | Promise<void> }>;
+
+let acquireTrackerLock: AcquireTrackerLock | null = null;
+/** False when the core is importable; otherwise why these cases skip. */
+let skipCore: string | false = false;
 try {
-  ({ acquireTrackerLock } = await import(pathToFileURL(coreLock).href));
+  ({ acquireTrackerLock } = (await import(pathToFileURL(coreLock).href)) as { acquireTrackerLock: AcquireTrackerLock });
 } catch (err) {
+  const info = err as { code?: string; url?: string | null };
   const coreAbsent = !fs.existsSync(coreLock);
-  const packageUnresolvable = err.url == null;
+  const packageUnresolvable = info.url == null;
   const depsAbsent = !fs.existsSync(path.join(CORE, "node_modules"));
-  if (err.code !== "ERR_MODULE_NOT_FOUND") throw err;
+  if (info.code !== "ERR_MODULE_NOT_FOUND") throw err;
   if (coreAbsent) skipCore = `no core checkout at ${CORE}`;
   else if (packageUnresolvable && depsAbsent) skipCore = `core dependencies are not installed at ${CORE} (web-only checkout)`;
   else throw err;
@@ -96,10 +104,11 @@ try {
 test("the core: a genuine ENOENT from acquireTrackerLock is NOT tagged LOCK_TIMEOUT", { skip: skipCore }, async () => {
   const unreachableLockDir = path.join(os.tmpdir(), `no-such-parent-${Date.now()}-xyz`, "lockdir");
   await assert.rejects(
-    () => acquireTrackerLock(unreachableLockDir, { timeoutMs: 2_000, retryMs: 50 }),
+    () => acquireTrackerLock!(unreachableLockDir, { timeoutMs: 2_000, retryMs: 50 }),
     (err) => {
-      assert.equal(err.code, "ENOENT");
-      assert.notEqual(err.code, "LOCK_TIMEOUT", "a filesystem failure must not be mistaken for lock contention");
+      const info = err as { code?: string };
+      assert.equal(info.code, "ENOENT");
+      assert.notEqual(info.code, "LOCK_TIMEOUT", "a filesystem failure must not be mistaken for lock contention");
       return true;
     },
   );
@@ -140,9 +149,10 @@ test(
     fs.chmodSync(sealed, 0o500); // r-x: mkdir inside is refused with EACCES
     try {
       await assert.rejects(
-        () => acquireTrackerLock(lockDir, { timeoutMs: 300, retryMs: 20 }),
+        () => acquireTrackerLock!(lockDir, { timeoutMs: 300, retryMs: 20 }),
         (err) => {
-          assert.equal(err.code, "LOCK_TIMEOUT", `expected LOCK_TIMEOUT after retrying, got ${err.code}: ${err.message}`);
+          const info = err as { code?: string; message?: string };
+          assert.equal(info.code, "LOCK_TIMEOUT", `expected LOCK_TIMEOUT after retrying, got ${info.code}: ${info.message}`);
           return true;
         },
       );

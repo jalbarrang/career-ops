@@ -26,24 +26,32 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import { CODEX_REQUIRED_EXEC_FLAGS, CODEX_REQUIRED_GLOBAL_FLAGS } from "./cli-fencing.ts";
 
+/** Both help texts a Codex binary answers with. */
+export interface HelpTexts {
+  globalHelp: string;
+  execHelp: string;
+}
+
+/** The stat fields that say "this is still the same executable". */
+interface FileIdentity {
+  mtimeMs: number;
+  ctimeMs: number;
+  size: number;
+  ino: number;
+  dev: number;
+}
+
 /**
  * The stat fields that together say "this is still the same executable".
  * @see readBothHelps for why size and mtime alone are not enough.
  */
-const IDENTITY_FIELDS = Object.freeze(["mtimeMs", "ctimeMs", "size", "ino", "dev"]);
+const IDENTITY_FIELDS = Object.freeze(["mtimeMs", "ctimeMs", "size", "ino", "dev"] as const);
 
-/**
- * @typedef {Object} ProbeCacheEntry
- * @property {number} mtimeMs
- * @property {number} ctimeMs
- * @property {number} size
- * @property {number} ino
- * @property {number} dev
- * @property {Promise<{globalHelp: string, execHelp: string}>} help
- */
+interface ProbeCacheEntry extends FileIdentity {
+  help: Promise<HelpTexts>;
+}
 
-/** @type {Map<string, ProbeCacheEntry>} */
-const probeCache = new Map();
+const probeCache = new Map<string, ProbeCacheEntry>();
 
 const HELP_TIMEOUT_MS = 5_000;
 const HELP_CAPTURE_BYTES = 64_000;
@@ -60,18 +68,18 @@ const SIGKILL_GRACE_MS = 1_000;
  * @param {string[]} args
  * @returns {Promise<string>}
  */
-function readCliHelp(binPath, args) {
+function readCliHelp(binPath: string, args: string[]): Promise<string> {
   return new Promise((resolve) => {
     let stdout = "";
     let stderr = "";
     let settled = false;
     let timedOut = false;
     /** @type {ReturnType<typeof setTimeout>|undefined} */
-    let timeout;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     /** @type {ReturnType<typeof setTimeout>|undefined} */
-    let killTimeout;
+    let killTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    const finish = (output) => {
+    const finish = (output: string): void => {
       if (settled) return;
       settled = true;
       if (timeout) clearTimeout(timeout);
@@ -79,7 +87,7 @@ function readCliHelp(binPath, args) {
       resolve(output);
     };
 
-    const appendBounded = (current, chunk) => (current + chunk.toString()).slice(-HELP_CAPTURE_BYTES);
+    const appendBounded = (current: string, chunk: { toString(): string }): string => (current + chunk.toString()).slice(-HELP_CAPTURE_BYTES);
 
     // NO_COLOR so flag names are matched as written, not around ANSI escapes.
     const child = spawn(binPath, args, { env: { ...process.env, NO_COLOR: "1" } });
@@ -161,14 +169,12 @@ const POSSIBLE_VALUES = /^\[possible values:\s*([^\]]+)\]\s*$/i;
  * @param {string} flag
  * @returns {boolean}
  */
-function declaresFlag(help, flag) {
-  const declaredOptions = new Set();
-  /** @type {Map<string, Set<string>>} */
-  const valuesByOption = new Map();
-  /** @type {string[]} */
-  let currentOptions = [];
+function declaresFlag(help: string, flag: string): boolean {
+  const declaredOptions = new Set<string>();
+  const valuesByOption = new Map<string, Set<string>>();
+  let currentOptions: string[] = [];
 
-  const recordValues = (values) => {
+  const recordValues = (values: string | undefined): void => {
     if (!values || currentOptions.length === 0) return;
     for (const option of currentOptions) {
       const owned = valuesByOption.get(option) ?? new Set();
@@ -208,7 +214,7 @@ function declaresFlag(help, flag) {
  * @param {string[]} [alsoRequiresInExec] - See codexFencingSupported.
  * @returns {boolean}
  */
-export function helpSatisfiesFencing({ globalHelp, execHelp }, alsoRequiresInExec = []) {
+export function helpSatisfiesFencing({ globalHelp, execHelp }: HelpTexts, alsoRequiresInExec: readonly string[] = []): boolean {
   // Deliberately fail closed: help/flag drift means "unsupported", never a
   // weaker Codex invocation that could bypass the required safety contract.
   return (
@@ -244,14 +250,13 @@ export function helpSatisfiesFencing({ globalHelp, execHelp }, alsoRequiresInExe
  * @param {{mtimeMs: number, ctimeMs: number, size: number, ino: number, dev: number}} identity
  * @returns {Promise<{globalHelp: string, execHelp: string}>}
  */
-function readBothHelps(binPath, identity) {
+function readBothHelps(binPath: string, identity: FileIdentity): Promise<HelpTexts> {
   const cached = probeCache.get(binPath);
   if (cached && IDENTITY_FIELDS.every((field) => cached[field] === identity[field])) {
     return cached.help;
   }
 
-  /** @type {ProbeCacheEntry} */
-  let entry;
+  let entry: ProbeCacheEntry;
   const help = Promise.all([readCliHelp(binPath, ["--help"]), readCliHelp(binPath, ["exec", "--help"])])
     .then(([globalHelp, execHelp]) => {
       // Either half empty means the binary never told us anything — evict, so
@@ -284,7 +289,10 @@ function readBothHelps(binPath, identity) {
  *   breaks the same run and should fail the same gate.
  * @returns {Promise<boolean>}
  */
-export function codexFencingSupported(binPath, { alsoRequiresInExec = [] } = {}) {
+export function codexFencingSupported(
+  binPath: string,
+  { alsoRequiresInExec = [] }: { alsoRequiresInExec?: string[] } = {},
+): Promise<boolean> {
   let stats;
 
   try {
@@ -293,6 +301,12 @@ export function codexFencingSupported(binPath, { alsoRequiresInExec = [] } = {})
     return Promise.resolve(false);
   }
 
-  const identity = Object.fromEntries(IDENTITY_FIELDS.map((field) => [field, stats[field]]));
+  const identity: FileIdentity = {
+    mtimeMs: stats.mtimeMs,
+    ctimeMs: stats.ctimeMs,
+    size: stats.size,
+    ino: stats.ino,
+    dev: stats.dev,
+  };
   return readBothHelps(binPath, identity).then((help) => helpSatisfiesFencing(help, alsoRequiresInExec));
 }

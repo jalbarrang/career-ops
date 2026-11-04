@@ -24,8 +24,8 @@
  * @param {string} text
  * @returns {string[]}
  */
-export function splitLines(text) {
-  return text.split(/\r?\n/);
+export function splitLines(text: unknown): string[] {
+  return String(text ?? "").split(/\r?\n/);
 }
 
 /** A pipeline-row segment like `posted: 2026-07-14`, `trust: 62 stale` or
@@ -36,6 +36,17 @@ export function splitLines(text) {
  *  labels the core hasn't invented yet). */
 const LABELED_SEGMENT = /^([a-z][a-z_-]*):\s*(.*)$/i;
 
+/** One parsed data/pipeline.md row. */
+export interface InboxRow {
+  url: string;
+  company: string;
+  role: string;
+  location?: string;
+  compensation?: string;
+  done: boolean;
+  postedAt?: string;
+}
+
 /** Parse data/pipeline.md — `- [ ] URL | Company | Role [| Location [| Compensation]] [| label: …]*`.
  *  Positional split for the first columns (the optional 4th `location` #1015
  *  and 5th `compensation` #1017 must NOT bleed into `role`); labeled segments
@@ -45,14 +56,14 @@ const LABELED_SEGMENT = /^([a-z][a-z_-]*):\s*(.*)$/i;
  *  @param {string} md - content of data/pipeline.md.
  *  @returns {{url: string, company: string, role: string, location?: string, compensation?: string, done: boolean, postedAt?: string}[]}
  */
-export function parseInbox(md) {
-  const jobs = [];
+export function parseInbox(md: unknown): InboxRow[] {
+  const jobs: InboxRow[] = [];
   for (const line of splitLines(md)) {
     const m = line.match(/^\s*-\s*\[([ xX])\]\s*(.+)$/);
     if (!m) continue;
-    const all = m[2].split("|").map((s) => s.trim());
-    const labels = new Map();
-    const parts = [];
+    const all = m[2].split("|").map((s: string) => s.trim());
+    const labels = new Map<string, string>();
+    const parts: string[] = [];
     for (const [i, seg] of all.entries()) {
       // the URL cell can contain a colon-y value but is always position 0
       const lm = i >= 3 ? seg.match(LABELED_SEGMENT) : null;

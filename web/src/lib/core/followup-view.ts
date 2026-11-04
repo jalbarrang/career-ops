@@ -13,19 +13,26 @@
 // Plain .ts (not .ts) so the root test suite can import it without a build,
 // mirroring followup-seed.ts.
 
+/** One followup-cadence entry, as far as this view reads it. */
+export interface FollowupEntry {
+  urgency?: string;
+  nextFollowupDate?: string;
+  [key: string]: unknown;
+}
+
 const DUE_URGENCIES = new Set(["urgent", "overdue"]);
 
 /** True when a followup-cadence.ts entry is actionable right now. */
-export function isDue(entry) {
-  return DUE_URGENCIES.has(entry?.urgency);
+export function isDue(entry: FollowupEntry | null | undefined): boolean {
+  return DUE_URGENCIES.has(entry?.urgency ?? "");
 }
 
 /** Due entries only (urgent/overdue), most urgent first, capped at `limit`. */
-export function selectDueFollowups(entries, limit = 8) {
-  const urgencyOrder = { urgent: 0, overdue: 1 };
-  return (Array.isArray(entries) ? entries : [])
+export function selectDueFollowups<T extends FollowupEntry>(entries: readonly T[] | null | undefined, limit: number = 8): T[] {
+  const urgencyOrder: Record<string, number> = { urgent: 0, overdue: 1 };
+  return (Array.isArray(entries) ? (entries as T[]) : [])
     .filter(isDue)
-    .sort((a, b) => (urgencyOrder[a.urgency] ?? 9) - (urgencyOrder[b.urgency] ?? 9))
+    .sort((a, b) => (urgencyOrder[a.urgency ?? ""] ?? 9) - (urgencyOrder[b.urgency ?? ""] ?? 9))
     .slice(0, limit);
 }
 
@@ -38,7 +45,7 @@ export function selectDueFollowups(entries, limit = 8) {
  * daysUntilNext, every such entry ties at Infinity and a stable sort just
  * preserves input order instead of the nearer date.
  */
-function nextDateValue(entry) {
+function nextDateValue(entry: FollowupEntry | null | undefined): number {
   const t = entry?.nextFollowupDate ? Date.parse(entry.nextFollowupDate) : NaN;
   return Number.isNaN(t) ? Infinity : t;
 }
@@ -49,8 +56,8 @@ function nextDateValue(entry) {
  * nextFollowupDate (cold, or no cadence) are excluded. Returns null when
  * there is nothing upcoming.
  */
-export function pickNextUpcoming(entries) {
-  const upcoming = (Array.isArray(entries) ? entries : [])
+export function pickNextUpcoming<T extends FollowupEntry>(entries: readonly T[] | null | undefined): T | null {
+  const upcoming = (Array.isArray(entries) ? (entries as T[]) : [])
     .filter((e) => !isDue(e) && e?.nextFollowupDate)
     .sort((a, b) => nextDateValue(a) - nextDateValue(b));
   return upcoming[0] ?? null;

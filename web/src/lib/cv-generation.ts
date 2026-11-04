@@ -23,13 +23,93 @@
  *
  * Plain .ts, no I/O and no `@/` aliases: the screen imports it, node --test too.
  */
-import { allRoles, ensureShape } from "./cv-profile.ts";
+import {
+  allRoles,
+  ensureShape,
+  type ProfileFact,
+  type ProfileLabeledEntry,
+} from "./cv-profile.ts";
+
+/** Candidate fields the CV template renders. */
+export interface CvCandidate {
+  name?: string;
+  title?: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+  linkedin?: string;
+  github?: string;
+  portfolio?: string;
+  [key: string]: unknown;
+}
+
+export interface CvSelectionExperience {
+  entryId: string;
+  factIds?: string[];
+}
+
+/** What the user picked in the generation screen. */
+export interface CvSelection {
+  summaryIds?: string[];
+  experiences?: CvSelectionExperience[];
+  skills?: string[];
+  projectIds?: string[];
+  educationIds?: string[];
+}
+
+export interface CvExperienceItem {
+  company: string;
+  role: string;
+  bullets: string[];
+  location?: string;
+  dates?: string;
+}
+
+export interface CvProjectItem {
+  name: string;
+  bullets: string[];
+}
+
+export interface CvEducationItem {
+  title: string;
+}
+
+export interface CvPayload {
+  candidate: CvCandidate;
+  summary?: string;
+  experience?: CvExperienceItem[];
+  projects?: CvProjectItem[];
+  education?: CvEducationItem[];
+  skills?: Array<{ items: string[] }>;
+}
+
+export interface CvGap {
+  entryId: string;
+  label?: string;
+  reason: string;
+  missing?: string[];
+}
+
+export interface CvCounts {
+  summary: number;
+  experience: number;
+  bullets: number;
+  skills: number;
+}
+
+export interface CvPayloadResult {
+  payload: CvPayload;
+  gaps: CvGap[];
+  warnings: string[];
+  counts: CvCounts;
+  generatedAt: string;
+}
 
 /** Candidate keys the CV template renders, mapped from config/profile.yml. */
-export function candidateFromProfileConfig(profileConfig = {}) {
-  const source = profileConfig && typeof profileConfig === "object" ? profileConfig : {};
-  const candidate = source.candidate && typeof source.candidate === "object" ? source.candidate : source;
-  const pick = (...keys) => {
+export function candidateFromProfileConfig(profileConfig: unknown = {}): CvCandidate {
+  const source = (profileConfig && typeof profileConfig === "object" && !Array.isArray(profileConfig) ? profileConfig : {}) as Record<string, unknown>;
+  const candidate = (source.candidate && typeof source.candidate === "object" && !Array.isArray(source.candidate) ? source.candidate : source) as Record<string, unknown>;
+  const pick = (...keys: string[]): string | undefined => {
     for (const key of keys) {
       const value = candidate[key];
       if (typeof value === "string" && value.trim()) return value.trim();
@@ -37,7 +117,7 @@ export function candidateFromProfileConfig(profileConfig = {}) {
     return undefined;
   };
 
-  const out = {
+  const out: CvCandidate = {
     // `full_name` is how config/profile.yml spells it; `name` is what the
     // template reads. Both are accepted, `name` wins when present.
     name: pick("name", "full_name"),
@@ -56,19 +136,15 @@ export function candidateFromProfileConfig(profileConfig = {}) {
 }
 
 /** Facts by id across every scope of the profile. */
-function factIndex(profile) {
-  const index = new Map();
-  const add = (fact) => {
+function factIndex(profile: unknown): Map<string, ProfileFact> {
+  const index = new Map<string, ProfileFact>();
+  const add = (fact: ProfileFact | null | undefined): void => {
     if (fact && typeof fact.id === "string") index.set(fact.id, fact);
   };
   const shaped = ensureShape(profile);
-  for (const section of ["summary", "certifications", "skills"]) {
-    for (const fact of shaped[section]) add(fact);
-  }
-  for (const section of ["projects", "education"]) {
-    for (const entry of shaped[section]) for (const fact of entry.facts ?? []) add(fact);
-  }
-  for (const { role } of allRoles(shaped)) for (const fact of role.facts ?? []) add(fact);
+  for (const fact of [...shaped.summary, ...shaped.certifications, ...shaped.skills]) add(fact);
+  for (const entry of [...shaped.projects, ...shaped.education]) for (const fact of entry.facts) add(fact);
+  for (const { role } of allRoles(shaped)) for (const fact of role.facts) add(fact);
   return index;
 }
 
@@ -91,13 +167,18 @@ function factIndex(profile) {
  *
  * @param {{ profile: object, candidate?: object, selection?: Selection, today?: string }} input
  */
-export function buildCvPayload({ profile, candidate = {}, selection = {}, today = new Date().toISOString().slice(0, 10) }) {
+export function buildCvPayload({ profile, candidate = {}, selection = {}, today = new Date().toISOString().slice(0, 10) }: {
+  profile: unknown;
+  candidate?: CvCandidate;
+  selection?: CvSelection;
+  today?: string;
+}): CvPayloadResult {
   const facts = factIndex(profile);
   const roles = allRoles(profile);
-  const gaps = [];
-  const warnings = [];
+  const gaps: CvGap[] = [];
+  const warnings: string[] = [];
 
-  const textOf = (id) => {
+  const textOf = (id: string): string | null => {
     const fact = facts.get(id);
     if (!fact) return null;
     if (fact.review_status !== "verified") {
@@ -108,10 +189,10 @@ export function buildCvPayload({ profile, candidate = {}, selection = {}, today 
 
   const summaryText = (selection.summaryIds ?? [])
     .map(textOf)
-    .filter(Boolean)
+    .filter((value): value is string => Boolean(value))
     .join(" ");
 
-  const experience = [];
+  const experience: CvExperienceItem[] = [];
   for (const picked of selection.experiences ?? []) {
     const found = roles.find(({ role }) => role.id === picked.entryId);
     if (!found) {
@@ -121,7 +202,7 @@ export function buildCvPayload({ profile, candidate = {}, selection = {}, today 
     const { company, role } = found;
     const companyName = String(company?.company?.name ?? "").trim();
     const roleName = String(role?.name ?? "").trim();
-    const missing = [];
+    const missing: string[] = [];
     if (!companyName) missing.push("company");
     if (!roleName) missing.push("role");
     if (missing.length > 0) {
@@ -133,31 +214,30 @@ export function buildCvPayload({ profile, candidate = {}, selection = {}, today 
       });
       continue;
     }
-    const bullets = (picked.factIds ?? []).map(textOf).filter(Boolean);
-    const item = { company: companyName, role: roleName, bullets };
+    const bullets = (picked.factIds ?? []).map(textOf).filter((value): value is string => Boolean(value));
+    const item: CvExperienceItem = { company: companyName, role: roleName, bullets };
     if (role.location) item.location = role.location;
     if (role.period) item.dates = role.period;
     experience.push(item);
   }
 
-  const skills = (selection.skills ?? []).map(textOf).filter(Boolean);
+  const skills = (selection.skills ?? []).map(textOf).filter((value): value is string => Boolean(value));
   const shaped = ensureShape(profile);
 
-  const projectEntries = (selection.projectIds ?? [])
+  const projectEntries: CvProjectItem[] = (selection.projectIds ?? [])
     .map((id) => shaped.projects.find((entry) => entry?.id === id))
-    .filter((entry) => entry && entry.label)
+    .filter((entry): entry is ProfileLabeledEntry => Boolean(entry?.label))
     .map((entry) => ({
       name: entry.label,
-      bullets: (entry.facts ?? []).map((fact) => String(fact.text ?? "").trim()).filter(Boolean),
+      bullets: entry.facts.map((fact) => String(fact.text ?? "").trim()).filter((text) => text !== ""),
     }));
 
-  const educationEntries = (selection.educationIds ?? [])
+  const educationEntries: CvEducationItem[] = (selection.educationIds ?? [])
     .map((id) => shaped.education.find((entry) => entry?.id === id))
-    .filter((entry) => entry && entry.label)
+    .filter((entry): entry is ProfileLabeledEntry => Boolean(entry?.label))
     .map((entry) => ({ title: entry.label }));
 
-  /** @type {Record<string, unknown>} */
-  const payload = { candidate };
+  const payload: CvPayload = { candidate };
   if (summaryText) payload.summary = summaryText;
   if (experience.length > 0) payload.experience = experience;
   if (projectEntries.length > 0) payload.projects = projectEntries;
@@ -190,7 +270,7 @@ export function buildCvPayload({ profile, candidate = {}, selection = {}, today 
  * Slugs are ascii-folded and dashed so the file survives any filesystem, and a
  * caller-supplied label can never escape the output directory.
  */
-export function cvFileStem(label, date = new Date().toISOString().slice(0, 10)) {
+export function cvFileStem(label: unknown, date: string = new Date().toISOString().slice(0, 10)): string {
   const slug = String(label ?? "")
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")

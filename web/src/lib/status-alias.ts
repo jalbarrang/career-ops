@@ -114,7 +114,7 @@ export const STATUS_ALIAS = {
  * @param {string} s - Raw status text from the tracker.
  * @returns {string} Lookup key.
  */
-function foldStatus(s) {
+function foldStatus(s: unknown): string {
   return String(s ?? "")
     .replace(/\*\*/g, "")
     .trim()
@@ -134,8 +134,8 @@ function foldStatus(s) {
  * @param {string} s - Raw status text from the tracker.
  * @returns {string} Canonical stage token, or the uppercased input.
  */
-export function canonStatus(s) {
+export function canonStatus(s: unknown): string {
   const k = foldStatus(s);
   if (k === "" || k === "—" || k === "-") return "DISCARDED";
-  return STATUS_ALIAS[k] ?? k.toUpperCase();
+  return (STATUS_ALIAS as Record<string, string>)[k] ?? k.toUpperCase();
 }

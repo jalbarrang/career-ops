@@ -7,9 +7,20 @@ import {
   formatRunCostEstimate,
   formatTokenCount,
   requiresBatchSpendConfirmation,
+  type RunCostJob,
 } from "../../src/lib/run-cost-estimate.ts";
 
-const job = (tokens, { usd, startedAt = 1, kind = "evaluate", status = "done" } = {}) => ({
+interface JobOverrides {
+  usd?: number;
+  startedAt?: number;
+  kind?: string;
+  status?: string;
+}
+
+const job = (
+  tokens: number,
+  { usd, startedAt = 1, kind = "evaluate", status = "done" }: JobOverrides = {},
+): RunCostJob => ({
   kind,
   status,
   startedAt,

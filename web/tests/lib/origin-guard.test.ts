@@ -76,16 +76,16 @@ import "../helpers/web-ts-alias-loader.ts";
 const { handle } = await import("../../src/hooks.server.ts");
 
 /** A RequestEvent-shaped object good enough for the origin guard. */
-function event(path, headers = {}) {
+function event(path: string, headers: Record<string, string> = {}): { url: URL; request: Request } {
   const url = new URL(path, "http://localhost:3000");
   return { url, request: new Request(url, { headers }) };
 }
 
 /** Resolve spy: the guard let the request through if this ran. */
-async function passes(path, headers) {
+async function passes(path: string, headers: Record<string, string>): Promise<boolean> {
   let reached = false;
   await handle({
-    event: event(path, headers),
+    event: event(path, headers) as never,
     resolve: async () => {
       reached = true;
       return new Response("page");

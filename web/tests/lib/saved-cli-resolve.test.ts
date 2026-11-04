@@ -16,28 +16,46 @@ const { resolveCliId } = await import("../../src/lib/saved-cli.ts");
 
 const CONFIG_KEY = "career-ops:config";
 
+/** The fields the fake /api/clis body carries. */
+interface CliEntry {
+  id?: string;
+  installed?: boolean;
+}
+
+interface StubOptions {
+  saved?: string;
+  clis?: Array<CliEntry | null>;
+  fetchThrows?: boolean;
+  httpError?: boolean;
+  errorBody?: Record<string, unknown>;
+}
+
 // Install fake localStorage + fetch and return the backing store so a test can
 // assert what got persisted.
-function stubEnv({ saved, clis, fetchThrows, httpError, errorBody = { error: "boom" } } = {}) {
-  const store = new Map();
+function stubEnv({ saved, clis, fetchThrows, httpError, errorBody = { error: "boom" } }: StubOptions = {}): Map<string, string> {
+  const store = new Map<string, string>();
   if (saved !== undefined) {
     store.set(CONFIG_KEY, JSON.stringify({ mode: "cli", cliId: saved }));
   }
+  // Only the three methods saved-cli.ts calls; the browser's Storage has more,
+  // and typing a partial one is the point of the cast.
   globalThis.localStorage = {
-    getItem: (k) => (store.has(k) ? store.get(k) : null),
-    setItem: (k, v) => store.set(k, String(v)),
-    removeItem: (k) => store.delete(k),
-  };
-  globalThis.fetch = async (url) => {
+    getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
+    setItem: (k: string, v: string) => { store.set(k, String(v)); },
+    removeItem: (k: string) => { store.delete(k); },
+  } as unknown as Storage;
+  // A minimal stand-in for Response: the module reads `ok`, `status` and `json()`.
+  globalThis.fetch = (async (url: string) => {
     assert.equal(url, "/api/clis");
     if (fetchThrows) throw new Error("network down");
     if (httpError) return { ok: false, status: 500, json: async () => errorBody };
     return { ok: true, status: 200, json: async () => ({ clis }) };
-  };
+  }) as unknown as typeof fetch;
   return store;
 }
 
-const savedCliId = (store) => JSON.parse(store.get(CONFIG_KEY) || "{}").cliId;
+const savedCliId = (store: Map<string, string>): unknown =>
+  (JSON.parse(store.get(CONFIG_KEY) || "{}") as { cliId?: unknown }).cliId;
 
 test("a saved id that is still installed is returned", async () => {
   const store = stubEnv({
@@ -133,8 +151,8 @@ test("onStale reports the stale id and the CLI that replaced it", async () => {
       { id: "opencode", installed: false },
     ],
   });
-  const calls = [];
-  assert.equal(await resolveCliId((...a) => calls.push(a)), "claude");
+  const calls: Array<[string, string | null]> = [];
+  assert.equal(await resolveCliId((...a: [string, string | null]) => { calls.push(a); }), "claude");
   assert.deepEqual(calls, [["opencode", "claude"]]);
 });
 
@@ -146,14 +164,14 @@ test("onStale reports a stale id with no replacement as null", async () => {
       { id: "codex", installed: true },
     ],
   });
-  const calls = [];
-  assert.equal(await resolveCliId((...a) => calls.push(a)), null);
+  const calls: Array<[string, string | null]> = [];
+  assert.equal(await resolveCliId((...a: [string, string | null]) => { calls.push(a); }), null);
   assert.deepEqual(calls, [["opencode", null]]);
 });
 
 test("onStale stays quiet when nothing was replaced", async () => {
-  const calls = [];
-  const onStale = (...a) => calls.push(a);
+  const calls: Array<[string, string | null]> = [];
+  const onStale = (...a: [string, string | null]): void => { calls.push(a); };
 
   stubEnv({ saved: "claude", clis: [{ id: "claude", installed: true }] });
   await resolveCliId(onStale);
@@ -170,11 +188,11 @@ test("the /api/clis fetch is bounded, and a timeout falls back to the saved id",
   // the job at "Starting…". Waiting out the real timeout would add seconds to
   // the suite, so assert the signal is passed and reject the way it would.
   stubEnv({ saved: "claude" });
-  let init;
-  globalThis.fetch = async (_url, i) => {
+  let init: RequestInit | undefined;
+  globalThis.fetch = (async (_url: string, i?: RequestInit) => {
     init = i;
     throw new DOMException("The operation was aborted due to timeout", "TimeoutError");
-  };
+  }) as unknown as typeof fetch;
   assert.equal(await resolveCliId(), "claude");
   assert.ok(init?.signal instanceof AbortSignal, "fetch('/api/clis') must carry an AbortSignal");
 });

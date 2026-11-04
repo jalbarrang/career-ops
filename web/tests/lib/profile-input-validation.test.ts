@@ -27,7 +27,10 @@ register(`data:text/javascript,${encodeURIComponent(loader)}`, pathToFileURL(web
 
 const { POST } = await import("../../src/routes/api/profile/+server.ts");
 const source = "# Original fixture comment\ncandidate:\n  full_name: Fixture Candidate\n  email: fixture@example.invalid\ncompensation:\n  currency: USD\n  target_range: 80-90\n";
-async function fixture(t, body) {
+async function fixture(
+  t: import("node:test").TestContext,
+  body: RequestInit["body"],
+): Promise<{ response: Response; file: string; config: string }> {
   const root = mkdtempSync(path.join(tmpdir(), "profile-input-"));
   const previous = process.env.CAREER_OPS_ROOT;
   process.env.CAREER_OPS_ROOT = root;

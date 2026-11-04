@@ -41,23 +41,23 @@
     updateEntryLabel,
     updateFactText,
     updateRoleField,
+    type CareerProfile,
+    type ProfileCompany,
+    type ProfileEvidence,
+    type ProfileFact,
+    type ProfileLabeledEntry,
+    type ProfileRole,
   } from "@/lib/cv-profile.ts";
 
-  type Fact = { id: string; text: string; review_status?: string; evidence?: { source?: string; line?: number; quote?: string } };
-  type Evidence = { source?: string; line?: number; quote?: string };
-  type Role = { id: string; name?: string; period?: string; location?: string; review_status?: string; evidence?: Evidence; facts?: Fact[] };
-  type Company = { id: string; company?: { name?: string; evidence?: Evidence }; roles?: Role[] };
-  type Entry = { id: string; label: string; review_status?: string; evidence?: Evidence; facts?: Fact[] };
-  type Profile = {
-    schema_version: number;
-    candidate: Record<string, unknown>;
-    summary: Fact[];
-    experiences: Company[];
-    projects: Entry[];
-    education: Entry[];
-    certifications: Fact[];
-    skills: Fact[];
-  };
+  // The builder edits the SAME schema the module's functions do. Local
+  // lookalike types drifted from it (optional evidence/facts) and made every
+  // mutation call unassignable the moment the module gained real types.
+  type Fact = ProfileFact;
+  type Evidence = ProfileEvidence;
+  type Role = ProfileRole;
+  type Company = ProfileCompany;
+  type Entry = ProfileLabeledEntry;
+  type Profile = CareerProfile;
 
   type Counts = Record<string, { entries: number; facts: number; roles?: number }>;
 

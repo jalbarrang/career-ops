@@ -46,6 +46,16 @@ export type JobRun = {
 
 type QueueItem = { id: string; jobId: string; queuedAt: string };
 type Store = { jobs: ScheduledJob[]; runs: JobRun[]; queue: QueueItem[] };
+
+/** Run `mutate` under the shared store lock.
+ *
+ * scheduled-jobs-store.ts describes the persisted document structurally, while
+ * this module's ScheduledJob carries ExploreFilters. The two are the same
+ * document with different amounts of detail filled in, so the cast is at this
+ * one boundary rather than in each of the five mutators. */
+function withStore<T>(mutate: (store: Store) => T): Promise<T> {
+  return withScheduledStore(storeFile(), (store) => mutate(store as unknown as Store));
+}
 type JobFields = Pick<ScheduledJob, "name" | "engine" | "filters" | "timezone" | "startAt" | "every" | "unit">;
 
 export class ScheduledJobValidationError extends Error {
@@ -123,7 +133,7 @@ export function getScheduledJob(id: string): ScheduledJob | undefined {
 }
 
 export async function createScheduledJob(fields: JobFields): Promise<ScheduledJob> {
-  return withScheduledStore(storeFile(), (store: Store) => {
+  return withStore((store) => {
     const now = new Date().toISOString();
     const job: ScheduledJob = {
       ...fields,
@@ -142,7 +152,7 @@ export async function updateScheduledJob(
   id: string,
   fields: JobFields & { status?: Exclude<JobStatus, "deleted"> },
 ): Promise<ScheduledJob | null> {
-  return withScheduledStore(storeFile(), (store: Store) => {
+  return withStore((store) => {
     const job = store.jobs.find((item) => item.id === id && item.status !== "deleted");
     if (!job) return null;
     const startChanged = fields.startAt !== job.startAt;
@@ -159,7 +169,7 @@ export async function updateScheduledJob(
 
 export async function patchScheduledJob(id: string, raw: unknown): Promise<ScheduledJob | null> {
   if (!isSafeScheduledId(id)) return null;
-  return withScheduledStore(storeFile(), (store: Store) => {
+  return withStore((store) => {
     const current = store.jobs.find((item) => item.id === id && item.status !== "deleted");
     if (!current) return null;
     let input: Record<string, unknown>;
@@ -182,7 +192,7 @@ export async function setScheduledJobStatus(
   id: string,
   status: Exclude<JobStatus, "deleted">,
 ): Promise<ScheduledJob | null> {
-  return withScheduledStore(storeFile(), (store: Store) => {
+  return withStore((store) => {
     const job = store.jobs.find((item) => item.id === id && item.status !== "deleted");
     if (!job) return null;
     job.status = status;
@@ -192,7 +202,7 @@ export async function setScheduledJobStatus(
 }
 
 export async function deleteScheduledJob(id: string): Promise<ScheduledJob | null> {
-  return withScheduledStore(storeFile(), (store: Store) => {
+  return withStore((store) => {
     const job = store.jobs.find((item) => item.id === id && item.status !== "deleted");
     if (!job) return null;
     job.status = "deleted";

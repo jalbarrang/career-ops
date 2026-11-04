@@ -9,8 +9,8 @@ import { resolveDataRoot } from "../../src/lib/core/data-root.ts";
 const CORE = path.resolve(import.meta.dirname, "../../..");
 
 /** resolveDataRoot wired to a real directory, like careerOpsRoot() wires it. */
-function resolve(coreRoot, env = {}) {
-  const readMarker = (p) => {
+function resolve(coreRoot: string, env: NodeJS.ProcessEnv = {}): string {
+  const readMarker = (p: string): string | null => {
     try {
       return fs.readFileSync(p, "utf8");
     } catch {
@@ -122,7 +122,7 @@ test("AGREES with the core's path-resolver.ts on every branch", async (t) => {
   for (const c of cases) {
     const core = tmpdir();
     const abs = tmpdir();
-    const subst = (v) => (v === "ABS" ? abs : v);
+    const subst = (v: string): string => (v === "ABS" ? abs : v);
 
     fs.copyFileSync(src, path.join(core, "path-resolver.ts"));
     if (c.marker !== null) fs.writeFileSync(path.join(core, ".career-ops-data"), subst(c.marker));

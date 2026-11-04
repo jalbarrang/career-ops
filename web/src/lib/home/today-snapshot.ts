@@ -9,7 +9,10 @@ import { pickAwaitingDecision } from "./awaiting.ts";
  * @param {{applications: T[], inbox: {url: string, done: boolean}[]}} snapshot
  * @param {(score: string) => number} scoreOf
  */
-export function todaySnapshot({ applications, inbox }, scoreOf) {
+export function todaySnapshot<T extends { date?: string; score?: string; status?: string }>(
+  { applications, inbox }: { applications: T[]; inbox: Array<{ url: string; done: boolean }> },
+  scoreOf: (score: string) => number,
+): { applications: T[]; inbox: Array<{ url: string; done: boolean }> } {
   return {
     applications: pickAwaitingDecision(applications, scoreOf, Infinity),
     inbox: inbox.map(({ url, done }) => ({ url, done })),

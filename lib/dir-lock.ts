@@ -13,8 +13,8 @@
 // if an acquire loop of its own appears anywhere else.
 //
 // web/src/lib/core/dir-lock.ts is a byte-for-byte copy of this file, because
-// the web bundle cannot import the repo-root core (web/next.config.ts pins the
-// Turbopack root to web/). web/tests/lib/dir-lock.test.ts fails if the two
+// the web bundle cannot import the repo-root core (the web build root is
+// pinned to web/). web/tests/lib/dir-lock.test.ts fails if the two
 // differ by a single byte, so edit this file and copy it across, never the
 // other way round.
 //

@@ -1,4 +1,5 @@
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcessWithoutNullStreams, type SpawnOptionsWithoutStdio } from "node:child_process";
+import type { Capabilities } from "./worker-capabilities.ts";
 import { fenceArgs } from "./cli-fencing.ts";
 import { prepareCliLaunch } from "./cli-launch.ts";
 
@@ -44,7 +45,12 @@ import { prepareCliLaunch } from "./cli-launch.ts";
  * @param {import("node:child_process").SpawnOptionsWithoutStdio} options
  * @param {{cliId: string, capabilities: import("./worker-capabilities.ts").Capabilities}} fencing
  */
-export function spawnHeadlessCli(binPath, args, options, fencing) {
+export function spawnHeadlessCli(
+  binPath: string,
+  args: string[],
+  options: SpawnOptionsWithoutStdio,
+  fencing: { cliId: string; capabilities: Capabilities },
+): ChildProcessWithoutNullStreams {
   // Fail fast rather than spawn unfenced. Omitting `fencing` used to spread
   // `undefined` into nothing, leaving cliId undefined — which matches no fencer,
   // so the raw argv was spawned with no error at all. The docstring's "it does

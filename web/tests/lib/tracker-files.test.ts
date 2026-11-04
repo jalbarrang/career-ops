@@ -16,7 +16,7 @@ test("web tracker and ledger follow the core resolver across supported layouts",
       fs.writeFileSync(path.join(directory, "applications.md"), directory);
       fs.writeFileSync(path.join(directory, "status-log.tsv"), "ledger:" + directory);
     }
-    const check = (directory) => {
+    const check = (directory: string): void => {
       assert.equal(resolveTrackerPath(root), coreResolve(root));
       assert.equal(readTrackerFile(root), directory);
       assert.equal(readTrackerFile(root, "status-log.tsv"), "ledger:" + directory);
@@ -35,7 +35,8 @@ test("web tracker and ledger follow the core resolver across supported layouts",
     try {
       fs.symlinkSync(path.join(root, "custom/applications.md"), path.join(root, "linked.md"));
     } catch (e) {
-      if (e?.code !== "EPERM" || e?.syscall !== "symlink") throw e;
+      const info = e as { code?: string; syscall?: string } | null;
+      if (info?.code !== "EPERM" || info?.syscall !== "symlink") throw e;
       linked = false;
       t.diagnostic("symlinked-tracker leg skipped: no symlink privilege (EPERM)");
     }

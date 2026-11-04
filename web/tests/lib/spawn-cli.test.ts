@@ -8,6 +8,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnHeadlessCli } from "../../src/lib/spawn-cli.ts";
 import { CAPS } from "../../src/lib/worker-capabilities.ts";
+import type { SpawnOptionsWithoutStdio } from "node:child_process";
 
 // Fencing is required at every call site (#2507). These cases are about stdin,
 // not permissions, so they name a runtime with no verified fencing mechanism:
@@ -61,7 +62,7 @@ test("spawnHeadlessCli tolerates a caller that passes stdio itself", async () =>
   const child = spawnHeadlessCli(process.execPath, ["-e", 'process.stdout.write("OK")'], {
     cwd: process.cwd(),
     env: process.env,
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: ["ignore", "pipe", "pipe"] as unknown as SpawnOptionsWithoutStdio["stdio"],
   }, PASSTHROUGH);
 
   // When: the child runs to completion.
@@ -105,10 +106,17 @@ test("spawnHeadlessCli refuses to spawn without a fencing declaration", () => {
   // unrestricted agent.
   // When it is omitted, or supplied incomplete
   // Then the spawn is refused rather than performed unfenced.
-  const spawnArgs = [process.execPath, ["-e", ""], { cwd: process.cwd(), env: process.env }];
+  const spawnArgs: [string, string[], SpawnOptionsWithoutStdio] = [
+    process.execPath,
+    ["-e", ""],
+    { cwd: process.cwd(), env: process.env },
+  ];
 
-  assert.throws(() => spawnHeadlessCli(...spawnArgs), /without \{cliId, capabilities\}/);
-  assert.throws(() => spawnHeadlessCli(...spawnArgs, {}), /without \{cliId, capabilities\}/);
-  assert.throws(() => spawnHeadlessCli(...spawnArgs, { cliId: "gemini" }), /without \{cliId, capabilities\}/);
-  assert.throws(() => spawnHeadlessCli(...spawnArgs, { capabilities: CAPS.localReadOnly }), /without \{cliId, capabilities\}/);
+  // Spelled as a loosely typed call: these arguments are DELIBERATELY invalid,
+  // which is the whole point of the case, so the signature must not veto them.
+  const call = spawnHeadlessCli as (...args: unknown[]) => unknown;
+  assert.throws(() => call(...spawnArgs), /without \{cliId, capabilities\}/);
+  assert.throws(() => call(...spawnArgs, {}), /without \{cliId, capabilities\}/);
+  assert.throws(() => call(...spawnArgs, { cliId: "gemini" }), /without \{cliId, capabilities\}/);
+  assert.throws(() => call(...spawnArgs, { capabilities: CAPS.localReadOnly }), /without \{cliId, capabilities\}/);
 });

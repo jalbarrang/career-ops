@@ -7,16 +7,14 @@
 // launcher does.
 //
 // So it is run for real, against a stub runner in a temp directory that prints the
-// argv (dev) or argv+env (start) it was handed. No installed Vite, no socket, no
-// network — the whole bind decision is observable from the child's output, and the
-// startup notice from its stderr.
+// argv it was handed. No installed Vite, no socket, no network — the whole bind
+// decision is observable from the child's output, and the startup notice from its
+// stderr.
 //
-// The runner changed when the app moved from Next to SvelteKit — `vite dev` takes
-// `--host`, and adapter-node takes HOST/PORT in the environment instead of a flag —
-// so the assertions below are expressed against those two carriers. Everything the
-// suite is protecting is unchanged: the bind is decided in one place, a caller's
-// own flag is never silently overridden, and the notice never claims a bind the
-// launcher did not choose.
+// The app is local-only now, so `vite dev` is the one runner and `--host` is the
+// one carrier. Everything the suite is protecting is unchanged: the bind is
+// decided in one place, a caller's own flag is never silently overridden, and the
+// notice never claims a bind the launcher did not choose.
 //
 // Lives in tests/lib/ rather than mirroring server.ts's position at the web root
 // because test-all.ts's web-suite parity check fails any web suite outside
@@ -35,8 +33,6 @@ import { fileURLToPath } from "node:url";
 const WEB_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 const DEV_STUB = "console.log(JSON.stringify(process.argv.slice(2)));\n";
-const START_STUB =
-  "console.log(JSON.stringify({ argv: process.argv.slice(2), HOST: process.env.HOST ?? null, PORT: process.env.PORT ?? null }));\n";
 
 /**
  * A throwaway web/ whose runner runs `body` instead of serving.
@@ -44,32 +40,25 @@ const START_STUB =
  * @param {object} [options]
  * @param {string} [options.body]     the stub runner's source; defaults to printing what it was handed
  * @param {boolean} [options.install] false to omit the runner entirely
- * @param {"dev"|"start"} [options.command] which entrypoint the stub replaces
  */
-function stubbedWebRoot({ body, install = true, command = "dev" } = {}) {
+function stubbedWebRoot({ body, install = true }: { body?: string; install?: boolean } = {}): string {
   const root = mkdtempSync(join(tmpdir(), "career-ops-launcher-"));
   cpSync(join(WEB_ROOT, "server.ts"), join(root, "server.ts"));
   cpSync(join(WEB_ROOT, "src", "lib"), join(root, "src", "lib"), { recursive: true });
   if (!install) return root;
 
-  if (command === "dev") {
-    const viteDir = join(root, "node_modules", "vite");
-    mkdirSync(join(viteDir, "bin"), { recursive: true });
-    // No `exports` map, so the launcher's resolve of package.json + bin.vite works
-    // the same way it does against the real package.
-    writeFileSync(join(viteDir, "package.json"), JSON.stringify({ name: "vite", version: "0.0.0-stub", bin: { vite: "./bin/vite.js" } }));
-    writeFileSync(join(viteDir, "bin", "vite.js"), body ?? DEV_STUB);
-  } else {
-    mkdirSync(join(root, "build"), { recursive: true });
-    writeFileSync(join(root, "build", "index.js"), body ?? START_STUB);
-  }
+  const viteDir = join(root, "node_modules", "vite");
+  mkdirSync(join(viteDir, "bin"), { recursive: true });
+  // No `exports` map, so the launcher's resolve of package.json + bin.vite works
+  // the same way it does against the real package.
+  writeFileSync(join(viteDir, "package.json"), JSON.stringify({ name: "vite", version: "0.0.0-stub", bin: { vite: "./bin/vite.js" } }));
+  writeFileSync(join(viteDir, "bin", "vite.js"), body ?? DEV_STUB);
   return root;
 }
 
 /** Run the launcher in a stub tree and report what the runner actually received. */
-function launch({ args = ["dev"], env = {}, ...stub } = {}) {
-  const command = args[0] === "start" ? "start" : "dev";
-  const root = stubbedWebRoot({ ...stub, command });
+function launch({ args = ["dev"], env = {}, ...stub }: { args?: string[]; env?: Record<string, string>; body?: string; install?: boolean; command?: string } = {}) {
+  const root = stubbedWebRoot(stub);
   try {
     // --no-install keeps the run hermetic: Bun otherwise auto-installs a
     // missing package from its global cache, so a tree the test deliberately
@@ -124,11 +113,12 @@ test("an opt-in naming only loopback does not widen the bind", () => {
 
 test("an opt-in naming a real host widens the bind and says so", () => {
   // Given a hostname, which the launcher cannot resolve to one address
-  // When the launcher starts the production server
-  const run = launch({ args: ["start"], env: { CAREER_OPS_WEB_ALLOWED_HOSTS: "nas.local" } });
+  // When the launcher starts the dev server
+  const run = launch({ args: ["dev"], env: { CAREER_OPS_WEB_ALLOWED_HOSTS: "nas.local" } });
   // Then it binds every interface and the user is told, with the reason
-  assert.equal(run.out.HOST, "0.0.0.0", "adapter-node carries the bind in HOST");
-  assert.equal(run.out.PORT, "3000");
+  const out = run.out as string[];
+  assert.equal(out[out.indexOf("--host") + 1], "0.0.0.0", "vite carries the bind in --host");
+  assert.equal(out[out.indexOf("--port") + 1], "3000");
   assert.ok(run.stderr.includes("binding 0.0.0.0"), `stderr was: ${run.stderr}`);
   assert.ok(run.stderr.includes("reachable from your network"), "widening must be announced");
   assert.ok(run.stderr.includes("nas.local"), "the notice should name what widened it");
@@ -187,7 +177,7 @@ test("every spelling of the host flag is recognised, including the attached shor
     const run = launch({ args });
     // Then the caller's value is the bind, and no loopback claim is made
     assert.equal(run.out[run.out.length - 1], "0.0.0.0", `${args.join(" ")} must carry the caller's bind`);
-    assert.equal(run.out.filter((token) => token === "--host").length, 1, `${args.join(" ")} must produce one bind flag`);
+    assert.equal(run.out.filter((token: string) => token === "--host").length, 1, `${args.join(" ")} must produce one bind flag`);
     assert.ok(!run.stderr.includes("loopback only"), `${args.join(" ")} must not claim loopback`);
   }
 });
@@ -270,16 +260,16 @@ const scripts = pkg.scripts ?? {};
 /** A script that starts a server itself, bypassing the launcher. */
 const STARTS_A_SERVER_DIRECTLY = /(^|&&|\|\||\s)(next\s+(dev|start)|vite\s+dev|node\s+build\/index\.js)\b/;
 
-test("the dev and start scripts route through the launcher", () => {
-  // Given the two scripts a developer actually runs
-  // `startsWith`, so that adding a flag to the script is not mistaken for
-  // bypassing the launcher.
+test("the dev script routes through the launcher", () => {
+  // Given the script a developer actually runs. `startsWith`, so that adding a
+  // flag to the script is not mistaken for bypassing the launcher.
   assert.ok(scripts.dev?.startsWith("bun server.ts dev"), `dev script was: ${scripts.dev}`);
-  assert.ok(scripts.start?.startsWith("bun server.ts start"), `start script was: ${scripts.start}`);
+  // The packaged `start` path is gone: this app runs locally, in dev.
+  assert.equal(scripts.start, undefined, "a start script would reintroduce a second runner");
 });
 
 test("no script starts a server on its own", () => {
   // Given every script in the package, not just the two above
-  const offenders = Object.entries(scripts).filter(([, command]) => STARTS_A_SERVER_DIRECTLY.test(command));
+  const offenders = Object.entries(scripts).filter(([, command]) => STARTS_A_SERVER_DIRECTLY.test(String(command)));
   assert.deepEqual(offenders, [], "a script bypassing server.ts would skip the bind decision");
 });

@@ -20,13 +20,18 @@ export async function PUT({ request }: { request: Request }) {
     if (Buffer.byteLength(raw) > MAX_CHAT_BYTES + 1000) throw new ChatError("Conversation is too large to save", 413);
     let body: Record<string, unknown> | undefined;
     try { body = JSON.parse(raw); } catch { throw new ChatError("Invalid JSON"); }
-    return json(saveChat(careerOpsRoot(), body?.id, body));
+    // The id is the file this write targets, so it is validated before use.
+    const id = body?.id;
+    if (typeof id !== "string") throw new ChatError("Invalid conversation id");
+    return json(saveChat(careerOpsRoot(), id, body));
   } catch (error) { return failure(error); }
 }
 export async function DELETE({ request }: { request: Request }) {
   try {
     const url = new URL(request.url);
-    deleteChat(careerOpsRoot(), url.searchParams.get("id"), Number(url.searchParams.get("revision")));
+    const id = url.searchParams.get("id");
+    if (id === null) throw new ChatError("Invalid conversation id");
+    deleteChat(careerOpsRoot(), id, Number(url.searchParams.get("revision")));
     return json({ ok: true });
   } catch (error) { return failure(error); }
 }

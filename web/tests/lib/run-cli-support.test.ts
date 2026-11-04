@@ -59,8 +59,8 @@ test("a cv envelope in its own Codex message survives preceding narration", () =
 
   // When: both flow through the same filter the route feeds via sendAgentText.
   const filter = createCvEnvelopeFilter();
-  filter.push(narration.text);
-  filter.push(envelope.text);
+  filter.push(narration!.text);
+  filter.push(envelope!.text);
   filter.flush();
 
   // Then: the envelope parses — the run's CV is recovered, not refused.
@@ -96,7 +96,7 @@ test("a real captured Codex turn reports full-rate tokens, not the raw input", (
     type: "turn.completed",
     usage: { input_tokens: 13956, cached_input_tokens: 11008, output_tokens: 44 },
   }));
-  assert.equal(event.tokens, 2992); // not 14000
+  assert.equal(event!.tokens, 2992); // not 14000
 });
 
 test("fractional and non-finite usage figures are ignored, not counted", () => {
@@ -501,8 +501,8 @@ test("the delta convention is untouched: Codex and Claude still accumulate", () 
     type: "turn.completed",
     usage: { input_tokens: 100, cached_input_tokens: 40, output_tokens: 10 },
   }));
-  assert.equal(codex.tokensAreTotal, undefined);
-  assert.equal(accumulateTokens(1000, codex), 1070);
+  assert.equal(codex!.tokensAreTotal, undefined);
+  assert.equal(accumulateTokens(1000, codex!), 1070);
 });
 
 test("completedReportNames filters out RESERVED sentinels", () => {

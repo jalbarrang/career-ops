@@ -22,6 +22,47 @@ import { claudeUsageTokens } from "./claude-usage.ts";
  * @typedef {{status?: string, tool?: string, text?: string, tokens?: number, tokensAreTotal?: boolean, costUsd?: number | null, error?: string}} ParsedEvent
  */
 
+/** The dashboard-friendly event shape all three parsers return. */
+export interface ParsedEvent {
+  status?: string;
+  tool?: string;
+  text?: string;
+  tokens?: number;
+  tokensAreTotal?: boolean;
+  costUsd?: number | null;
+  error?: string;
+}
+
+/** The fields these parsers read off a usage block. */
+interface RawUsage {
+  input_tokens?: unknown;
+  cached_input_tokens?: unknown;
+  output_tokens?: unknown;
+  [key: string]: unknown;
+}
+
+/** The permissive shape of one JSONL event; everything is narrowed at use. */
+interface RawEvent {
+  type?: unknown;
+  subtype?: unknown;
+  item?: { type?: unknown; tool?: unknown; text?: unknown; [key: string]: unknown } | null;
+  usage?: RawUsage | null;
+  error?: { message?: unknown } | null;
+  message?: unknown;
+  event?: {
+    type?: unknown;
+    content_block?: { type?: unknown; name?: unknown } | null;
+    delta?: { text?: unknown } | null;
+  } | null;
+  result?: unknown;
+  is_error?: unknown;
+  total_cost_usd?: unknown;
+  data?: unknown;
+  toolName?: unknown;
+  title?: unknown;
+  [key: string]: unknown;
+}
+
 const STATUS_READY = "Agent ready";
 const STATUS_RECONNECTING = "Reconnecting…";
 
@@ -54,7 +95,7 @@ const STATUS_RECONNECTING = "Reconnecting…";
  * fractional value from a malformed event is junk and must not reach the total
  * (CodeRabbit's finding on #2689's `n`, whose shape this shares).
  */
-function tokenCount(value) {
+function tokenCount(value: unknown): number {
   return typeof value === "number" && Number.isSafeInteger(value) && value > 0 ? value : 0;
 }
 
@@ -76,7 +117,7 @@ const FATAL_QUOTA_STDERR_RE = /quota|rate limit/i;
 // "will retry") — a bare /retry/ would also match terminal wording like
 // "do not retry" or "retry limit exhausted" and silence a genuine failure.
 const RETRYING_STDERR_RE = /retrying|retry\s+in\b|will\s+retry/i;
-const isFatalQuotaStderr = (line) => FATAL_QUOTA_STDERR_RE.test(line) && !RETRYING_STDERR_RE.test(line);
+const isFatalQuotaStderr = (line: string): boolean => FATAL_QUOTA_STDERR_RE.test(line) && !RETRYING_STDERR_RE.test(line);
 
 /** Claude Code's own wording for the same class of failure. */
 const CLAUDE_FATAL_STDERR_RE = /invalid api key|please run \/login|credit balance|usage limit reached/i;
@@ -95,7 +136,7 @@ const CODEX_TRANSIENT_ERROR_RE = /reconnect/i;
  * @param {string} line
  * @returns {boolean}
  */
-export function isFatalCodexStderr(line) {
+export function isFatalCodexStderr(line: string): boolean {
   return FATAL_AUTH_STDERR_RE.test(line) || isFatalQuotaStderr(line);
 }
 
@@ -111,7 +152,7 @@ export function isFatalCodexStderr(line) {
  * @param {string} line
  * @returns {boolean}
  */
-export function isFatalClaudeStderr(line) {
+export function isFatalClaudeStderr(line: string): boolean {
   return FATAL_AUTH_STDERR_RE.test(line) || CLAUDE_FATAL_STDERR_RE.test(line) || isFatalQuotaStderr(line);
 }
 
@@ -142,7 +183,7 @@ export function isFatalClaudeStderr(line) {
  * @param {string} line
  * @returns {boolean}
  */
-export function isFatalGenericStderr(line) {
+export function isFatalGenericStderr(line: string): boolean {
   return GENERIC_FATAL_STDERR_RE.test(line);
 }
 
@@ -161,7 +202,7 @@ const GENERIC_FATAL_STDERR_RE =
  * @param {string} prompt
  * @returns {string[]}
  */
-export function codexStreamArgs(prompt) {
+export function codexStreamArgs(prompt: string): string[] {
   return ["exec", "--json", "--color", "never", prompt];
 }
 
@@ -170,10 +211,10 @@ export function codexStreamArgs(prompt) {
  * @param {string} line
  * @returns {ParsedEvent | null}
  */
-export function parseCodexEvent(line) {
-  let event;
+export function parseCodexEvent(line: string): ParsedEvent | null {
+  let parsed: unknown;
   try {
-    event = JSON.parse(line);
+    parsed = JSON.parse(line);
   } catch {
     return null;
   }
@@ -181,7 +222,8 @@ export function parseCodexEvent(line) {
   // number or string — none of which the try above rejects, so reading `.type`
   // off them throws past this function into the stdout handler. A parser written
   // to survive hostile input has to survive its own success cases too.
-  if (!event || typeof event !== "object") return null;
+  if (!parsed || typeof parsed !== "object") return null;
+  const event = parsed as RawEvent;
 
   if (event.type === "thread.started") return { status: STATUS_READY };
   // Kind-agnostic on purpose: this parser serves every run kind (evaluate, pdf,
@@ -192,7 +234,7 @@ export function parseCodexEvent(line) {
     const type = event.item?.type;
     if (type === "command_execution") return { tool: "Bash" };
     if (type === "web_search") return { tool: "WebSearch" };
-    if (type === "mcp_tool_call") return { tool: event.item?.tool || "Working" };
+    if (type === "mcp_tool_call") return { tool: typeof event.item?.tool === "string" && event.item.tool ? event.item.tool : "Working" };
   }
 
   if (event.type === "item.completed" && event.item?.type === "agent_message") {
@@ -214,8 +256,8 @@ export function parseCodexEvent(line) {
     // No `usage` block means nothing to report — return null rather than a
     // {tokens: 0}, so the caller's `typeof === "number"` guard skips it instead
     // of clobbering a correct running total from an earlier turn.
-    if (!event.usage) return null;
     const usage = event.usage;
+    if (!usage) return null;
     // Subtraction, not addition: see the header note on the two conventions.
     // Clamped at 0 so a malformed usage block can never report negative tokens.
     const fresh = Math.max(0, tokenCount(usage.input_tokens) - tokenCount(usage.cached_input_tokens));
@@ -243,22 +285,24 @@ export function parseCodexEvent(line) {
  * @param {string} line
  * @returns {ParsedEvent | null}
  */
-export function parseClaudeEvent(line) {
-  let ev;
+export function parseClaudeEvent(line: string): ParsedEvent | null {
+  let parsed: unknown;
   try {
-    ev = JSON.parse(line);
+    parsed = JSON.parse(line);
   } catch {
     return null;
   }
   // Same reason as parseCodexEvent's guard: JSON.parse("null") succeeds.
-  if (!ev || typeof ev !== "object") return null;
+  if (!parsed || typeof parsed !== "object") return null;
+  const ev = parsed as RawEvent;
 
   if (ev.type === "stream_event") {
     const e = ev.event;
     if (e?.type === "content_block_start" && e.content_block?.type === "tool_use") {
-      return { tool: e.content_block.name };
+      const name = e.content_block.name;
+      return { tool: typeof name === "string" && name ? name : "Working" };
     }
-    if (e?.type === "content_block_delta" && e.delta?.text) {
+    if (e?.type === "content_block_delta" && typeof e.delta?.text === "string" && e.delta.text) {
       return { text: e.delta.text };
     }
     return null;
@@ -272,7 +316,7 @@ export function parseClaudeEvent(line) {
     // Usage first, so a FAILED result still reports what it burned — the tokens
     // were spent either way, and dropping them undercounts exactly the runs a
     // user most wants to see the cost of.
-    const result = {};
+    const result: ParsedEvent = {};
     if (ev.usage) {
       // Addition here, subtraction for Codex — see the header note. This shared
       // helper keeps the per-run total identical to /api/usage.
@@ -323,15 +367,16 @@ export function parseClaudeEvent(line) {
  * @param {string} line
  * @returns {ParsedEvent | null}
  */
-export function parseGrokEvent(line) {
-  let ev;
+export function parseGrokEvent(line: string): ParsedEvent | null {
+  let parsed: unknown;
   try {
-    ev = JSON.parse(line);
+    parsed = JSON.parse(line);
   } catch {
     return null;
   }
   // Same reason as the other two parsers' guard: JSON.parse("null") succeeds.
-  if (!ev || typeof ev !== "object") return null;
+  if (!parsed || typeof parsed !== "object") return null;
+  const ev = parsed as RawEvent;
 
   if (ev.type === "text") {
     if (typeof ev.data !== "string" || ev.data === "") return null;
@@ -353,8 +398,7 @@ export function parseGrokEvent(line) {
     // counting it at full rate overstates the run. Clamped at 0 so a malformed
     // usage block can never report negative tokens.
     const fresh = Math.max(0, tokenCount(usage.input_tokens) - tokenCount(usage.cached_input_tokens));
-    /** @type {ParsedEvent} */
-    const result = { tokens: fresh + tokenCount(usage.output_tokens), tokensAreTotal: true };
+    const result: ParsedEvent = { tokens: fresh + tokenCount(usage.output_tokens), tokensAreTotal: true };
     // Last NUMERIC cost wins upstream, so emitting null here would not erase a
     // figure already reported; grok sends the real number only on `end`.
     result.costUsd = typeof ev.total_cost_usd === "number" ? ev.total_cost_usd : null;
@@ -382,7 +426,7 @@ export function parseGrokEvent(line) {
  * @param {ParsedEvent | null | undefined} ev
  * @returns {number}
  */
-export function accumulateTokens(current, ev) {
+export function accumulateTokens(current: number, ev: ParsedEvent | null | undefined): number {
   if (typeof ev?.tokens !== "number") return current;
   return ev.tokensAreTotal ? ev.tokens : current + ev.tokens;
 }
@@ -395,7 +439,7 @@ export function accumulateTokens(current, ev) {
  * @param {string[]} entries
  * @returns {Set<string>}
  */
-export function completedReportNames(entries) {
+export function completedReportNames(entries: readonly string[]): Set<string> {
   return new Set(entries.filter((name) => name.endsWith(".md") && !isReservedReportFile(name)));
 }
 
@@ -407,7 +451,7 @@ export function completedReportNames(entries) {
  * @param {string[]} afterEntries
  * @returns {boolean}
  */
-export function hasNewCompletedReport(beforeEntries, afterEntries) {
+export function hasNewCompletedReport(beforeEntries: readonly string[], afterEntries: readonly string[]): boolean {
   const before = completedReportNames(beforeEntries);
   const after = completedReportNames(afterEntries);
   for (const name of after) {
@@ -423,7 +467,7 @@ export function hasNewCompletedReport(beforeEntries, afterEntries) {
 // searches routinely run longer — and the kill then misreported as "didn't save
 // a report" (#3124).
 export const RUN_MAX_DURATION_S = 800;
-export function killMsForKind(kind) {
+export function killMsForKind(kind: string): number {
   return kind === "pdf" ? 600_000 : 780_000;
 }
 
@@ -431,6 +475,6 @@ export function killMsForKind(kind) {
 // offers a re-run / Claude Code, and DELIBERATELY never says the CLI "didn't save
 // a report": a timeout and a CLI that couldn't write are different failures, and
 // blaming the CLI sends the user to re-check the wrong thing (#3124).
-export function timeoutMessage(killMs, kind) {
+export function timeoutMessage(killMs: number, kind: string): string {
   return `This run passed the ${Math.round(killMs / 1000)}s time limit and was stopped before it could finish — re-run it, or run a very long ${kind} on Claude Code directly. The CLI was working; we cut it off, so it isn't recorded as a result.`;
 }

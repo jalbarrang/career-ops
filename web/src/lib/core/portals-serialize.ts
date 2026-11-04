@@ -11,9 +11,9 @@
 /** One YAML list block, or "" when empty. Scalars go through JSON.stringify (a
  *  valid YAML double-quoted scalar) so arbitrary keywords — colons, quotes,
  *  leading dashes — can never break the document or inject YAML. */
-function block(key, items) {
+function block(key: string, items: readonly unknown[]): string {
   return items.length
-    ? `  ${key}:\n` + items.map((k) => `    - ${JSON.stringify(k)}`).join("\n") + "\n"
+    ? `  ${key}:\n` + items.map((k: unknown) => `    - ${JSON.stringify(k)}`).join("\n") + "\n"
     : "";
 }
 
@@ -28,7 +28,17 @@ function block(key, items) {
  * @param {{positive:string[], negative:string[], allow:string[], block:string[], alwaysAllow:string[], blockHard:string[]}} f
  * @returns {string}
  */
-export function serializePortals(f) {
+/** The filter tiers this serializer emits. */
+export interface PortalsFilterLists {
+  positive: readonly unknown[];
+  negative: readonly unknown[];
+  allow: readonly unknown[];
+  block: readonly unknown[];
+  alwaysAllow: readonly unknown[];
+  blockHard: readonly unknown[];
+}
+
+export function serializePortals(f: PortalsFilterLists): string {
   let out = "# Ephemeral Explorer filters — generated per-search, safe to delete.\n";
   if (f.positive.length || f.negative.length) {
     out += "title_filter:\n";

@@ -72,7 +72,7 @@ test("both tailored-CV lookups derive their key through this module", () => {
   // Given the guard only holds where it is actually called. Each lookup used to
   // build the slug inline, and a call site that rebuilds it would pass every
   // assertion above while still matching every file in output/.
-  const read = (p) => readFileSync(join(HERE, "..", "..", "src", p), "utf8");
+  const read = (p: string): string => readFileSync(join(HERE, "..", "..", "src", p), "utf8");
   for (const site of ["lib/apply/cv.ts", "routes/api/cv-pdf/+server.ts"]) {
     const src = read(site);
     assert.match(src, /from "@\/lib\/company-slug\.ts"/, `${site} must import the key derivation`);

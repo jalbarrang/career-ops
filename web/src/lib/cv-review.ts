@@ -45,16 +45,42 @@ const WARNING_MARK = /⚠️|^WARNING:|^WARNINGS \(\d+\)/m;
  * @param {string} [stderr]
  * @returns {string[]}
  */
-export function toDetailLines(stdout = "", stderr = "") {
+/** One row in the review panel. */
+export interface ReviewCheck {
+  id: string;
+  label: string;
+  status: "pass" | "warn" | "fail" | "skip";
+  summary: string;
+  details: string[];
+}
+
+/** The fields doctor.ts's --json payload exposes that this panel reads. */
+export interface DoctorReport {
+  missing?: string[];
+  warnings?: string[];
+  unpersonalized?: Array<{ path?: string; reason?: string }>;
+}
+
+/** One command run, as the panel receives it. */
+export interface CheckRun {
+  id: string;
+  label: string;
+  exitCode?: number | null;
+  stdout?: string;
+  stderr?: string;
+  error?: string | null;
+  unavailable?: string | null;
+}
+
+export function toDetailLines(stdout: string = "", stderr: string = ""): string[] {
   const lines = `${stdout}\n${stderr}`
     .split(/\r?\n/)
     .map((line) => line.trimEnd())
     .filter((line) => line.trim() !== "")
     .filter((line) => !BANNER.test(line.trim()));
 
-  const seen = new Set();
-  /** @type {string[]} */
-  const kept = [];
+  const seen = new Set<string>();
+  const kept: string[] = [];
   for (const line of lines) {
     const key = line.trim();
     if (seen.has(key)) continue;
@@ -85,7 +111,7 @@ export function toDetailLines(stdout = "", stderr = "") {
  * @param {string | null} [run.unavailable] - Why this check does not apply right now.
  * @returns {ReviewCheck}
  */
-export function summarizeCheck({ id, label, exitCode = null, stdout = "", stderr = "", error = null, unavailable = null }) {
+export function summarizeCheck({ id, label, exitCode = null, stdout = "", stderr = "", error = null, unavailable = null }: CheckRun): ReviewCheck {
   if (unavailable) {
     return { id, label, status: "skip", summary: unavailable, details: [] };
   }
@@ -117,7 +143,7 @@ export function summarizeCheck({ id, label, exitCode = null, stdout = "", stderr
  * @param {string} [label]
  * @returns {ReviewCheck}
  */
-export function summarizeDoctor(doctor = {}, label = "Setup & CV structure") {
+export function summarizeDoctor(doctor: DoctorReport = {}, label: string = "Setup & CV structure"): ReviewCheck {
   const missing = Array.isArray(doctor.missing) ? doctor.missing : [];
   const warnings = Array.isArray(doctor.warnings) ? doctor.warnings : [];
   const unpersonalized = Array.isArray(doctor.unpersonalized) ? doctor.unpersonalized : [];
@@ -155,7 +181,7 @@ export function summarizeDoctor(doctor = {}, label = "Setup & CV structure") {
  * @param {ReviewCheck[]} [checks]
  * @returns {string}
  */
-export function reviewHeadline(checks = []) {
+export function reviewHeadline(checks: readonly ReviewCheck[] = []): string {
   const failed = checks.filter((check) => check.status === "fail").length;
   if (failed > 0) return `${failed} check(s) failed`;
   const warned = checks.filter((check) => check.status === "warn").length;

@@ -13,7 +13,7 @@ export const BACK_TO_TOP_THRESHOLD = 400;
  * @param {number} [threshold] px to scroll before showing
  * @returns {boolean}
  */
-export function shouldShowBackToTop(scrollY, threshold = BACK_TO_TOP_THRESHOLD) {
+export function shouldShowBackToTop(scrollY: number, threshold: number = BACK_TO_TOP_THRESHOLD): boolean {
   return scrollY > threshold;
 }
 
@@ -24,6 +24,6 @@ export function shouldShowBackToTop(scrollY, threshold = BACK_TO_TOP_THRESHOLD) 
  * @param {boolean} prefersReducedMotion result of the reduce-motion media query
  * @returns {"auto" | "smooth"}
  */
-export function scrollBehaviorFor(prefersReducedMotion) {
+export function scrollBehaviorFor(prefersReducedMotion: boolean): ScrollBehavior {
   return prefersReducedMotion ? "auto" : "smooth";
 }

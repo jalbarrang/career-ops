@@ -9,7 +9,7 @@
  * parity test in tests/lib/ascii-fold.test.ts fails the build if they drift.
  *
  * WHAT IT IS FOR HERE: turning a company name into a DOMAIN GUESS
- * (app/api/logo/route.ts). That is the exact case the core module's docstring
+ * (routes/api/logo/+server.ts). That is the exact case the core module's docstring
  * describes — the comparison target is ASCII by construction, so folding to the
  * ASCII base letter is the intent, and DELETING the accented letter is always
  * wrong. "Telefónica" resolves telefonica.com, never telefnica.com.
@@ -46,9 +46,9 @@ const NON_DECOMPOSING_LATIN = [
  *   callers do not.
  * @returns {string} Folded name, or '' when nothing Latin survives.
  */
-export function asciiFold(value, { punctuation = 'space' } = {}) {
+export function asciiFold(value: unknown, { punctuation = "space" }: { punctuation?: "space" | "delete" } = {}): string {
   let out = String(value ?? '').toLowerCase().normalize('NFD').replace(/\p{M}+/gu, '');
-  for (const [re, to] of NON_DECOMPOSING_LATIN) out = out.replace(re, to);
+  for (const [re, to] of NON_DECOMPOSING_LATIN as Array<[RegExp, string]>) out = out.replace(re, to);
   // 'space' (default) turns residual punctuation into a separator, so
   // "Smith&Jones" becomes two words. 'delete' removes it, so it stays one.
   //

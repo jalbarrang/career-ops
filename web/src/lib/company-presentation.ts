@@ -4,6 +4,13 @@
 
 const DIRECT_VIA = /^(n\/?a|tbd|none|null|-|—|–)$/i;
 
+/** The two tracker cells this module reads. */
+export interface CompanyLike {
+  company?: string;
+  via?: string;
+  role?: string;
+}
+
 /**
  * Return the label and logo identity appropriate for an application row.
  * This module is plain JavaScript so the UI and its Node regression tests use
@@ -12,7 +19,7 @@ const DIRECT_VIA = /^(n\/?a|tbd|none|null|-|—|–)$/i;
  * @param {{ company?: string, via?: string }} application
  * @returns {{ label: string, logoName: string }}
  */
-export function companyPresentation({ company = "", via = "" } = {}) {
+export function companyPresentation({ company = "", via = "" }: CompanyLike = {}): { label: string; logoName: string } {
   const companyName = String(company).trim();
   const intermediary = String(via).trim();
 
@@ -26,8 +33,7 @@ export function companyPresentation({ company = "", via = "" } = {}) {
   return { label: "Confidential employer", logoName: "Confidential employer" };
 }
 
-/** @param {{ company?: string, via?: string, role?: string }} application */
-export function companySearchText(application) {
-  const { label } = companyPresentation(application);
+export function companySearchText(application: CompanyLike | null | undefined): string {
+  const { label } = companyPresentation(application ?? {});
   return `${application?.company ?? ""} ${application?.via ?? ""} ${label} ${application?.role ?? ""}`;
 }

@@ -40,7 +40,7 @@ export async function resolvePdfIndexPath(): Promise<string | null> {
   const hit = modCache.get(file);
   if (hit) return hit.resolvePdfIndexPath(hit.resolveTrackerPath(root));
   try {
-    const mod = (await import(/* webpackIgnore: true */ pathToFileURL(file).href)) as Partial<TrackerUtils>;
+    const mod = (await import(/* @vite-ignore */ pathToFileURL(file).href)) as Partial<TrackerUtils>;
     if (typeof mod.resolveTrackerPath === "function" && typeof mod.resolvePdfIndexPath === "function") {
       const utils = mod as TrackerUtils;
       modCache.set(file, utils); // only successes are cached (#2590)

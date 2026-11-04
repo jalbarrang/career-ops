@@ -43,7 +43,13 @@
  * @param {(...parts: string[]) => string} join `path.join`
  * @returns {string} Absolute data root.
  */
-export function resolveDataRoot(coreRoot, readMarker, env, resolve, join) {
+export function resolveDataRoot(
+  coreRoot: string,
+  readMarker: (p: string) => string | null,
+  env: NodeJS.ProcessEnv,
+  resolve: (...parts: string[]) => string,
+  join: (...parts: string[]) => string,
+): string {
   // Precedence order is the core's, including CAREER_OPS_ROOT winning over
   // CAREER_OPS_DATA_DIR when both are set.
   const fromEnv = env.CAREER_OPS_ROOT?.trim() || env.CAREER_OPS_DATA_DIR?.trim();

@@ -15,7 +15,7 @@ import assert from "node:assert/strict";
 import { parseCvEnvelope, createCvEnvelopeFilter } from "../../src/lib/cv-envelope.ts";
 
 /** Wrap `body` in a well-formed envelope; `format: null` omits the attribute. */
-function envelope(body, format = "a4") {
+function envelope(body: string | null, format: string | null = "a4"): string {
   const open = format === null ? "<<cv-html>>" : `<<cv-html format="${format}">>`;
   return `${open}\n${body}\n<</cv-html>>`;
 }
@@ -210,7 +210,7 @@ test("parseCvEnvelope: a non-string input fails closed", () => {
 // arrives as stream deltas that split wherever the transport feels like it.
 
 /** Feed `text` through a fresh filter in `size`-char chunks. */
-function feed(text, size) {
+function feed(text: string, size: number) {
   const filter = createCvEnvelopeFilter();
   let display = "";
   for (let i = 0; i < text.length; i += size) display += filter.push(text.slice(i, i + size));

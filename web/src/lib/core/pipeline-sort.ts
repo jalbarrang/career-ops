@@ -35,23 +35,36 @@ import { compareTrackerNumbers } from '../pipeline-sort.ts';
  *   name, so sorting by company uses the same text the table shows.
  * @returns {Array<Record<string, any>>} A new array; the input is not mutated.
  */
-export function sortRows(rows, sort, scoreOf, companyLabel = (row) => String(row.company ?? '')) {
+/** A tracker row, as far as sorting reads it. */
+export type SortableRow = Record<string, unknown>;
+
+export interface SortSpec {
+  key: string;
+  dir: 1 | -1;
+}
+
+export function sortRows<T extends SortableRow>(
+  rows: readonly T[],
+  sort: SortSpec,
+  scoreOf: (score: string) => number,
+  companyLabel: (row: T) => string = (row) => String(row.company ?? ''),
+): T[] {
   const dir = sort.dir === 1 ? 1 : -1;
 
   /** A row's tracker number as an integer, or NaN when the row has none. */
-  const numberOf = (row) => Number.parseInt(row.n, 10);
+  const numberOf = (row: SortableRow): number => Number.parseInt(String(row.n ?? ""), 10);
 
   /** A row's score, with an unusable cell ranked below every real score so it
    *  sorts last rather than as a zero. */
-  const scoreKey = (row) => {
-    const value = scoreOf(row.score ?? '');
+  const scoreKey = (row: SortableRow): number => {
+    const value = scoreOf(String(row.score ?? ''));
     return Number.isNaN(value) ? -Infinity : value;
   };
 
   /** The primary-key comparison, direction-signed. Equal keys return 0, and a
    *  row with no usable n compares equal to every other row under the tracker
    *  key, which is what keeps it out of the ordering below. */
-  const byKey = (a, b) => {
+  const byKey = (a: T, b: T): number => {
     if (sort.key === 'tracker') {
       // The tracker column compares row numbers numerically, through the one helper that
       // already did it in the component before the ordering moved here (#3477).

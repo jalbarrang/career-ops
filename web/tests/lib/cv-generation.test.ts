@@ -3,7 +3,7 @@ import { test } from "node:test";
 
 import { buildCvPayload, candidateFromProfileConfig, cvFileStem } from "../../src/lib/cv-generation.ts";
 
-const evidence = (source, line, quote) => ({ source, line, quote });
+const evidence = (source: string, line: number, quote: string) => ({ source, line, quote });
 
 /** Schema v2: one employer, two roles — the promotion case. */
 function fixture() {
@@ -124,8 +124,8 @@ test("two roles at one employer are two payload entries, in the order selected",
       ],
     },
   });
-  assert.deepEqual(payload.experience.map((entry) => `${entry.company} ${entry.role}`), ["Acme Senior Engineer", "Acme Engineer"]);
-  assert.deepEqual(payload.experience.map((entry) => entry.dates), ["2024 – 2026", "2021 – 2023"]);
+  assert.deepEqual(payload.experience!.map((entry) => `${entry.company} ${entry.role}`), ["Acme Senior Engineer", "Acme Engineer"]);
+  assert.deepEqual(payload.experience!.map((entry) => entry.dates), ["2024 – 2026", "2021 – 2023"]);
 });
 
 test("a role with no title is reported as a gap, never dropped in silence", () => {
@@ -139,7 +139,7 @@ test("a role with no title is reported as a gap, never dropped in silence", () =
       ],
     },
   });
-  assert.equal(payload.experience.length, 1);
+  assert.equal(payload.experience!.length, 1);
   assert.equal(gaps.length, 1);
   assert.equal(gaps[0].label, "Beta");
   assert.deepEqual(gaps[0].missing, ["role"]);
@@ -164,7 +164,7 @@ test("a fact that is still needs_review is rendered but flagged", () => {
     candidate: { name: "Juan" },
     selection: { experiences: [{ entryId: "experiences-senior", factIds: ["fact-a"] }] },
   });
-  assert.equal(payload.experience[0].bullets.length, 1);
+  assert.equal(payload.experience![0].bullets.length, 1);
   assert.equal(warnings.some((line) => line.includes("needs review")), true);
 });
 
@@ -174,7 +174,7 @@ test("a stale fact id is skipped rather than shipped as an empty bullet", () => 
     candidate: { name: "Juan" },
     selection: { experiences: [{ entryId: "experiences-senior", factIds: ["fact-a", "fact-gone"] }] },
   });
-  assert.deepEqual(payload.experience[0].bullets, ["Shipped the editor."]);
+  assert.deepEqual(payload.experience![0].bullets, ["Shipped the editor."]);
 });
 
 test("project facts survive as bullets, and an empty selection is a warning", () => {

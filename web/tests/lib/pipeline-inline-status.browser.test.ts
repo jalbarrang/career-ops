@@ -13,35 +13,38 @@ import { test } from "node:test";
 const url = process.env.PIPELINE_STATUS_TEST_URL;
 const root = process.env.PIPELINE_STATUS_TEST_ROOT;
 
+/** The fixture root, as a string. The suite skips unless both variables are set. */
+const fixtureRoot = String(root);
+
 test("inline Pipeline status browser flow (disposable data only)", { skip: !url || !root, timeout: 120_000 }, async (t) => {
-  const origin = new URL(url);
+  const origin = new URL(String(url));
   assert.ok(["localhost", "127.0.0.1", "[::1]"].includes(origin.hostname));
-  const relative = path.relative(os.tmpdir(), fs.realpathSync(root));
+  const relative = path.relative(os.tmpdir(), fs.realpathSync(fixtureRoot));
   assert.ok(relative && !relative.startsWith("..") && !path.isAbsolute(relative));
-  assert.equal(fs.readFileSync(path.join(root, ".inline-status-fixture"), "utf8").trim(), "fictional-only");
-  const tracker = path.join(root, "data/applications.md");
+  assert.equal(fs.readFileSync(path.join(fixtureRoot, ".inline-status-fixture"), "utf8").trim(), "fictional-only");
+  const tracker = path.join(fixtureRoot, "data/applications.md");
   const initial = fs.readFileSync(tracker, "utf8");
   assert.ok(initial.includes("Fixture Alpha") && initial.includes("Fixture Beta") && initial.includes("Fixture Gamma"));
   const { chromium } = await import("playwright-core");
   const browser = await chromium.launch({ channel: "chrome", headless: true });
   t.after(() => browser.close());
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  const errors = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  const errors: string[] = [];
+  page.on("pageerror", (error) => { errors.push(error.message); });
   // Missing fixture resources and the deliberately injected HTTP 503 are
   // network errors, not React/runtime errors. Still fail on console exceptions.
   page.on("console", (message) => {
     if (message.type() === "error" && !message.text().startsWith("Failed to load resource:")) errors.push(message.text());
   });
-  const posts = [];
+  const posts: unknown[] = [];
   page.on("request", (request) => {
     if (request.url().endsWith("/api/status") && request.method() === "POST") posts.push(request.postDataJSON());
   });
-  const row = (n) => page.locator("tbody tr").filter({ has: page.getByRole("link", { name: `#${n}`, exact: true }) });
-  const tab = (name) => page.getByRole("button", { name: new RegExp(`^${name} \\d+$`) });
-  const edit = (n) => row(n).getByRole("button", { name: /^Edit status/ });
-  const select = (n) => row(n).getByRole("combobox");
-  async function until(check) {
+  const row = (n: number) => page.locator("tbody tr").filter({ has: page.getByRole("link", { name: `#${n}`, exact: true }) });
+  const tab = (name: string) => page.getByRole("button", { name: new RegExp(`^${name} \\d+$`) });
+  const edit = (n: number) => row(n).getByRole("button", { name: /^Edit status/ });
+  const select = (n: number) => row(n).getByRole("combobox");
+  async function until(check: () => boolean | Promise<boolean>): Promise<void> {
     const start = Date.now();
     while (!await check()) {
       if (Date.now() - start > 15_000) assert.fail("UI did not reach expected state");
@@ -80,8 +83,8 @@ test("inline Pipeline status browser flow (disposable data only)", { skip: !url 
   });
 
   await t.test("failed save disables its controls, then rolls back with an accessible error", async () => {
-    let release;
-    const gate = new Promise((resolve) => { release = resolve; });
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
     await page.route("**/api/status", async (route) => {
       await gate;
       await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "Fixture tracker busy; retry shortly" }) });
@@ -105,9 +108,9 @@ test("inline Pipeline status browser flow (disposable data only)", { skip: !url 
     await tab("EVALUATED").click();
     await page.waitForURL(/tab=EVALUATED/);
     await edit(11).waitFor();
-    let release;
+    let release!: () => void;
     let held = false;
-    const gate = new Promise((resolve) => { release = resolve; });
+    const gate = new Promise<void>((resolve) => { release = resolve; });
     subtest.after(async () => { release(); await page.unrouteAll({ behavior: "wait" }); });
     await page.route("**/pipeline?**", async (route) => {
       // Delay the server refresh, not the POST: confirmed UI feedback should
@@ -130,14 +133,14 @@ test("inline Pipeline status browser flow (disposable data only)", { skip: !url 
     await tab("APPLIED").click();
     await edit(11).waitFor();
     assert.match(await row(11).innerText(), /Applied/);
-    assert.match(fs.readFileSync(path.join(root, "data/status-log.tsv"), "utf8"), /11\t.*Evaluated\tApplied\tweb/);
+    assert.match(fs.readFileSync(path.join(fixtureRoot, "data/status-log.tsv"), "utf8"), /11\t.*Evaluated\tApplied\tweb/);
   });
 
   await t.test("search during a delayed save cannot apply its response to a different row", async () => {
     await tab("ALL").click();
     await edit(13).waitFor();
-    let release;
-    const gate = new Promise((resolve) => { release = resolve; });
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
     await page.route("**/api/status", async (route) => { await gate; await route.continue(); });
     await edit(13).click();
     await select(13).selectOption("Interview");
@@ -153,8 +156,8 @@ test("inline Pipeline status browser flow (disposable data only)", { skip: !url 
   });
 
   await t.test("independent row saves may finish out of order without crossing identities", async (subtest) => {
-    let release;
-    const gate = new Promise((resolve) => { release = resolve; });
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
     subtest.after(async () => { release(); await page.unrouteAll({ behavior: "wait" }); });
     await page.route("**/api/status", async (route) => {
       if (route.request().postDataJSON().n === "12") await gate;

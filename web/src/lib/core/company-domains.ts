@@ -3,7 +3,7 @@ import { asciiFold } from "./ascii-fold.ts";
 /**
  * Plausible domains for a company name, cheapest/likeliest first.
  *
- * Extracted from app/api/logo/route.ts so it can be exercised directly — a
+ * Extracted from routes/api/logo/+server.ts so it can be exercised directly — a
  * route handler is not reachable from `node --test`, and this is the half of
  * the logo resolver that decides whether a company can EVER get a logo. Same
  * move as funnel-tiles.ts / clean-chips.ts / whats-new-suppression.ts.
@@ -39,13 +39,13 @@ import { asciiFold } from "./ascii-fold.ts";
  *   .ts so node:test can load it without a TS runner, and the map is TS.
  * @returns {string[]} Up to 5 domain candidates, curated first.
  */
-export function companyDomains(company, curatedDomain = () => null) {
+export function companyDomains(company: unknown, curatedDomain: (base: string) => string | null = () => null): string[] {
   const paren = String(company ?? "").match(/\(([A-Za-z0-9]{2,12})\)/)?.[1]; // "… (5WPR)"
   // [^()] (not [^)]) keeps the match unambiguous — no polynomial backtracking on
   // adversarial inputs full of unclosed parens (CodeQL js/polynomial-redos).
   const base = String(company ?? "").replace(/\([^()]*\)/g, "").trim();
 
-  const fold = (s) => asciiFold(s, { punctuation: "delete" }).replace(/ /g, "");
+  const fold = (s: string): string => asciiFold(s, { punctuation: "delete" }).replace(/ /g, "");
   const compact = fold(base.replace(/&/g, "and"));
   const firstWord = fold(base.split(/\s+/)[0] ?? "");
 

@@ -6,8 +6,10 @@
  * prompt context. This is a volume signal, not a dollar-cost estimate: cache
  * reads remain discounted by Claude even though each token appears here.
  */
-export function claudeUsageTokens(usage) {
+export function claudeUsageTokens(usage: unknown): number {
   if (!usage || typeof usage !== "object") return 0;
+
+  const fields = usage as Record<string, unknown>;
 
   return [
     "input_tokens",
@@ -15,7 +17,7 @@ export function claudeUsageTokens(usage) {
     "cache_creation_input_tokens",
     "cache_read_input_tokens",
   ].reduce((total, key) => {
-    const value = usage[key];
+    const value = fields[key];
     return total + (typeof value === "number" && Number.isSafeInteger(value) && value > 0 ? value : 0);
   }, 0);
 }

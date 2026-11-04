@@ -22,14 +22,14 @@ const CLIS_TS = join(WEB, "src", "lib", "clis.ts");
 const SUPPORTED_MD = join(WEB, "..", "docs", "SUPPORTED_CLIS.md");
 
 /** Binaries KNOWN can spawn. */
-function knownBins(src) {
+function knownBins(src: string): Set<string> {
   return new Set([...src.matchAll(/bin:\s*"([^"]+)"/g)].map((m) => m[1]));
 }
 
 /** Binaries docs/SUPPORTED_CLIS.md promises work headlessly. A CLI documented
  *  as interactive-only (Cursor, Kimi) is correctly absent from KNOWN — the web
  *  UI drives workers headlessly and has nothing to offer them. */
-function documentedHeadlessBins(md) {
+function documentedHeadlessBins(md: string): Set<string> {
   return new Set([...md.matchAll(/Headless\/Batch:\s*`([A-Za-z0-9_-]+)/g)].map((m) => m[1]));
 }
 

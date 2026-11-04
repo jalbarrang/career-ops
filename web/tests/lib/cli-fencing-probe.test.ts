@@ -25,7 +25,7 @@ import { CODEX_REQUIRED_EXEC_FLAGS, CODEX_REQUIRED_GLOBAL_FLAGS } from "../../sr
 const ROUTE_EXEC_FLAGS = ["--ephemeral", "--output-last-message"];
 
 /** Render tokens in the two structured forms Codex's clap help uses. */
-const structuredHelp = (tokens) => {
+const structuredHelp = (tokens: readonly string[]): string => {
   const values = tokens.filter((token) => !token.startsWith("-"));
   return tokens
     .filter((token) => token.startsWith("-"))
@@ -37,7 +37,7 @@ const structuredHelp = (tokens) => {
 };
 
 /** Help text that declares every token as codex's own does. */
-const completeHelp = (overrides = {}) => ({
+const completeHelp = (overrides: Record<string, string> = {}) => ({
   globalHelp: structuredHelp(CODEX_REQUIRED_GLOBAL_FLAGS),
   execHelp: structuredHelp([...CODEX_REQUIRED_EXEC_FLAGS, ...ROUTE_EXEC_FLAGS]),
   ...overrides,
@@ -51,7 +51,10 @@ const completeHelp = (overrides = {}) => ({
  * pinning these guards to whatever version a developer happens to have would
  * make them pass or fail for reasons unrelated to the code under test.
  */
-function stubCodex(t, { globalFlags, execFlags }) {
+function stubCodex(
+  t: import("node:test").TestContext,
+  { globalFlags, execFlags }: { globalFlags: readonly string[]; execFlags: readonly string[] },
+) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fencing-probe-"));
   const bin = path.join(dir, "codex-stub.ts");
   const callLog = path.join(dir, "calls.log");
@@ -169,7 +172,7 @@ test("an option described on the same line as its flags is still a declaration",
   // sandbox policy to use`), and may append the possible values to that line.
   // codex-cli 0.154.0 happens to wrap every option, but the layout is decided per
   // build and per help text, not by us.
-  const inline = (flag) => `${flag} <VALUE>  Description of ${flag} that sits on the same line`;
+  const inline = (flag: string): string => `${flag} <VALUE>  Description of ${flag} that sits on the same line`;
   const help = completeHelp({
     globalHelp: CODEX_REQUIRED_GLOBAL_FLAGS.map(inline).join("\n"),
     execHelp: [

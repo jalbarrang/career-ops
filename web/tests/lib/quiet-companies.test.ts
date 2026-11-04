@@ -63,8 +63,8 @@ test("a flag is mapped without inventing anything", () => {
   assert.equal(first.role, "Staff Platform Engineer");
   assert.equal(first.lastDate, "2026-06-02");
   assert.deepEqual(first.trackerNums, [2]);
-  assert.match(first.reason, /courtesy threshold/);
-  assert.match(first.blacklistRow, /^\| Globex \|/);
+  assert.match(first.reason ?? "", /courtesy threshold/);
+  assert.match(first.blacklistRow ?? "", /^\| Globex \|/);
 });
 
 test("a missing role is null rather than an empty label", () => {

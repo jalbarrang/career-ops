@@ -24,7 +24,7 @@ const OPEN = "<<act:";
  * @param {string} acc - Accumulated assistant text so far.
  * @returns {number} Index where the trailing partial opener starts, else -1.
  */
-export function pendingActOpenerStart(acc) {
+export function pendingActOpenerStart(acc: string): number {
   // `<<act:` plus any id letters, but no trailing space yet → regex can't fire.
   const withColon = /<<act:[a-zA-Z]*$/.exec(acc);
   if (withColon) return withColon.index;

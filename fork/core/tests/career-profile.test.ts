@@ -269,8 +269,13 @@ test('a failed save removes its temporary file and reports the original error', 
     // Launcher: make the final rename fail after the temporary file is written, then run the CLI.
     const launcher = join(root, 'fail-rename.ts');
     writeFileSync(launcher, [
-      "import fs from 'node:fs';",
-      "import { syncBuiltinESMExports } from 'node:module';",
+      // Patch the CommonJS `node:fs` object, then import the CLI dynamically:
+      // Bun binds a module's named imports at link time, and this import
+      // happens after the patch, so the wrapper is what the CLI links against.
+      // Node needs syncBuiltinESMExports() to push the same patch into ESM
+      // named imports; Bun reads the object directly and ignores the call.
+      "import { createRequire, syncBuiltinESMExports } from 'node:module';",
+      "const fs = createRequire(import.meta.url)('node:fs');",
       'const realRename = fs.renameSync;',
       'fs.renameSync = (from, to) => {',
       "  if (String(from).endsWith('career-profile.yml.tmp')) throw new Error('simulated rename failure');",

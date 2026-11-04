@@ -41,10 +41,12 @@ import { BASE_CV_TEMPLATE } from "../run-prompts.ts";
  * @param {string} root Absolute path to the career-ops checkout (careerOpsRoot()).
  * @returns {Promise<string>} Repo-relative template path, forward-slashed.
  */
-export async function resolveCvTemplate(root) {
+export async function resolveCvTemplate(root: string): Promise<string> {
   const file = path.join(root, "cv-templates.ts");
   try {
-    const mod = await import(/* webpackIgnore: true */ pathToFileURL(file).href);
+    const mod = (await import(/* @vite-ignore */ pathToFileURL(file).href)) as {
+      resolveTemplate?: (kind: string, name: null, options: Record<string, unknown>) => unknown;
+    };
     if (typeof mod?.resolveTemplate !== "function") return BASE_CV_TEMPLATE;
     const profile = process.env.CAREER_OPS_PROFILE?.trim();
     const abs = mod.resolveTemplate("cv", null, {

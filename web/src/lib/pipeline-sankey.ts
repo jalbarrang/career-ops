@@ -12,12 +12,83 @@
 
 import { canonStatus } from "./status-alias.ts";
 
-/** @typedef {{ n: string|number, status: string }} SankeyApp */
-/** @typedef {{ num: number, from: string, to: string }} SankeyLogRow */
-/** @typedef {{ id: string, label: string, rank: number, tone: string, value: number }} SankeyNode */
-/** @typedef {{ source: string, target: string, value: number }} SankeyLink */
+/** One tracker row, reduced to what the graph needs. */
+export interface SankeyApp {
+  n: string | number;
+  status: string;
+}
 
-export const NODE_DEFS = [
+/** One status-log row. */
+export interface SankeyLogRow {
+  num: number;
+  date?: string;
+  from: string;
+  to: string;
+  source?: string;
+  note?: string;
+}
+
+/** A node before a value is counted. */
+export interface SankeyNodeDef {
+  id: string;
+  label: string;
+  rank: number;
+  tone: string;
+}
+
+/** A live node with its value. */
+export interface SankeyNode extends SankeyNodeDef {
+  value: number;
+}
+
+export interface SankeyLink {
+  source: string;
+  target: string;
+  value: number;
+}
+
+export interface SankeyGraph {
+  nodes: SankeyNode[];
+  links: SankeyLink[];
+  total: number;
+}
+
+export interface SankeyPadding {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+export interface SankeyLayoutOptions {
+  width?: number;
+  height?: number;
+  padding?: SankeyPadding;
+  nodeWidth?: number;
+  nodeGap?: number;
+}
+
+export interface PositionedNode extends SankeyNode {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface LaidLink extends SankeyLink {
+  d: string;
+  thickness: number;
+}
+
+export interface SankeyLayout {
+  nodes: PositionedNode[];
+  links: LaidLink[];
+  width: number;
+  height: number;
+  scale: number;
+}
+
+export const NODE_DEFS: SankeyNodeDef[] = [
   { id: "tracked", label: "Tracked", rank: 0, tone: "neutral" },
   { id: "skip", label: "SKIP", rank: 1, tone: "danger" },
   { id: "evaluated", label: "Still evaluated", rank: 1, tone: "muted" },
@@ -66,7 +137,7 @@ const LEAVES = [
  * @param {string} raw
  * @returns {string}
  */
-export function statusToken(raw) {
+export function statusToken(raw: unknown): string {
   const base = String(raw ?? "")
     .replace(/\s+\d{4}-\d{2}-\d{2}\s*$/, "")
     .trim();
@@ -84,8 +155,8 @@ export function statusToken(raw) {
  * @param {string} tsv
  * @returns {Array<{num: number, date: string, from: string, to: string, source: string, note: string}>}
  */
-export function parseStatusLog(tsv) {
-  const rows = [];
+export function parseStatusLog(tsv: unknown): SankeyLogRow[] {
+  const rows: SankeyLogRow[] = [];
   for (const line of String(tsv ?? "").split(/\r?\n/)) {
     if (!line.trim()) continue;
     const cols = line.split("\t");
@@ -107,7 +178,7 @@ export function parseStatusLog(tsv) {
  * @param {SankeyLogRow[]} log
  * @returns {boolean}
  */
-function logReachedAdvanced(num, log) {
+function logReachedAdvanced(num: number, log: readonly SankeyLogRow[]): boolean {
   for (const row of log) {
     if (row.num !== num) continue;
     if (ADVANCED.has(statusToken(row.from)) || ADVANCED.has(statusToken(row.to))) return true;
@@ -120,7 +191,7 @@ function logReachedAdvanced(num, log) {
  * @param {SankeyLogRow[]} log
  * @returns {boolean}
  */
-function logReachedSubmitted(num, log) {
+function logReachedSubmitted(num: number, log: readonly SankeyLogRow[]): boolean {
   return log.some(
     (row) =>
       row.num === num &&
@@ -134,7 +205,7 @@ function logReachedSubmitted(num, log) {
  * @param {SankeyLogRow[]} log
  * @returns {string}
  */
-export function classifyLeaf(app, log) {
+export function classifyLeaf(app: SankeyApp, log: readonly SankeyLogRow[]): string {
   const num = Number(app.n);
   const status = statusToken(app.status);
   const reachedInterview = ADVANCED.has(status) || logReachedAdvanced(num, log);
@@ -159,10 +230,10 @@ export function classifyLeaf(app, log) {
  * @param {SankeyLogRow[]} [log]
  * @returns {{ nodes: SankeyNode[], links: SankeyLink[], total: number }}
  */
-export function buildPipelineSankey(apps, log = []) {
-  const rows = Array.isArray(apps) ? apps : [];
-  const ledger = Array.isArray(log) ? log : [];
-  const counts = Object.fromEntries(LEAVES.map((id) => [id, 0]));
+export function buildPipelineSankey(apps: unknown, log: unknown = []): SankeyGraph {
+  const rows: SankeyApp[] = Array.isArray(apps) ? (apps as SankeyApp[]) : [];
+  const ledger: SankeyLogRow[] = Array.isArray(log) ? (log as SankeyLogRow[]) : [];
+  const counts: Record<string, number> = Object.fromEntries(LEAVES.map((id): [string, number] => [id, 0]));
   for (const app of rows) {
     const leaf = classifyLeaf(app, ledger);
     counts[leaf] = (counts[leaf] ?? 0) + 1;
@@ -176,7 +247,7 @@ export function buildPipelineSankey(apps, log = []) {
     counts.rejectedInterview +
     counts.discardedInterview;
   const submitted = counts.waiting + engaged + counts.rejectedApply + counts.discarded;
-  const values = {
+  const values: Record<string, number> = {
     tracked: rows.length,
     skip: counts.skip,
     evaluated: counts.evaluated,
@@ -194,9 +265,9 @@ export function buildPipelineSankey(apps, log = []) {
     discardedInterview: counts.discardedInterview,
   };
 
-  const nodes = NODE_DEFS.map((def) => ({ ...def, value: values[def.id] ?? 0 })).filter((n) => n.value > 0);
+  const nodes: SankeyNode[] = NODE_DEFS.map((def) => ({ ...def, value: values[def.id] ?? 0 })).filter((n) => n.value > 0);
 
-  const rawLinks = [
+  const rawLinks: SankeyLink[] = [
     { source: "tracked", target: "skip", value: values.skip },
     { source: "tracked", target: "evaluated", value: values.evaluated },
     { source: "tracked", target: "discardedEarly", value: values.discardedEarly },
@@ -213,7 +284,7 @@ export function buildPipelineSankey(apps, log = []) {
     { source: "engaged", target: "discardedInterview", value: values.discardedInterview },
   ];
   const live = new Set(nodes.map((n) => n.id));
-  const links = rawLinks.filter((l) => l.value > 0 && live.has(l.source) && live.has(l.target));
+  const links: SankeyLink[] = rawLinks.filter((l) => l.value > 0 && live.has(l.source) && live.has(l.target));
 
   return { nodes, links, total: rows.length };
 }
@@ -223,15 +294,18 @@ export function buildPipelineSankey(apps, log = []) {
  * @param {{ nodes: SankeyNode[], links: SankeyLink[] }} graph
  * @param {{ width?: number, height?: number, padding?: { top: number, right: number, bottom: number, left: number }, nodeWidth?: number, nodeGap?: number }} [opts]
  */
-export function layoutSankey(graph, opts = {}) {
+export function layoutSankey(
+  graph: { nodes?: SankeyNode[]; links?: SankeyLink[] } | null | undefined,
+  opts: SankeyLayoutOptions = {},
+): SankeyLayout {
   const width = opts.width ?? 920;
   const height = opts.height ?? 420;
   const padding = opts.padding ?? { top: 20, right: 168, bottom: 20, left: 96 };
   const nodeWidth = opts.nodeWidth ?? 18;
   const nodeGap = opts.nodeGap ?? 14;
 
-  const nodes = Array.isArray(graph?.nodes) ? graph.nodes.filter((n) => n.value > 0) : [];
-  const links = Array.isArray(graph?.links) ? graph.links.filter((l) => l.value > 0) : [];
+  const nodes: SankeyNode[] = Array.isArray(graph?.nodes) ? graph.nodes.filter((n) => n.value > 0) : [];
+  const links: SankeyLink[] = Array.isArray(graph?.links) ? graph.links.filter((l) => l.value > 0) : [];
   if (nodes.length === 0) {
     return { nodes: [], links: [], width, height, scale: 0 };
   }
@@ -251,8 +325,8 @@ export function layoutSankey(graph, opts = {}) {
   if (!Number.isFinite(scale) || scale <= 0) scale = 1;
 
   const order = new Map(NODE_DEFS.map((d, i) => [d.id, i]));
-  const positioned = [];
-  const byId = new Map();
+  const positioned: PositionedNode[] = [];
+  const byId = new Map<string, PositionedNode>();
   for (const r of ranks) {
     const group = nodes.filter((n) => n.rank === r).sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
     const totalH = group.reduce((s, n) => s + n.value * scale, 0) + Math.max(0, group.length - 1) * nodeGap;
@@ -267,8 +341,8 @@ export function layoutSankey(graph, opts = {}) {
     }
   }
 
-  const srcUsed = new Map(positioned.map((n) => [n.id, 0]));
-  const tgtUsed = new Map(positioned.map((n) => [n.id, 0]));
+  const srcUsed = new Map<string, number>(positioned.map((n) => [n.id, 0]));
+  const tgtUsed = new Map<string, number>(positioned.map((n) => [n.id, 0]));
   const ordered = [...links].sort((a, b) => {
     const sa = byId.get(a.source);
     const sb = byId.get(b.source);
@@ -277,7 +351,7 @@ export function layoutSankey(graph, opts = {}) {
     return (sa?.y ?? 0) - (sb?.y ?? 0) || (ta?.y ?? 0) - (tb?.y ?? 0);
   });
 
-  const laidLinks = [];
+  const laidLinks: LaidLink[] = [];
   for (const l of ordered) {
     const s = byId.get(l.source);
     const t = byId.get(l.target);

@@ -24,8 +24,9 @@ import path from "node:path";
 // the hooks thread — harmlessly, the resolve chain gains no second link. Within
 // one realm there is nothing to dedupe either; ESM caches this module, so its
 // body runs once however many times it is imported.
-if (!globalThis.__careerOpsWebAliasRegistered) {
-  globalThis.__careerOpsWebAliasRegistered = true;
+const aliasState = globalThis as { __careerOpsWebAliasRegistered?: boolean };
+if (!aliasState.__careerOpsWebAliasRegistered) {
+  aliasState.__careerOpsWebAliasRegistered = true;
   register(import.meta.url, import.meta.url);
 }
 
@@ -35,7 +36,11 @@ if (!globalThis.__careerOpsWebAliasRegistered) {
 const WEB_SRC = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "src");
 const HAS_EXT = /\.(m?[jt]sx?|json)$/i;
 
-export async function resolve(specifier, context, nextResolve) {
+export async function resolve(
+  specifier: string,
+  context: { parentURL?: string; conditions?: string[] },
+  nextResolve: (specifier: string, context?: { parentURL?: string; conditions?: string[] }) => Promise<unknown>,
+) {
   if (!specifier.startsWith("@/")) return nextResolve(specifier, context);
   const base = path.join(WEB_SRC, specifier.slice(2));
   // Specifiers that already name an extension (e.g. "@/lib/tracker-table.ts")

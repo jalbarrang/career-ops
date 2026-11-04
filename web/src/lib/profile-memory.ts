@@ -18,7 +18,7 @@ export const NOTES_START = "<!-- co-web-notes:start -->";
 export const NOTES_END = "<!-- co-web-notes:end -->";
 
 /** The CANONICAL user-customization file the CLI/TUI reads. */
-export function profilePath(root) {
+export function profilePath(root: string): string {
   return path.join(root, "modes", "_profile.md");
 }
 
@@ -53,8 +53,8 @@ export function profilePath(root) {
  * @param {string} root career-ops home, i.e. careerOpsRoot()
  * @returns {string}
  */
-export function readProfileMemory(root) {
-  const read = (file) => {
+export function readProfileMemory(root: string): string {
+  const read = (file: string): string => {
     try {
       return fs.readFileSync(file, "utf8").trim();
     } catch (err) {
@@ -67,7 +67,7 @@ export function readProfileMemory(root) {
          nobody ever wrote. ENOTDIR is deliberately NOT folded in here: modes/
          ships with the repo, so a file standing where that directory belongs is a
          broken path rather than a fresh install. */
-      if (err?.code === "ENOENT") return "";
+      if ((err as { code?: string } | null)?.code === "ENOENT") return "";
       throw err;
     }
   };

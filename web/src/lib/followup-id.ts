@@ -3,7 +3,7 @@
  * @param {unknown} value
  * @returns {number | null}
  */
-export function parseFollowupId(value) {
+export function parseFollowupId(value: unknown): number | null {
   if (typeof value === "number") {
     return Number.isSafeInteger(value) && value > 0 ? value : null;
   }

@@ -45,10 +45,11 @@ test("parseFollowupId rejects coercible prefixes and non-positive or unsafe valu
 });
 
 test("all follow-up mutation routes use strict ID parsing", () => {
-  for (const [relative, expectedCalls] of [
+  const routes: Array<[string, number]> = [
     ["src/routes/api/followups/log/+server.ts", 2],
     ["src/routes/api/followups/override/+server.ts", 2],
-  ]) {
+  ];
+  for (const [relative, expectedCalls] of routes) {
     const source = fs.readFileSync(path.join(webRoot, relative), "utf8");
     assert.equal(source.includes("Number.parseInt(String(body."), false, relative);
     assert.equal((source.match(/parseFollowupId\(/g) ?? []).length, expectedCalls, relative);

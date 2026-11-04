@@ -10,16 +10,19 @@ import { test } from "node:test";
 const url = process.env.LOADING_TRANSITION_TEST_URL;
 const root = process.env.LOADING_TRANSITION_TEST_ROOT;
 
+/** The fixture root, as a string. The suite skips unless both variables are set. */
+const fixtureRoot = String(root);
+
 test("loading transitions keep context and only latest requests settle Today", {
   skip: !url || !root,
   timeout: 120_000,
 }, async (t) => {
-  const origin = new URL(url);
+  const origin = new URL(String(url));
   assert.ok(["localhost", "127.0.0.1", "[::1]"].includes(origin.hostname));
-  const relative = path.relative(os.tmpdir(), fs.realpathSync(root));
+  const relative = path.relative(os.tmpdir(), fs.realpathSync(fixtureRoot));
   assert.ok(relative && !relative.startsWith("..") && !path.isAbsolute(relative));
-  assert.equal(fs.readFileSync(path.join(root, ".inline-status-fixture"), "utf8").trim(), "fictional-only");
-  const tracker = path.join(root, "data/applications.md");
+  assert.equal(fs.readFileSync(path.join(fixtureRoot, ".inline-status-fixture"), "utf8").trim(), "fictional-only");
+  const tracker = path.join(fixtureRoot, "data/applications.md");
   const initial = fs.readFileSync(tracker, "utf8");
   for (const name of ["Fixture Alpha", "Fixture Beta", "Fixture Gamma"]) assert.ok(initial.includes(name));
 
@@ -27,21 +30,22 @@ test("loading transitions keep context and only latest requests settle Today", {
   const browser = await chromium.launch({ channel: "chrome", headless: true });
   t.after(() => browser.close());
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  const errors = [];
+  const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  const tab = (label) => page.getByRole("button", { name: new RegExp(`^${label} \\d+$`) });
+  const tab = (label: string) => page.getByRole("button", { name: new RegExp(`^${label} \\d+$`) });
   const heading = page.getByRole("heading", { level: 1 });
   const updatesAlert = page.getByRole("alert").filter({ hasText: "could not be loaded." });
-  async function until(check) {
+  async function until(check: () => boolean | Promise<boolean>): Promise<void> {
     const started = Date.now();
     while (!await check()) {
       if (Date.now() - started > 15_000) assert.fail("UI did not reach expected state");
       await page.waitForTimeout(50);
     }
   }
-  function gate() {
-    let release;
-    const promise = new Promise((resolve) => { release = resolve; });
+  /** A latch: `release()` resolves `promise`. */
+  function gate(): { promise: Promise<void>; release: () => void } {
+    let release!: () => void;
+    const promise = new Promise<void>((resolve) => { release = resolve; });
     return { promise, release };
   }
 
@@ -170,8 +174,8 @@ test("loading transitions keep context and only latest requests settle Today", {
         : endpoint === "/api/followups" ? emptyFollowups : emptyFresh });
       completed += 1;
     });
-    const started = (index) => until(() => ["/api/followups", "/api/whats-new"].every((endpoint) => gates.has(`${index}:${endpoint}`)));
-    const release = (index) => { for (const endpoint of ["/api/followups", "/api/whats-new"]) gates.get(`${index}:${endpoint}`).release(); };
+    const started = (index: number) => until(() => ["/api/followups", "/api/whats-new"].every((endpoint) => gates.has(`${index}:${endpoint}`)));
+    const release = (index: number): void => { for (const endpoint of ["/api/followups", "/api/whats-new"]) gates.get(`${index}:${endpoint}`)?.release(); };
     const refetch = () => page.evaluate(() => window.dispatchEvent(new Event("co-job-done")));
     await page.reload();
     await started(1);

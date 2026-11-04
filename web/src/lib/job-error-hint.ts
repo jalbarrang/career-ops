@@ -27,21 +27,40 @@
 const AUTH_PATTERN =
   /authenticat\w*|login|sign[ -]?in|credential|api[ -]?key|unauthorized|no cli configured/i;
 
-const HINTS = {
+/** One actionable hint shown under a failed job. */
+export interface Hint {
+  kind: string;
+  text: string;
+}
+
+const HINTS: Record<string, Hint> = {
   auth: { kind: "auth", text: "Sign your CLI in from Config, then re-run." },
   connection: { kind: "connection", text: "Lost connection to the local server — re-run." },
   interrupted: { kind: "interrupted", text: "The run was interrupted — re-run it." },
 };
 
+/** One step in a job's own log. */
+interface JobStep {
+  label?: string;
+  [key: string]: unknown;
+}
+
+/** The fields these hints read off a job record. */
+interface HintedJob {
+  status?: string;
+  steps?: JobStep[];
+  [key: string]: unknown;
+}
+
 /** The message set on the job's last step — the authoritative terminal cause. */
-function lastStepLabel(job) {
+function lastStepLabel(job: HintedJob | null | undefined): string {
   if (!job || job.status !== "error") return "";
-  const steps = job.steps || [];
+  const steps = job.steps ?? [];
   return steps[steps.length - 1]?.label ?? "";
 }
 
 /** Pick the hint (or null) for an errored job, based on its terminal label only. */
-export function jobErrorHint(job) {
+export function jobErrorHint(job: HintedJob | null | undefined): Hint | null {
   const label = lastStepLabel(job);
   if (!label) return null;
   if (label === "Connection error") return HINTS.connection;

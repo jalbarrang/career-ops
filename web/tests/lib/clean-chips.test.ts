@@ -12,7 +12,7 @@ import { cleanChips, CHIP_CAP } from "../../src/lib/clean-chips.ts";
 
 /** Split a raw input string the same way filter-builder's commit() does —
  *  on unambiguous item separators only (never bare spaces). */
-function split(text) {
+function split(text: string): string[] {
   return text.split(/[,\n;\t\r]+/);
 }
 
@@ -99,7 +99,7 @@ test("the shipped portals.example.yml round-trips without losing keywords", () =
   // default and handed the scanner fewer than half of it — while the CLI, on
   // the same file, used all 37. One config, two different searches, no warning.
   const yml = readFileSync(new URL("../../../templates/portals.example.yml", import.meta.url), "utf8");
-  const positive = yaml.load(yml)?.title_filter?.positive ?? [];
+  const positive = (yaml.load(yml) as { title_filter?: { positive?: string[] } } | null)?.title_filter?.positive ?? [];
   assert.ok(positive.length > 16, "template should still be the realistic size this guards");
   assert.equal(cleanChips(positive).length, positive.length);
 });

@@ -2,7 +2,7 @@
  * cv-match.ts — the ONE matching contract shared by every resolver that has
  * to decide which file in output/ is "the" tailored artifact for an offer:
  * `web/src/lib/apply/cv.ts` (resolveTailoredCv, used by the apply flow),
- * `web/src/app/api/cv-pdf/route.ts` (the "View tailored CV" link), and
+ * `web/src/routes/api/cv-pdf/+server.ts` (the "View tailored CV" link), and
  * `web/src/lib/apply/cover.ts` (resolveTailoredCover, behind "View cover" and
  * /api/cover-pdf).
  *
@@ -28,14 +28,14 @@ import path from 'node:path';
  * slug). An empty token matches nothing — an empty needle is contained in
  * every filename, and the result gets attached to a real application.
  */
-export function hasToken(filenameLower, token) {
+export function hasToken(filenameLower: string, token: string | null | undefined): boolean {
   if (!token) return false;
   const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, 'i');
   return re.test(filenameLower);
 }
 
-export function matchesTailoredCv(filenameLower, slug) {
+export function matchesTailoredCv(filenameLower: string, slug: string): boolean {
   if (!filenameLower.startsWith('cv-')) return false;
   return hasToken(filenameLower, slug);
 }
@@ -51,7 +51,7 @@ export function matchesTailoredCv(filenameLower, slug) {
  * own guard — so a tailored CV can never be served as this offer's cover
  * letter. Attaching nothing beats attaching the wrong document.
  */
-export function matchesTailoredCover(filenameLower, slug) {
+export function matchesTailoredCover(filenameLower: string, slug: string): boolean {
   if (filenameLower.startsWith('cv-')) return false;
   if (!hasToken(filenameLower, 'cover')) return false;
   return hasToken(filenameLower, slug);
@@ -63,21 +63,21 @@ export function matchesTailoredCover(filenameLower, slug) {
  * replacing it — so a vanished file is dropped rather than throwing ENOENT
  * and 500ing the request.
  */
-export function sortNewestFirst(dir, files) {
+export function sortNewestFirst(dir: string, files: readonly string[]): string[] {
   return files
-    .map((f) => {
+    .map((f): { f: string; mtime: number } | null => {
       try {
         return { f, mtime: statMtime(dir, f) };
       } catch {
         return null;
       }
     })
-    .filter((entry) => entry !== null)
+    .filter((entry): entry is { f: string; mtime: number } => entry !== null)
     .sort((a, b) => b.mtime - a.mtime)
     .map((entry) => entry.f);
 }
 
-function statMtime(dir, f) {
+function statMtime(dir: string, f: string): number {
   const stat = fs.statSync(path.join(dir, f));
   // readdirSync can list a directory that happens to match the cv-*.pdf
   // pattern; treat it the same as a vanished file (caught by the caller's

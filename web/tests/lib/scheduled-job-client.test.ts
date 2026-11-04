@@ -10,9 +10,9 @@ import { scheduledRunnerResourcePath, scheduledStorePath } from "../../src/lib/s
 test("scheduled-job client keeps one cadence minimum and preserves payload", async () => {
   assert.equal(cadenceMinimum("minutes"), MIN_SCHEDULE_MINUTES);
   assert.equal(cadenceMinimum("hours"), 1);
-  let request;
-  const result = await createScheduledJobRequest({ name: "Profile scan", every: 2, unit: "days", filters: { positive: [] } }, async (...args) => {
-    request = args;
+  let request!: [string, { body: string }];
+  const result = await createScheduledJobRequest({ name: "Profile scan", every: 2, unit: "days", filters: { positive: [] } }, async (url, init) => {
+    request = [url, init];
     return { ok: true, async json() { return { id: "job" }; } };
   });
   assert.deepEqual(result, { id: "job" });
@@ -26,9 +26,9 @@ test("only failed runs use the failure tone", () => {
 });
 
 test("scheduled-job client updates by encoded id and preserves payload", async () => {
-  let request;
-  const result = await updateScheduledJobRequest("job/1", { status: "paused" }, async (...args) => {
-    request = args;
+  let request!: [string, { body: string }];
+  const result = await updateScheduledJobRequest("job/1", { status: "paused" }, async (url, init) => {
+    request = [url, init];
     return { ok: true, async json() { return { id: "job/1", status: "paused" }; } };
   });
   assert.deepEqual(result, { id: "job/1", status: "paused" });

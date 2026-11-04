@@ -1,8 +1,7 @@
 // bind-host.ts — what interface the dashboard listens on, and the argv that says so.
 //
-// The socket is the dashboard's outermost access control. `next dev` /
-// `next start` with no -H reach server.listen(port, undefined), which binds every
-// interface, and the request guard cannot compensate: Host is chosen by the
+// The socket is the dashboard's outermost access control. The dev server with
+// no -H reaches server.listen(port, undefined), which binds every interface, and the request guard cannot compensate: Host is chosen by the
 // client, so a LAN caller spelling `Host: localhost` satisfies it. See
 // origin-guard.ts's header for the full threat model — this module owns only the
 // bind half of it, and the bind is not the whole of it.
@@ -14,7 +13,7 @@
 // That is the limit of the guarantee, and the two layers do diverge elsewhere:
 // a caller's own -H moves the bind with the allow-list untouched, and a fallback
 // bind of 0.0.0.0 is IPv4-only, so an opted-in IPv6 host passes the filter with
-// nothing listening for it. planNextRun reports the first; the README documents
+// nothing listening for it. planDevRun reports the first; the README documents
 // both.
 //
 // Pure in the sense that matters: no process state, no I/O. server.ts passes
@@ -33,8 +32,8 @@ import { parseAllowedHosts, isLoopbackHost } from "./origin-guard.ts";
 export const LOOPBACK_BIND = "127.0.0.1";
 export const ALL_INTERFACES_BIND = "0.0.0.0";
 
-/** The `next` subcommands this launcher fronts. */
-export const NEXT_COMMANDS = Object.freeze(["dev", "start"]);
+/** The subcommand this local-only launcher fronts. */
+export const RUN_COMMANDS = Object.freeze(["dev"]);
 
 // Values a user reaches for after reading the variable's name as a switch.
 // Every one of them is a syntactically valid hostname, so only an explicit list
@@ -68,7 +67,7 @@ const HOSTNAME_LABEL = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
  * @param {string} host
  * @returns {boolean}
  */
-function isIPLiteral(host) {
+function isIPLiteral(host: string): boolean {
   return isIP(host) !== 0;
 }
 
@@ -81,13 +80,13 @@ function isIPLiteral(host) {
  *
  * Exported because it guards two unrelated decisions — refusing a wildcard in
  * the allow-list, and refusing to claim loopback is lost on a wildcard bind —
- * and validation makes the second unreachable through planNextRun. Tested
+ * and validation makes the second unreachable through planDevRun. Tested
  * directly so that guard stays falsifiable rather than becoming decoration.
  *
  * @param {string} host
  * @returns {boolean}
  */
-export function isWildcardAddress(host) {
+export function isWildcardAddress(host: string): boolean {
   return host === ALL_INTERFACES_BIND || (host.includes(":") && /^[0:]+$/.test(host));
 }
 
@@ -102,7 +101,7 @@ export function isWildcardAddress(host) {
  * @param {string} host
  * @returns {boolean}
  */
-function isUnscopedLinkLocalV6(host) {
+function isUnscopedLinkLocalV6(host: string): boolean {
   return /^fe[89ab][0-9a-f]:/.test(host);
 }
 
@@ -120,7 +119,7 @@ function isUnscopedLinkLocalV6(host) {
  * @param {string} host
  * @returns {boolean}
  */
-function isNonUnicastAddress(host) {
+function isNonUnicastAddress(host: string): boolean {
   const version = isIP(host);
   if (version === 4) {
     const firstOctet = Number(host.slice(0, host.indexOf(".")));
@@ -135,7 +134,7 @@ function isNonUnicastAddress(host) {
  * @param {string} host  a single entry, already lowercased and port-stripped
  * @returns {boolean}
  */
-function isPlausibleHost(host) {
+function isPlausibleHost(host: string): boolean {
   if (isIPLiteral(host)) return true;
   if (host.length > 253) return false;
   const labels = host.replace(/\.$/, "").split("."); // a trailing root dot is a valid FQDN
@@ -156,7 +155,7 @@ function isPlausibleHost(host) {
  * @param {string|undefined} envValue  CAREER_OPS_WEB_ALLOWED_HOSTS
  * @returns {{ok: true, hosts: string[]} | {ok: false, error: string}}
  */
-export function validateAllowedHosts(envValue) {
+export function validateAllowedHosts(envValue: string | undefined): { ok: true; hosts: string[] } | { ok: false; error: string } {
   const hosts = [...parseAllowedHosts(envValue)];
   for (const host of hosts) {
     if (SWITCH_LIKE.has(host)) {
@@ -243,7 +242,7 @@ export function validateAllowedHosts(envValue) {
  * @param {string|undefined} envValue  CAREER_OPS_WEB_ALLOWED_HOSTS
  * @returns {string}
  */
-export function resolveBindHost(envValue) {
+export function resolveBindHost(envValue: string | undefined): string {
   const named = [...parseAllowedHosts(envValue)];
   const reachable = named.filter((host) => !isLoopbackHost(host));
   if (reachable.length === 0) return LOOPBACK_BIND;
@@ -262,7 +261,7 @@ export function resolveBindHost(envValue) {
  * @param {string} bindHost
  * @returns {boolean}
  */
-export function isWidenedBind(bindHost) {
+export function isWidenedBind(bindHost: string): boolean {
   return !isLoopbackHost(bindHost);
 }
 
@@ -278,12 +277,12 @@ export function isWidenedBind(bindHost) {
  *
  * Erring towards a false positive is safe — the launcher forwards argv untouched
  * and warns — so the short form is matched on its prefix, which has no false
- * negative. No other `next dev` / `next start` option begins with `-H`.
+ * negative. No other dev-server option begins with `-H`.
  *
  * @param {string[]} extra
  * @returns {boolean}
  */
-export function hasHostFlag(extra) {
+export function hasHostFlag(extra: readonly string[]): boolean {
   return extra.some((token) => {
     const flag = String(token);
     return flag.startsWith("-H") || flag === "--hostname" || flag.startsWith("--hostname=");
@@ -301,7 +300,7 @@ export function hasHostFlag(extra) {
  * loopback, so nothing here does.
  *
  * @param {object} input
- * @param {string|undefined} input.command   argv[2] — a NEXT_COMMANDS entry
+ * @param {string|undefined} input.command   argv[2] — a RUN_COMMANDS entry
  * @param {string[]} [input.extra]           remaining argv, forwarded verbatim
  * @param {string|undefined} input.envValue  CAREER_OPS_WEB_ALLOWED_HOSTS
  * @returns {{ok: true, argv: string[], bindHost: string, hostFlagSupplied: boolean,
@@ -309,13 +308,32 @@ export function hasHostFlag(extra) {
  *            loopbackUnreachable: boolean}
  *          | {ok: false, error: string}}
  */
-export function planNextRun({ command, extra = [], envValue }) {
-  if (!NEXT_COMMANDS.includes(command)) {
+export interface DevRunInput {
+  command?: string;
+  extra?: string[];
+  envValue?: string;
+}
+
+export type DevRunPlan =
+  | {
+      ok: true;
+      argv: string[];
+      bindHost: string;
+      hostFlagSupplied: boolean;
+      widened: boolean;
+      allowedHosts: string[];
+      grantsNoNewHost: boolean;
+      loopbackUnreachable: boolean;
+    }
+  | { ok: false; error: string };
+
+export function planDevRun({ command, extra = [], envValue }: DevRunInput): DevRunPlan {
+  if (command === undefined || !RUN_COMMANDS.includes(command)) {
     return {
       ok: false,
       error:
-        `Usage: bun server.ts <${NEXT_COMMANDS.join("|")}> [next options]\n` +
-        "Run it through npm: `bun run dev` / `npm start` (extra flags after --).",
+        `Usage: bun server.ts ${RUN_COMMANDS.join("|")} [options]\n` +
+        "Run it through bun: `bun run dev` (extra flags after --).",
     };
   }
 

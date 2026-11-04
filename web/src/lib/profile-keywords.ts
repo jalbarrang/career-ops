@@ -4,8 +4,8 @@
  *
  * The core already does this in `providers/_profile-keywords.ts`
  * (`profileTargetKeywords`), and this is a deliberate mirror of it, not a
- * second design: Turbopack's root is pinned to `web/` and refuses modules
- * outside it (see next.config.ts and tracker-table.ts's header), so a
+ * second design: the web build root is pinned to `web/` and refuses modules
+ * outside it (see tracker-table.ts's header), so a
  * build-time import of the core helper is not available here.
  *
  * It exists as a named, tested function because the inline version it replaces
@@ -37,11 +37,13 @@
  * @param {unknown} profile - A parsed profile.yml (or anything at all).
  * @returns {string[]}
  */
-export function profileTargetKeywords(profile) {
-  const roles = profile && typeof profile === "object" ? profile.target_roles : null;
+export function profileTargetKeywords(profile: unknown): string[] {
+  const source = profile && typeof profile === "object" ? (profile as { target_roles?: unknown }) : null;
+  const roles = source?.target_roles;
   if (!roles || typeof roles !== "object") return [];
+  const groups = roles as { primary?: unknown; archetypes?: unknown };
   return [
-    ...(Array.isArray(roles.primary) ? roles.primary : []),
-    ...(Array.isArray(roles.archetypes) ? roles.archetypes.map((a) => a && a.name) : []),
+    ...(Array.isArray(groups.primary) ? groups.primary : []),
+    ...(Array.isArray(groups.archetypes) ? groups.archetypes.map((a: { name?: string } | null) => a && a.name) : []),
   ].filter((k) => typeof k === "string");
 }

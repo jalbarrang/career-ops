@@ -38,7 +38,7 @@
 
   // SvelteKit's `navigating` is the pending flag the React version got from
   // useTransition: every tab/min/sort change is a query navigation through the
-  // server load, which is exactly the transition Next's router.replace ran.
+  // server load, which is exactly the transition the old router.replace ran.
   const isPending = $derived(navigating.to !== null);
   let pendingTab = $state<Tab | null>(null);
 

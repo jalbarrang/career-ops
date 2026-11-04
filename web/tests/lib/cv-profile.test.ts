@@ -37,8 +37,8 @@ const DATE = "2026-11-02";
 /** One employer, one role, ready for fact tests. */
 function withCompany() {
   const added = addCompany(emptyProfile(), { name: "Acme Inc.", date: DATE });
-  const role = addRole(added.profile, { companyId: added.company.id, name: "Senior Engineer", date: DATE });
-  return { profile: role.profile, companyId: added.company.id, roleId: role.role.id };
+  const role = addRole(added.profile, { companyId: added.company!.id, name: "Senior Engineer", date: DATE });
+  return { profile: role.profile, companyId: added.company!.id, roleId: role.role!.id };
 }
 
 test("a new profile is schema v2 with every section present", () => {
@@ -52,9 +52,9 @@ test("a new profile is schema v2 with every section present", () => {
 test("a company needs a name, and the name is unique", () => {
   const first = addCompany(emptyProfile(), { name: "  Acme Inc.  ", date: DATE });
   assert.equal(first.added, true);
-  assert.equal(first.company.company.name, "Acme Inc."); // trimmed
-  assert.match(first.company.id, /^experiences-[0-9a-f]{12}$/);
-  assert.deepEqual(first.company.company.evidence, { source: `user-stated ${DATE}`, line: 1, quote: "Acme Inc." });
+  assert.equal(first.company!.company.name, "Acme Inc."); // trimmed
+  assert.match(first.company!.id, /^experiences-[0-9a-f]{12}$/);
+  assert.deepEqual(first.company!.company.evidence, { source: `user-stated ${DATE}`, line: 1, quote: "Acme Inc." });
 
   const duplicate = addCompany(first.profile, { name: "acme inc.", date: DATE });
   assert.equal(duplicate.added, false);
@@ -87,26 +87,26 @@ test("a second role on the same company is what a promotion looks like", () => {
   const second = addRole(profile, { companyId, name: "Engineer", date: DATE });
   assert.equal(second.added, true);
 
-  let next = updateRoleField(second.profile, { companyId, roleId: second.role.id, field: "period", value: "2021 – 2023" });
+  let next = updateRoleField(second.profile, { companyId, roleId: second.role!.id, field: "period", value: "2021 – 2023" });
   const roles = next.experiences[0].roles;
   assert.deepEqual(roles.map((role) => role.name), ["Senior Engineer", "Engineer"]);
   assert.deepEqual(roles.map((role) => role.period ?? null), [null, "2021 – 2023"]);
 
   // Moving the newer role below the older one is a plain array swap inside the company.
-  next = moveRole(next, { companyId, roleId: second.role.id, direction: "up" });
+  next = moveRole(next, { companyId, roleId: second.role!.id, direction: "up" });
   assert.deepEqual(next.experiences[0].roles.map((role) => role.name), ["Engineer", "Senior Engineer"]);
 
   // Past the top is a no-op, not a wrap-around.
-  const same = moveRole(next, { companyId, roleId: second.role.id, direction: "up" });
+  const same = moveRole(next, { companyId, roleId: second.role!.id, direction: "up" });
   assert.deepEqual(same.experiences[0].roles.map((role) => role.name), ["Engineer", "Senior Engineer"]);
 });
 
 test("a role with no title is allowed, because the importer meets blocks without one", () => {
   const added = addCompany(emptyProfile(), { name: "Acme", date: DATE });
-  const role = addRole(added.profile, { companyId: added.company.id, date: DATE });
+  const role = addRole(added.profile, { companyId: added.company!.id, date: DATE });
   assert.equal(role.added, true);
-  assert.equal(role.role.name, "");
-  assert.deepEqual(role.role.facts, []);
+  assert.equal(role.role!.name, "");
+  assert.deepEqual(role.role!.facts, []);
 });
 
 test("adding a role to a company that does not exist adds nothing", () => {
@@ -122,9 +122,9 @@ test("facts live in their own scope: a role, a labelled entry, or a flat section
 
   const added = addFact(profile, { ...scope, text: "  Shipped the editor.  ", date: DATE });
   assert.equal(added.added, true);
-  assert.equal(added.fact.text, "Shipped the editor.");
-  assert.equal(added.fact.review_status, "verified");
-  assert.deepEqual(added.fact.evidence, { source: `user-stated ${DATE}`, line: 1, quote: "Shipped the editor." });
+  assert.equal(added.fact!.text, "Shipped the editor.");
+  assert.equal(added.fact!.review_status, "verified");
+  assert.deepEqual(added.fact!.evidence, { source: `user-stated ${DATE}`, line: 1, quote: "Shipped the editor." });
   assert.deepEqual(factsOf(added.profile, scope).map((fact) => fact.text), ["Shipped the editor."]);
 
   const flat = addFact(emptyProfile(), { section: "skills", text: "TypeScript", date: DATE });
@@ -140,7 +140,7 @@ test("the same wording under two roles is two facts, but twice in one scope is a
   assert.equal(twice.added, false);
   assert.equal(twice.reason, "duplicate");
 
-  const other = addFact(first.profile, { section: "experiences", companyId, roleId: second.role.id, text: "Led the cell.", date: DATE });
+  const other = addFact(first.profile, { section: "experiences", companyId, roleId: second.role!.id, text: "Led the cell.", date: DATE });
   assert.equal(other.added, true);
   assert.equal(other.profile.experiences[0].roles[0].facts.length, 1);
   assert.equal(other.profile.experiences[0].roles[1].facts.length, 1);
@@ -150,11 +150,11 @@ test("rewording a fact keeps its id and its evidence — that is what re-import 
   const { profile, companyId, roleId } = withCompany();
   const scope = { section: "experiences", companyId, roleId };
   const added = addFact(profile, { ...scope, text: "Original wording", date: DATE });
-  const edited = updateFactText(added.profile, { ...scope, factId: added.fact.id, text: "Sharper wording" });
+  const edited = updateFactText(added.profile, { ...scope, factId: added.fact!.id, text: "Sharper wording" });
 
   const fact = edited.experiences[0].roles[0].facts[0];
   assert.equal(fact.text, "Sharper wording");
-  assert.equal(fact.id, added.fact.id);
+  assert.equal(fact.id, added.fact!.id);
   assert.deepEqual(fact.evidence, userEvidence("Original wording", DATE));
 
   const blank = updateFactText(edited, { ...scope, factId: fact.id, text: "   " });
@@ -166,11 +166,11 @@ test("review status accepts only the two values the schema knows", () => {
   const scope = { section: "experiences", companyId, roleId };
   const added = addFact(profile, { ...scope, text: "Shipped it.", date: DATE });
 
-  const flipped = setFactStatus(added.profile, { ...scope, factId: added.fact.id, status: "needs_review" });
+  const flipped = setFactStatus(added.profile, { ...scope, factId: added.fact!.id, status: "needs_review" });
   assert.equal(flipped.experiences[0].roles[0].facts[0].review_status, "needs_review");
 
   // A typo must not reach the file, where the core validator would reject it.
-  const bogus = setFactStatus(flipped, { ...scope, factId: added.fact.id, status: "approved" });
+  const bogus = setFactStatus(flipped, { ...scope, factId: added.fact!.id, status: "approved" });
   assert.equal(bogus.experiences[0].roles[0].facts[0].review_status, "needs_review");
 });
 
@@ -180,13 +180,13 @@ test("removing and reordering facts stays inside one role", () => {
   const scope = { section: "experiences", companyId, roleId };
   const one = addFact(second.profile, { ...scope, text: "First", date: DATE });
   const two = addFact(one.profile, { ...scope, text: "Second", date: DATE });
-  const otherRole = addFact(two.profile, { section: "experiences", companyId, roleId: second.role.id, text: "Elsewhere", date: DATE });
+  const otherRole = addFact(two.profile, { section: "experiences", companyId, roleId: second.role!.id, text: "Elsewhere", date: DATE });
 
-  const moved = moveFact(otherRole.profile, { ...scope, factId: two.fact.id, direction: "up" });
+  const moved = moveFact(otherRole.profile, { ...scope, factId: two.fact!.id, direction: "up" });
   assert.deepEqual(moved.experiences[0].roles[0].facts.map((fact) => fact.text), ["Second", "First"]);
   assert.equal(moved.experiences[0].roles[1].facts[0].text, "Elsewhere");
 
-  const removed = removeFact(moved, { ...scope, factId: one.fact.id });
+  const removed = removeFact(moved, { ...scope, factId: one.fact!.id });
   assert.deepEqual(removed.experiences[0].roles[0].facts.map((fact) => fact.text), ["Second"]);
   assert.equal(removed.experiences[0].roles[1].facts.length, 1);
 });
@@ -206,23 +206,23 @@ test("removing a company takes its roles and facts with it", () => {
 test("renaming a company and reordering companies are plain list operations", () => {
   const first = addCompany(emptyProfile(), { name: "Acme", date: DATE });
   const second = addCompany(first.profile, { name: "Beta", date: DATE });
-  const renamed = updateCompanyName(second.profile, { companyId: first.company.id, name: "Acme Holdings" });
+  const renamed = updateCompanyName(second.profile, { companyId: first.company!.id, name: "Acme Holdings" });
   assert.deepEqual(renamed.experiences.map((company) => company.company.name), ["Acme Holdings", "Beta"]);
 
-  const moved = moveCompany(renamed, { companyId: second.company.id, direction: "up" });
+  const moved = moveCompany(renamed, { companyId: second.company!.id, direction: "up" });
   assert.deepEqual(moved.experiences.map((company) => company.company.name), ["Beta", "Acme Holdings"]);
 });
 
 test("labelled entries (projects/education) keep their v1 shape and their own facts", () => {
   const added = addEntry(emptyProfile(), { section: "projects", label: "FraudShield", date: DATE });
   assert.equal(added.added, true);
-  assert.equal(added.entry.label, "FraudShield");
+  assert.equal(added.entry!.label, "FraudShield");
 
-  const withFact = addFact(added.profile, { section: "projects", entryId: added.entry.id, text: "Detected fraud in real time.", date: DATE });
+  const withFact = addFact(added.profile, { section: "projects", entryId: added.entry!.id, text: "Detected fraud in real time.", date: DATE });
   assert.equal(withFact.added, true);
   assert.equal(withFact.profile.projects[0].facts.length, 1);
 
-  const renamed = updateEntryLabel(withFact.profile, { section: "projects", entryId: added.entry.id, label: "FraudShield OSS" });
+  const renamed = updateEntryLabel(withFact.profile, { section: "projects", entryId: added.entry!.id, label: "FraudShield OSS" });
   assert.equal(renamed.projects[0].label, "FraudShield OSS");
   // A duplicate label in the same section is refused, matching the importer's dedupe.
   assert.equal(addEntry(renamed, { section: "projects", label: "fraudshield oss", date: DATE }).reason, "duplicate");
@@ -299,9 +299,9 @@ test("two untitled roles added to one company on the same day get distinct ids",
   // `makeId` are identical for the second role — which used to reproduce the
   // role id, and with it the keyed-`{#each}` duplicate key crash.
   const added = addCompany(emptyProfile(), { name: "Acme", date: DATE });
-  const first = addRole(added.profile, { companyId: added.company.id, date: DATE });
-  const second = addRole(first.profile, { companyId: added.company.id, date: DATE });
-  const third = addRole(second.profile, { companyId: added.company.id, date: DATE });
+  const first = addRole(added.profile, { companyId: added.company!.id, date: DATE });
+  const second = addRole(first.profile, { companyId: added.company!.id, date: DATE });
+  const third = addRole(second.profile, { companyId: added.company!.id, date: DATE });
 
   const ids = third.profile.experiences[0].roles.map((role) => role.id);
   assert.equal(ids.length, 3);
@@ -312,13 +312,13 @@ test("two untitled roles added to one company on the same day get distinct ids",
 
 test("ids are unique across the whole profile, as the core validator requires", () => {
   const added = addCompany(emptyProfile(), { name: "Acme", date: DATE });
-  const role = addRole(added.profile, { companyId: added.company.id, date: DATE });
-  const second = addRole(role.profile, { companyId: added.company.id, date: DATE });
+  const role = addRole(added.profile, { companyId: added.company!.id, date: DATE });
+  const second = addRole(role.profile, { companyId: added.company!.id, date: DATE });
 
   // The same wording under two UNNAMED roles of one company hashes to the same
   // parts too, so facts need the same guarantee the roles just got.
-  const one = addFact(second.profile, { section: "experiences", companyId: added.company.id, roleId: role.role.id, text: "Led the cell.", date: DATE });
-  const two = addFact(one.profile, { section: "experiences", companyId: added.company.id, roleId: second.role.id, text: "Led the cell.", date: DATE });
+  const one = addFact(second.profile, { section: "experiences", companyId: added.company!.id, roleId: role.role!.id, text: "Led the cell.", date: DATE });
+  const two = addFact(one.profile, { section: "experiences", companyId: added.company!.id, roleId: second.role!.id, text: "Led the cell.", date: DATE });
 
   const ids = [];
   for (const company of two.profile.experiences) {
@@ -392,13 +392,13 @@ test('what the picker writes parses back to the same dates', () => {
     { startYear: 2016, endYear: 2021 },
   ]) {
     const written = formatPeriod(value);
-    const reread = parsePeriod(written);
-    assert.notEqual(reread, null, `${written} should parse back`);
-    assert.equal(reread.start.year, value.startYear);
-    assert.equal(reread.start.month, value.startMonth ?? null);
-    assert.equal(reread.present, Boolean(value.present));
-    assert.equal(reread.end?.year ?? null, value.present ? null : (value.endYear ?? null));
+    const reread = parsePeriod(written!);
+    assert.notEqual(reread!, null, `${written} should parse back`);
+    assert.equal(reread!.start.year, value.startYear);
+    assert.equal(reread!.start.month, value.startMonth ?? null);
+    assert.equal(reread!.present, Boolean(value.present));
+    assert.equal(reread!.end?.year ?? null, value.present ? null : (value.endYear ?? null));
     // And it stays inside the length the importer classifies on.
-    assert.ok(written.length <= 40, `${written} is too long for the importer`);
+    assert.ok(written!.length <= 40, `${written} is too long for the importer`);
   }
 });

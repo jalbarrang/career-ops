@@ -28,6 +28,6 @@ import path from "node:path";
  * @param {string} file - A filename or path; only the basename is examined.
  * @returns {boolean}
  */
-export function isReservedReportFile(file) {
+export function isReservedReportFile(file: string): boolean {
   return /^\d+-RESERVED\.md$/.test(path.basename(file));
 }

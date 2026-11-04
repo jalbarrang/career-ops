@@ -20,17 +20,84 @@ import { join } from 'node:path';
 import { loadYaml } from './yaml-document.ts';
 import { getCareerOpsRoot } from '../path-resolver.ts';
 
-const STATUS = new Set(['needs_review', 'verified']);
+/** The two review states a fact, entry or role may carry. */
+type ReviewStatus = 'needs_review' | 'verified';
+
+/** Where in a source file a statement was found, so it can be re-checked. */
+interface ProfileEvidence {
+  source: string;
+  line: number;
+  quote: string;
+}
+
+/** One statement in a bare-fact section (summary, certifications, skills). */
+interface ProfileFact {
+  id: string;
+  text: string;
+  review_status: ReviewStatus;
+  evidence: ProfileEvidence;
+}
+
+/** A labelled entry in `projects` / `education`, with the facts under it. */
+interface ProfileLabeledEntry {
+  id: string;
+  label: string;
+  review_status?: ReviewStatus;
+  evidence: ProfileEvidence;
+  facts: ProfileFact[];
+}
+
+/** One role held at a company. An empty `name` is allowed on purpose. */
+interface ProfileRole {
+  id: string;
+  name: string;
+  period?: string;
+  location?: string;
+  review_status?: ReviewStatus;
+  evidence: ProfileEvidence;
+  facts: ProfileFact[];
+}
+
+/** A company and every role held there; the company carries the identity. */
+interface ProfileCompany {
+  id: string;
+  company: { name: string; evidence: ProfileEvidence };
+  roles: ProfileRole[];
+}
+
+/** A schema-v2 profile. */
+interface CareerProfile {
+  schema_version: number;
+  candidate: Record<string, unknown>;
+  summary: ProfileFact[];
+  experiences: ProfileCompany[];
+  projects: ProfileLabeledEntry[];
+  education: ProfileLabeledEntry[];
+  certifications: ProfileFact[];
+  skills: ProfileFact[];
+}
+
+/** A role paired with the company it belongs to, as `experienceRoles` returns it. */
+interface ProfileRoleEntry {
+  company: ProfileCompany;
+  role: ProfileRole;
+}
+
+const STATUS: ReadonlySet<unknown> = new Set(['needs_review', 'verified']);
 
 export const SCHEMA_VERSION = 2;
 
 /** Sections that hold a bare list of facts. */
-export const FACT_SECTIONS = ['summary', 'certifications', 'skills'];
+export const FACT_SECTIONS: string[] = ['summary', 'certifications', 'skills'];
 
 /** Sections that hold labelled entries with their own facts (unchanged from v1). */
-export const LABEL_SECTIONS = ['projects', 'education'];
+export const LABEL_SECTIONS: string[] = ['projects', 'education'];
 
-const isMapping = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+const isMapping = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+/** `Array.isArray` that narrows to `unknown[]` instead of `any[]`. */
+const isUnknownArray = (value: unknown): value is unknown[] => Array.isArray(value);
 
 /**
  * Validate a profile and return its errors ([] means valid).
@@ -38,34 +105,37 @@ const isMapping = (value) => Boolean(value) && typeof value === 'object' && !Arr
  * Every message names the exact path (`experiences[0].roles[1].name`) because
  * the only consumer that shows these to a person is the web builder, and
  * "roles are invalid" does not tell them which role.
+ *
+ * Takes `unknown` because the input is parsed YAML, not a value whose shape is
+ * already known; the return value is the only thing that vouches for it.
  */
-export function validateProfile(profile) {
-  const errors = [];
+export function validateProfile(profile: unknown): string[] {
+  const errors: string[] = [];
   if (!isMapping(profile)) {
     return ['profile must be a mapping'];
   }
   if (profile.schema_version !== SCHEMA_VERSION) errors.push(`schema_version must be ${SCHEMA_VERSION}`);
   if (!isMapping(profile.candidate)) errors.push('candidate must be a mapping');
 
-  const ids = new Set();
-  const checkEvidence = (evidence, path) => {
+  const ids = new Set<string>();
+  const checkEvidence = (evidence: unknown, path: string): void => {
     if (!isMapping(evidence) || typeof evidence.source !== 'string' || !evidence.source.trim() ||
-        !Number.isInteger(evidence.line) || evidence.line < 1 ||
+        typeof evidence.line !== 'number' || !Number.isInteger(evidence.line) || evidence.line < 1 ||
         typeof evidence.quote !== 'string' || !evidence.quote.trim()) {
       errors.push(`${path}.evidence requires source, positive line, and quote`);
     }
   };
-  const checkId = (id, path) => {
+  const checkId = (id: unknown, path: string): void => {
     if (typeof id !== 'string' || !id.trim()) errors.push(`${path}.id is required`);
     else if (ids.has(id)) errors.push(`duplicate id: ${id}`);
     else ids.add(id);
   };
-  const checkFacts = (facts, path) => {
-    if (!Array.isArray(facts)) {
+  const checkFacts = (facts: unknown, path: string): void => {
+    if (!isUnknownArray(facts)) {
       errors.push(`${path}.facts must be a list`);
       return;
     }
-    facts.forEach((fact, i) => {
+    facts.forEach((fact: unknown, i: number) => {
       const at = `${path}.facts[${i}]`;
       if (!isMapping(fact)) {
         errors.push(`${at} must be a mapping`);
@@ -79,11 +149,12 @@ export function validateProfile(profile) {
   };
 
   for (const section of [...FACT_SECTIONS, ...LABEL_SECTIONS, 'experiences']) {
-    if (!Array.isArray(profile[section])) errors.push(`${section} must be a list`);
+    if (!isUnknownArray(profile[section])) errors.push(`${section} must be a list`);
   }
 
   for (const section of FACT_SECTIONS) {
-    for (const [i, fact] of (Array.isArray(profile[section]) ? profile[section] : []).entries()) {
+    const facts = profile[section];
+    for (const [i, fact] of (isUnknownArray(facts) ? facts : []).entries()) {
       const at = `${section}[${i}]`;
       if (!isMapping(fact)) {
         errors.push(`${at} must be a mapping`);
@@ -97,7 +168,8 @@ export function validateProfile(profile) {
   }
 
   for (const section of LABEL_SECTIONS) {
-    for (const [i, entry] of (Array.isArray(profile[section]) ? profile[section] : []).entries()) {
+    const entries = profile[section];
+    for (const [i, entry] of (isUnknownArray(entries) ? entries : []).entries()) {
       const at = `${section}[${i}]`;
       if (!isMapping(entry)) {
         errors.push(`${at} must be a mapping`);
@@ -111,7 +183,8 @@ export function validateProfile(profile) {
     }
   }
 
-  for (const [i, company] of (Array.isArray(profile.experiences) ? profile.experiences : []).entries()) {
+  const experiences = profile.experiences;
+  for (const [i, company] of (isUnknownArray(experiences) ? experiences : []).entries()) {
     const at = `experiences[${i}]`;
     if (!isMapping(company)) {
       errors.push(`${at} must be a mapping`);
@@ -130,11 +203,12 @@ export function validateProfile(profile) {
     }
     checkEvidence(company.company.evidence, `${at}.company`);
 
-    if (!Array.isArray(company.roles)) {
+    const roles = company.roles;
+    if (!isUnknownArray(roles)) {
       errors.push(`${at}.roles must be a list`);
       continue;
     }
-    company.roles.forEach((role, j) => {
+    roles.forEach((role: unknown, j: number) => {
       const roleAt = `${at}.roles[${j}]`;
       if (!isMapping(role)) {
         errors.push(`${roleAt} must be a mapping`);
@@ -159,16 +233,26 @@ export function validateProfile(profile) {
   return errors;
 }
 
+/** Options for `loadValidatedProfile`. */
+interface LoadProfileOptions {
+  /** Data root the default file path is anchored to. */
+  dataRoot?: string;
+  /** Explicit profile file, overriding the data-root default. */
+  file?: string;
+}
+
 /** Missing/invalid profiles fail; only the importer may initialize a new one. */
-export function loadValidatedProfile({ dataRoot = getCareerOpsRoot(), file = join(dataRoot, 'data', 'career-profile.yml') } = {}) {
-  const profile = loadYaml(readFileSync(file, 'utf8'));
-  const errors = validateProfile(profile);
+export function loadValidatedProfile({ dataRoot = getCareerOpsRoot(), file = join(dataRoot, 'data', 'career-profile.yml') }: LoadProfileOptions = {}): CareerProfile {
+  // Parsed YAML is untrusted input; validateProfile is what turns it into a
+  // CareerProfile, and the assertion below is that proof.
+  const parsed: unknown = loadYaml(readFileSync(file, 'utf8'));
+  const errors = validateProfile(parsed);
   if (errors.length) throw new Error(`Invalid profile:\n- ${errors.join('\n- ')}`);
-  return profile;
+  return parsed as CareerProfile;
 }
 
 /** A schema-v2 profile with no content. */
-export function emptyProfile() {
+export function emptyProfile(): CareerProfile {
   return {
     schema_version: SCHEMA_VERSION,
     candidate: {},
@@ -187,12 +271,17 @@ export function emptyProfile() {
  * Selection (`lib/profile-cv-selection.ts`) binds a CV slot to ONE role, so it
  * needs the roles addressable on their own. Keeping the flattening here means
  * the nested shape has exactly one reader that understands nesting.
+ *
+ * Takes `unknown` and narrows: it is called with a profile that has just been
+ * validated, but also from callers holding parsed YAML.
  */
-export function experienceRoles(profile) {
-  const roles = [];
-  for (const company of Array.isArray(profile?.experiences) ? profile.experiences : []) {
-    for (const role of Array.isArray(company?.roles) ? company.roles : []) {
-      roles.push({ company, role });
+export function experienceRoles(profile: unknown): ProfileRoleEntry[] {
+  const roles: ProfileRoleEntry[] = [];
+  const companies = isMapping(profile) && isUnknownArray(profile.experiences) ? profile.experiences : [];
+  for (const company of companies) {
+    const nested = isMapping(company) && isUnknownArray(company.roles) ? company.roles : [];
+    for (const role of nested) {
+      roles.push({ company: company as ProfileCompany, role: role as ProfileRole });
     }
   }
   return roles;

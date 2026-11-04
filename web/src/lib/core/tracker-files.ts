@@ -4,7 +4,7 @@ import path from "node:path";
 // Synchronous mirror of path-resolver.ts for the synchronous web readers.
 // tracker-files.test.ts checks parity against the core resolver, including
 // overrides, legacy layouts, and symlinks.
-export function resolveTrackerPath(root) {
+export function resolveTrackerPath(root: string): string {
   const override = process.env.CAREER_OPS_TRACKER?.trim();
   const candidate = path.resolve(override || (
     fs.existsSync(path.join(root, "data/applications.md"))
@@ -18,13 +18,13 @@ export function resolveTrackerPath(root) {
   }
 }
 
-export function readTrackerFile(root, sibling) {
+export function readTrackerFile(root: string, sibling?: string): string | null {
   const tracker = resolveTrackerPath(root);
   const file = sibling ? path.join(path.dirname(tracker), sibling) : tracker;
   try {
     return fs.readFileSync(file, "utf8");
   } catch (error) {
-    if (error.code === "ENOENT") return null;
+    if ((error as { code?: string } | null)?.code === "ENOENT") return null;
     throw error;
   }
 }

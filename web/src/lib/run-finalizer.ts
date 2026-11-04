@@ -10,7 +10,7 @@
  * @param {() => void} release
  * @returns {() => void}
  */
-export function createRunFinalizer(child, release) {
+export function createRunFinalizer(child: { once: (event: string, listener: () => void) => unknown }, release: () => void): () => void {
   let workerClosed = false;
   let runFinished = false;
   let released = false;

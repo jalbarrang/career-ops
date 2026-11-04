@@ -14,6 +14,8 @@ import {
   readScheduledStore,
   withResourceLock,
   withScheduledStore,
+  type ScheduledJob,
+  type ScheduledStore,
 } from "../../src/lib/scheduled-jobs-store.ts";
 import {
   buildScanCommand,
@@ -31,6 +33,26 @@ import {
 import { assertScheduledJobBody } from "../../src/lib/scheduled-job-input.ts";
 
 const WEB_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+
+/** A complete job fixture; overrides cover only what a case cares about. */
+const JOB_DEFAULTS: ScheduledJob = {
+  id: "11111111-1111-4111-8111-111111111111",
+  name: "Job",
+  engine: "full",
+  filters: {},
+  timezone: "UTC",
+  startAt: "2026-08-08T08:00:00.000Z",
+  every: 1,
+  unit: "hours",
+  status: "active",
+  createdAt: "2026-08-08T08:00:00.000Z",
+  updatedAt: "2026-08-08T08:00:00.000Z",
+};
+
+const makeJob = (overrides: Partial<ScheduledJob> = {}): ScheduledJob => ({ ...JOB_DEFAULTS, ...overrides });
+
+/** A complete store fixture. */
+const makeStore = (overrides: Partial<ScheduledStore> = {}): ScheduledStore => ({ jobs: [], runs: [], queue: [], ...overrides });
 
 test("scheduled-jobs store starts empty and never seeds candidate-specific targeting", () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "career-ops-scheduled-store-"));
@@ -76,17 +98,7 @@ test("invalid scheduled-jobs JSON is reported instead of overwritten", () => {
 
 test("overdue schedules queue once and advance directly to the next future run", () => {
   const now = Date.parse("2026-08-08T12:00:00.000Z");
-  const store = {
-    jobs: [{
-      id: "job-1",
-      status: "active",
-      startAt: "2026-08-08T08:00:00.000Z",
-      every: 1,
-      unit: "hours",
-    }],
-    runs: [],
-    queue: [],
-  };
+  const store = makeStore({ jobs: [makeJob({ id: "job-1" })] });
 
   assert.equal(enqueueDueJobs(store, now), 1);
   assert.equal(store.queue.length, 1);
@@ -102,11 +114,11 @@ test("scan command honors the selected engine and bounded filters", () => {
     ats: ["lever", "ashby"],
     limitPerAts: 999,
   };
-  assert.deepEqual(buildScanCommand({ engine: "portals", filters }), {
+  assert.deepEqual(buildScanCommand(makeJob({ engine: "portals", filters })), {
     script: "scan.ts",
     args: ["--since", "5", "--quiet"],
   });
-  assert.deepEqual(buildScanCommand({ engine: "full", filters }), {
+  assert.deepEqual(buildScanCommand(makeJob({ engine: "full", filters })), {
     script: "scan-ats-full.ts",
     args: ["--since", "5", "--ats", "lever,ashby", "--limit", "500", "--json"],
   });
@@ -115,18 +127,23 @@ test("scan command honors the selected engine and bounded filters", () => {
 test("scheduled overlay falls back to portal title keywords and preserves hard location blocks", () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "career-ops-scheduled-filters-"));
   fs.writeFileSync(path.join(temp, "portals.yml"), "title_filter:\n  positive: [engineer]\ntitle_filter_full:\n  positive: [architect]\nlocation_filter: {}\n", "utf8");
-  const job = {
-    id: "11111111-1111-4111-8111-111111111111",
-    engine: "full",
-    filters: { positive: [], blockHard: ["Brazil"], alwaysAllow: ["Porto"] },
-  };
+  const job = makeJob({ filters: { positive: [], blockHard: ["Brazil"], alwaysAllow: ["Porto"] } });
   try {
-    let overlay;
+    interface Overlay {
+      title_filter: { positive: string[] };
+      title_filter_full: { positive: string[] };
+      location_filter: { block_hard: string[]; always_allow: string[] };
+    }
+    let overlay: Overlay = {
+      title_filter: { positive: [] },
+      title_filter_full: { positive: [] },
+      location_filter: { block_hard: [], always_allow: [] },
+    };
     const result = executeJob(temp, job, {
       spawnFn: (_node, _args, options) => {
         assert.equal(options.env.CAREER_OPS_ROOT, temp);
         assert.ok(fs.existsSync(path.join(options.cwd, "scan.ts")));
-        overlay = yaml.load(fs.readFileSync(options.env.CAREER_OPS_PORTALS, "utf8"));
+        overlay = yaml.load(fs.readFileSync(String(options.env.CAREER_OPS_PORTALS), "utf8")) as typeof overlay;
         return { status: 0, stdout: JSON.stringify({ postingsKept: 0 }), stderr: "" };
       },
     });
@@ -137,7 +154,7 @@ test("scheduled overlay falls back to portal title keywords and preserves hard l
     assert.deepEqual(overlay.location_filter.always_allow, ["Porto"]);
     const explicit = executeJob(temp, { ...job, filters: { ...job.filters, positive: ["designer"] } }, {
       spawnFn: (_node, _args, options) => {
-        overlay = yaml.load(fs.readFileSync(options.env.CAREER_OPS_PORTALS, "utf8"));
+        overlay = yaml.load(fs.readFileSync(String(options.env.CAREER_OPS_PORTALS), "utf8")) as typeof overlay;
         return { status: 0, stdout: JSON.stringify({ postingsKept: 0 }), stderr: "" };
       },
     });
@@ -154,11 +171,7 @@ test("scheduled scan never starts without title keywords", () => {
   fs.writeFileSync(path.join(temp, "portals.yml"), "title_filter: {}\n", "utf8");
   try {
     let spawned = false;
-    const result = executeJob(temp, {
-      id: "11111111-1111-4111-8111-111111111111",
-      engine: "full",
-      filters: { positive: [] },
-    }, {
+    const result = executeJob(temp, makeJob({ filters: { positive: [] } }), {
       spawnFn: () => { spawned = true; throw new Error("scanner must not run"); },
     });
     assert.equal(spawned, false);
@@ -170,7 +183,7 @@ test("scheduled scan never starts without title keywords", () => {
 });
 
 test("scan command treats null and empty numeric filters as absent", () => {
-  assert.deepEqual(buildScanCommand({ engine: "full", filters: { sinceDays: null, limitPerAts: "" } }).args, [
+  assert.deepEqual(buildScanCommand(makeJob({ filters: { sinceDays: null, limitPerAts: "" } })).args, [
     "--since", "7", "--ats", "greenhouse,lever,ashby,workday", "--limit", "150", "--json",
   ]);
 });
@@ -186,7 +199,7 @@ test("manual claims persist a running record and reject duplicate runs", async (
   const now = Date.parse("2026-08-08T12:00:00.000Z");
   try {
     await withScheduledStore(storePath, (store) => {
-      store.jobs.push({ id: jobId, name: "Manual", status: "active", engine: "full", filters: {}, timezone: "UTC", startAt: new Date(now).toISOString(), every: 1, unit: "hours", createdAt: new Date(now).toISOString(), updatedAt: new Date(now).toISOString() });
+      store.jobs.push(makeJob({ id: jobId, name: "Manual", startAt: new Date(now).toISOString(), createdAt: new Date(now).toISOString(), updatedAt: new Date(now).toISOString() }));
     });
     const claim = await withScheduledStore(storePath, (store) => claimManualJob(store, jobId, now));
     assert.ok(claim?.queueId);
@@ -207,12 +220,12 @@ test("manual claims persist a running record and reject duplicate runs", async (
 
 test("manual claims allow paused jobs but exclude deleted and unknown jobs", () => {
   const now = Date.parse("2026-08-08T12:00:00.000Z");
-  const base = { id: "11111111-1111-4111-8111-111111111111", name: "Manual", engine: "full", filters: {}, timezone: "UTC", startAt: new Date(now).toISOString(), every: 1, unit: "hours", createdAt: new Date(now).toISOString(), updatedAt: new Date(now).toISOString() };
-  const paused = { jobs: [{ ...base, status: "paused" }], runs: [], queue: [] };
+  const base = makeJob({ name: "Manual", startAt: new Date(now).toISOString(), createdAt: new Date(now).toISOString(), updatedAt: new Date(now).toISOString() });
+  const paused = makeStore({ jobs: [{ ...base, status: "paused" }] });
   assert.ok(claimManualJob(paused, base.id, now));
   assert.equal(claimManualJob(paused, base.id, now + 1_000), null);
-  assert.equal(claimManualJob({ jobs: [{ ...base, status: "deleted" }], runs: [], queue: [] }, base.id, now), null);
-  assert.equal(claimManualJob({ jobs: [], runs: [], queue: [] }, base.id, now), null);
+  assert.equal(claimManualJob(makeStore({ jobs: [{ ...base, status: "deleted" }] }), base.id, now), null);
+  assert.equal(claimManualJob(makeStore(), base.id, now), null);
 });
 
 test("lock creation failures surface and leave no lock behind", async () => {
@@ -240,12 +253,12 @@ test("roles-found parsing matches both scanner output formats", () => {
 
 test("queue claim is durable until completion and stale claims are reclaimable", async () => {
   const now = Date.parse("2026-08-08T12:00:00.000Z");
-  const store = {
-    jobs: [{ id: "11111111-1111-4111-8111-111111111111", status: "active", startAt: "2026-08-08T08:00:00.000Z", every: 1, unit: "hours" }],
-    runs: [],
-    queue: [{ id: "22222222-2222-4222-8222-222222222222", jobId: "11111111-1111-4111-8111-111111111111", queuedAt: "2026-08-08T08:00:00.000Z" }],
-  };
+  const store = makeStore({
+    jobs: [makeJob()],
+    queue: [{ id: "22222222-2222-4222-8222-222222222222", jobId: JOB_DEFAULTS.id, queuedAt: "2026-08-08T08:00:00.000Z" }],
+  });
   const first = claimDueJob(store, now);
+  assert.ok(first);
   assert.equal(first.claimToken.length, 36);
   assert.equal(store.queue.length, 1);
   assert.equal(store.queue[0].claimToken, first.claimToken);
@@ -309,18 +322,18 @@ test("concurrent real contenders never overlap while taking over or releasing a 
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "career-ops-scheduled-race-"));
   const resource = path.join(temp, "resource");
   const moduleUrl = pathToFileURL(path.join(WEB_ROOT, "src/lib/scheduled-jobs-store.ts")).href;
-  const runChild = (index) => new Promise((resolve, reject) => {
+  const runChild = (index: number): Promise<void> => new Promise((resolve, reject) => {
     const marker = path.join(temp, `${index}.json`);
     const code = `import fs from 'node:fs'; import { withResourceLock } from ${JSON.stringify(moduleUrl)}; const marker=${JSON.stringify(marker)}; await withResourceLock(${JSON.stringify(resource)}, async()=>{ const start=Date.now(); await new Promise(r=>setTimeout(r,35)); fs.writeFileSync(marker, JSON.stringify({start,end:Date.now()})); });`;
     const child = spawn(process.execPath, ["--input-type=module", "-e", code], { stdio: ["ignore", "ignore", "pipe"] });
     let stderr = "";
-    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    child.stderr.on("data", (chunk) => { stderr += String(chunk); });
     child.once("error", reject);
     child.once("close", (status) => status === 0 ? resolve() : reject(new Error(stderr || `child exited ${status}`)));
   });
   try {
     await Promise.all(Array.from({ length: 8 }, (_, index) => runChild(index)));
-    const intervals = Array.from({ length: 8 }, (_, index) => JSON.parse(fs.readFileSync(path.join(temp, `${index}.json`), "utf8"))).sort((a, b) => a.start - b.start);
+    const intervals = Array.from({ length: 8 }, (_, index) => JSON.parse(fs.readFileSync(path.join(temp, `${index}.json`), "utf8")) as { start: number; end: number }).sort((a, b) => a.start - b.start);
     for (let index = 1; index < intervals.length; index += 1) assert.ok(intervals[index].start >= intervals[index - 1].end, "lock holders overlapped");
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });
@@ -353,7 +366,7 @@ test("a worker crash after a persisted claim leaves the queue recoverable", asyn
 
 test("executeJob retries exactly three times and converts scanner timeouts to a final failure", () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "career-ops-scheduled-retry-"));
-  const job = { id: "11111111-1111-4111-8111-111111111111", engine: "full", filters: {}, timezone: "UTC" };
+  const job = makeJob();
   fs.writeFileSync(path.join(temp, "portals.yml"), "title_filter:\n  positive: [engineer]\nlocation_filter: {}\n", "utf8");
   try {
     let attempts = 0;
@@ -381,7 +394,7 @@ test("executeJob retries exactly three times and converts scanner timeouts to a 
 
 test("executeJob retries thrown setup and spawn failures before succeeding", () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "career-ops-scheduled-thrown-retry-"));
-  const job = { id: "11111111-1111-4111-8111-111111111111", engine: "full", filters: {}, timezone: "UTC" };
+  const job = makeJob();
   fs.writeFileSync(path.join(temp, "portals.yml"), "title_filter:\n  positive: [engineer]\nlocation_filter: {}\n", "utf8");
   try {
     let attempts = 0;
@@ -403,13 +416,13 @@ test("completion history is capped at 100 records", async () => {
   const jobId = "11111111-1111-4111-8111-111111111111";
   const queueId = "22222222-2222-4222-8222-222222222222";
   const runId = "33333333-3333-4333-8333-333333333333";
-  const store = {
-    jobs: [{ id: jobId, status: "active", lastRunAt: undefined }],
-    runs: Array.from({ length: MAX_RUNS }, (_, index) => ({ id: `${String(index + 4).padStart(8, "0")}-4444-4444-8444-444444444444`, jobId, at: new Date().toISOString(), state: "success", attempt: 1 })),
+  const store = makeStore({
+    jobs: [makeJob({ id: jobId, lastRunAt: undefined })],
+    runs: Array.from({ length: MAX_RUNS }, (_, index) => ({ id: `${String(index + 4).padStart(8, "0")}-4444-4444-8444-444444444444`, jobId, at: new Date().toISOString(), state: "success" as const, attempt: 1 })),
     queue: [{ id: queueId, jobId, queuedAt: new Date().toISOString(), claimToken: "44444444-4444-4444-8444-444444444444", runId }],
-  };
+  });
   store.runs[0].id = runId;
-  await recordCompletion("unused", { job: { id: jobId, engine: "full" }, queueId, runId, claimToken: store.queue[0].claimToken }, { state: "success", attempt: 1, rolesFound: 0, durationMs: 1, message: "ok" }, store);
+  await recordCompletion("unused", { job: makeJob({ id: jobId }), queueId, runId, claimToken: String(store.queue[0].claimToken) }, { state: "success", attempt: 1, rolesFound: 0, durationMs: 1, message: "ok" }, store);
   assert.equal(store.runs.length, MAX_RUNS);
   assert.equal(store.runs[0].id, runId);
 });

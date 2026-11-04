@@ -31,7 +31,7 @@
  * see that file's header.
  *
  * resolveTailoredCover() is TypeScript that reaches web/src/lib/career-ops via
- * the `@/` path alias (Next's tsconfig paths). Node 22 type-strips .ts on
+ * the `@/` path alias (the app's `@/` path alias). Node 22 type-strips .ts on
  * import, but it does NOT understand that alias — `bun test` here is plain
  * `node --test`, with no webpack/SWC in the loop. The tiny inline loader below
  * teaches node:module's resolution hook to resolve `@/*` to web/src/* (with
@@ -86,7 +86,21 @@ const { matchesTailoredCover } = await import('../../src/lib/apply/cv-match.ts')
  * column order parseApplications falls back to, so the applicationNumber path
  * has a real tracker to join against.
  */
-async function withFixture(files, fn, rows) {
+/** `[filename, mtime offset in ms]`; the offset is optional. */
+type FixtureFile = [name: string, mtimeOffsetMs?: number];
+
+/** One tracker row written in the legacy fixed column order. */
+interface FixtureRow {
+  n: string | number;
+  company: string;
+  role: string;
+}
+
+async function withFixture<T>(
+  files: ReadonlyArray<FixtureFile>,
+  fn: (outputDir: string) => Promise<T>,
+  rows?: ReadonlyArray<FixtureRow>,
+): Promise<T> {
   const root = mkdtempSync(join(tmpdir(), 'cover-resolver-'));
   const outputDir = join(root, 'output');
   mkdirSync(outputDir, { recursive: true });
@@ -108,7 +122,7 @@ async function withFixture(files, fn, rows) {
         '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |',
         '|---|------|---------|------|-------|--------|-----|--------|-------|',
         ...rows.map(
-          ({ n, company, role }) =>
+          ({ n, company, role }: FixtureRow) =>
             `| ${n} | 2026-01-01 | ${company} | ${role} | 4.5/5 | Applied | ✅ | [${n}](../reports/${n}-x-2026-01-01.md) | |`
         ),
         '',

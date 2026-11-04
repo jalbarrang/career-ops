@@ -49,14 +49,27 @@ if (canImportTs) registerHooks({
   },
 });
 
-const { runPlanner } = canImportTs ? await import("../../src/lib/apply/planner.ts") : { runPlanner: null };
+type PlannerModule = {
+  runPlanner: typeof import("../../src/lib/apply/planner.ts")["runPlanner"];
+};
+const planner = (canImportTs ? await import("../../src/lib/apply/planner.ts") : {}) as Partial<PlannerModule>;
+const runPlanner = planner.runPlanner!;
 
 /** A runPlanner call with everything but the runtime fixed; returns the run and the log lines. */
-async function plan({ cliId, spec, binPath }) {
-  const lines = [];
+async function plan({
+  cliId,
+  spec,
+  binPath,
+}: {
+  cliId: string;
+  /** Only the fields the planner reads; the rest of CliSpec is UI metadata. */
+  spec: { id: string; name: string; args: (prompt: string) => string[] };
+  binPath: string;
+}): Promise<{ run: Awaited<ReturnType<PlannerModule["runPlanner"]>>; lines: string[] }> {
+  const lines: string[] = [];
   const run = await runPlanner({
     cliId,
-    spec,
+    spec: spec as import("../../src/lib/clis.ts").CliSpec,
     binPath,
     prompt: "PROMPT",
     fieldCount: 1,
@@ -75,7 +88,7 @@ test("a runtime argv that contradicts the capability record is refused, not spaw
   const spec = {
     id: "codex",
     name: "Codex",
-    args: (p) => ["exec", "-c", "sandbox_mode=danger-full-access", p],
+    args: (p: string): string[] => ["exec", "-c", "sandbox_mode=danger-full-access", p],
   };
 
   // When: the planner is asked to run it.
@@ -84,6 +97,7 @@ test("a runtime argv that contradicts the capability record is refused, not spaw
   // Then: the promise resolves (no escaping throw) with the refusal spelled out,
   // nothing was spawned, and the caller gets an empty buffer to close on.
   assert.equal(typeof run.refused, "string");
+  assert.ok(run.refused, "a refusal must be reported, not swallowed");
   assert.match(run.refused, /sandbox_mode=danger-full-access/, "the refusal names the offending token");
   assert.equal(run.buf, "");
   assert.equal(run.code, null);

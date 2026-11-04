@@ -56,7 +56,7 @@ const HEADING_LETTER = /^(?:Block\s+([A-Z])(?:[).:]|\s)|([A-Z])[).:])/i;
  * @param {string} h
  * @returns {string}
  */
-export function cleanHeading(h) {
+export function cleanHeading(h: string): string {
   const stripped = h
     .replace(HEADING_PREFIX, "")
     .replace(/\s*\((?:lead|verdict)\)\s*$/i, "")
@@ -69,7 +69,7 @@ export function cleanHeading(h) {
  * @param {string} heading
  * @returns {string | null}
  */
-export function authorLetter(heading) {
+export function authorLetter(heading: string): string | null {
   const match = heading.match(HEADING_LETTER);
   return (match?.[1] ?? match?.[2])?.toUpperCase() ?? null;
 }
@@ -101,7 +101,7 @@ export function authorLetter(heading) {
  * @param {string} heading
  * @returns {boolean}
  */
-export function isVerdictHeading(heading) {
+export function isVerdictHeading(heading: string): boolean {
   if (/\((?:lead|verdict)\)\s*$/i.test(heading.trim())) return true;
   return /^verdict$/i.test(cleanHeading(heading));
 }
@@ -113,7 +113,7 @@ export const APPLY_LINE = 4.0;
  * @param {unknown} score
  * @returns {string | null} "Recommended" | "Below the apply line" | null
  */
-export function applyLineLabel(score) {
+export function applyLineLabel(score: unknown): string | null {
   if (score == null || score === "") return null;
   const n = typeof score === "number" ? score : Number(String(score).match(/(\d+(?:\.\d+)?)/)?.[1]);
   if (!Number.isFinite(n)) return null;
@@ -128,7 +128,7 @@ export function applyLineLabel(score) {
  * @param {{ score?: unknown, legitimacy?: unknown }} opts
  * @returns {boolean}
  */
-export function applyCtaQuiet(opts) {
+export function applyCtaQuiet(opts: { score?: unknown; legitimacy?: unknown } = {}): boolean {
   if (applyLineLabel(opts?.score) === "Below the apply line") return true;
   const s = String(opts?.legitimacy ?? "").toLowerCase();
   if (s.includes("caution") || s.includes("precau") || s.includes("caut")) return true;
@@ -142,7 +142,7 @@ export function applyCtaQuiet(opts) {
  * @param {{ letter?: string | null, heading?: string }} section
  * @returns {boolean}
  */
-export function isLeadSection(section) {
+export function isLeadSection(section: { letter?: string | null; heading?: string } | null | undefined): boolean {
   if (section?.letter === "B") return true;
   return /\b(cv match|match with cv)\b/i.test(cleanHeading(section?.heading ?? ""));
 }
@@ -152,7 +152,7 @@ export function isLeadSection(section) {
  * @param {string} md
  * @returns {string}
  */
-export function firstProseParagraph(md) {
+export function firstProseParagraph(md: unknown): string {
   const withoutTables = String(md ?? "")
     .split("\n")
     .map((l) => (/^\s*\|/.test(l) ? "" : l))
@@ -171,7 +171,7 @@ export function firstProseParagraph(md) {
  * @param {{ report?: string, intro?: string, verdictContent?: string }} opts
  * @returns {string}
  */
-export function verdictReason(opts) {
+export function verdictReason(opts: { report?: string; intro?: string; verdictContent?: string } = {}): string {
   const fromVerdict = firstProseParagraph(opts?.verdictContent ?? "");
   if (fromVerdict) return fromVerdict;
   const fromIntro = firstProseParagraph(opts?.intro ?? "");
@@ -190,13 +190,17 @@ export function verdictReason(opts) {
  * @param {string} body
  * @returns {{ intro: string, sections: Section[] }}
  */
-export function splitSections(body) {
-  /** @type {string[]} */
-  const intro = [];
-  /** @type {Section[]} */
-  const sections = [];
-  /** @type {{ heading: string, letter: string | null, lines: string[] } | null} */
-  let cur = null;
+/** One `## ` block. */
+export interface ReportSection {
+  heading: string;
+  letter: string | null;
+  content: string;
+}
+
+export function splitSections(body: string): { intro: string; sections: ReportSection[] } {
+  const intro: string[] = [];
+  const sections: ReportSection[] = [];
+  let cur: { heading: string; letter: string | null; lines: string[] } | null = null;
   for (const line of body.split("\n")) {
     const h = line.match(/^##\s+(.*)$/);
     if (h) {

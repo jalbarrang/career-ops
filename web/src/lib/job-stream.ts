@@ -3,6 +3,28 @@
  * @typedef {{ status: "done", tokens?: number, costUsd?: number } | { status: "error", message: string }} JobCompletion
  */
 
+/** A non-terminal event forwarded to the progress callback. */
+export type JobProgress =
+  | { type: "text"; text: string }
+  | { type: "tool"; name: string }
+  | { type: "status"; label: string };
+
+/** How a run ended: the server's own completion record, or why it did not. */
+export type JobCompletion =
+  | { status: "done"; tokens?: number; costUsd?: number }
+  | { status: "error"; message: string };
+
+/** One NDJSON event, as far as this reader reads it. */
+interface RawJobEvent {
+  type?: unknown;
+  text?: unknown;
+  name?: unknown;
+  label?: unknown;
+  msg?: unknown;
+  tokens?: unknown;
+  costUsd?: unknown;
+}
+
 /**
  * Read the /api/run NDJSON protocol. A closed connection is not proof that the
  * worker saved its report or rendered its PDF: only the server's `done` event is.
@@ -11,18 +33,20 @@
  * @param {(event: JobProgress) => void} onProgress
  * @returns {Promise<JobCompletion>}
  */
-export async function readJobStream(stream, onProgress) {
+export async function readJobStream(
+  stream: ReadableStream<Uint8Array>,
+  onProgress: (event: JobProgress) => void,
+): Promise<JobCompletion> {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let ended = false;
 
-  /** @param {string} line @returns {JobCompletion | null} */
-  const consume = (line) => {
+  const consume = (line: string): JobCompletion | null => {
     if (!line.trim()) return null;
-    let event;
+    let event: RawJobEvent | null;
     try {
-      event = JSON.parse(line);
+      event = JSON.parse(line) as RawJobEvent | null;
     } catch {
       return { status: "error", message: "Invalid response from the local server. Check the pipeline before retrying." };
     }
@@ -36,9 +60,9 @@ export async function readJobStream(stream, onProgress) {
         ...(typeof event.costUsd === "number" ? { costUsd: event.costUsd } : {}),
       };
     }
-    if (event?.type === "text" && typeof event.text === "string") onProgress(event);
-    else if (event?.type === "tool" && typeof event.name === "string") onProgress(event);
-    else if (event?.type === "status" && typeof event.label === "string") onProgress(event);
+    if (event?.type === "text" && typeof event.text === "string") onProgress({ type: "text", text: event.text });
+    else if (event?.type === "tool" && typeof event.name === "string") onProgress({ type: "tool", name: event.name });
+    else if (event?.type === "status" && typeof event.label === "string") onProgress({ type: "status", label: event.label });
     // Keepalives and future non-terminal events do not confirm completion.
     return null;
   };

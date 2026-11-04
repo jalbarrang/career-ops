@@ -14,7 +14,6 @@
     "dev": "bun server.ts dev",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "bun server.ts start",
     "typecheck": "bunx svelte-check --tsconfig ./tsconfig.json",
     "test": "bun test",
     "check:i18n": "inlang check --project ./project.inlang",

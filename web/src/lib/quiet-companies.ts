@@ -19,44 +19,59 @@
 // The blacklist row is likewise passed through as text to copy, never applied:
 // AGENTS.md describes data/blacklist.md as opt-in and never auto-populated.
 
-/**
- * @typedef {{company: string, role: string|null, days: number, lastDate: string|null,
- *            trackerNums: number[], reason: string|null, blacklistRow: string|null}} QuietCompany
- * @typedef {{available: boolean, reason: string|null, companies: QuietCompany[],
- *            checked: number, courtesyDays: number|null, disclaimer: string|null,
- *            warnings: string[]}} QuietModel
- */
+/** One company the watchlist flags as silent. */
+export interface QuietCompany {
+  company: string;
+  role: string | null;
+  days: number;
+  lastDate: string | null;
+  trackerNums: number[];
+  reason: string | null;
+  blacklistRow: string | null;
+}
+
+/** What the panel renders. */
+export interface QuietModel {
+  available: boolean;
+  reason: string | null;
+  companies: QuietCompany[];
+  checked: number;
+  courtesyDays: number | null;
+  disclaimer: string | null;
+  warnings: string[];
+}
 
 /**
  * @param {{available?: boolean, reason?: string|null, data?: object|null}|null|undefined} payload
  * @param {number} [limit]
  * @returns {QuietModel}
  */
-export function quietModel(payload, limit = 10) {
-  const empty = {
+export function quietModel(payload: unknown, limit: number = 10): QuietModel {
+  const envelope = payload as { available?: boolean; reason?: unknown; data?: unknown } | null | undefined;
+  const empty: QuietModel = {
     available: false,
-    reason: typeof payload?.reason === "string" ? payload.reason : "unavailable",
+    reason: typeof envelope?.reason === "string" ? envelope.reason : "unavailable",
     companies: [],
     checked: 0,
     courtesyDays: null,
     disclaimer: null,
     warnings: [],
   };
-  if (!payload?.available || !payload.data) return empty;
+  if (!envelope?.available || !envelope.data) return empty;
 
-  const d = payload.data;
-  const meta = d.metadata ?? {};
-  const flags = Array.isArray(d.flags) ? d.flags : [];
+  const d = envelope.data as Record<string, unknown>;
+  const meta = (d.metadata ?? {}) as Record<string, unknown>;
+  const flags: Array<Record<string, unknown>> = Array.isArray(d.flags) ? (d.flags as Array<Record<string, unknown>>) : [];
 
-  const companies = flags
-    .filter((f) => f && typeof f.company === "string" && f.company.trim() !== "")
+  const companies: QuietCompany[] = flags
+    .filter((f) => f && typeof f.company === "string" && (f.company as string).trim() !== "")
     // Longest silence first: the ordering is the only prioritisation this panel
     // offers, and the core does not guarantee one.
     .slice()
     .sort((a, b) => num(b.daysSinceLastInterview) - num(a.daysSinceLastInterview))
     .slice(0, Math.max(1, Math.trunc(limit)))
-    .map((f) => ({
-      company: f.company,
+    .map((f): QuietCompany => ({
+      company: String(f.company),
       role: typeof f.role === "string" && f.role.trim() !== "" ? f.role : null,
       days: num(f.daysSinceLastInterview),
       lastDate: typeof f.lastInterviewDate === "string" ? f.lastInterviewDate : null,
@@ -70,11 +85,11 @@ export function quietModel(payload, limit = 10) {
     reason: null,
     companies,
     checked: num(meta.companiesChecked),
-    courtesyDays: Number.isFinite(meta.courtesyDays) ? meta.courtesyDays : null,
+    courtesyDays: Number.isFinite(meta.courtesyDays) ? (meta.courtesyDays as number) : null,
     // Carried, never inlined as a constant: if the core ever rewords or removes
     // it, the panel must follow rather than keep asserting the old sentence.
     disclaimer: typeof meta.disclaimer === "string" ? meta.disclaimer : null,
-    warnings: Array.isArray(d.warnings) ? d.warnings.filter((w) => typeof w === "string") : [],
+    warnings: Array.isArray(d.warnings) ? (d.warnings as unknown[]).filter((w): w is string => typeof w === "string") : [],
   };
 }
 
@@ -87,10 +102,11 @@ export function quietModel(payload, limit = 10) {
  * @param {QuietModel} model
  * @returns {boolean}
  */
-export function checkRan(model) {
+export function checkRan(model: QuietModel): boolean {
   return model.available;
 }
 
-function num(v) {
+function num(v: unknown): number {
+  if (typeof v !== "number") return 0;
   return Number.isFinite(v) && v > 0 ? Math.trunc(v) : 0;
 }

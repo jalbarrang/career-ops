@@ -128,12 +128,14 @@ test("a code fence inside a string value survives", () => {
   // prefilled application form. Only a fence that WRAPS the message is stripped.
   const answer = "Here is my code:\n```js\nfoo()\n```\nThanks";
   const { obj, truncated } = extractJsonObject("```json\n" + JSON.stringify({ answer }) + "\n```");
+  assert.ok(obj, "a fenced object must parse");
   assert.equal(obj.answer, answer, "the fence strip reached inside a string value");
   assert.equal(truncated, false);
 });
 
 test("a bare fence in a value survives when the message has no wrapper", () => {
   const { obj } = extractJsonObject(JSON.stringify({ b: "x ``` y" }));
+  assert.ok(obj);
   assert.equal(obj.b, "x ``` y");
 });
 
@@ -142,6 +144,6 @@ test("prose around the object still works, fenced or not", () => {
   // does not need to be: the scanner seeks the first `{`, and a trailing fence
   // sits past the matching `}`. Asserted so a future 'simplification' back to a
   // global strip has to fail something.
-  assert.equal(extractJsonObject('Sure:\n```json\n{"a":2}\n```').obj.a, 2);
-  assert.equal(extractJsonObject('{"a":3}\nhope that helps').obj.a, 3);
+  assert.equal(extractJsonObject('Sure:\n```json\n{"a":2}\n```').obj?.a, 2);
+  assert.equal(extractJsonObject('{"a":3}\nhope that helps').obj?.a, 3);
 });

@@ -29,13 +29,32 @@ register(`data:text/javascript,${encodeURIComponent(loader)}`, pathToFileURL(web
 const { POST: updateProfile } = await import("../../src/routes/api/profile/+server.ts");
 const { POST: updateCadence } = await import("../../src/routes/api/followups/cadence/+server.ts");
 
-const routes = [
+const routes: RouteFixture[] = [
   { name: "profile", post: updateProfile, patch: { name: "Updated Fixture Candidate" } },
   { name: "followups/cadence", post: updateCadence, patch: { applied_first_days: 9 } },
 ];
 const template = "candidate:\n  full_name: Template Candidate\n  location: Template City\ncompensation:\n  currency: USD\n";
 
-async function withFixture(source, fn) {
+/** One route under test, plus the patch that proves the write landed. */
+interface RouteFixture {
+  name: string;
+  post: (event: { request: Request }) => Promise<Response>;
+  /** The one field each route's patch is expected to change. */
+  patch: { name?: string; applied_first_days?: number };
+}
+
+/** The parts of config/profile.yml these assertions index into. Both sequences
+ *  exist in every fixture the merge cases use, so they are not optional here. */
+interface ProfileDoc {
+  candidate: { full_name?: string; email?: string };
+  compensation?: { target_range?: string };
+  followup_cadence: { applied_first_days?: number; applied_max_followups?: number };
+}
+
+async function withFixture(
+  source: string | undefined,
+  fn: (paths: { config: string; file: string }) => Promise<void>,
+): Promise<void> {
   const root = mkdtempSync(path.join(tmpdir(), "career-ops-profile-shape-"));
   const config = path.join(root, "config");
   const file = path.join(config, "profile.yml");
@@ -55,7 +74,7 @@ async function withFixture(source, fn) {
 
 // SvelteKit's +server.ts handlers take a request event, not a bare Request, so
 // this helper builds the event both routes are called with.
-function request(route) {
+function request(route: RouteFixture): { request: Request } {
   return {
     request: new Request(`http://fixture.invalid/api/${route.name}`, {
       method: "POST",
@@ -66,7 +85,7 @@ function request(route) {
 }
 
 for (const route of routes) {
-  for (const [shape, source] of [
+  const shapes: Array<[string, string]> = [
     ["list", "- candidate:\n    full_name: Fixture Candidate\n  compensation:\n    target_range: 100-120\n"],
     ["text scalar", "Fixture candidate notes that must survive\n"],
     ["number scalar", "42\n"],
@@ -75,7 +94,8 @@ for (const route of routes) {
     ["null", "null\n"],
     ["empty document", "# Existing profile to repair\n"],
     ["malformed YAML", "candidate: [broken\n"],
-  ]) {
+  ];
+  for (const [shape, source] of shapes) {
     test(`${route.name} rejects an existing ${shape} without writing or backing it up`, async () => {
       await withFixture(source, async ({ config, file }) => {
         const beforeFiles = readdirSync(config).sort();
@@ -94,7 +114,7 @@ for (const route of routes) {
       const response = await route.post(request(route));
       assert.equal(response.status, 200);
       assert.equal((await response.json()).ok, true);
-      const expected = yaml.load(source);
+      const expected = yaml.load(source) as ProfileDoc;
       if (route.name === "profile") expected.candidate.full_name = route.patch.name;
       else expected.followup_cadence.applied_first_days = route.patch.applied_first_days;
       assert.deepEqual(yaml.load(readFileSync(file, "utf8")), expected);
@@ -110,7 +130,7 @@ for (const route of routes) {
       const response = await route.post(request(route));
       assert.equal(response.status, 200);
       assert.equal((await response.json()).ok, true);
-      const expected = yaml.load(template);
+      const expected = yaml.load(template) as ProfileDoc;
       if (route.name === "profile") expected.candidate.full_name = route.patch.name;
       else expected.followup_cadence = route.patch;
       assert.deepEqual(yaml.load(readFileSync(file, "utf8")), expected);

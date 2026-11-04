@@ -14,9 +14,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { isSubmitControl, snapshotLabel, SUBMIT_RX, IN_FORM_RX, CJK_SUBMIT_RX } from "../../src/lib/apply/submit-guard.ts";
+import type { ElementFacts } from "../../src/lib/apply/submit-guard.ts";
 
 /** The facts drive.ts reads, with the defaults of an ordinary in-form control. */
-const el = (facts) => ({ tag: "button", type: "button", inForm: true, ...facts });
+const el = (facts: ElementFacts = {}): ElementFacts => ({ tag: "button", type: "button", inForm: true, ...facts });
 
 test("isSubmitControl: an input that submits by type is refused", () => {
   // Given the plainest submit control there is

@@ -19,10 +19,36 @@
  *   postingsDroppedNoDate?: number}>} results Parsed --json objects of the sources that finished.
  * @param {number} offerCount Offers actually surfaced — the fallback when no source reports postingsKept.
  */
-export function mergeScanResults(results, offerCount) {
-  const sum = (key) => results.reduce((n, r) => n + (typeof r[key] === "number" ? r[key] : 0), 0);
-  const anyNumber = (key) => results.some((r) => typeof r[key] === "number");
-  const datasetStatus = {};
+/** One source's `--json` receipt, as far as this merge reads it. */
+export interface ScanSourceResult {
+  companiesScanned?: number;
+  unreachableBoards?: number;
+  postingsKept?: number;
+  companiesAvailable?: number;
+  capHit?: boolean;
+  datasetStatus?: Record<string, string>;
+  postingsDroppedNoDate?: number;
+  [key: string]: unknown;
+}
+
+/** The merged counters the route reports. */
+export interface MergedScanResult {
+  companiesScanned: number;
+  unreachable: number;
+  matches: number;
+  companiesAvailable?: number;
+  capHit: boolean;
+  datasetStatus: Record<string, string>;
+  postingsDroppedNoDate?: number;
+}
+
+export function mergeScanResults(results: readonly ScanSourceResult[], offerCount: number): MergedScanResult {
+  const sum = (key: string): number => results.reduce((n, r) => {
+    const value = r[key];
+    return n + (typeof value === "number" ? value : 0);
+  }, 0);
+  const anyNumber = (key: string): boolean => results.some((r) => typeof r[key] === "number");
+  const datasetStatus: Record<string, string> = {};
   for (const r of results) Object.assign(datasetStatus, r.datasetStatus || {});
   return {
     companiesScanned: sum("companiesScanned"),
@@ -35,7 +61,7 @@ export function mergeScanResults(results, offerCount) {
   };
 }
 
-function joinLabels(labels) {
+function joinLabels(labels: readonly string[]): string {
   if (labels.length <= 1) return labels.join("");
   return `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
 }
@@ -49,7 +75,7 @@ function joinLabels(labels) {
  * @param {string[]} labels Display names of the timed-out sources (e.g. ["Workday"]).
  * @param {number} deadlineSec The deadline they missed, in seconds.
  */
-export function timedOutMessage(labels, deadlineSec) {
+export function timedOutMessage(labels: readonly string[], deadlineSec: number): string {
   const names = joinLabels(labels);
   const plural = labels.length > 1;
   return (

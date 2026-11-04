@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { getCareerOpsRoot } from "../path-resolver.ts";
-import { isWildcardAddress, planNextRun } from "../web/src/lib/bind-host.ts";
+import { isWildcardAddress, planDevRun } from "../web/src/lib/bind-host.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -114,7 +114,7 @@ const dataRoot = getCareerOpsRoot();
 console.log("\x1b[32m✓\x1b[0m Data root resolved: " + dataRoot);
 
 // Plan the run's bind and resolve it from CAREER_OPS_WEB_ALLOWED_HOSTS
-const plan = planNextRun({
+const plan = planDevRun({
   command: "dev",
   extra: host !== "127.0.0.1" ? ["-H", host, "-p", String(port)] : ["-p", String(port)],
   envValue: process.env.CAREER_OPS_WEB_ALLOWED_HOSTS,

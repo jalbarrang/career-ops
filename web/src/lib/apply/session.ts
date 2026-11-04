@@ -1,4 +1,4 @@
-import { chromium, type Browser, type BrowserContext, type Page, type Frame, type Response } from "playwright-core";
+import { chromium, type Browser, type BrowserContext, type Frame, type LaunchOptions, type Page, type Response } from "playwright-core";
 import { extractForm, type ApplyField, type ExtractedForm } from "./extract";
 import { parseGreenhouse, fetchGreenhouseSchema } from "./greenhouse";
 import { statusBlock, dismissConsent, tryApplyTrigger, dropNewTabs, classifyEmpty, captchaWarning, multiStepInfo, verifyFill, type ApplyIssue } from "./diagnose";
@@ -136,17 +136,17 @@ const SESSIONS: Map<string, Session> = (globalThis.__coApplySessions ??= new Map
  * options is the root checkout the web writes into, so the launch object and
  * the script resolution come from one place rather than a bare relative path.
  */
-export const HEADED_APPLY_LAUNCH = {
+export const HEADED_APPLY_LAUNCH: LaunchOptions = {
   channel: "chrome",
   headless: false,
   args: ["--window-position=-3200,-3200", "--window-size=1280,940"],
-} as const;
+};
 
 /** The bundled-Chromium fallback when system Chrome is absent. */
-export const BUNDLED_HEADED_LAUNCH = {
+export const BUNDLED_HEADED_LAUNCH: LaunchOptions = {
   headless: false,
   args: ["--window-position=-3200,-3200", "--window-size=1280,940"],
-} as const;
+};
 
 async function headedBrowser(): Promise<Browser> {
   const b = globalThis.__coHeadedBrowser;

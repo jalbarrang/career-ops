@@ -38,11 +38,11 @@ const WRITERS = ["appendToPipeline", "appendToScanHistory"];
 //   offers.length && appendToScanHistory(...)
 // The import line names the writers without calling them, so it is skipped
 // explicitly rather than relying on the `(` to exclude it.
-const callRe = (name) => new RegExp(`\\b${name}\\s*\\(`, "g");
+const callRe = (name: string): RegExp => new RegExp(`\\b${name}\\s*\\(`, "g");
 
 /** @returns {{line: number, text: string, awaited: boolean}[]} every call to `name`. */
-function callsTo(name) {
-  const found = [];
+function callsTo(name: string): Array<{ line: number; text: string; awaited: boolean }> {
+  const found: Array<{ line: number; text: string; awaited: boolean }> = [];
   src.split("\n").forEach((text, i) => {
     if (/^\s*import\b/.test(text)) return;
     for (const m of text.matchAll(callRe(name))) {
@@ -81,7 +81,7 @@ test("every core writer call is awaited before the success response", () => {
 test("extractor flags non-statement call forms, not just bare statements", () => {
   // Guard the guard: an anchored pattern would score all four of these as
   // "no calls found" and pass. Exercises the same predicate the sweep uses.
-  const awaited = (text) => {
+  const awaited = (text: string): boolean => {
     const m = [...text.matchAll(callRe("appendToScanHistory"))][0];
     assert.ok(m, `pattern did not match a call in: ${text}`);
     return /\bawait\s*$/.test(text.slice(0, m.index));

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { normalizeTextKey } from "./normalize-text-key.ts";
 
-// Cache identity for name-resolved company logos (see app/api/logo/route.ts).
+// Cache identity for name-resolved company logos (see routes/api/logo/+server.ts).
 //
 // The logo cache is written once per key and never revalidated — misses are
 // stored as an empty sentinel precisely so a dead company is never refetched.
@@ -13,7 +13,7 @@ import { normalizeTextKey } from "./normalize-text-key.ts";
 //  2. It must not collide. Two different companies sharing a key means one of
 //     them wears the other's logo permanently, with no expiry to correct it.
 
-/** Bump whenever `companyDomains()` in app/api/logo/route.ts changes which
+/** Bump whenever `companyDomains()` in routes/api/logo/+server.ts changes which
  *  domains it tries, or in what order — OR whenever the key derivation itself
  *  changes, per requirement 1 above: an unchanged version leaves any entry
  *  poisoned under the old derivation permanently reachable, with nothing to
@@ -52,11 +52,11 @@ export const COMPANY_KEY_VERSION = "v4";
  *  Extension blocks, astral-plane code points) — cutting the pair leaves a
  *  lone surrogate in the key, an invalid UTF-16 string. Spreading a string
  *  iterates by code point, so the pair is always kept or dropped whole. */
-function truncateCodePoints(s, n) {
+function truncateCodePoints(s: string, n: number): string {
   return [...s].slice(0, n).join("");
 }
 
-export function companyCacheKey(company) {
+export function companyCacheKey(company: unknown): string | null {
   const normalized = normalizeTextKey(company);
   if (!normalized) return null;
   // The digest covers the FULL normalized name (never truncated), so

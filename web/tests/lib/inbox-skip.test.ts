@@ -69,7 +69,7 @@ const SKIPPED_FIXTURE = [
   "",
 ].join("\n");
 
-function linesOf(text) {
+function linesOf(text: string): string[] {
   return text.split("\n");
 }
 

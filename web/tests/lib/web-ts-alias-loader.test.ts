@@ -35,7 +35,9 @@ test("bare and relative specifiers still resolve", async () => {
 
 test("an unresolvable @/ specifier still reports the alias it could not find", async () => {
   await assert.rejects(
-    () => import("@/lib/this-module-does-not-exist"),
+    // A variable specifier: a literal one would be a compile-time resolution
+    // error, which is a different failure from the runtime one under test.
+    () => import(String("@/lib/this-module-does-not-exist")),
     /@\//,
     "a miss must name the alias, not report a bare ENOENT",
   );

@@ -33,14 +33,41 @@ const ENTITY_SECTIONS = new Set(["experiences", "projects", "education"]);
 
 const FOUND = /^Found (\d+) review candidates in (.+?)\.?\s*$/;
 
-/**
- * @typedef {object} Candidate
- * @property {string} section   one of SECTIONS
- * @property {string | null} parent  the entity label a fact belongs to, if any
- * @property {boolean} isHeading     true for an entity-heading candidate
- * @property {string} text      what the row shows
- * @property {string} label     the CLI's own label prefix, verbatim
- */
+/** One review candidate the importer printed. */
+export interface Candidate {
+  /** One of SECTIONS. */
+  section: string;
+  /** The entity label a fact belongs to, if any. */
+  parent: string | null;
+  /** True for an entity-heading candidate. */
+  isHeading: boolean;
+  /** What the row shows. */
+  text: string;
+  /** The CLI's own label prefix, verbatim. */
+  label: string;
+}
+
+/** One review prompt block: a flat fact, or an entry heading plus its facts. */
+export interface ImportBlock {
+  key: string;
+  kind: "flat" | "entry";
+  section: string;
+  headingIndices: number[];
+  ownerIndex: number;
+  factIndices: number[];
+  labels: string[];
+}
+
+export type ImportAction = "approve" | "skip" | "edit";
+
+/** What the user chose for one candidate. */
+export interface ImportDecision {
+  action: ImportAction;
+  text?: string;
+}
+
+/** Decisions are sparse: an index with no answer is `undefined`. */
+export type ImportDecisions = Array<ImportDecision | undefined>;
 
 /**
  * Parse `bun career-profile.ts import` (preview mode) stdout.
@@ -58,7 +85,7 @@ const FOUND = /^Found (\d+) review candidates in (.+?)\.?\s*$/;
  * @param {string} stdout
  * @returns {{ candidates: Candidate[], total: number, totalMatches: boolean, source: string, parsed: boolean }}
  */
-export function parseImportPreview(stdout = "") {
+export function parseImportPreview(stdout: string = ""): { candidates: Candidate[]; total: number; totalMatches: boolean; source: string; parsed: boolean } {
   const lines = String(stdout).replace(/\r\n?/g, "\n").split("\n");
 
   let source = "";
@@ -74,10 +101,9 @@ export function parseImportPreview(stdout = "") {
     }
   }
 
-  /** @type {Candidate[]} */
-  const candidates = [];
-  /** @type {Map<string, string>} section -> current entity label */
-  const parents = new Map();
+  const candidates: Candidate[] = [];
+  /** section -> current entity label */
+  const parents = new Map<string, string>();
 
   for (const line of lines) {
     if (!line.startsWith("- ")) continue;
@@ -127,13 +153,15 @@ export function parseImportPreview(stdout = "") {
  * @param {({ action: "approve" | "skip" | "edit", text?: string } | undefined)[]} decisions
  * @returns {{ stdin: string, prompted: number[], swallowed: number[] }}
  */
-export function buildReviewInput(candidates = [], decisions = []) {
-  const prompted = [];
-  const swallowed = [];
-  /** @type {string[]} */
-  const lines = [];
+export function buildReviewInput(
+  candidates: readonly Candidate[] = [],
+  decisions: ImportDecisions = [],
+): { stdin: string; prompted: number[]; swallowed: number[] } {
+  const prompted: number[] = [];
+  const swallowed: number[] = [];
+  const lines: string[] = [];
 
-  const push = (decision) => {
+  const push = (decision: ImportDecision | undefined): void => {
     const action = decision?.action ?? "skip";
     if (action === "edit") {
       const text = String(decision?.text ?? "").trim();
@@ -178,11 +206,9 @@ export function buildReviewInput(candidates = [], decisions = []) {
   return { stdin: lines.length > 0 ? `${lines.join("\n")}\n` : "", prompted, swallowed };
 }
 
-export function groupImportBlocks(candidates = []) {
-  /** @type {ImportBlock[]} */
-  const blocks = [];
-  /** @type {ImportBlock | null} */
-  let current = null;
+export function groupImportBlocks(candidates: readonly Candidate[] = []): ImportBlock[] {
+  const blocks: ImportBlock[] = [];
+  let current: ImportBlock | null = null;
 
   candidates.forEach((candidate, index) => {
     if (!candidate.isHeading) {
@@ -254,15 +280,15 @@ export function groupImportBlocks(candidates = []) {
  * @param {string[]} [labels]
  * @returns {{ company: string, role: string, dates: string }}
  */
-export function suggestEntryFields(labels = []) {
-  const clean = (value) => String(value ?? "").trim();
-  const isDates = (value) => /\b(?:19|20)\d{2}\b/.test(value) && !/[.;]$/.test(value) && value.length <= 40;
+export function suggestEntryFields(labels: readonly string[] = []): { company: string; role: string; dates: string } {
+  const clean = (value: unknown): string => String(value ?? "").trim();
+  const isDates = (value: string): boolean => /\b(?:19|20)\d{2}\b/.test(value) && !/[.;]$/.test(value) && value.length <= 40;
   // A comma-separated list ("Clients: SoftPatagonia, Valueinnova LLC") is a
   // sentence fragment, not a company name — treating it as one would write a
   // junk company into the profile.
-  const isProse = (value) => value.length > 60 || /[.;]$/.test(value) || /,\s/.test(value);
+  const isProse = (value: string): boolean => value.length > 60 || /[.;]$/.test(value) || /,\s/.test(value);
 
-  const named = [];
+  const named: string[] = [];
   let dates = "";
   for (const label of labels.map(clean).filter(Boolean)) {
     if (isDates(label)) {
@@ -292,9 +318,9 @@ export function suggestEntryFields(labels = []) {
  * @param {({ action: "approve" | "skip" | "edit", text?: string } | undefined)[]} decisions
  * @returns {({ action: "approve" | "skip" | "edit", text?: string } | undefined)[]}
  */
-export function applyBlockDecision(block, action, decisions = []) {
+export function applyBlockDecision(block: ImportBlock, action: "approve" | "skip", decisions: ImportDecisions = []): ImportDecisions {
   const next = [...decisions];
-  const set = (index, decision) => {
+  const set = (index: number, decision: ImportDecision): void => {
     next[index] = decision;
   };
 
@@ -314,7 +340,7 @@ export function applyBlockDecision(block, action, decisions = []) {
  * @param {string} stdout
  * @returns {string}
  */
-export function summarizeImportRun(stdout = "") {
+export function summarizeImportRun(stdout: string = ""): string {
   const lines = String(stdout)
     .replace(/\r\n?/g, "\n")
     .split("\n")

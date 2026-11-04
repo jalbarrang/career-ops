@@ -19,7 +19,7 @@
  * @param {string} opener - The envelope opener, e.g. "<<offer:".
  * @returns {number} Number of trailing chars to keep buffered (0 = flush all).
  */
-export function pendingOpenerLen(buf, opener) {
+export function pendingOpenerLen(buf: string, opener: string): number {
   const max = Math.min(buf.length, opener.length - 1);
   for (let k = max; k > 0; k--) {
     if (buf.endsWith(opener.slice(0, k))) return k;

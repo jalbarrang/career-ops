@@ -36,7 +36,7 @@ const src = readFileSync(CLIS_TS, "utf8");
  *  thing this whole file exists to distrust. `[^=]*` skips the annotation, so
  *  `CliSpec[]`, `Array<CliSpec>` and `readonly CliSpec[]` all land on the
  *  literal itself. (Caught by career-ops-maintainer in review.) */
-function knownBody(text) {
+function knownBody(text: string): string {
   return text.match(/export const KNOWN[^=]*=\s*\[([\s\S]*?)\n\];/)?.[1] ?? "";
 }
 
