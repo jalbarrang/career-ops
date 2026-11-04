@@ -3,48 +3,35 @@ name: Tests
 on:
   pull_request:
     branches: [main]
-  # The merge queue builds a temporary merge commit per group and needs the
-  # same required checks to report on it; without this trigger every queued
-  # PR would wait forever on `test (...)`.
-  merge_group:
 
-# merge_group runs carry the base repo's GITHUB_TOKEN (write-capable by
-# default, unlike a fork pull_request) while executing code that came from a
-# fork. Nothing in this workflow needs to write, and no other secret is
-# referenced here, so the token is pinned read-only and never persisted.
+# Nothing here writes and no secret is referenced, so the token is pinned
+# read-only and never persisted.
 permissions:
   contents: read
 
-# A force-push supersedes the running matrix; cancel it instead of letting
-# stale legs occupy runners (3 jobs per push at this repo's PR volume).
+# A force-push supersedes the running job; cancel it instead of leaving a
+# stale runner occupied.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   test:
-    strategy:
-      # One OS failing must not cancel the evidence from the others —
-      # a platform-specific failure is exactly what this matrix exists to isolate.
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    # Linux only. The suite is kept portable (several tests carry
+    # windows-latest regression notes), but this is a single-maintainer fork:
+    # both other platforms ran the same code for 3x the runner time, and the
+    # macOS leg — the slowest at about 11 minutes — is the one a local run
+    # already covers. Add an OS here when a platform bug actually escapes.
+    runs-on: ubuntu-latest
     # Without a limit a hung job holds its runner for GitHub's default of six
     # hours. test-all.ts kills a discovered suite that runs past its budget,
     # but its inline sections and the install steps have no limit of their
-    # own. The slowest leg (macOS) takes about 11 minutes.
+    # own.
     timeout-minutes: 30
     steps:
-      # The repo is committed with LF; Windows runners default to autocrlf,
-      # which would rewrite every text file on checkout and make regexes that
-      # rely on `.` (no \r) fail in ways the other platforms never see.
-      - name: Force LF checkout on Windows
-        if: runner.os == 'Windows'
-        run: git config --global core.autocrlf false
       - uses: actions/checkout@v7
         with:
-          # Test code (fork code, in a merge_group) must not find a token in .git/config.
+          # PR code must not find a token in .git/config.
           persist-credentials: false
       # The declared floor (packages/core/src/kernel/bun-floor.ts, package.json engines). Exact on
       # purpose: a bare '1' resolves to the newest 1.x and tests nothing.
