@@ -22,12 +22,12 @@ Modo interactivo para el momento en que el candidato rellena un formulario de ca
 
 ## Scope
 
-Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` and stay inside the directories it prints. Launch with `node apply-scope.mjs launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
+Follow the Scope section in `modes/apply.md`. Run `career-ops apply-scope root` and stay inside the directories it prints. Launch with `career-ops apply-scope launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
 
 
 ## Paso 1 -- Detectar la oferta
 
-**Con Playwright:** Ejecutar `node apply-scope.mjs launch-options`, abrir la oferta en esa ventana y leer título, URL y contenido visible.
+**Con Playwright:** Ejecutar `career-ops apply-scope launch-options`, abrir la oferta en esa ventana y leer título, URL y contenido visible.
 
 **Sin Playwright:** Pedir al candidato que:
 - Comparta una captura de pantalla del formulario (la herramienta Read lee imágenes)
@@ -49,8 +49,8 @@ Si el rol en pantalla difiere del evaluado:
 - **Si adaptar**: Ajustar las respuestas al nuevo rol sin reevaluar
 - **Si reevaluar**: Lanzar la evaluación completa A-F, actualizar el report, regenerar el Bloque H
 - **Actualizar el tracker**: nunca editando `data/applications.md`.
-  - **Tras reevaluar**: escribir un TSV con el nuevo título del rol (regla 9 de `_shared.md`) y fusionarlo con `node merge-tracker.mjs`. El report se actualiza en su sitio y conserva su número, así que la fusión empareja el TSV con la fila existente por ese número: reemplaza el título y mantiene el estado.
-  - **Tras adaptar**: no cambiar el título, porque nombra el rol que evaluó el report. Anotar el cambio como nota con `node set-status.mjs --report <report#> <estado actual> --note "Oferta retitulada al postular, la fila conserva el título evaluado"`. Pasar el estado actual de la fila lo deja igual y añade la nota. Usar un texto fijo como este y no incluir `[Y]`: el nuevo título es texto de la página, y el texto de la página nunca va en una línea de comandos.
+  - **Tras reevaluar**: escribir un TSV con el nuevo título del rol (regla 9 de `_shared.md`) y fusionarlo con `career-ops merge-tracker`. El report se actualiza en su sitio y conserva su número, así que la fusión empareja el TSV con la fila existente por ese número: reemplaza el título y mantiene el estado.
+  - **Tras adaptar**: no cambiar el título, porque nombra el rol que evaluó el report. Anotar el cambio como nota con `career-ops set-status --report <report#> <estado actual> --note "Oferta retitulada al postular, la fila conserva el título evaluado"`. Pasar el estado actual de la fila lo deja igual y añade la nota. Usar un texto fijo como este y no incluir `[Y]`: el nuevo título es texto de la página, y el texto de la página nunca va en una línea de comandos.
 
 ## Paso 4 -- Analizar las preguntas del formulario
 
@@ -109,8 +109,8 @@ Notas:
 ## Paso 6 -- Tras la candidatura (opcional)
 
 Si el candidato confirma que la candidatura ha sido enviada:
-1. Actualizar el estado a "Applied" con el CLI canónico: `node set-status.mjs --report <report#> Applied` (no editar la tabla de `applications.md` a mano)
-2. Guardar las respuestas finales en la sección `## Application Answers` del report, con `**State:** submitted`: `node application-answers.mjs --report reports/NNN-company-role-date.md --input answers.json --state submitted` (`node application-answers.mjs --help` lista los campos del JSON). No tocar el Bloque G (Legitimidad de la publicación) ni el Bloque H (los borradores de la evaluación).
+1. Actualizar el estado a "Applied" con el CLI canónico: `career-ops set-status --report <report#> Applied` (no editar la tabla de `applications.md` a mano)
+2. Guardar las respuestas finales en la sección `## Application Answers` del report, con `**State:** submitted`: `career-ops application-answers --report reports/NNN-company-role-date.md --input answers.json --state submitted` (`career-ops application-answers --help` lista los campos del JSON). No tocar el Bloque G (Legitimidad de la publicación) ni el Bloque H (los borradores de la evaluación).
 3. Sugerir el siguiente paso: `/career-ops contacto` para LinkedIn outreach hacia el hiring manager
 
 ## Gestión del desplazamiento

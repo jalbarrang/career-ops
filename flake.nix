@@ -36,11 +36,10 @@
         pkgs:
         with pkgs; [
 
-          nodejs
           bun
 
           # Pi coding agent host (docs/SUPPORTED_CLIS.md), in the shell so the
-          # integration runs without a global npm install:
+          # integration runs without a global install:
           #   pi            interactive
           #   pi -p "…"     headless worker
           # Taken from `nixpkgs-pi` (see the input comment): the toolchain pin
@@ -60,12 +59,13 @@
       };
 
       devShell.shellHook = pkgs: ''
-        # Pin npm playwright to match nixpkgs browser binaries
+        # Pin the Bun-installed playwright to match nixpkgs browser binaries.
+        # --no-save keeps the checkout's package.json and bun.lock untouched.
         EXPECTED="${pkgs.playwright-driver.version}"
-        CURRENT=$(node -e "try{console.log(require('playwright-core/package.json').version)}catch{}" 2>/dev/null)
+        CURRENT=$(bun -e "try{console.log(require('playwright-core/package.json').version)}catch{}" 2>/dev/null)
         if [ "$CURRENT" != "$EXPECTED" ]; then
           echo "Pinning playwright to $EXPECTED to match Nix-provided browsers..."
-          npm install --no-save "playwright@$EXPECTED" >/dev/null 2>&1
+          bun add --no-save "playwright@$EXPECTED" >/dev/null 2>&1
         fi
       '';
 

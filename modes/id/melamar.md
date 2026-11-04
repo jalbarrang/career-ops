@@ -22,12 +22,12 @@ Mode interaktif untuk saat kandidat mengisi formulir lamaran di browser Playwrig
 
 ## Scope
 
-Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` and stay inside the directories it prints. Launch with `node apply-scope.mjs launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
+Follow the Scope section in `modes/apply.md`. Run `career-ops apply-scope root` and stay inside the directories it prints. Launch with `career-ops apply-scope launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
 
 
 ## Langkah 1 -- Deteksi lowongan
 
-**Dengan Playwright:** Jalankan `node apply-scope.mjs launch-options`, buka lowongan di jendela itu, lalu baca judul, URL, dan konten yang terlihat.
+**Dengan Playwright:** Jalankan `career-ops apply-scope launch-options`, buka lowongan di jendela itu, lalu baca judul, URL, dan konten yang terlihat.
 
 **Tanpa Playwright:** Minta kandidat untuk:
 - Membagikan tangkapan layar formulir (Read tool bisa membaca gambar)
@@ -49,8 +49,8 @@ Jika role di layar berbeda dari yang dievaluasi:
 - **Jika menyesuaikan**: Sesuaikan jawaban dengan role baru tanpa evaluasi ulang
 - **Jika evaluasi ulang**: Jalankan evaluasi lengkap A-F, perbarui report, buat ulang Blok G
 - **Perbarui tracker**: jangan pernah dengan mengedit `data/applications.md`.
-  - **Setelah evaluasi ulang**: tulis TSV dengan jabatan role yang baru (aturan 9 di `_shared.md`) dan gabungkan dengan `node merge-tracker.mjs`. Report diperbarui di tempat dan nomornya tetap, sehingga penggabungan mencocokkan TSV dengan baris yang ada lewat nomor itu: jabatan diganti dan status dipertahankan.
-  - **Setelah menyesuaikan**: biarkan jabatannya, karena itu menamai role yang dievaluasi report. Catat perubahannya sebagai catatan dengan `node set-status.mjs --report <report#> <status saat ini> --note "Lowongan berganti nama saat melamar, baris tetap memakai jabatan yang dievaluasi"`. Memberikan status baris saat ini membuatnya tidak berubah dan menambahkan catatannya. Pakai teks tetap seperti ini dan jangan sertakan `[Y]`: jabatan baru adalah teks dari halaman, dan teks dari halaman tidak pernah masuk ke baris perintah.
+  - **Setelah evaluasi ulang**: tulis TSV dengan jabatan role yang baru (aturan 9 di `_shared.md`) dan gabungkan dengan `career-ops merge-tracker`. Report diperbarui di tempat dan nomornya tetap, sehingga penggabungan mencocokkan TSV dengan baris yang ada lewat nomor itu: jabatan diganti dan status dipertahankan.
+  - **Setelah menyesuaikan**: biarkan jabatannya, karena itu menamai role yang dievaluasi report. Catat perubahannya sebagai catatan dengan `career-ops set-status --report <report#> <status saat ini> --note "Lowongan berganti nama saat melamar, baris tetap memakai jabatan yang dievaluasi"`. Memberikan status baris saat ini membuatnya tidak berubah dan menambahkan catatannya. Pakai teks tetap seperti ini dan jangan sertakan `[Y]`: jabatan baru adalah teks dari halaman, dan teks dari halaman tidak pernah masuk ke baris perintah.
 
 ## Langkah 4 -- Analisis pertanyaan formulir
 
@@ -109,7 +109,7 @@ Catatan:
 ## Langkah 6 -- Setelah melamar (opsional)
 
 Jika kandidat mengonfirmasi lamaran sudah dikirim:
-1. Perbarui status dari "Evaluated" menjadi "Applied" dengan `node set-status.mjs --report <report#> Applied` (jangan mengedit tabel `applications.md` secara manual)
+1. Perbarui status dari "Evaluated" menjadi "Applied" dengan `career-ops set-status --report <report#> Applied` (jangan mengedit tabel `applications.md` secara manual)
 2. Perbarui Blok G report dengan jawaban final
 3. Sarankan langkah berikutnya: `/career-ops contacto` untuk outreach LinkedIn ke hiring manager
 

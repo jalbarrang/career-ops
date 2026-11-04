@@ -22,12 +22,12 @@ Interactieve modus voor wanneer de kandidaat een sollicitatieformulier invult in
 
 ## Scope
 
-Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` and stay inside the directories it prints. Launch with `node apply-scope.mjs launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
+Follow the Scope section in `modes/apply.md`. Run `career-ops apply-scope root` and stay inside the directories it prints. Launch with `career-ops apply-scope launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
 
 
 ## Stap 1 -- Ontdek de vacature
 
-**Met Playwright:** Start met `node apply-scope.mjs launch-options`, open de vacature in dat venster en lees titel, URL en zichtbare inhoud.
+**Met Playwright:** Start met `career-ops apply-scope launch-options`, open de vacature in dat venster en lees titel, URL en zichtbare inhoud.
 
 **Zonder Playwright:** Vraag de kandidaat om:
 - Deel een screenshot van het formulier (de Read-tool leest de afbeeldingen)
@@ -49,7 +49,7 @@ Als de rol op het scherm afwijkt van de geëvalueerde rol:
 - **Waarschuw de kandidaat**: "De rol is veranderd van [X] in [Y]. Wil je dat ik de antwoorden opnieuw evalueer of aanpas aan de nieuwe titel?"
 - **Indien aangepast**: Pas de antwoorden eenmalig aan de zichtbare rol aan zonder opnieuw te evalueren. Laat de oorspronkelijke roltitel in de tracker, de rapportmetadata en blok G ongewijzigd en sla de aangepaste antwoorden niet in het oude rapport op
 - **Indien opnieuw geëvalueerd**: Start de volledige A-F-evaluatie voor de zichtbare rol, werk de rapportmetadata bij en genereer blok G opnieuw. Schrijf de gewijzigde roltitel als TSV-toevoeging in `batch/tracker-additions/`; bewerk `applications.md` niet rechtstreeks
-- **Na herbeoordeling**: Voer in deze volgorde `node merge-tracker.mjs`, `node verify-pipeline.mjs`, `node normalize-statuses.mjs` en `node dedup-tracker.mjs` uit
+- **Na herbeoordeling**: Voer in deze volgorde `career-ops merge-tracker`, `career-ops verify-pipeline`, `career-ops normalize-statuses` en `career-ops dedup-tracker` uit
 
 ## Stap 4 -- Analyseer de formuliervragen
 
@@ -110,7 +110,7 @@ Opmerkingen:
 ## Stap 6 -- Na de aanvraag (optioneel)
 
 Als de kandidaat bevestigt dat de sollicitatie is verzonden:
-1. Update de status naar "Applied" via de canonieke CLI: `node set-status.mjs --report <report#> Applied` (bewerk de tabel `applications.md` niet met de hand)
+1. Update de status naar "Applied" via de canonieke CLI: `career-ops set-status --report <report#> Applied` (bewerk de tabel `applications.md` niet met de hand)
 2. Update blok G van het rapport met de definitieve antwoorden alleen als bedrijf en rol nog exact overeenkomen met de rapportmetadata. Na een eenmalige aanpassing aan een andere rol moet eerst een afzonderlijk rapport voor die rol worden gemaakt of de volledige herbeoordeling worden uitgevoerd; overschrijf nooit het rapport van de oorspronkelijke rol
 3. Stel de volgende stap voor: `/career-ops contacto` voor LinkedIn-contact met de rekruteringsmanager
 

@@ -1,0 +1,15 @@
+{
+  "extends": "$app/tsconfig",
+  "include": ["src/**/*.ts", "src/**/*.svelte", "tests/**/*"],
+  "exclude": ["node_modules", "build", ".svelte-kit/output"],
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "strict": true,
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

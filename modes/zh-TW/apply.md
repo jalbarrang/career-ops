@@ -22,14 +22,14 @@
 
 ## Scope
 
-Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` and stay inside the directories it prints. Launch with `node apply-scope.mjs launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
+Follow the Scope section in `modes/apply.md`. Run `career-ops apply-scope root` and stay inside the directories it prints. Launch with `career-ops apply-scope launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
 
 
 ---
 
 ## 步驟 1 — 擷取當前職缺表單
 
-**使用 Playwright**：執行 `node apply-scope.mjs launch-options`，在該視窗開啟職缺頁面，並讀取標題、URL 和頁面正文。
+**使用 Playwright**：執行 `career-ops apply-scope launch-options`，在該視窗開啟職缺頁面，並讀取標題、URL 和頁面正文。
 
 **不使用 Playwright**：請求職者執行以下其中一項：
 - 傳送當前表單頁面的螢幕截圖（Read 工具能辨識並分析圖片）。
@@ -55,8 +55,8 @@ Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` an
 - **若選擇微調適配**：直接依新職缺名稱調整用詞，不重新評分。
 - **若選擇重新評估**：執行完整的 A–G 評估，產生新報告並覆蓋舊報告。
 - **更新 Tracker**：嚴禁直接編輯 `data/applications.md`。
-  - **重新評估之後**：寫入一份帶有新職缺名稱的 TSV 檔（`_shared.md` 的規則 9），再以 `node merge-tracker.mjs` 合併。新報告會覆蓋舊報告，編號不變，合併時會依該編號將 TSV 對應到既有的資料列：職缺名稱被取代，狀態維持不變。
-  - **微調適配之後**：不要更動職缺名稱，因為它指的是報告所評估的職缺。改以備註記錄這項變動：`node set-status.mjs --report <report#> <目前狀態> --note "投遞時職缺已更名，該列保留評估時的職缺名稱"`。傳入該列目前的狀態不會改變狀態，只會附加備註。備註請使用這樣的固定文字，不要寫入 `[Y]`：新名稱是來自頁面的文字，頁面文字絕不能出現在命令列中。
+  - **重新評估之後**：寫入一份帶有新職缺名稱的 TSV 檔（`_shared.md` 的規則 9），再以 `career-ops merge-tracker` 合併。新報告會覆蓋舊報告，編號不變，合併時會依該編號將 TSV 對應到既有的資料列：職缺名稱被取代，狀態維持不變。
+  - **微調適配之後**：不要更動職缺名稱，因為它指的是報告所評估的職缺。改以備註記錄這項變動：`career-ops set-status --report <report#> <目前狀態> --note "投遞時職缺已更名，該列保留評估時的職缺名稱"`。傳入該列目前的狀態不會改變狀態，只會附加備註。備註請使用這樣的固定文字，不要寫入 `[Y]`：新名稱是來自頁面的文字，頁面文字絕不能出現在命令列中。
 
 ---
 
@@ -113,7 +113,7 @@ Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` an
 ## 步驟 6 — 投遞後動作
 
 當求職者確認已經成功按下「送出應徵／投遞」後，執行以下收尾與建檔工作：
-1. 使用規範的 CLI 將該職缺狀態更新為 `Applied`：`node set-status.mjs --report <report#> Applied`（不要手動編輯 `data/applications.md` 表格）。
+1. 使用規範的 CLI 將該職缺狀態更新為 `Applied`：`career-ops set-status --report <report#> Applied`（不要手動編輯 `data/applications.md` 表格）。
 2. 將最終實際送出的表單回答歸檔，並更新到該報告的維度 H 區塊中，方便後續面試對照。
 3. 建議下一步行動：引導求職者使用 `/career-ops contacto` 指令，產生直達 LinkedIn 招募負責人的開發話術。
 

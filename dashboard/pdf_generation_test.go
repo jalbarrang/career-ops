@@ -81,7 +81,7 @@ func TestRunGeneratePDFUsesCheckoutWithSelectedDataRoot(t *testing.T) {
 	if err := json.Unmarshal(raw, &got); err != nil {
 		t.Fatal(err)
 	}
-	wantArgs := []string{filepath.Join(checkout, "generate-pdf.mjs"), filepath.Join(root, request.HTMLPath), filepath.Join(root, request.PDFPath), "--format=a4", "--report=007"}
+	wantArgs := []string{filepath.Join(checkout, "packages", "cli", "src", "commands", "cv", "generate-pdf.ts"), filepath.Join(root, request.HTMLPath), filepath.Join(root, request.PDFPath), "--format=a4", "--report=007"}
 	if len(got.Args) != len(wantArgs) {
 		t.Fatalf("unexpected args: %v", got.Args)
 	}
@@ -104,12 +104,12 @@ func TestRunGeneratePDFUsesCheckoutWithSelectedDataRoot(t *testing.T) {
 
 func TestRunGeneratePDFRejectsDataOnlyScript(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "generate-pdf.mjs"), []byte("throw new Error('data script ran')"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "generate-pdf.ts"), []byte("throw new Error('data script ran')"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	t.Chdir(root)
 	msg := runGeneratePDF(screens.PipelineGeneratePDFMsg{CareerOpsPath: root})().(screens.PipelinePDFGeneratedMsg)
-	if !strings.Contains(msg.Err, "need generate-pdf.mjs in the career-ops checkout") {
+	if !strings.Contains(msg.Err, "need generate-pdf.ts in the career-ops checkout") {
 		t.Fatalf("data-only script must not run: %+v", msg)
 	}
 }

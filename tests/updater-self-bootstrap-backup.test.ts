@@ -1,0 +1,61 @@
+// tests/updater-self-bootstrap-backup.test.ts — #3207 recovery guarantee.
+
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { backupSystemFiles } from '../packages/cli/src/commands/platform/update-system.ts';
+import { pass, fail } from './helpers.ts';
+
+const dir = mkdtempSync(join(tmpdir(), 'co-bootstrap-backup-'));
+const root = dirname(dirname(fileURLToPath(import.meta.url)));
+
+try {
+  const updater = join(dir, 'packages/cli/src/commands/platform/update-system.ts');
+  mkdirSync(dirname(updater), { recursive: true });
+  writeFileSync(updater, 'local fork fix\n');
+
+  const [saved] = backupSystemFiles(['packages/cli/src/commands/platform/update-system.ts'], { root: dir });
+  writeFileSync(updater, 'fetched upstream updater\n');
+
+  if (saved.backup === 'packages/cli/src/commands/platform/update-system.ts.bak'
+      && readFileSync(`${updater}.bak`, 'utf8') === 'local fork fix\n'
+      && readFileSync(updater, 'utf8') === 'fetched upstream updater\n') {
+    pass('self-bootstrap preserves the local updater before loading upstream');
+  } else {
+    fail('self-bootstrap backup did not preserve the pre-checkout bytes');
+  }
+
+  const failure = backupSystemFiles(['missing-import.ts'], { root: dir })[0];
+  if (failure.error && failure.backup === 'missing-import.ts.bak') {
+    pass('a backup failure is reportable without hiding the affected path');
+  } else {
+    fail('backup failures must retain both the path and error');
+  }
+
+  const source = readFileSync(join(root, 'packages/cli/src/commands/platform/update-system.ts'), 'utf8');
+  // apply() pins FETCH_HEAD to an immutable SHA once per run and addresses that
+  // SHA everywhere afterwards (#3052), so this ordering check follows the pinned
+  // ref rather than the pseudo-ref it replaced.
+  const closureAt = source.indexOf('const reexecFiles = assertCanonicalManifestPaths(');
+  const coverageAt = source.indexOf('uncoveredReexecFiles.length > 0', closureAt);
+  const detectAt = source.indexOf('locallyModifiedSystemFiles(reexecFiles, targetCommit)', coverageAt);
+  const backUpAt = source.indexOf('backupSystemFiles(bootstrapAtRisk)', detectAt);
+  const checkoutAt = source.indexOf("git('--literal-pathspecs', 'checkout', targetCommit, '--', ...reexecFiles)", detectAt);
+  if (closureAt !== -1 && coverageAt > closureAt && detectAt > coverageAt
+      && backUpAt > detectAt && checkoutAt > backUpAt) {
+    pass('apply validates, detects, and backs up bootstrap edits before literal checkout');
+  } else {
+    fail('apply must validate and preserve bootstrap edits before the destructive checkout');
+  }
+
+  const recordAt = source.indexOf('generatedBackupPaths.add(result.backup)');
+  const validationAt = source.indexOf('!generatedBackupPaths.has(file)');
+  if (recordAt > backUpAt && validationAt > recordAt) {
+    pass('apply excludes only its successfully generated backups from user-layer validation');
+  } else {
+    fail('updater-created backups must not be mistaken for user-layer changes');
+  }
+} finally {
+  rmSync(dir, { recursive: true, force: true });
+}

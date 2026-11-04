@@ -3,8 +3,14 @@
 ## Prerequisites
 
 - An AI coding CLI — [Claude Code](https://claude.ai/code), Codex, Qwen Code, OpenCode, Pi, GitHub Copilot CLI, Antigravity CLI, Grok Build CLI, or Hermes Agent (see [Supported CLIs](SUPPORTED_CLIS.md))
-- [Node.js](https://nodejs.org) 22.13+ and `git` (`npx` ships with Node — the installer refuses to run without them). 22.13 is the first release where `node:sqlite`, used by the tracker index (see [tracker](SCRIPTS.md#tracker)), needs no flag
+- [Bun](https://bun.sh) 1.4.3+ and `git` (`bunx` ships with Bun — the installer refuses to run without them). Bun provides `node:sqlite`, used by the tracker index (see [tracker](SCRIPTS.md#tracker))
 - (Optional) Go 1.21+ (for the dashboard TUI)
+
+> **Upgrading from a pre-Bun release?** Install Bun before you update. The
+> toolchain moved from npm to Bun: every script, the test suite and the
+> updater's dependency step now run `bun`, and `package-lock.json` was replaced
+> by `bun.lock`. `bun install` in the checkout brings an existing install up to
+> date without touching your data (`cv.md`, `config/`, `data/`, `reports/`).
 
 ## Quick Start
 
@@ -26,7 +32,7 @@ isolated cloud VM; it does not have your machine's files or local configuration.
 3. Submit this first task:
 
    ```text
-   Set up career-ops in this checkout. Run npm install, then start the first-run
+   Set up career-ops in this checkout. Run bun install, then start the first-run
    onboarding. Keep cv.md, data/, and reports/ out of Git.
    ```
 
@@ -51,10 +57,10 @@ sessions, use the local quick start below.
 ### Recommended — one command
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
-`npx` ships with Node.js — it runs the installer once without installing anything globally. This clones the latest release into `./career-ops` and installs dependencies. Then move into the workspace and open your AI CLI:
+`bunx` ships with Bun — it runs the installer once without installing anything globally. This clones the latest release into `./career-ops` and installs dependencies. Then move into the workspace and open your AI CLI:
 
 ```bash
 cd career-ops
@@ -93,7 +99,7 @@ codex exec "Run career-ops tracker mode and summarize the current statuses."
 ```bash
 git clone https://github.com/career-ops-hq/career-ops.git
 cd career-ops
-npm install
+bun install
 ```
 
 Then open your AI CLI in the folder — the same first-run onboarding applies. Use this path if you want to track a specific branch, contribute, or audit the code before installing dependencies.
@@ -108,7 +114,7 @@ The basic workflow is:
 
 1. Fork the repository and create a branch from `main`.
 2. Make one focused change and keep personal data such as `cv.md`, `profile.yml`, applications, and reports out of the commit.
-3. Run the relevant checks; for a broad validation, use `node test-all.mjs --quick`.
+3. Run the relevant checks; for a broad validation, use `bun test-all.ts --quick`.
 4. Commit and push your branch to your fork.
 5. Open a pull request against `career-ops-hq/career-ops` and explain what changed and why.
 
@@ -119,7 +125,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full contribution guidelines a
 PDFs are rendered with a headless Chromium. Install it once per machine:
 
 ```bash
-npx playwright install chromium
+bunx playwright install chromium
 ```
 
 On NixOS, skip this step: the browsers it downloads can't run there. Use the flake dev shell instead, as described in [NIXOS.md](NIXOS.md).
@@ -140,13 +146,13 @@ On NixOS, skip this step: the browsers it downloads can't run there. Use the fla
 ## Verify Setup
 
 ```bash
-node cv-sync-check.mjs      # Check configuration
-node verify-pipeline.mjs     # Check pipeline integrity
+career-ops cv-sync-check      # Check configuration
+career-ops verify-pipeline     # Check pipeline integrity
 ```
 
 ## Build Dashboard (Optional)
 
 ```bash
-npm run serve:dashboard     # Opens TUI pipeline viewer
-npm run build:dashboard     # Optional: build the standalone binary
+bun run serve:dashboard     # Opens TUI pipeline viewer
+bun run build:dashboard     # Optional: build the standalone binary
 ```

@@ -1,0 +1,20 @@
+{
+  "//": "The upstream version each fork-owned file was copied from. fork/apply.mjs refuses to overwrite a file whose current hash is neither the recorded base nor the fork's own copy — that is what a real upstream change to the same file looks like, and it must be reviewed by a human instead of silently clobbering the fork's schema.",
+  "upstream_version": "1.38.0",
+  "files": {
+    "packages/cli/src/commands/profile/career-profile.ts": "a87cc087d83872f167242051c24ff2f3d0a187b7a7d7adfcb967d49d11f90a0c",
+    "tests/career-profile.test.ts": "8a152a5c0d043d58a6936d9e901b5875e1da96f02ae457536ef7516cbb19fbaa",
+    "tests/fixtures/profile-cv-selection.json": "5a40942b6f566ea37dca7d71f42495aaf205686be4ae216de4ab164f93014d25",
+    "tests/profile-cv-selection.test.ts": "3637731c51eabdbde72bf77ea27d21fe3d29f1428bc145abd92123be5b24dd74",
+    "packages/core/src/profile/career-profile.ts": "4435f40febb221c5d450b300ee0f19f4f2469846b6e00e4c825598dfb93a4fea",
+    "packages/core/src/profile/profile-cv-selection.ts": "0c9558146edd904753b0547ef25a7302d5ff0931324dba336f644d8afd0c59ec"
+  },
+  "installed": {
+    "packages/cli/src/commands/profile/career-profile.ts": "a87cc087d83872f167242051c24ff2f3d0a187b7a7d7adfcb967d49d11f90a0c",
+    "tests/career-profile.test.ts": "8a152a5c0d043d58a6936d9e901b5875e1da96f02ae457536ef7516cbb19fbaa",
+    "tests/fixtures/profile-cv-selection.json": "5a40942b6f566ea37dca7d71f42495aaf205686be4ae216de4ab164f93014d25",
+    "tests/profile-cv-selection.test.ts": "3637731c51eabdbde72bf77ea27d21fe3d29f1428bc145abd92123be5b24dd74",
+    "packages/core/src/profile/career-profile.ts": "4435f40febb221c5d450b300ee0f19f4f2469846b6e00e4c825598dfb93a4fea",
+    "packages/core/src/profile/profile-cv-selection.ts": "0c9558146edd904753b0547ef25a7302d5ff0931324dba336f644d8afd0c59ec"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": [
+    "packages/*/src/**/*.ts",
+    "tests/**/*.ts",
+    "scripts/**/*.ts",
+    "batch/**/*.ts",
+    "plugins/**/*.ts",
+    "fork/**/*.ts",
+    "scaffolder/**/*.ts",
+    "test-all.ts",
+    "updater-migration-tests.ts",
+    "upgrade-tests.ts",
+    "playwright.cv.config.ts"
+  ],
+  "exclude": ["node_modules", "apps", "output", "data", "dashboard", "test-results", ".git"]
+}

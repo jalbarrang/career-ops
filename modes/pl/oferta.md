@@ -103,7 +103,7 @@ Dołącz także:
 
 Zapisz pełną ocenę w `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
-- `{###}` = następny kolejny numer (3 cyfry, dopełnione zerami). Aby przydzielić go atomowo i uniknąć race conditions, musisz uruchomić `node reserve-report-num.mjs`, by zarezerwować numer (stdout zwraca `{###}`), zapisać report, a następnie uruchomić `node reserve-report-num.mjs --release {###}`, by zwolnić sentinel.
+- `{###}` = następny kolejny numer (3 cyfry, dopełnione zerami). Aby przydzielić go atomowo i uniknąć race conditions, musisz uruchomić `career-ops reserve-report-num`, by zarezerwować numer (stdout zwraca `{###}`), zapisać report, a następnie uruchomić `career-ops reserve-report-num --release {###}`, by zwolnić sentinel.
 - `{company-slug}` = nazwa firmy małymi literami, bez spacji (użyj myślników)
 - `{YYYY-MM-DD}` = dzisiejsza data
 
@@ -152,7 +152,7 @@ Zapisz pełną ocenę w `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
 ### 2. Zapisz w trackerze
 
-**ZAWSZE** zapisz w trackerze. Zapisz TSV (reguła 9 w `_shared.md`) i scal go przez `node merge-tracker.mjs`; nigdy nie dopisuj wiersza bezpośrednio do `data/applications.md`. Pola:
+**ZAWSZE** zapisz w trackerze. Zapisz TSV (reguła 9 w `_shared.md`) i scal go przez `career-ops merge-tracker`; nigdy nie dopisuj wiersza bezpośrednio do `data/applications.md`. Pola:
 - Następny kolejny numer
 - Dzisiejsza data
 - Firma

@@ -98,7 +98,7 @@
 वह एक नौकरी पेस्ट करें जिस पर आप आज रात अप्लाई करने वाले थे। अगर जवाब <em>अप्लाई न करें</em> आया, तो आपने अभी-अभी अपनी रात वापस पा ली। अगर जवाब एक प्लान के साथ आया, तो आपको पता है कि आगे क्या करना है।
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 <p align="center"><sub>ओपन सोर्स। लोकल। उसी AI CLI में जो आप पहले से इस्तेमाल करते हैं। <a href="docs/RUNNING_ON_A_BUDGET.md">मुफ़्त और लोकल मॉडल शामिल।</a></sub></p>
@@ -159,7 +159,7 @@ career-ops उम्मीदवारों के लिए हमेशा �
 
 ## career-ops क्या नहीं करता
 
-- **आवेदन अपने आप सबमिट करना।** यह हर फ़ील्ड के जवाब का ड्राफ़्ट बनाता है; आप जाँचते हैं और Submit दबाते हैं। स्क्रिप्ट कभी POST नहीं करती (`prepare-application.mjs`)।
+- **आवेदन अपने आप सबमिट करना।** यह हर फ़ील्ड के जवाब का ड्राफ़्ट बनाता है; आप जाँचते हैं और Submit दबाते हैं। स्क्रिप्ट कभी POST नहीं करती (`packages/cli/src/commands/evaluation/prepare-application.ts`)।
 - **ईमेल भेजना।** सिर्फ़ ड्राफ़्ट। इस पूरे कोडबेस में कहीं भी मेल भेजने का कोई ज़रिया नहीं है।
 - **बाहर डेटा भेजना।** कोई टेलीमेट्री नहीं, हमारा कोई बैकएंड नहीं। आपका CV आपकी मशीन से सीधे आपके चुने हुए AI प्रोवाइडर तक जाता है, और कहीं नहीं। एकमात्र सार्वजनिक रिकॉर्ड यही रिपॉज़िटरी है: `HIRED.md` और इसके issues।
 - **4.0/5 से नीचे आवेदन के लिए धकेलना।** यह आपको मना करेगा। आप इसे नज़रअंदाज़ कर सकते हैं, और यह बता देगा।
@@ -175,7 +175,7 @@ career-ops उम्मीदवारों के लिए हमेशा �
 | **ATS PDF जनरेशन**       | ATS के पढ़ने लायक CV, आपके अपने अनुभव से हर JD के हिसाब से ढाले गए, Space Grotesk + DM Sans डिज़ाइन में                                   |
 | **कवर लेटर जनरेटर**      | रिसर्च-आधारित कवर लेटर: कीवर्ड मिररिंग, चार इंटरैक्टिव एंगल प्रॉम्प्ट (क्यों/समस्याएँ/तरीक़ा/लहजा), चैट में ड्राफ़्ट अप्रूवल गेट, और CV वाली ही HTML + Playwright पाइपलाइन से A4 PDF। हर मूल्यांकन पर अपने आप ड्राफ़्ट बनाता है; `/career-ops cover` से ज़रूरत पर पूरा करें और जनरेट करें |
 | **CV से आगे**            | कंपनी रिसर्च ([`deep`](modes/deep.md)) AI रणनीति, हाल के क़दम, इंजीनियरिंग संस्कृति और वह कोण सामने लाती है जो आपकी प्रोफ़ाइल को लेना चाहिए। कॉन्टैक्ट डिस्कवरी ([`contacto`](modes/contacto.md)) उस हायरिंग मैनेजर, रिक्रूटर या टीम साथी की पहचान करती है जिससे संपर्क करना सार्थक है और हर संपर्क-प्रकार के हिसाब से ≤300 अक्षरों का LinkedIn संदेश ड्राफ़्ट करती है। औपचारिक आवेदन ईमेल ड्राफ़्ट ([`email`](modes/email.md)) मूल्यांकित रिपोर्ट या पेस्ट की गई JD को विषय पंक्ति, मुख्य भाग और अटैचमेंट चेकलिस्ट में बदलते हैं, बिना कुछ भेजे, सबमिट किए या क्लिक किए। आवेदन आपको कतार में लगाता है; रिसर्च आपको बातचीत दिलाती है। |
-| **पैटर्न विश्लेषण**      | रिजेक्शन पैटर्न और प्रति-ATS-चैनल आगे बढ़ने की दर (`analyze-patterns.mjs`), पूरी खोज के फ़नल आँकड़े (`stats.mjs`), रीपोस्ट हुई नौकरियों की पहचान, जो ghost job का संकेत हो सकती हैं (`detect-reposts.mjs`) |
+| **पैटर्न विश्लेषण**      | रिजेक्शन पैटर्न और प्रति-ATS-चैनल आगे बढ़ने की दर (`packages/cli/src/commands/insights/analyze-patterns.ts`), पूरी खोज के फ़नल आँकड़े (`packages/core/src/insights/stats.ts`), रीपोस्ट हुई नौकरियों की पहचान, जो ghost job का संकेत हो सकती हैं (`packages/cli/src/commands/insights/detect-reposts.ts`) |
 
 <details>
 <summary><b>बाकी सब जो यह करता है</b></summary>
@@ -192,8 +192,8 @@ career-ops उम्मीदवारों के लिए हमेशा �
 | **Dashboard TUI**        | अपनी पाइपलाइन ब्राउज़, फ़िल्टर और सॉर्ट करने के लिए टर्मिनल UI                                                                            |
 | **पाइपलाइन इंटीग्रिटी**  | स्वचालित मर्ज, डीडुप, स्टेटस नॉर्मलाइज़ेशन, हेल्थ चेक                                                                                     |
 | **इंटरव्यू सूट**         | समय-खंडों में तैयारी योजनाएँ, फ़ीडबैक के साथ अभ्यास सत्र, इंटरव्यू के बाद डीब्रीफ़ ([`interview/`](modes/interview/README.md)), और कंपनी रेड-फ़्लैग डिटेक्टर ([`interview-redflag`](modes/interview-redflag.md)) |
-| **ऑफ़र स्टेज**           | कॉन्ट्रैक्ट पढ़ने का साथी: धारा-दर-धारा समीक्षा और वकील के लिए सवालों की सूची ([`offer-prep`](modes/offer-prep.md)), और वांछित/विज्ञापित/वास्तविक वेतन-अंतर विश्लेषक (`salary-gap.mjs`) |
-| **फ़ॉलो-अप और जवाब**     | फ़ॉलो-अप कैडेंस कैलकुलेटर और पहले से तय रिमाइंडर (`followup-cadence.mjs`, `followup-seed.mjs`); नियोक्ता के जवाबों को ट्रैकर अपडेट में वर्गीकृत करना ([`reply-watch`](modes/reply-watch.md)) |
+| **ऑफ़र स्टेज**           | कॉन्ट्रैक्ट पढ़ने का साथी: धारा-दर-धारा समीक्षा और वकील के लिए सवालों की सूची ([`offer-prep`](modes/offer-prep.md)), और वांछित/विज्ञापित/वास्तविक वेतन-अंतर विश्लेषक (`packages/cli/src/commands/insights/salary-gap.ts`) |
+| **फ़ॉलो-अप और जवाब**     | फ़ॉलो-अप कैडेंस कैलकुलेटर और पहले से तय रिमाइंडर (`packages/core/src/outreach/followup-cadence.ts`, `packages/core/src/outreach/followup-seed.ts`); नियोक्ता के जवाबों को ट्रैकर अपडेट में वर्गीकृत करना ([`reply-watch`](modes/reply-watch.md)) |
 | **प्लगइन सिस्टम**        | वैकल्पिक इंटीग्रेशन (Gmail, Notion, Apify + एक कम्युनिटी रजिस्ट्री), डिफ़ॉल्ट रूप से बंद; देखें [docs/PLUGINS.md](docs/PLUGINS.md)         |
 
 </details>
@@ -203,7 +203,7 @@ career-ops उम्मीदवारों के लिए हमेशा �
 **सबसे तेज़ तरीक़ा, एक ही कमांड से:**
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 > 💡 `npx` [Node.js](https://nodejs.org) के साथ आता है: यह इंस्टॉलर एक बार चलाता है,
@@ -224,8 +224,8 @@ claude   # or codex / qwen / opencode / agy / grok — open your AI CLI here
 
 ```bash
 git clone https://github.com/career-ops-hq/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # only needed for PDF generation
+cd career-ops && bun install
+bunx playwright install chromium   # only needed for PDF generation
 # On a non-Debian/Ubuntu Linux distro (Fedora, Arch, ...), Chromium's system
 # libraries aren't installed by the line above — install them yourself with
 # your distro's package manager if PDF generation fails to launch the browser
@@ -256,14 +256,14 @@ claude   # or codex / opencode / qwen / agy / grok
 ### ग्लोबल इंस्टॉल
 
 ```bash
-npm i -g @santifer/career-ops
+bun add -g @santifer/career-ops
 ```
 
 यह `career-ops` बाइनरी को ग्लोबली इंस्टॉल करता है ताकि आप `npx` के बिना `career-ops init [folder]` चला सकें। `init` इसकी इकलौती कमांड है: यह एक वर्कस्पेस तैयार करती है, और उसके बाद का सारा काम आपकी AI कोडिंग CLI के अंदर होता है (नीचे Usage देखें), इस बाइनरी के ज़रिए नहीं।
 
 **कौन सा इस्तेमाल करें?**
-- `npx @santifer/career-ops init`: पहली बार के लिए सबसे अच्छा; एक अलग प्रोजेक्ट फ़ोल्डर बनाता है।
-- `npm i -g @santifer/career-ops`: अगर आप `npx` वाले रूप के बजाय `career-ops init` टाइप करना पसंद करते हैं। यह कोई और कमांड नहीं जोड़ता।
+- `bunx @santifer/career-ops init`: पहली बार के लिए सबसे अच्छा; एक अलग प्रोजेक्ट फ़ोल्डर बनाता है।
+- `bun add -g @santifer/career-ops`: अगर आप `npx` वाले रूप के बजाय `career-ops init` टाइप करना पसंद करते हैं। यह कोई और कमांड नहीं जोड़ता।
 
 > **यह सिस्टम इसलिए बना है कि आपकी AI कोडिंग CLI ख़ुद इसे अनुकूलित करे।** मोड, आर्कटाइप, स्कोरिंग वज़न, नेगोशिएशन स्क्रिप्ट: बस उससे बदलने को कहें। यह वही फ़ाइलें पढ़ती है जो इस्तेमाल करती है, इसलिए उसे ठीक पता है कि क्या संपादित करना है।
 
@@ -454,13 +454,13 @@ cp .env.example .env
 # Edit .env, set GEMINI_API_KEY=your_key_here
 
 # 2. Install dependencies
-npm install
+bun install
 
 # 3. Evaluate a job description
-node gemini-eval.mjs "We are looking for a Senior AI Engineer..."
-node gemini-eval.mjs --file ./jds/my-job.txt
-node agent-inbox.mjs add "..."   # queue a request for the next session
-npm run gemini:eval -- "JD text here"
+bun packages/cli/src/commands/evaluation/gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun packages/cli/src/commands/evaluation/gemini-eval.ts --file ./jds/my-job.txt
+bun packages/cli/src/commands/platform/agent-inbox.ts add "..."   # queue a request for the next session
+bun run gemini:eval -- "JD text here"
 ```
 
 > **फ़्री टियर:** दोनों विकल्प बिना बिलिंग के काम करते हैं। नेटिव CLI Google OAuth इस्तेमाल करती है; API स्क्रिप्ट `gemini-3.6-flash` इस्तेमाल करती है (रेट लिमिट मॉडल और टियर पर निर्भर है; मौजूदा कोटा के लिए Google AI दस्तावेज़ देखें)।
@@ -480,10 +480,10 @@ npm run gemini:eval -- "JD text here"
 
 **खोजे जाने वाले जॉब बोर्ड:** 55+ प्रोवाइडर मॉड्यूल ATS API, बोर्ड-व्यापी फ़ीड, XML/RSS फ़ीड, markdown फ़ीड और लोकल पार्सर कवर करते हैं। पूरी तालिका के लिए [Supported job boards](docs/SUPPORTED_JOB_BOARDS.md) देखें।
 
-डिफ़ॉल्ट रूप से `node scan.mjs` (यानी `npm run scan`) हर ATS फ़ीड जो लौटाती है उस पर भरोसा करता है। कुछ कंपनियाँ भूमिका बंद होने के बाद भी पुरानी पोस्टिंग अपने सार्वजनिक API में छोड़ देती हैं, इसलिए वे समाप्त एंट्रियाँ `pipeline.md` में लीक हो सकती हैं। API पास के बाद Playwright चलाने और समाप्त पोस्टिंग को पाइपलाइन में पहुँचने से पहले हटाने के लिए `--verify` दें:
+डिफ़ॉल्ट रूप से `bun packages/core/src/scanning/scan.ts` (यानी `bun run scan`) हर ATS फ़ीड जो लौटाती है उस पर भरोसा करता है। कुछ कंपनियाँ भूमिका बंद होने के बाद भी पुरानी पोस्टिंग अपने सार्वजनिक API में छोड़ देती हैं, इसलिए वे समाप्त एंट्रियाँ `pipeline.md` में लीक हो सकती हैं। API पास के बाद Playwright चलाने और समाप्त पोस्टिंग को पाइपलाइन में पहुँचने से पहले हटाने के लिए `--verify` दें:
 
 ```bash
-node scan.mjs --verify          # zero-token discovery + Playwright liveness check
+bun packages/core/src/scanning/scan.ts --verify          # zero-token discovery + Playwright liveness check
 ```
 
 सत्यापन क्रमिक है और सिर्फ़ नए ऑफ़र पर (डीडुप के बाद) चलता है, इसलिए लागत सीमित रहती है।
@@ -493,13 +493,13 @@ node scan.mjs --verify          # zero-token discovery + Playwright liveness che
 बिल्ट-इन टर्मिनल डैशबोर्ड आपको अपनी पाइपलाइन विज़ुअली ब्राउज़ करने देता है:
 
 ```bash
-npm run serve:dashboard   # launch the TUI
-npm run build:dashboard   # optional: build the standalone binary
+bun run serve:dashboard   # launch the TUI
+bun run build:dashboard   # optional: build the standalone binary
 ```
 
 Features: 10 फ़िल्टर टैब, 8 सॉर्ट मोड, ग्रुप्ड/फ़्लैट व्यू, लेज़ी-लोडेड प्रीव्यू, इनलाइन स्टेटस बदलाव।
 
-एक **प्रायोगिक वेब UI** भी है (अल्फ़ा और वैकल्पिक: जब तक आप शुरू न करें, कुछ नहीं चलता): [`web/README.md`](web/README.md) देखें।
+एक **प्रायोगिक वेब UI** भी है (अल्फ़ा और वैकल्पिक: जब तक आप शुरू न करें, कुछ नहीं चलता): [`apps/web/README.md`](apps/web/README.md) देखें।
 
 ## Project Structure
 
@@ -556,9 +556,9 @@ career-ops/
 
 - **ट्रैकर ओवरराइड:** आप `CAREER_OPS_TRACKER` सेट करके आवेदन ट्रैकर फ़ाइल का पाथ सीधे भी बदल सकते हैं।
 - **लेखन:** सभी लेखन ऑपरेशन (जैसे मर्ज) प्रामाणिक रूप से `{DATA_ROOT}/data/applications.md` को लक्षित करते हैं।
-- **स्कैनर कॉन्फ़िग:** `portals.yml` को `{DATA_ROOT}/portals.yml` पर पढ़ा और सत्यापित किया जाता है, इसलिए `node validate-portals.mjs` वही फ़ाइल जाँचता है जो `scan.mjs` पढ़ता है।
+- **स्कैनर कॉन्फ़िग:** `portals.yml` को `{DATA_ROOT}/portals.yml` पर पढ़ा और सत्यापित किया जाता है, इसलिए `bun packages/cli/src/commands/scanning/validate-portals.ts` वही फ़ाइल जाँचता है जो `packages/core/src/scanning/scan.ts` पढ़ता है।
 - **बनाए गए दस्तावेज़:** अनुकूलित CV और कवर लेटर `{DATA_ROOT}/output/` के अंदर लिखे जाते हैं, और उन्हें किसी रिपोर्ट से जोड़ने वाला PDF मैनिफ़ेस्ट `{DATA_ROOT}/data/pdf-index.tsv` में रहता है। जब तक `CAREER_OPS_TRACKER` सेट नहीं है, इन लेखनों की सीमा तय करने वाला ट्रैकर वर्कस्पेस डेटा रूट है, चेकआउट नहीं।
-- **ट्रैकर ओवरराइड के साथ PDF:** `generate-pdf.mjs` वर्कस्पेस तय करने से पहले `CAREER_OPS_TRACKER` को रिज़ॉल्व करता है, इसलिए ओवरराइड सेट होने पर वर्कस्पेस वह फ़ोल्डर होता है जिसमें वह ट्रैकर है (या उसके ऊपर वाला फ़ोल्डर, जब ट्रैकर किसी `data/` फ़ोल्डर में हो)। तब CV का HTML और हर PDF उसी वर्कस्पेस के अंदर होने चाहिए, और मैनिफ़ेस्ट उसकी `data/pdf-index.tsv` में चला जाता है। कवर लेटर अब भी `{DATA_ROOT}/output/` को ही लक्षित करते हैं, इसलिए जब वह फ़ोल्डर ट्रैकर के वर्कस्पेस से बाहर हो, तो उन्हें अस्वीकार कर दिया जाता है।
+- **ट्रैकर ओवरराइड के साथ PDF:** `packages/cli/src/commands/cv/generate-pdf.ts` वर्कस्पेस तय करने से पहले `CAREER_OPS_TRACKER` को रिज़ॉल्व करता है, इसलिए ओवरराइड सेट होने पर वर्कस्पेस वह फ़ोल्डर होता है जिसमें वह ट्रैकर है (या उसके ऊपर वाला फ़ोल्डर, जब ट्रैकर किसी `data/` फ़ोल्डर में हो)। तब CV का HTML और हर PDF उसी वर्कस्पेस के अंदर होने चाहिए, और मैनिफ़ेस्ट उसकी `data/pdf-index.tsv` में चला जाता है। कवर लेटर अब भी `{DATA_ROOT}/output/` को ही लक्षित करते हैं, इसलिए जब वह फ़ोल्डर ट्रैकर के वर्कस्पेस से बाहर हो, तो उन्हें अस्वीकार कर दिया जाता है।
 - **कोड लेयर अपनी जगह रहती है:** `node_modules/`, `providers/`, `modes/` और ख़ुद स्क्रिप्ट हमेशा रिपॉज़िटरी के सापेक्ष रिज़ॉल्व होते हैं, डेटा रूट के सापेक्ष कभी नहीं।
 
 Go डैशबोर्ड TUI, Node.js स्क्रिप्ट और AI एजेंट मोड सभी इस रेज़ोल्यूशन क्रम का अपने आप पालन करते हैं।
@@ -617,7 +617,7 @@ Go डैशबोर्ड TUI, Node.js स्क्रिप्ट और AI �
 career-ops ([career-ops.org](https://career-ops.org), जिसे **careerops** भी कहा जाता है) एक ओपन सोर्स AI जॉब सर्च है जो आपकी AI कोडिंग CLI (Claude Code, Codex, OpenCode और अन्य) में लोकल चलती है और हर फ़ैसला आप पर छोड़ती है। यह आपके CV के मुक़ाबले जॉब ऑफ़र का मूल्यांकन करती है, ATS-अनुकूलित PDF बनाती है, संपर्क के लिए सही व्यक्ति ढूँढती है, और सब कुछ एक जगह ट्रैक करती है: अंतिम फ़ैसला हमेशा आपका है। यह [CareerOps घोषणापत्र](https://career-ops.org/manifesto) का पहला संदर्भ कार्यान्वयन है।
 
 **क्या अनुकूलित CV कुछ गढ़ सकता है?**
-नहीं गढ़ना चाहिए, और प्रॉम्प्ट यही कहते हैं: दोबारा लिखो, कभी गढ़ो मत। `generate-pdf` ऐसे CV को रोक देता है जिसके आँकड़े या तथ्य आपके स्रोतों में नहीं हैं, जब तक आप `--skip-fact-check` न दें। `pdf` मोड `cv-title-check.mjs` भी चलाता है, जो अनुकूलित CV के हर पद के नाम की तुलना उसी नौकरी के लिए cv.md में दिए पद के नाम से करता है (कंपनी और तारीखों से मिलाकर), और जो भी अलग हो उसे रखने या वापस बदलने के बारे में आपसे पूछता है। यह सिर्फ़ चेतावनी देता है, रोकता नहीं, क्योंकि पद के नाम को अलग ढंग से लिखना कभी-कभी आपका फ़ैसला होता है। दोबारा लिखे गए शब्दों को अभी कुछ भी नहीं परखता: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (सत्यता जाँच जो विफल होने पर रोक दे) इसे ट्रैक करता है। तब तक, भेजने से पहले हर CV पढ़ें। [क़ानूनी अस्वीकरण](LEGAL_DISCLAIMER.md) यही बात ज़्यादा शब्दों में कहता है।
+नहीं गढ़ना चाहिए, और प्रॉम्प्ट यही कहते हैं: दोबारा लिखो, कभी गढ़ो मत। `generate-pdf` ऐसे CV को रोक देता है जिसके आँकड़े या तथ्य आपके स्रोतों में नहीं हैं, जब तक आप `--skip-fact-check` न दें। `pdf` मोड `packages/cli/src/commands/cv/cv-title-check.ts` भी चलाता है, जो अनुकूलित CV के हर पद के नाम की तुलना उसी नौकरी के लिए cv.md में दिए पद के नाम से करता है (कंपनी और तारीखों से मिलाकर), और जो भी अलग हो उसे रखने या वापस बदलने के बारे में आपसे पूछता है। यह सिर्फ़ चेतावनी देता है, रोकता नहीं, क्योंकि पद के नाम को अलग ढंग से लिखना कभी-कभी आपका फ़ैसला होता है। दोबारा लिखे गए शब्दों को अभी कुछ भी नहीं परखता: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (सत्यता जाँच जो विफल होने पर रोक दे) इसे ट्रैक करता है। तब तक, भेजने से पहले हर CV पढ़ें। [क़ानूनी अस्वीकरण](LEGAL_DISCLAIMER.md) यही बात ज़्यादा शब्दों में कहता है।
 
 **क्या मैं career-ops मुफ़्त में, या सस्ते / लोकल मॉडल पर चला सकता हूँ?**
 हाँ। career-ops CLI-निरपेक्ष है और मुफ़्त और लोकल मॉडल पर चलता है (OpenRouter के मुफ़्त मॉडल, Ollama, या कोई भी OpenAI-संगत एंडपॉइंट), इसलिए आप किसी पेड सब्सक्रिप्शन से बँधे नहीं हैं। पूरे सेटअप के लिए [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md) देखें।

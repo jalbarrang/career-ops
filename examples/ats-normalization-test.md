@@ -1,6 +1,6 @@
 # ATS Normalization Test Fixture
 
-This file is a regression fixture for the text normalization pass added in `generate-pdf.mjs` (issue #1). It contains the Unicode artifacts that can cause parsing errors or display issues in ATS systems and legacy parsers. Use it to verify that the normalizer converts them to ASCII-safe equivalents.
+This file is a regression fixture for the text normalization pass added in `packages/cli/src/commands/cv/generate-pdf.ts` (issue #1). It contains the Unicode artifacts that can cause parsing errors or display issues in ATS systems and legacy parsers. Use it to verify that the normalizer converts them to ASCII-safe equivalents.
 
 ## Problematic Unicode (normalizer must convert these)
 
@@ -31,19 +31,19 @@ The normalizer does NOT fix writing style. These are enforced by the rules in `m
 ## How to verify the normalizer
 
 ```bash
-# From the project root, after editing generate-pdf.mjs:
-node --check generate-pdf.mjs
+# From the project root, after editing packages/cli/src/commands/cv/generate-pdf.ts:
+node --check packages/cli/src/commands/cv/generate-pdf.ts
 
 # Quick smoke test of the normalizer logic (no Playwright needed):
-node -e "
-import('./generate-pdf.mjs').catch(()=>{});
+bun -e "
+import('packages/cli/src/commands/cv/generate-pdf.ts').catch(()=>{});
 " 2>/dev/null || true
 ```
 
 For an end-to-end test, generate a CV PDF from a known dirty HTML file and inspect the output:
 
 ```bash
-node generate-pdf.mjs /tmp/dirty-cv.html /tmp/clean-cv.pdf --format=a4
+bun packages/cli/src/commands/cv/generate-pdf.ts /tmp/dirty-cv.html /tmp/clean-cv.pdf --format=a4
 # Expected log line:
 # 🧹 ATS normalization: N replacements (em-dash=X, smart-double-quote=Y, ...)
 ```

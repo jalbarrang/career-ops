@@ -25,7 +25,7 @@ func stageCount(pm model.ProgressMetrics, label string) int {
 }
 
 // A hire is terminal success and proves every earlier stage. It must count into
-// Applied, Responded, Interview and Offer — the same cumulative math stats.mjs's
+// Applied, Responded, Interview and Offer — the same cumulative math stats.ts's
 // computeFunnel() documents as mirroring this function. Before the fix "hired"
 // appeared in no tier, so a landed job rendered as an entirely empty funnel.
 func TestComputeProgressMetricsCountsHiredInEveryStage(t *testing.T) {
@@ -121,7 +121,7 @@ func TestComputeProgressMetricsFunnelIsMonotonic(t *testing.T) {
 // The top funnel stage counts every tracked row, scored or not — a row
 // backfilled without an evaluation (#1799) sits there with no score. So it must
 // not borrow the word the Stats header uses for the scored count, nor the
-// canonical "Evaluated" status: computeFunnel() in stats.mjs already warns that
+// canonical "Evaluated" status: computeFunnel() in stats.ts already warns that
 // the same word standing for two different numbers reads as a bug, and this
 // label made it three.
 //
@@ -143,7 +143,7 @@ func TestFunnelTopStageCountsUnscoredRowsAndIsNotNamedEvaluated(t *testing.T) {
 	}
 }
 
-// Active means in flight, the same set stats.mjs counts: an evaluated row was
+// Active means in flight, the same set stats.ts counts: an evaluated row was
 // never sent and a hire is finished.
 func TestComputeProgressMetricsActiveAppsAreInFlight(t *testing.T) {
 	pm := ComputeProgressMetrics(appsWithStatuses(

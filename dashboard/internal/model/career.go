@@ -66,7 +66,7 @@ type ProgressMetrics struct {
 	// applied to anything yet was shown 0.0% on all three — coloured by
 	// rateColor, whose default band is Red, so the dashboard reported the search
 	// as failing before it had begun. Mirrors rateOrNull() in
-	// web/src/lib/analytics/view-model.mjs, which gates each rate on the count
+	// web/src/lib/analytics/view-model.ts, which gates each rate on the count
 	// it was taken over rather than on its own value.
 	RatesDenominator int
 

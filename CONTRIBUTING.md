@@ -54,7 +54,7 @@ The review process you'll experience here is documented end-to-end in [Agentic m
 - New evaluation dimensions or scoring logic
 - Dashboard TUI features (in `dashboard/`)
 - New skill modes (in `modes/`)
-- Script improvements (`.mjs` utilities)
+- Script improvements (`.ts` utilities)
 
 ### Claiming a good first issue
 
@@ -155,8 +155,8 @@ To propose a source (yours or anyone's): [open a source proposal](https://github
 
 - Keep modes language-agnostic when possible (Claude handles both EN and ES)
 - Scripts should handle missing files gracefully (check `existsSync` before `readFileSync`)
-- Dashboard changes require a build (`npm run build:dashboard`) — test with real data before submitting
-- Changes to `dashboard/` or `templates/states.yml` need `go test ./...` run from `dashboard/`: CI runs it on every pull request, and it is the only check that the dashboard accepts every state in `templates/states.yml`; `node test-all.mjs` does not run it
+- Dashboard changes require a build (`bun run build:dashboard`) — test with real data before submitting
+- Changes to `dashboard/` or `templates/states.yml` need `go test ./...` run from `dashboard/`: CI runs it on every pull request, and it is the only check that the dashboard accepts every state in `templates/states.yml`; `bun test-all.ts` does not run it
 - Don't commit personal data (cv.md, profile.yml, applications.md, reports/)
 
 ## What we do NOT accept
@@ -174,26 +174,41 @@ To propose a source (yours or anyone's): [open a source proposal](https://github
 
 ## Development
 
+### Where the code lives
+
+The repo is a Bun workspace with one dependency direction:
+
+```
+apps/web  ──►  packages/cli  ──►  packages/core
+```
+
+- `packages/core/src/<context>/` — the engine, grouped by bounded context (`kernel`, `tracker`, `pipeline`, `scanning`, `liveness`, `evaluation`, `cv`, `profile`, `interview`, `outreach`, `insights`, `platform`). Parsing rules, adapters and shared primitives belong here. A core module must not import a command or the web app.
+- `packages/cli/src/commands/<context>/` — one script per command. When other code needs its exported helpers, the script lives in core instead and keeps its `isMainModule` tail so it still runs directly.
+- `apps/web/` — the SvelteKit app. It may import the engine; nothing under `packages/` may import it.
+- `tests/` + `test-all.ts` — the integration suite. `tests/architecture-boundaries.test.ts` enforces the arrows above.
+
+Run a command as `career-ops <command>` (or `bun run <script>`; `career-ops --list` shows them all). A new runnable script needs one line in the generated catalog: run `bun scripts/regenerate-command-catalog.ts` after adding it, and the suite fails if the catalog is stale. Code that needs the checkout root calls `repoRoot()`; the user's data root is `getCareerOpsRoot()` — never rebuild either from `import.meta.url`. `ARCHITECTURE.md` has the full map.
+
 ```bash
 # Scripts
-npm run doctor                # Setup validation
-node verify-pipeline.mjs     # Health check
-node cv-sync-check.mjs        # Config check
+bun run doctor                 # Setup validation
+career-ops verify-pipeline     # Health check
+career-ops cv-sync-check       # Config check
 
 # Dashboard
-npm run build:dashboard       # go build with platform-correct binary name
-npm run serve:dashboard       # launch the TUI against the repo root
+bun run build:dashboard       # go build with platform-correct binary name
+bun run serve:dashboard       # launch the TUI against the repo root
 (cd dashboard && go test ./...)  # Go tests; CI runs them next to test-all
 
 # Tests
-node test-all.mjs             # Full suite — run before pushing/opening a PR
-node test-all.mjs --quick     # Full suite, skipping the dashboard build
-node test-all.mjs --only providers/themuse   # Run just one provider's test(s)
-node test-all.mjs --quick --jobs 4           # Run at most 4 test files at a time
+bun test-all.ts             # Full suite — run before pushing/opening a PR
+bun test-all.ts --quick     # Full suite, skipping the dashboard build
+bun test-all.ts --only providers/themuse   # Run just one provider's test(s)
+bun test-all.ts --quick --jobs 4           # Run at most 4 test files at a time
 ```
 
 **The test files under `tests/` run in parallel**, one process each, as many at
-a time as the machine has CPUs, and the inline sections of `test-all.mjs` run
+a time as the machine has CPUs, and the inline sections of `test-all.ts` run
 alongside them in one of those slots. `--jobs N` changes that for one run and
 `CAREER_OPS_TEST_JOBS=N` for a machine; `1` runs everything one after another
 in a single process. The log comes out in the same order either way. If a test
@@ -202,26 +217,26 @@ and see "Parallel runs" in [`tests/README.md`](tests/README.md) for what a
 suite may not rely on.
 
 **Any new test belongs in its own file** under `tests/`, not as a numbered
-section inside `test-all.mjs`. Anything matching `tests/**/*.test.mjs` is
+section inside `test-all.ts`. Anything matching `tests/**/*.test.ts` is
 auto-discovered, so there is nothing to register and no section number to pick.
 A new file also collides with nobody: several contributors adding sections to
-`test-all.mjs` at the same time all edit its final lines, and each merge forces
+`test-all.ts` at the same time all edit its final lines, and each merge forces
 a rebase on the rest.
 
 **Adding a scanner provider?** See
-[`providers/ADDING_A_PROVIDER.md`](providers/ADDING_A_PROVIDER.md) — the full
-contract, the mandatory guards, and what `tests/providers/{name}.test.mjs`
+[`packages/core/src/scanning/providers/ADDING_A_PROVIDER.md`](packages/core/src/scanning/providers/ADDING_A_PROVIDER.md) — the full
+contract, the mandatory guards, and what `tests/providers/{name}.test.ts`
 must cover.
 
 **Adding a test for the web app:** web suites live under `web/tests/`. A suite
 that covers one module mirrors that module's path below `web/src/` and takes its
-name (`src/lib/clean-chips.mjs` → `tests/lib/clean-chips.test.mjs`); a suite that
+name (`src/lib/clean-chips.ts` → `tests/lib/clean-chips.test.ts`); a suite that
 pins a behaviour across modules is named for the behaviour instead, which is what
-roughly half of `web/tests/` does. `web/`'s own `npm test` glob-discovers them
+roughly half of `web/tests/` does. `web/`'s own `bun test` glob-discovers them
 either way, so no registration is needed there either — but keep them out of
-`web/src/` (Next.js scans that tree) and write them as `.mjs`, since there is no
-TypeScript loader for `node --test`. `web/README.md` has the detail;
-`tests/web-test-layout.test.mjs` enforces the *discovery* half on every PR — that
+`web/src/` (Next.js scans that tree) and write them as `.ts`: the suites are
+framework-free, and `bun test` runs them without a TypeScript test loader. `apps/web/README.md` has the detail;
+`tests/web-test-layout.test.ts` enforces the *discovery* half on every PR — that
 the glob reaches every suite on disk and that `web/`'s engines floor can run it.
 The naming is a convention, not a checked contract.
 
@@ -229,11 +244,11 @@ The naming is a convention, not a checked contract.
 `tests/` files matching the given substring and skips every inline core
 section (syntax, scripts, dashboard, data contract, personal data, paths,
 etc.). A green `--only` run is **not** a green suite — always run the full
-`node test-all.mjs` before pushing.
+`bun test-all.ts` before pushing.
 
 ### Checking translated mode structure
 
-Run `node i18n-drift.mjs --lang tr` (repeat `--lang` for several languages),
+Run `career-ops i18n-drift --lang tr` (repeat `--lang` for several languages),
 or omit `--lang` to check every locale. `--json` emits machine-readable results;
 `--summary` prints language totals. The checker runs offline with Node alone and
 reports drift without failing.

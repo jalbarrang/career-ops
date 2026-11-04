@@ -13,7 +13,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # Optional: Go toolchain for the dashboard TUI (./dashboard).
 # Small footprint, keeps full feature parity with the README setup.
-# Must be >= the `go` line in dashboard/go.mod (checked by tests/go-floor.test.mjs), or
+# Must be >= the `go` line in dashboard/go.mod (checked by tests/go-floor.test.ts), or
 # `go build` fetches a newer toolchain over the network and fails offline.
 # Bumping GO_VERSION means updating both checksums too, from the
 # linux-amd64 and linux-arm64 archives listed at https://go.dev/dl/.
@@ -36,13 +36,21 @@ RUN set -eux; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
+# Bun is the project's package manager and script runner. Copied from the
+# official image rather than installed with `curl … | bash`, so the build never
+# runs a remote install script and the version is pinned by the image tag.
+COPY --from=oven/bun:1.4.3-debian /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx
+
 WORKDIR /app
 
-# Prime npm deps in a layer so rebuilds stay fast.
-# Pin playwright to the version that matches the base image's bundled chromium.
-COPY package.json package-lock.json* ./
-RUN npm install --no-audit --no-fund \
- && npm install --no-audit --no-fund --save-exact playwright@1.64.1
+# Prime Bun deps in a layer so rebuilds stay fast. package.json already pins
+# playwright to the version that matches the base image's bundled chromium, and
+# bun.lock is the lock this repository ships, so `--frozen-lockfile` installs
+# exactly that. --ignore-scripts skips the postinstall's browser download: the
+# image already carries Chromium at /ms-playwright.
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --ignore-scripts
 
 # The rest of the project is bind-mounted at runtime via docker compose,
 # so we don't COPY sources here — keeps the image generic and lets local

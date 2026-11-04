@@ -10,7 +10,7 @@ personalized answers for each form question.
 ## Base workflow
 
 Follow `modes/apply.md` verbatim, including its Scope section. Run
-`node apply-scope.mjs root` and `node apply-scope.mjs launch-options`. Do not
+`career-ops apply-scope root` and `career-ops apply-scope launch-options`. Do not
 read `DevToolsActivePort` or attach to an existing browser. Do not submit the
 form. The steps below are Singapore-specific field guidance for the GENERATE step.
 
@@ -89,6 +89,6 @@ refresh it from `filled` to `submitted`.
 ## After applying (optional)
 
 If the candidate confirms submission, follow `modes/apply.md` → Step 9
-(Post-apply) as written: status via `set-status.mjs`, the follow-up seed via
-`followup-seed.mjs`, the `## Application Answers` refresh to `submitted`, and
+(Post-apply) as written: status via `packages/cli/src/commands/tracker/set-status.ts`, the follow-up seed via
+`packages/core/src/outreach/followup-seed.ts`, the `## Application Answers` refresh to `submitted`, and
 the `contacto` suggestion. Nothing Singapore-specific changes in that step.

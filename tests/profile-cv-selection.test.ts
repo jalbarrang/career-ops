@@ -1,0 +1,278 @@
+/** Fictional fixtures only; every CLI runs against an external Data Root. */
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { pass, fail, rmSync, ROOT, NODE } from './helpers.ts';
+import { describeSpawn } from './helpers/describe-spawn.ts';
+import { loadValidatedProfile, validateProfile } from '../packages/core/src/profile/career-profile.ts';
+import { prepareCvSelection, verifyCvSelection, selectionDigest, SelectionError } from '../packages/core/src/profile/profile-cv-selection.ts';
+import { validatePayload } from '../packages/core/src/cv/cv-payload-schema.ts';
+
+const fixture = JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/profile-cv-selection.json'), 'utf8'));
+function input() {
+  const basePayload = structuredClone(fixture.base_payload);
+  return {
+    profile: structuredClone(fixture.profile), basePayload,
+    selection: {
+      schema: 'profile-selection.v1', base_payload_sha256: selectionDigest(basePayload),
+      bindings: [{ profile_entry_id: 'exp-acme-recent',
+        target: { experience_index: 0, entry_sha256: selectionDigest(basePayload.experience[0]) },
+        fact_ids: ['fact-chinese', 'fact-team'] }],
+    },
+  };
+}
+/**
+ * FORK (schema v2): a profile experience is a company with nested roles, and a
+ * CV slot binds to ONE role. These helpers keep the assertions talking about a
+ * role, which is the thing selection actually resolves.
+ */
+const roles = (x) => x.profile.experiences[0].roles;
+const role = (x, i) => roles(x)[i];
+
+function check(name, run) {
+  try { run(); pass(`profile selection: ${name}`); }
+  catch (error) { fail(`profile selection: ${name}: ${error.stack}`); }
+}
+function rejectsCode(run, code) {
+  assert.throws(run, error => error instanceof SelectionError && error.code === code);
+}
+
+check('verbatim ordered bullets, precise mapping, pure inputs and preserved identity/sections', () => {
+  const original = input();
+  const result = prepareCvSelection(original);
+  const expected = structuredClone(original.basePayload);
+  expected.experience[0].bullets = ['维护 A&B <组件> 的告警规则。', 'Managed 20 people.'];
+  assert.deepEqual(result.payload, expected);
+  assert.deepEqual(original, input());
+  assert.deepEqual(validatePayload(result.payload, 'html').errors, []);
+  assert.deepEqual(result.mapping.bullets, [
+    { experience_index: 0, bullet_index: 0, profile_entry_id: 'exp-acme-recent', fact_id: 'fact-chinese',
+      text_sha256: selectionDigest('维护 A&B <组件> 的告警规则。'), evidence: { source: 'cv.md', quote: '维护 A&B <组件> 的告警规则。' } },
+    { experience_index: 0, bullet_index: 1, profile_entry_id: 'exp-acme-recent', fact_id: 'fact-team',
+      text_sha256: selectionDigest('Managed 20 people.'), evidence: { source: 'cv.md', quote: 'Managed 20 people.' } },
+  ]);
+  assert.equal(verifyCvSelection(original, result), true);
+});
+
+const invalid = [
+  ['unknown schema', x => { x.selection.schema = 'v2'; }, 'selection-schema'],
+  ['empty bindings', x => { x.selection.bindings = []; }, 'empty-bindings'],
+  ['missing entry', x => { x.selection.bindings[0].profile_entry_id = 'missing'; }, 'missing-entry'],
+  ['unreviewed role', x => { role(x, 0).review_status = 'needs_review'; }, 'entry-not-verified'],
+  ['missing fact', x => { x.selection.bindings[0].fact_ids = ['missing']; }, 'missing-or-wrongly-bound-fact'],
+  ['wrong same-label entry', x => { x.selection.bindings[0].fact_ids = ['fact-earlier']; }, 'missing-or-wrongly-bound-fact'],
+  ['unreviewed fact', x => { x.selection.bindings[0].fact_ids = ['fact-unreviewed']; }, 'fact-not-verified'],
+  ['duplicate fact', x => { x.selection.bindings[0].fact_ids = ['fact-team', 'fact-team']; }, 'duplicate-selected-fact'],
+  ['empty facts', x => { x.selection.bindings[0].fact_ids = []; }, 'empty-fact-selection'],
+  ['invalid slot', x => { x.selection.bindings[0].target.experience_index = -1; }, 'invalid-target'],
+  ['wrong slot anchor', x => { x.selection.bindings[0].target.experience_index = 1; }, 'target-anchor-changed'],
+  ['duplicate slot', x => { x.selection.bindings.push(structuredClone(x.selection.bindings[0])); }, 'duplicate-target'],
+  ['changed base', x => { x.basePayload.summary = 'A changed summary'; }, 'base-payload-changed'],
+  ['ambiguous global IDs', x => { role(x, 1).id = role(x, 0).id; }, 'invalid-profile'],
+  ['ambiguous fact IDs', x => { role(x, 1).facts[0].id = 'fact-team'; }, 'invalid-profile'],
+  ['malformed evidence', x => { role(x, 0).facts[0].evidence.line = 0; }, 'invalid-profile'],
+  ['existing HTML schema errors', x => { delete x.basePayload.experience[0].company; }, 'invalid-payload'],
+];
+for (const [name, change, code] of invalid) check(`rejects ${name}`, () => {
+  const original = input();
+  change(original);
+  rejectsCode(() => prepareCvSelection(original), code);
+});
+
+check('diagnostics identify the selected entry, fact and target slot', () => {
+  const original = input();
+  original.selection.bindings[0].fact_ids = ['fact-unreviewed'];
+  assert.throws(() => prepareCvSelection(original), error => error.code === 'fact-not-verified'
+    && error.profile_entry_id === 'exp-acme-recent' && error.fact_id === 'fact-unreviewed' && error.experience_index === 0);
+});
+
+for (const [name, change] of [
+  ['selected text', x => { role(x, 0).facts[0].text = 'Changed wording.'; }],
+  ['selected evidence quote', x => { role(x, 0).facts[0].evidence.quote = 'Changed source quote.'; }],
+  ['selected evidence source', x => { role(x, 0).facts[0].evidence.source = 'other.md'; }],
+  ['entry identity wording', x => { role(x, 0).name = 'Changed role'; }],
+  ['entry evidence', x => { role(x, 0).evidence.source = 'other.md'; }],
+  ['selection order', x => { x.selection.bindings[0].fact_ids.reverse(); }],
+  ['explicit rebinding', x => {
+    x.selection.bindings[0].target = { experience_index: 1, entry_sha256: selectionDigest(x.basePayload.experience[1]) };
+  }],
+]) check(`verification invalidates ${name}`, () => {
+  const original = input();
+  const prepared = prepareCvSelection(original);
+  change(original);
+  assert.throws(() => verifyCvSelection(original, prepared), SelectionError);
+});
+
+check('verification rejects a revoked review even when mapping remains unchanged', () => {
+  const original = input();
+  const prepared = prepareCvSelection(original);
+  role(original, 0).facts[0].review_status = 'needs_review';
+  rejectsCode(() => verifyCvSelection(original, prepared), 'fact-not-verified');
+});
+
+check('line shifts, unrelated valid edits, and Profile reordering keep selections valid', () => {
+  const original = input();
+  const prepared = prepareCvSelection(original);
+  role(original, 0).evidence.line += 10;
+  role(original, 0).facts.forEach(fact => { fact.evidence.line += 10; });
+  role(original, 0).facts[2].text = 'Changed unselected fact.';
+  original.profile.candidate.name = 'Changed unused identity';
+  role(original, 1).name = 'Unrelated role edit';
+  roles(original).reverse();
+  roles(original).forEach(entry => entry.facts.reverse());
+  assert.equal(verifyCvSelection(original, prepared), true);
+});
+
+check('multiple same-label entries bind by ID and preserve independent bullet order', () => {
+  const original = input();
+  original.selection.bindings.push({ profile_entry_id: 'exp-acme-earlier',
+    target: { experience_index: 1, entry_sha256: selectionDigest(original.basePayload.experience[1]) }, fact_ids: ['fact-earlier'] });
+  const prepared = prepareCvSelection(original);
+  assert.deepEqual(prepared.payload.experience[1].bullets, ['Maintained release notes.']);
+  assert.equal(prepared.mapping.bullets[2].profile_entry_id, 'exp-acme-earlier');
+});
+
+check('resealed edits outside selected bullets cannot bypass reconstruction', () => {
+  const original = input();
+  const prepared = prepareCvSelection(original);
+  prepared.payload.experience[1].role = 'Invented title';
+  prepared.mapping.payload_sha256 = selectionDigest(prepared.payload);
+  rejectsCode(() => verifyCvSelection(original, prepared), 'prepared-payload-mismatch');
+});
+check('mapping-only edits fail verification', () => {
+  const original = input();
+  const prepared = prepareCvSelection(original);
+  prepared.mapping.bullets[0].fact_id = 'fact-earlier';
+  rejectsCode(() => verifyCvSelection(original, prepared), 'prepared-mapping-mismatch');
+});
+check('JSON hashing ignores object key order but rejects lossy and cyclic values', () => {
+  assert.equal(selectionDigest({ a: 1, b: [2, 3] }), selectionDigest({ b: [2, 3], a: 1 }));
+  assert.notEqual(selectionDigest([2, 3]), selectionDigest([3, 2]));
+  const cycle = {}; cycle.self = cycle;
+  for (const value of [undefined, NaN, Infinity, new Date(), { a: undefined }, [, 1], cycle]) {
+    rejectsCode(() => selectionDigest(value), 'non-json-input');
+  }
+});
+
+// No spaces in the prefix: the CLI spawns below pass this directory as a
+// `file://` preload URL, and Bun rejects a percent-encoded path (`%20`) before
+// any project code runs.
+const root = mkdtempSync(join(tmpdir(), 'profile-selection-data-'));
+const save = (file, value) => writeFileSync(join(root, file), JSON.stringify(value, null, 2));
+const networkGuard = join(root, 'offline.ts');
+writeFileSync(networkGuard, `
+import http from 'node:http';
+import https from 'node:https';
+import net from 'node:net';
+import tls from 'node:tls';
+import { syncBuiltinESMExports } from 'node:module';
+const blocked = () => { throw new Error('Unexpected network access'); };
+globalThis.fetch = blocked;
+http.request = http.get = https.request = https.get = net.connect = net.createConnection = tls.connect = blocked;
+syncBuiltinESMExports();
+`);
+function cli(script, args, status = 0, overrides = {}) {
+  const result = spawnSync(NODE, ['--import', pathToFileURL(networkGuard).href, join(ROOT, script), ...args], {
+    cwd: root, env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_PROFILE: '', ...overrides }, encoding: 'utf8', timeout: 30_000,
+  });
+  assert.equal(result.status, status, describeSpawn(result));
+  return result;
+}
+try {
+  mkdirSync(join(root, 'data'));
+  mkdirSync(join(root, 'config'));
+  mkdirSync(join(root, 'output'));
+  const original = input();
+  save('data/career-profile.yml', original.profile); // JSON is valid YAML.
+  save('base.json', original.basePayload);
+  save('selection.json', original.selection);
+  writeFileSync(join(root, 'cv.md'), fixture.primary_cv);
+  save('config/cv-facts.json', { allow_metrics: [], allow_facts: [], forbidden_phrases: [], warn_phrases: [] });
+  const sourceFiles = ['data/career-profile.yml', 'base.json', 'selection.json', 'cv.md', 'config/cv-facts.json'];
+  const before = sourceFiles.map(file => readFileSync(join(root, file), 'utf8'));
+  const args = ['--payload', 'base.json', '--selection=selection.json'];
+
+  check('shared reader respects explicit/default Data Roots and rejects missing/invalid profiles', () => {
+    assert.deepEqual(loadValidatedProfile({ dataRoot: root }), original.profile);
+    const previous = process.env.CAREER_OPS_ROOT;
+    try {
+      process.env.CAREER_OPS_ROOT = root;
+      assert.deepEqual(loadValidatedProfile(), original.profile);
+    } finally {
+      if (previous === undefined) delete process.env.CAREER_OPS_ROOT;
+      else process.env.CAREER_OPS_ROOT = previous;
+    }
+    assert.throws(() => loadValidatedProfile({ file: join(root, 'missing.yml') }), { code: 'ENOENT' });
+    save('invalid-reader.yml', { schema_version: 3 });
+    assert.throws(() => loadValidatedProfile({ file: join(root, 'invalid-reader.yml') }), /schema_version must be 2/);
+  });
+
+  check('real prepare/verify CLIs run offline outside the checkout', () => {
+    const prepared = JSON.parse(cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', ...args]).stdout);
+    assert.deepEqual(prepared, prepareCvSelection(original));
+    save('prepared.json', prepared);
+    cli('packages/cli/src/commands/profile/career-profile.ts', ['verify-cv', ...args, '--prepared', 'prepared.json']);
+    save('alternate-profile.yml', original.profile);
+    cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', ...args, '--profile', 'alternate-profile.yml']);
+    cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', ...args], 0, { CAREER_OPS_ROOT: '', CAREER_OPS_DATA_DIR: root });
+    assert.equal(cli('packages/cli/src/commands/profile/career-profile.ts', ['validate']).status, 0);
+  });
+
+  check('CLI errors include fact/entry context and slot zero, omitting unavailable fields', () => {
+    const selection = structuredClone(original.selection);
+    selection.bindings[0].fact_ids = ['fact-unreviewed'];
+    save('invalid-selection.json', selection);
+    const factError = cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', '--payload', 'base.json', '--selection', 'invalid-selection.json'], 1);
+    assert.equal(factError.stdout, '');
+    assert.equal(factError.stderr, '[fact-not-verified] Selected fact needs review. (profile_entry_id="exp-acme-recent", fact_id="fact-unreviewed", experience_index=0)\n');
+
+    delete selection.bindings[0].target;
+    save('invalid-selection.json', selection);
+    const targetError = cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', '--payload', 'base.json', '--selection', 'invalid-selection.json'], 1);
+    assert.equal(targetError.stderr, '[invalid-target] Experience index is outside the base payload. (profile_entry_id="exp-acme-recent")\n');
+  });
+
+  check('CLI rejects stale preparation, missing/invalid profiles and malformed arguments', () => {
+    const prepared = prepareCvSelection(original);
+    prepared.payload.experience[0].bullets[0] = 'Edited after preparation';
+    save('prepared.json', prepared);
+    assert.match(cli('packages/cli/src/commands/profile/career-profile.ts', ['verify-cv', ...args, '--prepared', 'prepared.json'], 1).stderr, /prepared-payload-mismatch/);
+    cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', ...args, '--profile', 'absent.yml'], 1);
+    save('invalid.yml', { schema_version: 3 });
+    cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', ...args, '--profile', 'invalid.yml'], 1);
+    for (const bad of [['--payload'], ['--payload='], ['--bogus'], [...args, '--payload', 'base.json'], [...args, 'extra.json'], ['--payload', 'base.json']]) {
+      cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', ...bad], 1);
+    }
+  });
+
+  check('prepared text renders literally through the existing HTML builder', () => {
+    const prepared = prepareCvSelection(original);
+    save('render.json', prepared.payload);
+    cli('packages/cli/src/commands/cv/build-cv-html.ts', [join(root, 'render.json'), join(root, 'output/cv.html')]);
+    const html = readFileSync(join(root, 'output/cv.html'), 'utf8');
+    assert.ok(html.includes('维护 A&amp;B &lt;组件&gt; 的告警规则。'));
+    assert.ok(html.indexOf('维护 A&amp;B') < html.indexOf('Managed 20 people.'));
+  });
+
+  check('verified Profile text still fails the real PDF fact gate when primary sources disagree', () => {
+    const inflated = structuredClone(original);
+    role(inflated, 0).facts[0].text = 'Managed 999 people.';
+    assert.deepEqual(validateProfile(inflated.profile), []);
+    const prepared = prepareCvSelection(inflated);
+    assert.equal(verifyCvSelection(inflated, prepared), true);
+    save('inflated.json', prepared.payload);
+    cli('packages/cli/src/commands/cv/build-cv-html.ts', [join(root, 'inflated.json'), join(root, 'output/inflated.html')]);
+    const result = cli('packages/cli/src/commands/cv/generate-pdf.ts', [join(root, 'output/inflated.html'), join(root, 'output/inflated.pdf')], 1);
+    assert.match(result.stderr, /Fact check failed[\s\S]*999 people/);
+    assert.equal(existsSync(join(root, 'output/inflated.pdf')), false);
+  });
+
+  check('commands preserve Profile, primary sources and original manifests byte-for-byte', () => {
+    assert.deepEqual(sourceFiles.map(file => readFileSync(join(root, file), 'utf8')), before);
+  });
+} finally {
+  rmSync(root, { recursive: true, force: true });
+}

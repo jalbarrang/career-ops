@@ -6,7 +6,7 @@
 
 1. **讀取資料**：分析 `data/pipeline.md` (用 `grep -n -m 20 '^- \[ \] ' data/pipeline.md` 搜尋，每批處理完後再搜尋一次，直到只剩本次留在 Pending 的項目，不要讀取整個檔案)，找出 "Pending" 區塊下所有標記為 `- [ ]` 的待處理項目。
 2. **逐一處理**：對每一個未處理的 URL：
-   a. **領取新報告編號**：執行 `node reserve-report-num.mjs` 原子地佔用下一個順序編號作為 `REPORT_NUM`；報告寫入後執行 `node reserve-report-num.mjs --release <num>` 釋放佔位。切勿自行掃描 `reports/` 取最大值加 1 —— 並行時多個 worker 會算出同一個編號（#749）。
+   a. **領取新報告編號**：執行 `career-ops reserve-report-num` 原子地佔用下一個順序編號作為 `REPORT_NUM`；報告寫入後執行 `career-ops reserve-report-num --release <num>` 釋放佔位。切勿自行掃描 `reports/` 取最大值加 1 —— 並行時多個 worker 會算出同一個編號（#749）。
    b. **擷取職缺描述 (JD)**：首選 Playwright（透過 `browser_navigate` + `browser_snapshot`）渲染網頁擷取；次選 `WebFetch` 抓取靜態文字；最後以 `WebSearch` 搜尋同名職缺的快照。
    c. **例外處理**：若連結因權限、失效等原因完全打不開，將該項標記為 `- [!]`，附上錯誤描述，然後繼續處理下一個。
    d. **執行一鍵管線評估**：跑 A–F 各維度評估 → 存成報告 `.md` → 依設定產生履歷 PDF（若評分達門檻）→ 自動登錄至 tracker。
@@ -45,7 +45,7 @@
 ## 智慧解析 URL 職缺描述
 
 1. **Playwright（首選）**：`browser_navigate` + `browser_snapshot`。能穩定處理所有單頁式應用 (SPA)。
-   - **可選 — CLI 擷取器（`config/profile.yml` 中的 `scan.extractor: cli`）：** 改為執行 `node browser-extract.mjs <url>`（`--mode jd`）——精簡的 `{ "url", "title", "text" }`，更少 token（視職缺網站而定）。發生錯誤或缺少時**靜默**回退至 `browser_navigate` + `browser_snapshot`。
+   - **可選 — CLI 擷取器（`config/profile.yml` 中的 `scan.extractor: cli`）：** 改為執行 `career-ops browser-extract <url>`（`--mode jd`）——精簡的 `{ "url", "title", "text" }`，更少 token（視職缺網站而定）。發生錯誤或缺少時**靜默**回退至 `browser_navigate` + `browser_snapshot`。
 2. **WebFetch（次選）**：適用於靜態頁面，或在 Playwright 環境不可用時作為後備。
 3. **WebSearch（最終手段）**：在第三方求職聚合平台上找同名職缺的快照。
 
@@ -61,7 +61,7 @@
 啟動處理之前，先執行以下腳本檢查履歷與設定的同步狀態：
 
 ```bash
-node cv-sync-check.mjs
+career-ops cv-sync-check
 ```
 
 若偵測到履歷或個人偏好資料有脫節風險，在繼續執行前先向求職者提出警示。

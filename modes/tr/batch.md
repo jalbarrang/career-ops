@@ -41,7 +41,7 @@ batch/
 4. **Beklemede olan her URL için**:
    a. Chrome: işin üzerine tıkla → DOM üzerinden JD metnini oku.
    b. JD'yi `/tmp/batch-jd-{id}.txt` konumuna kaydet.
-   c. Sonraki REPORT_NUM değerini atomik olarak rezerve et: `node reserve-report-num.mjs` (çalışan raporu yazdıktan sonra `--release {num}` ile serbest bırak; eski, kullanılmayan işaretçiler / sentinels otomatik olarak toplanır - GC).
+   c. Sonraki REPORT_NUM değerini atomik olarak rezerve et: `career-ops reserve-report-num` (çalışan raporu yazdıktan sonra `--release {num}` ile serbest bırak; eski, kullanılmayan işaretçiler / sentinels otomatik olarak toplanır - GC).
    d. Bash üzerinden çalıştır:
 
       ```bash
@@ -68,19 +68,19 @@ Bireysel çalışan görevleri (worker tasks) arka planda başsız olarak oluşt
 N adet paralel değerlendiriciyi (evaluators) el ile mi yönetiyorsunuz (birden fazla ajan penceresi / alt ajanlar, `batch-runner.sh` dışında)? ÖNCE tüm aralığı (range) rezerve et, ardından her çalışana kendi numarasını ver — çalışanların (workers) `max+1` işlemini kendilerinin hesaplamasına asla izin verme:
 
 ```bash
-node reserve-report-num.mjs --count 8
+career-ops reserve-report-num --count 8
 # stdout: 042-049  → çalışan 1 042'yi alır, çalışan 2 043'ü alır, ...
 ```
 
 Her bir numara `reports/` içerisindeki bir işaretçi dosyayla (sentinel file) desteklenir, böylece diğer pencerelerden gelen eşzamanlı (concurrent) rezervasyonlar birbiriyle çakışamaz. Tüm raporlar yazıldıktan sonra, kalan numaraları tek bir çağrıyla (call) serbest bırak:
 
 ```bash
-node reserve-report-num.mjs --release 042-049
+career-ops reserve-report-num --release 042-049
 ```
 
 **Bilinmesi gereken iki şey:**
 
-- **4-saatlik koruma penceresi.** 4 saatten daha eski işaretçiler (sentinels) çöp toplayıcı tarafından temizlenir (`verify-pipeline.mjs` bunu tetikler). Aralığı (range), uzun bir oturumun başında değil, hemen çalışanları (workers) oluşturmadan önce rezerve et. Bir çalışan gerçek raporunu yazdığında o slot kalıcı olarak güvendedir — 4 saat sonra sadece yavaş kalmış veya hiç başlatılmamış slotlar risk altındadır.
+- **4-saatlik koruma penceresi.** 4 saatten daha eski işaretçiler (sentinels) çöp toplayıcı tarafından temizlenir (`packages/cli/src/commands/platform/verify-pipeline.ts` bunu tetikler). Aralığı (range), uzun bir oturumun başında değil, hemen çalışanları (workers) oluşturmadan önce rezerve et. Bir çalışan gerçek raporunu yazdığında o slot kalıcı olarak güvendedir — 4 saat sonra sadece yavaş kalmış veya hiç başlatılmamış slotlar risk altındadır.
 - **Boşluklar normaldir.** Bir rezervasyon çarpışır ve yeniden başlarsa, atlanan numaralar (örn. `006`) bir daha asla kullanılmaz. Rapor numaraları şeffaf olmayan (opaque) kimliklerdir (ID'lerdir); numara atlanması bir veri bozulması (corruption) anlamına gelmez.
 
 ## Mod B: Bağımsız (Standalone) betik

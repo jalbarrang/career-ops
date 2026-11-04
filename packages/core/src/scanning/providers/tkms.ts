@@ -1,0 +1,214 @@
+// TKMS (thyssenkrupp Marine Systems) provider — the careers app at
+// jobs.tkmsgroup.com. Single-employer, but the backend is a shared job-board
+// platform keyed by a `subclient` param, so the provider takes the subclient
+// (and locale) from a config block for reuse if another tenant on the same
+// platform ever needs it.
+//
+//   POST {origin}/api/filter/query
+//   Content-Type: application/json
+//   {"searchQuery":"","filter":{},"subclient":"tkms","locale":"en","page":0}
+//   → {"jobs":[{"_geoloc":[…],"data":{id,title,city,country,state,company,
+//        postingDate:"2026-07-02T22:00:00",locations:[{city,cityState,…}],…}}],
+//      "page":0,"jobsPerPage":20,"nextPage":1,"totalHits":330}
+//
+// `page` is 0-based; `nextPage` is null on the last page. The public job page is
+// {origin}/{locale}/job/{slug}/{id} — the slug is cosmetic (a stub resolves the
+// same posting, verified), so we slugify the title.
+//
+// Detection: jobs.tkmsgroup.com is the only known host, and it carries no
+// generic platform token, so detect() claims that host explicitly.
+
+// Titles arrive HTML-escaped, so the tag strip below is not enough on its own:
+// an undecoded "R&amp;D Engineer" fails the user's own title_filter positive
+// "r&d" and is silently dropped, and a negative like "sales & marketing" never
+// vetoes "Sales &amp; Marketing Lead". Shared decoder, same as softgarden and
+// radancy (#2487, #2921).
+import { decodeEntities } from './_html-entities.ts';
+import { safeEncodeURIComponent } from './_safe-url.ts';
+import { sleep } from './_http.ts';
+import type { Context, DetectHit, Job, PortalEntry, Provider } from './_types.ts';
+
+const MAX_PAGES = 60; // safety cap on request count (60*20 = 1200 postings)
+const MAX_JOBS = 1000; // cap total postings pulled
+const PAGE_DELAY_MS = 150; // polite pacing between page requests
+
+/** Resolved tenant coordinates for the TKMS jobs app. */
+export interface TkmsConfig {
+  origin: string;
+  queryApi: string;
+  subclient: string;
+  locale: string;
+}
+
+/** One query row, before it becomes a `Job`. */
+interface TkmsRow {
+  id: string;
+  title: string;
+  url: string;
+  location: string;
+  postedAt: number | undefined;
+}
+
+/** Narrow a parsed-JSON value to an indexable object. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+export function resolveConfig(entry: PortalEntry): TkmsConfig | null {
+  const raw = entry.api || entry.careers_url || '';
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (u.protocol !== 'https:') return null;
+  const host = u.host.toLowerCase();
+  if (host !== 'jobs.tkmsgroup.com') return null;
+  const block: Record<string, unknown> = isRecord(entry.tkms) ? entry.tkms : {};
+  const locale = typeof block.locale === 'string' ? block.locale : 'en';
+  return {
+    origin: u.origin,
+    queryApi: `${u.origin}/api/filter/query`,
+    subclient: typeof block.subclient === 'string' ? block.subclient : 'tkms',
+    locale,
+  };
+}
+
+// Slugify a title for the cosmetic job-page slug (TKMS uses `_` for the
+// gender marker and `-` between words; a stub slug also resolves, so exactness
+// doesn't matter — we just produce a clean, hyphenated string).
+export function slugify(title: string): string {
+  return String(title)
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'job';
+}
+
+// postingDate is a naive ISO local timestamp ("2026-07-02T22:00:00"); prefer
+// the epoch-seconds `postingDate_timestamp` when present.
+export function parseTkmsDate(data: unknown): number | undefined {
+  if (!isRecord(data)) return undefined;
+  const ts = data.postingDate_timestamp;
+  if (typeof ts === 'number' && Number.isFinite(ts)) return ts * 1000;
+  const raw = data.postingDate;
+  if (typeof raw === 'string' && raw.trim()) {
+    const ms = Date.parse(raw.trim() + 'Z'); // treat naive stamp as UTC for determinism
+    if (Number.isFinite(ms)) return ms;
+  }
+  return undefined;
+}
+
+// Location: prefer the `locations` array (cityState per site), else the flat
+// city/country fields. Joined with " / ", deduped.
+export function tkmsLocation(data: unknown): string {
+  const row: Record<string, unknown> = isRecord(data) ? data : {};
+  const locs: unknown[] = Array.isArray(row.locations) ? row.locations : [];
+  const out: string[] = [];
+  for (const l of locs) {
+    const source = isRecord(l) ? (l.cityState || l.city) : undefined;
+    const s = String(source || '').trim();
+    if (s && !out.includes(s)) out.push(s);
+  }
+  if (out.length) return out.join(' / ');
+  const flat = [row.city, row.country].map((p) => String(p || '').trim()).filter(Boolean);
+  return [...new Set(flat)].join(', ');
+}
+
+/**
+ * Map one query response to {total, nextPage, rows}. A record without an id or
+ * title is skipped.
+ */
+export function parseQuery(
+  json: unknown,
+  cfg: { origin: string; locale: string },
+): { total: number | null; nextPage: number | null; rows: TkmsRow[] } {
+  const body: Record<string, unknown> = isRecord(json) ? json : {};
+  const total = typeof body.totalHits === 'number' ? body.totalHits : null;
+  const nextPage = typeof body.nextPage === 'number' ? body.nextPage : null;
+  const list: unknown[] = Array.isArray(body.jobs) ? body.jobs : [];
+  const rows: TkmsRow[] = [];
+  // cfg.locale is a trusted config segment (portals.yml `tkms.locale`, the only
+  // attested value being the default "en"). encodeURIComponent here, not
+  // safeEncodeURIComponent + drop: a structural char (`/`, `?`, `#`) is escaped
+  // so the URL stays well-formed, and a lone surrogate — a genuine config error
+  // — throws out of parseQuery loudly rather than silently dropping every
+  // posting one at a time. Hoisted out of the row loop so that throw lands
+  // before any row work. Same call as garena's config-derived path.
+  const localeSeg = encodeURIComponent(cfg.locale);
+  for (const item of list) {
+    const d = isRecord(item) ? item.data : undefined;
+    if (!isRecord(d)) continue;
+    const id = d.id != null ? String(d.id) : '';
+    const title = decodeEntities(String(d.title || '').replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim();
+    if (!id || !title) continue;
+    // A lone surrogate in id throws URIError out of encodeURIComponent and
+    // aborts this loop; id is also the dedup key. Drop this row on a null.
+    const encodedId = safeEncodeURIComponent(id);
+    if (encodedId === null) continue;
+    rows.push({
+      id,
+      title,
+      url: `${cfg.origin}/${localeSeg}/job/${slugify(title)}/${encodedId}`,
+      location: tkmsLocation(d),
+      postedAt: parseTkmsDate(d),
+    });
+  }
+  return { total, nextPage, rows };
+}
+
+/** Resolve the page cap: positive integer `max_pages`, else default. */
+function resolveMaxPages(entry: PortalEntry): number {
+  const v = entry?.max_pages;
+  if (typeof v === 'number' && Number.isInteger(v) && v > 0) return Math.min(v, MAX_PAGES);
+  return MAX_PAGES;
+}
+
+const tkms: Provider = {
+  id: 'tkms',
+
+  detect(entry: PortalEntry): DetectHit | null {
+    const url = entry.api || entry.careers_url || '';
+    if (typeof url !== 'string') return null;
+    return resolveConfig(entry) ? { url } : null;
+  },
+
+  async fetch(entry: PortalEntry, ctx: Context): Promise<Job[]> {
+    const cfg = resolveConfig(entry);
+    if (!cfg) throw new Error(`tkms: cannot resolve jobs host for ${entry.name}`);
+
+    const maxPages = resolveMaxPages(entry);
+    const jobs: Job[] = [];
+    const seen = new Set<string>();
+
+    for (let page = 0; page < maxPages; page++) {
+      if (page > 0) await sleep(PAGE_DELAY_MS, ctx);
+      const json: unknown = await ctx.fetchJson(cfg.queryApi, {
+        method: 'POST',
+        redirect: 'error',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({ searchQuery: '', filter: {}, subclient: cfg.subclient, locale: cfg.locale, page }),
+      });
+      const { nextPage, rows } = parseQuery(json, cfg);
+      if (rows.length === 0) break;
+
+      let fresh = 0;
+      for (const row of rows) {
+        if (seen.has(row.id)) continue;
+        seen.add(row.id);
+        fresh++;
+        const job: Job = { title: row.title, url: row.url, company: entry.name, location: row.location };
+        if (typeof row.postedAt === 'number') job.postedAt = row.postedAt;
+        jobs.push(job);
+        if (jobs.length >= MAX_JOBS) break;
+      }
+      if (fresh === 0) break; // server looped / ignored page
+      if (jobs.length >= MAX_JOBS) break;
+      if (nextPage === null) break; // last page
+    }
+    return jobs;
+  },
+};
+
+export default tkms;

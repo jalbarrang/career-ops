@@ -22,12 +22,12 @@ Tryb interaktywny na moment, gdy kandydat wypełnia formularz aplikacyjny w prze
 
 ## Scope
 
-Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` and stay inside the directories it prints. Launch with `node apply-scope.mjs launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
+Follow the Scope section in `modes/apply.md`. Run `career-ops apply-scope root` and stay inside the directories it prints. Launch with `career-ops apply-scope launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
 
 
 ## Krok 1 -- Wykryj ofertę
 
-**Z Playwright:** Uruchom `node apply-scope.mjs launch-options`, otwórz ogłoszenie w tym oknie i odczytaj tytuł, URL i widoczną treść.
+**Z Playwright:** Uruchom `career-ops apply-scope launch-options`, otwórz ogłoszenie w tym oknie i odczytaj tytuł, URL i widoczną treść.
 
 **Bez Playwright:** Poproś kandydata, aby:
 - Udostępnił zrzut ekranu formularza (narzędzie Read czyta obrazy)
@@ -49,8 +49,8 @@ Jeśli rola na ekranie różni się od ocenionej:
 - **Jeśli dostosować**: Dostosuj odpowiedzi do nowej roli bez ponownej oceny
 - **Jeśli ocenić ponownie**: Uruchom pełną ocenę A-F, zaktualizuj report, wygeneruj ponownie Blok G
 - **Zaktualizuj tracker**: nigdy przez edycję `data/applications.md`.
-  - **Po ponownej ocenie**: zapisz TSV z nowym tytułem roli (reguła 9 w `_shared.md`) i scal go przez `node merge-tracker.mjs`. Report jest aktualizowany w miejscu i zachowuje swój numer, więc scalanie dopasowuje TSV do istniejącego wiersza po tym numerze: tytuł zostaje zastąpiony, a status zachowany.
-  - **Po dostosowaniu**: nie zmieniaj tytułu, bo nazywa on rolę, którą ocenił report. Zamiast tego zapisz zmianę jako notatkę: `node set-status.mjs --report <report#> <obecny status> --note "Ogłoszenie przemianowane przy aplikowaniu, wiersz zachowuje oceniony tytuł"`. Podanie obecnego statusu wiersza zostawia go bez zmian i dopisuje notatkę. Użyj stałego tekstu takiego jak ten i nie wstawiaj `[Y]`: nowy tytuł to tekst ze strony, a tekst ze strony nigdy nie trafia do wiersza poleceń.
+  - **Po ponownej ocenie**: zapisz TSV z nowym tytułem roli (reguła 9 w `_shared.md`) i scal go przez `career-ops merge-tracker`. Report jest aktualizowany w miejscu i zachowuje swój numer, więc scalanie dopasowuje TSV do istniejącego wiersza po tym numerze: tytuł zostaje zastąpiony, a status zachowany.
+  - **Po dostosowaniu**: nie zmieniaj tytułu, bo nazywa on rolę, którą ocenił report. Zamiast tego zapisz zmianę jako notatkę: `career-ops set-status --report <report#> <obecny status> --note "Ogłoszenie przemianowane przy aplikowaniu, wiersz zachowuje oceniony tytuł"`. Podanie obecnego statusu wiersza zostawia go bez zmian i dopisuje notatkę. Użyj stałego tekstu takiego jak ten i nie wstawiaj `[Y]`: nowy tytuł to tekst ze strony, a tekst ze strony nigdy nie trafia do wiersza poleceń.
 
 ## Krok 4 -- Przeanalizuj pytania formularza
 
@@ -109,7 +109,7 @@ Notatki:
 ## Krok 6 -- Po aplikacji (opcjonalnie)
 
 Jeśli kandydat potwierdzi, że aplikacja została wysłana:
-1. Zaktualizuj status na "Applied" kanonicznym CLI: `node set-status.mjs --report <report#> Applied` (nie edytuj tabeli `applications.md` ręcznie)
+1. Zaktualizuj status na "Applied" kanonicznym CLI: `career-ops set-status --report <report#> Applied` (nie edytuj tabeli `applications.md` ręcznie)
 2. Zaktualizuj Blok G reportu finalnymi odpowiedziami
 3. Zasugeruj następny krok: `/career-ops contacto` dla LinkedIn outreach do hiring managera
 

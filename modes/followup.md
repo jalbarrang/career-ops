@@ -22,14 +22,14 @@ elapsed-time cadence case — see `confirmed_time_noshow` in `modes/email.md`
 
 ## Step 0: Check that follow-ups are on
 
-If `config/profile.yml` sets `follow_ups.enabled: false`, stop here. Tell the user follow-ups are turned off and that they can turn them back on with `follow_ups.enabled: true` in `config/profile.yml` or the "Track follow-ups" checkbox on the web Config page. Do not run the cadence script or draft follow-up messages. The `contacto` mode is a first outreach, not a follow-up, so it still works when follow-ups are off. `followup-cadence.mjs --json` also reports `"followupsEnabled": false` with no entries in that case.
+If `config/profile.yml` sets `follow_ups.enabled: false`, stop here. Tell the user follow-ups are turned off and that they can turn them back on with `follow_ups.enabled: true` in `config/profile.yml` or the "Track follow-ups" checkbox on the web Config page. Do not run the cadence script or draft follow-up messages. The `contacto` mode is a first outreach, not a follow-up, so it still works when follow-ups are off. `packages/core/src/outreach/followup-cadence.ts --json` also reports `"followupsEnabled": false` with no entries in that case.
 
 ## Step 1 — Run Cadence Script
 
 Execute:
 
 ```bash
-node followup-cadence.mjs
+career-ops followup-cadence
 ```
 
 Parse the JSON output. It contains:
@@ -43,14 +43,14 @@ Parse the JSON output. It contains:
 If no actionable entries, tell the user:
 > "No active applications to follow up on. Apply to some roles first with `/career-ops` and come back when they're aging."
 
-**Calibration cross-reference:** `node funnel-velocity.mjs --summary` reports which in-flight applications sit beyond the typical first-response window (its `waiting` block) — those rows are natural follow-up candidates; feed them into this cadence view rather than treating the wait itself as a verdict (silence past the window is common, not a rejection). When the user reports a status change here ("they replied", "rejected"), route it through `node set-status.mjs --report <report#> <state>` and pass `--on YYYY-MM-DD` when they name the real event day.
+**Calibration cross-reference:** `career-ops funnel-velocity --summary` reports which in-flight applications sit beyond the typical first-response window (its `waiting` block) — those rows are natural follow-up candidates; feed them into this cadence view rather than treating the wait itself as a verdict (silence past the window is common, not a rejection). When the user reports a status change here ("they replied", "rejected"), route it through `career-ops set-status --report <report#> <state>` and pass `--on YYYY-MM-DD` when they name the real event day.
 
 ## Step 1b — Employer Response-Latency Check
 
 Execute:
 
 ```bash
-node rejection-latency.mjs
+career-ops rejection-latency
 ```
 
 Parse the JSON output. It cross-references `data/active-interviews.md` interview dates with tracker rows still in `Interview` state (matched per application: company + role) and flags applications whose post-interview silence exceeds the **courtesy** threshold (30-day default, configurable via `rejection_latency.courtesy_days` or `--courtesy-days`). If `flags` is empty, skip this step silently.
@@ -154,7 +154,7 @@ Do NOT generate another follow-up. Instead suggest:
 
 ### Company history context (optional)
 
-Before drafting, check the company's card. Skip this lookup entirely when the tracker's company field is `?` (the unknown-employer marker — there is no meaningful card to fetch). Otherwise run `node company-history.mjs --company <company>`, passing the company name as its own single, quoted argument — never splice it into a longer shell string, since company names can legitimately contain quotes, `$`, backticks, or `;`. If `responsiveness.label` is `silent-on-you`, set expectations rather than discouraging the follow-up: many processes are genuinely just slow, so mention this plainly and suggest capping further time investment in this company if it stays silent after this attempt. The decision to send — and how many more times — stays the user's; never skip or downgrade a follow-up because of this label. Follow-up compliance is never punished.
+Before drafting, check the company's card. Skip this lookup entirely when the tracker's company field is `?` (the unknown-employer marker — there is no meaningful card to fetch). Otherwise run `career-ops company-history --company <company>`, passing the company name as its own single, quoted argument — never splice it into a longer shell string, since company names can legitimately contain quotes, `$`, backticks, or `;`. If `responsiveness.label` is `silent-on-you`, set expectations rather than discouraging the follow-up: many processes are genuinely just slow, so mention this plainly and suggest capping further time investment in this company if it stays silent after this attempt. The decision to send — and how many more times — stays the user's; never skip or downgrade a follow-up because of this label. Follow-up compliance is never punished.
 
 ## Step 4 — Present Drafts
 
@@ -177,7 +177,7 @@ For each draft, show:
 After the user reviews and says they've sent a follow-up, record it:
 
 1. If `data/follow-ups.md` doesn't exist, create it (this exact header — the
-   same one the web UI writes; `followup-cadence.mjs` parses these columns):
+   same one the web UI writes; `packages/core/src/outreach/followup-cadence.ts` parses these columns):
 
    ```markdown
    # Follow-ups
@@ -196,7 +196,7 @@ After the user reviews and says they've sent a follow-up, record it:
    - `contact` = who it was sent to
    - `notes` = brief note (e.g., "First follow-up, referenced Barbeiro.app")
 
-3. Optionally add "Follow-up {N} sent {YYYY-MM-DD}" to the row's notes with `node set-status.mjs --report {report#} {current status} --note "Follow-up {N} sent {YYYY-MM-DD}"`. Passing the row's current status leaves it unchanged and appends the note; do not edit `data/applications.md` by hand
+3. Optionally add "Follow-up {N} sent {YYYY-MM-DD}" to the row's notes with `career-ops set-status --report {report#} {current status} --note "Follow-up {N} sent {YYYY-MM-DD}"`. Passing the row's current status leaves it unchanged and appends the note; do not edit `data/applications.md` by hand
 
 **IMPORTANT:** Only record follow-ups the user confirms they actually sent. Never record a draft as sent.
 
@@ -215,7 +215,7 @@ the computed schedule until a follow-up is logged on or after the set-date;
 the latest pin per application wins; deleting the line clears the pin.
 
 Pins may be seeded AUTOMATICALLY when an application turns Applied —
-`node followup-seed.mjs <num>` (run by the `apply` mode's Step 9) appends a
+`career-ops followup-seed <num>` (run by the `apply` mode's Step 9) appends a
 pin scheduling the first follow-up at apply date + the `applied_first`
 cadence. Seeding is idempotent, and a stale pin left behind by a later
 Rejected/Discarded transition is harmless because the cadence analysis
@@ -243,4 +243,4 @@ After showing all drafts, summarize:
 | Assessment | 1 day (assessment invite/submission) | Every 3 days | No limit |
 | Interview | 1 day after (thank-you) | Every 3 days | No limit |
 
-These defaults can be overridden via `node followup-cadence.mjs --applied-days N`.
+These defaults can be overridden via `career-ops followup-cadence --applied-days N`.

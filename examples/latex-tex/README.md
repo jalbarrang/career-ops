@@ -1,6 +1,6 @@
 # LaTeX-in examples (latex-tex mode)
 
-Fictional `.tex` fixtures for `extract-latex-content.mjs` / `patch-latex-content.mjs` tests.
+Fictional `.tex` fixtures for `packages/cli/src/commands/cv/extract-latex-content.ts` / `packages/cli/src/commands/cv/patch-latex-content.ts` tests.
 Do not use real names, emails, or employers from your own CV here.
 
 | File | Family |
@@ -9,5 +9,5 @@ Do not use real names, emails, or employers from your own CV here.
 | `tabularx-itemize.tex` | `tabularx-itemize` — `tabularx` header rows + `itemize` bullets |
 
 ```bash
-node extract-latex-content.mjs examples/latex-tex/resume-subheading.tex
+bun packages/cli/src/commands/cv/extract-latex-content.ts examples/latex-tex/resume-subheading.tex
 ```

@@ -8,7 +8,7 @@ Khi ứng viên dán tin tuyển dụng (văn bản hoặc URL), LUÔN trả đ�
 
 Khi ứng viên dán một **URL** (không phải văn bản tin), trước hết xác nhận tin còn mở rồi mới bắt đầu đánh giá. Một liên kết chết không được phép đi tới Block A: tin hết hạn hoặc 404 sẽ làm phí một lượt đánh giá A-G, báo cáo và PDF.
 
-1. Lấy nội dung trang: nếu đến từ `auto-pipeline` (bước 0.5 đã mở và kiểm tra liên kết), dùng lại snapshot đó, không mở lại. Với URL nhập trực tiếp, mở bằng Playwright (`browser_navigate` + `browser_snapshot`) và đọc tiêu đề, URL và nội dung hiển thị. **Tùy chọn:** nếu `config/profile.yml` có `scan.extractor: cli`, chạy `node browser-extract.mjs <url>` (mặc định `--mode jd`) và dùng `{ "url", "title", "text" }` gọn của nó, **âm thầm quay về** `browser_navigate` + `browser_snapshot` nếu lệnh lỗi hoặc không có.
+1. Lấy nội dung trang: nếu đến từ `auto-pipeline` (bước 0.5 đã mở và kiểm tra liên kết), dùng lại snapshot đó, không mở lại. Với URL nhập trực tiếp, mở bằng Playwright (`browser_navigate` + `browser_snapshot`) và đọc tiêu đề, URL và nội dung hiển thị. **Tùy chọn:** nếu `config/profile.yml` có `scan.extractor: cli`, chạy `career-ops browser-extract <url>` (mặc định `--mode jd`) và dùng `{ "url", "title", "text" }` gọn của nó, **âm thầm quay về** `browser_navigate` + `browser_snapshot` nếu lệnh lỗi hoặc không có.
    - Bộ trích xuất CLI chỉ đọc tài liệu ngoài cùng. Nếu đầu ra của nó không có JD thật hoặc đường dẫn ứng tuyển, dùng Playwright kiểm tra iframe nhúng trước khi kết luận đóng tin, kể cả khi bộ trích xuất trả về thành công.
 2. Phân loại tin:
    - **dấu hiệu còn mở:** có tiêu đề/vai trò cùng mô tả thật hoặc đường dẫn ứng tuyển
@@ -439,7 +439,7 @@ Nếu kích hoạt, thêm ghi chú ngắn, không gây hoảng:
 
 > ⚠️ **Location tag mismatch signal:** [Viết bằng {language.output}: tin này hiển thị "{địa điểm nền tảng}" trên {tên nền tảng}, nhưng trang việc làm của chính nhà tuyển dụng cho cùng tin ghi "{địa điểm trang nhà tuyển dụng}". Hãy xác nhận địa điểm làm việc thực tế trực tiếp với nhà tuyển dụng trước khi cho rằng địa điểm nền tảng hiển thị là đúng -- đôi khi đó là lỗi đăng chéo/gắn thẻ, không nhất thiết là lừa dối.]
 
-Tín hiệu này không đổi tầng bên dưới; nó được báo cáo riêng. **Ghi chú phạm vi:** hiện tín hiệu này chỉ dựa vào chỉ dẫn trong prompt -- agent tự so sánh hai nguồn khi cả hai có trong dữ liệu người dùng cung cấp; nó không sửa `check-liveness.mjs` hay `liveness-core.mjs`.
+Tín hiệu này không đổi tầng bên dưới; nó được báo cáo riêng. **Ghi chú phạm vi:** hiện tín hiệu này chỉ dựa vào chỉ dẫn trong prompt -- agent tự so sánh hai nguồn khi cả hai có trong dữ liệu người dùng cung cấp; nó không sửa `packages/cli/src/commands/liveness/check-liveness.ts` hay `packages/core/src/liveness/liveness-core.ts`.
 
 **10. Kiểm tra giấy phép agency** (từ văn bản JD + `templates/agency-licensing.yml`):
 
@@ -516,7 +516,7 @@ Tín hiệu này **có thể** kéo tầng bên dưới về **Suspicious** khi 
 
 ### Prior-contact FYI (không tính điểm)
 
-Kiểm tra trục `responsiveness` của thẻ `node company-history.mjs --company <company>`, truyền tên công ty như một đối số riêng được trích dẫn -- không bao giờ ghép vào chuỗi shell dài hơn, vì tên công ty có thể chứa dấu nháy, `$`, backtick hay `;`. Rẽ nhánh theo `responsiveness.label` và thêm MỘT dòng thông tin vào báo cáo. Mảng `facts` có thể chứa nhiều đơn ứng tuyển vào cùng công ty, nên điền placeholder theo **từng loại**: dùng đơn gần nhất khớp điều kiện riêng của placeholder đó -- placeholder "đã phản hồi" điền từ fact đã phản hồi gần nhất, placeholder "im lặng" điền từ fact im lặng gần nhất.
+Kiểm tra trục `responsiveness` của thẻ `career-ops company-history --company <company>`, truyền tên công ty như một đối số riêng được trích dẫn -- không bao giờ ghép vào chuỗi shell dài hơn, vì tên công ty có thể chứa dấu nháy, `$`, backtick hay `;`. Rẽ nhánh theo `responsiveness.label` và thêm MỘT dòng thông tin vào báo cáo. Mảng `facts` có thể chứa nhiều đơn ứng tuyển vào cùng công ty, nên điền placeholder theo **từng loại**: dùng đơn gần nhất khớp điều kiện riêng của placeholder đó -- placeholder "đã phản hồi" điền từ fact đã phản hồi gần nhất, placeholder "im lặng" điền từ fact im lặng gần nhất.
 
 - `silent-on-you` (điền từ fact im lặng gần nhất; nếu có nhiều hơn một đơn im lặng, thêm số lượng các đơn còn lại):
 > Note: you applied to {company} on {date}; no response in {N}d after {M} follow-ups. Not a legitimacy signal — factor into how much effort to invest.
@@ -659,7 +659,7 @@ Trước khi lưu báo cáo, áp dụng `_shared.md` → "Độ tin cậy của 
 
 Lưu bản đánh giá đầy đủ vào `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
-- `{###}` = số thứ tự kế tiếp (3 chữ số, đệm số 0). Để cấp phát nguyên tử và tránh race condition, bạn PHẢI chạy `node reserve-report-num.mjs` để giữ số (stdout trả về `{###}`), ghi báo cáo, rồi chạy `node reserve-report-num.mjs --release {###}` để nhả sentinel.
+- `{###}` = số thứ tự kế tiếp (3 chữ số, đệm số 0). Để cấp phát nguyên tử và tránh race condition, bạn PHẢI chạy `career-ops reserve-report-num` để giữ số (stdout trả về `{###}`), ghi báo cáo, rồi chạy `career-ops reserve-report-num --release {###}` để nhả sentinel.
 - `{company-slug}` = tên công ty chữ thường, không dấu, không khoảng trắng (dùng dấu gạch nối)
 - `{YYYY-MM-DD}` = ngày hiện tại
 - **Tin qua agency với nhà tuyển dụng cuối chưa rõ (#1596):** slug là `confidential-{agency-slug}` (ví dụ `042-confidential-hays-2026-07-06.md`). File KHÔNG BAO GIỜ đổi tên sau khi nhà tuyển dụng được tiết lộ -- cập nhật tiêu đề/header/YAML.
@@ -730,7 +730,7 @@ Lưu bản đánh giá đầy đủ vào `reports/{###}-{company-slug}-{YYYY-MM-
 (danh sách 15-20 từ khóa từ JD để tối ưu ATS)
 
 ## Keyword Coverage
-(tự tạo bởi `node keyword-match.mjs <report>` — coverage %, present, thin, missing)
+(tự tạo bởi `career-ops keyword-match <report>` — coverage %, present, thin, missing)
 
 ## Job Description (archived verbatim)
 (toàn văn tin tuyển dụng, dán nguyên văn — xem yêu cầu bên dưới)
@@ -738,9 +738,9 @@ Lưu bản đánh giá đầy đủ vào `reports/{###}-{company-slug}-{YYYY-MM-
 
 **Tiêu đề phần và nhãn header giữ nguyên tiếng Anh.** `## Machine Summary`, dấu `(lead)` và `## Risk Summary` (cả hai lần xuất hiện), các nhãn `**Date:**`, `**URL:**`, `**Archetype:**`, `**Score:**`, `**Legitimacy:**`, `**Work Auth:**`, `**PDF:**` và các tiêu đề `## A)`-`## H)` được script và giao diện web đọc theo tên; dịch chúng sẽ làm mất trường trong trình xem một cách âm thầm. Nhãn `**Quyết định:**` là ngoại lệ. Nội dung bên dưới tiêu đề viết bằng `{language.output}`.
 
-**Machine Summary (bắt buộc):** mọi báo cáo mang một YAML fence `## Machine Summary` ngay sau header -- cùng schema, tên field chính xác và quy tắc với khối "Machine Summary" trong `batch/batch-prompt.md` (không nhân đôi schema ở đây; file đó là nguồn sự thật). Nó gồm `advertised_comp`: con số lương của chính JD **nguyên văn** (ví dụ `"25-35 triệu"`), hoặc `null` khi JD không nêu -- không bao giờ ước lượng, không bao giờ thay bằng dữ liệu thị trường đã nghiên cứu. Key này gieo quan sát lương công bố mà `node salary-gap.mjs` đọc. Nó cũng gồm `risk_summary`: khối Risk Summary phản chiếu dạng map, và `requirement_importance`: bảng Block B phản chiếu từng dòng, mang tầng bằng chứng, mức quan trọng và match của mỗi dòng (`[]` khi JD không cho ra danh sách yêu cầu dùng được). Giới hạn `inferred` từ cổng Block B cũng áp dụng trong YAML -- `importance` không bao giờ là `critical` hoặc `high` khi `evidence: inferred`. Các key YAML và giá trị enum giữ nguyên tiếng Anh.
+**Machine Summary (bắt buộc):** mọi báo cáo mang một YAML fence `## Machine Summary` ngay sau header -- cùng schema, tên field chính xác và quy tắc với khối "Machine Summary" trong `batch/batch-prompt.md` (không nhân đôi schema ở đây; file đó là nguồn sự thật). Nó gồm `advertised_comp`: con số lương của chính JD **nguyên văn** (ví dụ `"25-35 triệu"`), hoặc `null` khi JD không nêu -- không bao giờ ước lượng, không bao giờ thay bằng dữ liệu thị trường đã nghiên cứu. Key này gieo quan sát lương công bố mà `career-ops salary-gap` đọc. Nó cũng gồm `risk_summary`: khối Risk Summary phản chiếu dạng map, và `requirement_importance`: bảng Block B phản chiếu từng dòng, mang tầng bằng chứng, mức quan trọng và match của mỗi dòng (`[]` khi JD không cho ra danh sách yêu cầu dùng được). Giới hạn `inferred` từ cổng Block B cũng áp dụng trong YAML -- `importance` không bao giờ là `critical` hoặc `high` khi `evidence: inferred`. Các key YAML và giá trị enum giữ nguyên tiếng Anh.
 
-**Lưu trữ JD (bắt buộc, #2789):** mọi báo cáo PHẢI mang mục `## Job Description (archived verbatim)` với toàn văn tin dán nguyên trạng -- không bao giờ tóm tắt hay diễn giải. Header `**URL:**` đơn thuần không phải bản lưu: nó là con trỏ trực tiếp sẽ hỏng khi tin bị đóng hoặc gỡ -- việc này thường xảy ra trong những tuần giữa lúc nộp đơn và vòng phỏng vấn sau, và không còn cách khôi phục yêu cầu gốc. Đây là cơ chế chính, không phải dự phòng. Nếu JD rất dài, ghi nó bằng `archive-posting.mjs --report={num}` và thay vì văn bản, đặt trong mục này **chính xác** câu `See jds/{filename} for the full archive (archive-posting.mjs --report={num}).` -- `check-jd-archive.mjs` chỉ công nhận câu con trỏ chuẩn này khi nó truy ngược về đúng số báo cáo qua `findCaptureForReport`; mục chỉ gồm câu này mới được coi là con trỏ, nếu thêm văn xuôi khác sẽ bị coi là chính văn bản lưu trữ.
+**Lưu trữ JD (bắt buộc, #2789):** mọi báo cáo PHẢI mang mục `## Job Description (archived verbatim)` với toàn văn tin dán nguyên trạng -- không bao giờ tóm tắt hay diễn giải. Header `**URL:**` đơn thuần không phải bản lưu: nó là con trỏ trực tiếp sẽ hỏng khi tin bị đóng hoặc gỡ -- việc này thường xảy ra trong những tuần giữa lúc nộp đơn và vòng phỏng vấn sau, và không còn cách khôi phục yêu cầu gốc. Đây là cơ chế chính, không phải dự phòng. Nếu JD rất dài, ghi nó bằng `packages/cli/src/commands/evaluation/archive-posting.ts --report={num}` và thay vì văn bản, đặt trong mục này **chính xác** câu `See jds/{filename} for the full archive (packages/cli/src/commands/evaluation/archive-posting.ts --report={num}).` -- `packages/core/src/evaluation/check-jd-archive.ts` chỉ công nhận câu con trỏ chuẩn này khi nó truy ngược về đúng số báo cáo qua `findCaptureForReport`; mục chỉ gồm câu này mới được coi là con trỏ, nếu thêm văn xuôi khác sẽ bị coi là chính văn bản lưu trữ.
 
 Không phải nguồn JD nào cũng là URL: có tin chỉ tồn tại dưới dạng ảnh chụp màn hình dán vào. Với mọi định dạng nguồn (URL, văn bản dán, ảnh chụp), chép văn bản ngày đăng hiển thị trên nguồn -- `Posted 3 days ago`, ngày cụ thể, "Cập nhật ..." -- thành dòng đầu tiên của mục lưu trữ: `Posted: {ngày hoặc chuỗi tương đối như hiển thị}`, hoặc `Posted: not visible in source` khi thật sự không có. Không bao giờ thay bằng thời gian sửa/tạo của file báo cáo.
 
@@ -749,7 +749,7 @@ Không phải nguồn JD nào cũng là URL: có tin chỉ tồn tại dưới d
 Sau khi lưu báo cáo, chạy kiểm tra độ phủ và dán khối `## Keyword Coverage` của nó vào báo cáo, ngay dưới mục `## Keywords extracted` (sau danh sách từ khóa, trước `## Job Description (archived verbatim)`):
 
 ```bash
-node keyword-match.mjs reports/{###}-{company-slug}-{YYYY-MM-DD}.md
+career-ops keyword-match reports/{###}-{company-slug}-{YYYY-MM-DD}.md
 ```
 
 Mặc định lệnh quét `cv.md` gốc -- đọc kết quả như **danh sách khoảng trống trước khi điều chỉnh** (từ khóa JD nào cần đưa vào khi điều chỉnh CV), không phải phán quyết về tài liệu bạn sẽ gửi; đầu ra ghi rõ nó đã quét gì. Để kiểm tra CV cuối cùng đã điều chỉnh, truyền `--cv` (mode `pdf` làm việc này trên HTML đã tạo).
@@ -767,7 +767,7 @@ Mặc định lệnh quét `cv.md` gốc -- đọc kết quả như **danh sách
 - Score: sao chép điểm toàn cục 1-5 đã quyết định từ header báo cáo và `score` trong Machine Summary. Áp dụng mọi quy tắc chấm điểm của người dùng trong `modes/_profile.md` và `modes/_custom.md` khi quyết định điểm đó, không áp dụng lại khi ghi tracker. A-H là các phần của báo cáo, không phải điểm để lấy trung bình.
 - Status: `Evaluated`
 - PDF: ❌ (hoặc ✅ nếu auto-pipeline đã tạo PDF)
-- Report: liên kết tương đối từ gốc `[001](reports/001-company-2026-01-01.md)` (khi gộp bằng `merge-tracker.mjs` sẽ được chuẩn hóa tương đối với thư mục của tracker, ví dụ `../reports/...`; xem #760)
+- Report: liên kết tương đối từ gốc `[001](reports/001-company-2026-01-01.md)` (khi gộp bằng `packages/cli/src/commands/tracker/merge-tracker.ts` sẽ được chuẩn hóa tương đối với thư mục của tracker, ví dụ `../reports/...`; xem #760)
 - Notes -- khi mục pipeline mang đoạn `| posted: {YYYY-MM-DD}` (do scanner ghi từ `offer.postedAt` của provider, xem `modes/pipeline.md`), chuyển nó thành một đoạn cuối riêng: `…; posted: 2026-08-07`. Đây là đường duy nhất để ngày đăng tin tới tracker và cột POSTED của dashboard. Sao chép nguyên văn; khi mục không có đoạn này thì không ghi gì thay vì suy đoán một ngày.
 
 **Định dạng tracker:**
@@ -790,12 +790,12 @@ Nếu -- và chỉ nếu -- người dùng **nêu rõ một con số mong muốn
 {tracker#}\t{YYYY-MM-DD}\tdesired\t{amount}\t{currency}\tuser\t{ghi chú ngữ cảnh ngắn}
 ```
 
-Không bao giờ suy ra con số mong muốn từ JD, điểm số hay các cuộc trò chuyện trước. Mặc định của hồ sơ (`config/profile.yml` → `compensation.target_range`) không cần dòng nào -- `salary-gap.mjs` đọc nó như fallback. Con số công bố cũng không cần dòng: `advertised_comp` của báo cáo **chính là** quan sát công bố.
+Không bao giờ suy ra con số mong muốn từ JD, điểm số hay các cuộc trò chuyện trước. Mặc định của hồ sơ (`config/profile.yml` → `compensation.target_range`) không cần dòng nào -- `packages/cli/src/commands/insights/salary-gap.ts` đọc nó như fallback. Con số công bố cũng không cần dòng: `advertised_comp` của báo cáo **chính là** quan sát công bố.
 
 ---
 
 ## Block H — Bản nháp trả lời form ứng tuyển (Draft Application Answers)
 
-Chỉ tạo khi điểm toàn cục >= 4.5 và form ứng tuyển có ô trả lời tự do. Tiêu đề phần trong báo cáo là `## H) Draft Application Answers` (giữ nguyên tiếng Anh để `application-answers.mjs` đọc được).
+Chỉ tạo khi điểm toàn cục >= 4.5 và form ứng tuyển có ô trả lời tự do. Tiêu đề phần trong báo cáo là `## H) Draft Application Answers` (giữ nguyên tiếng Anh để `packages/cli/src/commands/evaluation/application-answers.ts` đọc được).
 
 Mỗi câu hỏi của form là một mục đậm riêng (`**Câu hỏi nguyên văn?**`) theo sau là câu trả lời. Trả lời chỉ từ các file nguồn chính (`cv.md`, `article-digest.md`, `config/profile.yml`, `modes/_profile.md`) và điều người dùng nói trực tiếp trong cuộc trò chuyện -- không bao giờ bịa. Dùng giọng "Tôi chọn Anh/Chị": tự tin, không van xin; trích một chi tiết cụ thể của tin. Với các trường thường gặp trên form Việt Nam, xem `ung-tuyen.md`.

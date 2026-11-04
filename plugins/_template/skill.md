@@ -12,7 +12,7 @@ license: MIT
 
 ## How to run it
 
-- `node plugins.mjs run {{NAME}}` — runs the plugin's hook.
+- `bun packages/cli/src/commands/platform/plugins.ts run {{NAME}}` — runs the plugin's hook.
 
 ## What it produces
 

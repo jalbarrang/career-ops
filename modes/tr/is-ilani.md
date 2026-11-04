@@ -116,7 +116,7 @@ Bloklar A-F tamamlandıktan sonra **HER ZAMAN** şunları yap:
 
 Değerlendirmenin tamamını `reports/{###}-{sirket-slug}-{YYYY-MM-DD}.md` olarak kaydet.
 
-- `{###}` = sıradaki numara (3 haneli, sıfır dolgulu). Bu numarayı atomik olarak atamak ve yarış durumlarını (race condition) önlemek için, numarayı rezerve etmek üzere `node reserve-report-num.mjs` komutunu çalıştırmalısınız (standart çıktı `{###}` değerini döndürür), raporu yazmalı ve ardından sentineli serbest bırakmak için `node reserve-report-num.mjs --release {###}` komutunu çalıştırmalısınız.
+- `{###}` = sıradaki numara (3 haneli, sıfır dolgulu). Bu numarayı atomik olarak atamak ve yarış durumlarını (race condition) önlemek için, numarayı rezerve etmek üzere `career-ops reserve-report-num` komutunu çalıştırmalısınız (standart çıktı `{###}` değerini döndürür), raporu yazmalı ve ardından sentineli serbest bırakmak için `career-ops reserve-report-num --release {###}` komutunu çalıştırmalısınız.
 - `{sirket-slug}` = şirket adı küçük harfle, boşluksuz (tire kullan)
 - `{YYYY-MM-DD}` = bugünün tarihi
 
@@ -191,18 +191,18 @@ num\tdate\tcompany\trole\tstatus\tscore\tpdf\treport\tnotes\turl
 {num}\t{date}\t{company}\t{role}\t{status}\t{score}\t{pdf_emoji}\t[{num}](reports/{num}-{slug}-{date}.md)\t{note}\t{url}
 ```
 
-Her iki satırı da **tam olarak yukarıdaki gibi** yaz: sütun adları İngilizce, değerler ise **üstlerindeki adlarla aynı sırada**. `merge-tracker.mjs` alanları ADA göre çözer; tam da bu yüzden adların altlarındaki satırı tarif etmesi gerekir — satırlardan yalnızca birini yeniden sıralarsan `company` ile `role` sessizce yer değiştirir (ikisi de serbest metin olduğu için içerik kontrolü bunu yakalayamaz).
+Her iki satırı da **tam olarak yukarıdaki gibi** yaz: sütun adları İngilizce, değerler ise **üstlerindeki adlarla aynı sırada**. `packages/cli/src/commands/tracker/merge-tracker.ts` alanları ADA göre çözer; tam da bu yüzden adların altlarındaki satırı tarif etmesi gerekir — satırlardan yalnızca birini yeniden sıralarsan `company` ile `role` sessizce yer değiştirir (ikisi de serbest metin olduğu için içerik kontrolü bunu yakalayamaz).
 
 - `{num}` = sıradaki numara (tam sayı, `reports/` klasöründen hesapla)
 - `{status}` = `Evaluated`
 - `{score}` = `X.X/5` formatı (örn. `4.2/5`)
 - `{pdf_emoji}` = `✅` veya `❌`
 - `{note}` = kısa not (hücre boş bırakılabilir)
-- `{url}` = ilanın URL'si. Bu **belirleyici yinelenen-kayıt anahtarıdır**: `merge-tracker.mjs` satırları önce buna göre eşler, yalnızca URL yoksa şirket+rol bulanık eşleşmesine düşer. URL yoksa hücreyi **boş** bırak — asla `N/A` veya `-` yazma; bu yer tutucular atılır ve satır anahtarsız kalır.
+- `{url}` = ilanın URL'si. Bu **belirleyici yinelenen-kayıt anahtarıdır**: `packages/cli/src/commands/tracker/merge-tracker.ts` satırları önce buna göre eşler, yalnızca URL yoksa şirket+rol bulanık eşleşmesine düşer. URL yoksa hücreyi **boş** bırak — asla `N/A` veya `-` yazma; bu yer tutucular atılır ve satır anahtarsız kalır.
 
-Ardından `node merge-tracker.mjs` çalıştır.
+Ardından `career-ops merge-tracker` çalıştır.
 
-**Mevcut** kayıt için `data/applications.md`'yi elle düzenleme: durum ve notları `node set-status.mjs` ile, PDF işaretini `node mark-pdf-ready.mjs <rapor no>` ile güncelle.
+**Mevcut** kayıt için `data/applications.md`'yi elle düzenleme: durum ve notları `career-ops set-status` ile, PDF işaretini `career-ops mark-pdf-ready <rapor no>` ile güncelle.
 
 ---
 

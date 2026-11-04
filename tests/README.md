@@ -4,56 +4,56 @@ Auto-discovered test files for the career-ops suite.
 
 ## Purpose
 
-`test-all.mjs` (repo root) is the suite runner: it executes its inline core
+`test-all.ts` (repo root) is the suite runner: it executes its inline core
 checks (syntax, scripts, dashboard, data contract, personal data, paths) and
-then auto-discovers every `*.test.mjs` file under this directory. There is no
+then auto-discovers every `*.test.ts` file under this directory. There is no
 test framework by design — the suite must run on a fresh clone with only
-Node.js (`tests/helpers.mjs`).
+Node.js (`tests/helpers.ts`).
 
 ## Layout
 
-- `helpers.mjs` — shared assertion helpers and counters. Exports `pass`,
+- `helpers.ts` — shared assertion helpers and counters. Exports `pass`,
   `fail`, `warn`, plus `ROOT` (repo root), `QUICK` (`--quick` flag), and
   `NODE` (current Node binary).
-- `run-discovered-child.mjs` — not a suite. `test-all.mjs` starts it once per
+- `run-discovered-child.ts` — not a suite. `test-all.ts` starts it once per
   discovered suite when suites run in parallel (see "Parallel runs" below).
-- `providers/{name}.test.mjs` — one file per scanner provider (see
-  [providers/ADDING_A_PROVIDER.md](../providers/ADDING_A_PROVIDER.md) for the
+- `providers/{name}.test.ts` — one file per scanner provider (see
+  [packages/core/src/scanning/providers/ADDING_A_PROVIDER.md](../providers/ADDING_A_PROVIDER.md) for the
   test pattern), plus shared cross-provider tests such as
-  `ats-ssrf-hardening.test.mjs`.
-  Underscore-prefixed files (e.g. `_html-entities.test.mjs`) test shared
+  `ats-ssrf-hardening.test.ts`.
+  Underscore-prefixed files (e.g. `_html-entities.test.ts`) test shared
   helper modules.
-- Other `*.test.mjs` files at this level (e.g. `stats.test.mjs`) cover root
-  scripts. Note: standalone `*.test.mjs` files in the repo root are not
-  discovered and will not run — `tests/no-root-suites.test.mjs` fails the
+- Other `*.test.ts` files at this level (e.g. `stats.test.ts`) cover root
+  scripts. Note: standalone `*.test.ts` files in the repo root are not
+  discovered and will not run — `tests/no-root-suites.test.ts` fails the
   build if one shows up (see "Why the flat root" in ARCHITECTURE.md).
-  A handful of `*-tests.mjs` suites do remain at the root (a flag-driven CI
+  A handful of `*-tests.ts` suites do remain at the root (a flag-driven CI
   harness, a suite that asserts on its own filename, two needing a per-script
   timeout, and one added after the convention was written); those are registered in
-  `test-all.mjs`'s `scripts` list or invoked by a workflow, and
-  `root-tests-registration.test.mjs` asserts every one of them is reachable.
+  `test-all.ts`'s `scripts` list or invoked by a workflow, and
+  `root-tests-registration.test.ts` asserts every one of them is reachable.
 
-**Web tests do not live here.** `web/` runs its own `npm test` over
-`web/tests/**/*.test.mjs` (see [../web/README.md](../web/README.md)); this
+**Web tests do not live here.** `web/` runs its own `bun test` over
+`web/tests/**/*.test.ts` (see [../web/README.md](../web/README.md)); this
 directory is for the core. Web suites use `node:test`. Suites here may use
 either the `pass`/`fail` helpers or `node:test`, which ships with Node, so both
-run on a bare clone: `test-all.mjs` imports a `pass`/`fail` suite and runs a
-`node:test` suite in a child process under `node --test`, folding its exit code
-into the totals (#2463). `tests/helpers.mjs` is for this directory only; web
+run on a bare clone: `test-all.ts` imports a `pass`/`fail` suite and runs a
+`node:test` suite in a child process under `bun test`, folding its exit code
+into the totals (#2463). `tests/helpers.ts` is for this directory only; web
 suites do not import it.
 
 The one exception to the split is a guard *about* web's layout —
-`web-test-layout.test.mjs` lives here on purpose, because `web-ci.yml` is
-informative by design and never blocks a merge, while `test-all.mjs` runs on
+`web-test-layout.test.ts` lives here on purpose, because `web-ci.yml` is
+informative by design and never blocks a merge, while `test-all.ts` runs on
 every PR as a required check.
 
 ## Running
 
 ```bash
-node test-all.mjs                            # full suite — run before pushing
-node test-all.mjs --quick                    # full suite, skip dashboard build
-node test-all.mjs --only providers/themuse   # only matching tests/ files
-node test-all.mjs --quick --jobs 4           # at most 4 suites at a time
+bun test-all.ts                            # full suite — run before pushing
+bun test-all.ts --quick                    # full suite, skip dashboard build
+bun test-all.ts --only providers/themuse   # only matching tests/ files
+bun test-all.ts --quick --jobs 4           # at most 4 suites at a time
 ```
 
 Discovery walks `tests/` recursively, sorted lexicographically for a
@@ -61,13 +61,13 @@ deterministic cross-OS order. `--only` filters on the tests-relative path and
 exits 1 when nothing matches (so a typo cannot turn CI green).
 
 **`--only` is a dev convenience, not a PR gate:** it skips every inline core
-section of `test-all.mjs`. A green `--only` run is not a green suite — always
-run the full `node test-all.mjs` before pushing.
+section of `test-all.ts`. A green `--only` run is not a green suite — always
+run the full `bun test-all.ts` before pushing.
 
 ## Parallel runs
 
 The files in this directory are most of a full run, so they run several at a
-time, each in a process of its own. The inline sections of `test-all.mjs` run
+time, each in a process of its own. The inline sections of `test-all.ts` run
 at the same time, in one more process, which takes one of the slots until it
 finishes. How many slots, in order of precedence:
 
@@ -85,7 +85,7 @@ integer is a usage error, not a fallback to the default.
 **What does not change.** The output is printed in discovery order whatever
 finished first: each suite's output is held until its turn comes, so two runs
 of the same tree print the same log. The totals and the exit code are the same
-as a serial run's. The inline sections of `test-all.mjs` still run one after
+as a serial run's. The inline sections of `test-all.ts` still run one after
 another and still print first: they stream as they run, and no suite's output
 appears until the last of them has finished.
 
@@ -103,13 +103,13 @@ running after 600 others in one:
 - **A fixed path.** Two suites writing the same file now do it at the same
   time. Use `mkdtempSync` for scratch space, never a constant name.
 - **Having the checkout to itself.** The inline sections and the other suites
-  read the repository while yours runs: section 1 checks every `.mjs` file it
+  read the repository while yours runs: section 1 checks every `.ts` file it
   finds, section 2 copies the tree, and several suites walk it. Put fixtures
   under `tmpdir()`. One that has to sit inside the checkout (a script that
   must resolve `node_modules`, a directory git must not know) goes in the
-  repository root under `SCRATCH_PREFIX` from `lib/scratch-dirs.mjs`: the
-  shared walker (`lib/walk-tree.mjs`) skips that prefix and `.gitignore`
-  covers it. `scratch-dirs.test.mjs` fails a `mkdtempSync(join(ROOT, …))`
+  repository root under `SCRATCH_PREFIX` from `packages/core/src/kernel/scratch-dirs.ts`: the
+  shared walker (`packages/core/src/kernel/walk-tree.ts`) skips that prefix and `.gitignore`
+  covers it. `scratch-dirs.test.ts` fails a `mkdtempSync(join(ROOT, …))`
   that does not carry it. A file the real scripts read, such as the
   `.career-ops-data` marker, is never a fixture: see "The suite's data root"
   below.
@@ -127,19 +127,19 @@ running after 600 others in one:
 disappears there is one of the cases above, in the suite or section that failed
 or in one it used to follow.
 
-A suite that starts a `test-all.mjs` of its own gets a serial one unless it
+A suite that starts a `test-all.ts` of its own gets a serial one unless it
 passes `--jobs` itself: the runner sets `CAREER_OPS_TEST_JOBS=1` for everything
 it starts, so N workers do not fan out N more each.
 
 ## Adding a test
 
-Add one `{name}.test.mjs` file here — it is auto-discovered, no registration
-needed. Do not add a section to `test-all.mjs`. Import the helpers with a
+Add one `{name}.test.ts` file here — it is auto-discovered, no registration
+needed. Do not add a section to `test-all.ts`. Import the helpers with a
 path relative to the test file's location:
 
 ```js
-import { pass, fail, ROOT } from './helpers.mjs';    // tests/*.test.mjs
-import { pass, fail, ROOT } from '../helpers.mjs';   // tests/providers/*.test.mjs
+import { pass, fail, ROOT } from './helpers.ts';    // tests/*.test.ts
+import { pass, fail, ROOT } from '../helpers.ts';   // tests/providers/*.test.ts
 ```
 
 See `CONTRIBUTING.md` for the full contribution flow.
@@ -147,7 +147,7 @@ See `CONTRIBUTING.md` for the full contribution flow.
 ## The suite's data root
 
 The suite is run inside real workspaces, so it never reads or writes the
-developer's data. When `helpers.mjs` loads it creates a scratch directory, pins
+developer's data. When `helpers.ts` loads it creates a scratch directory, pins
 `CAREER_OPS_ROOT` to it (clearing `CAREER_OPS_DATA_DIR`, as it clears
 `CAREER_OPS_TRACKER`), and removes it at exit. Every script a test spawns
 inherits that, so the default for a new test is already safe.
@@ -164,7 +164,7 @@ inherits that, so the default for a new test is already safe.
 - `SANDBOX_DATA_ROOT` is the scratch root, for a fixture that has to sit under
   the data root's `output/` or `jds/`.
 
-`data-root-guard.mjs` fingerprints the real user layer before the run and at
+`data-root-guard.ts` fingerprints the real user layer before the run and at
 exit — including an exit by Ctrl-C — and fails the run, naming each path, if
 anything differs. That includes the user files resolved from the checkout
 rather than the data root (`plugins.local/`, `plugins.lock`, `opencode.json`,

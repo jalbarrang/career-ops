@@ -30,19 +30,19 @@ An HTTP backend still exists and is described further down. It runs when you hav
 The plugin ships bundled with career-ops. Enable it once per repo:
 
 ```bash
-node plugins.mjs enable h1b-sponsor --confirm
+bun packages/cli/src/commands/platform/plugins.ts enable h1b-sponsor --confirm
 ```
 
 To confirm it is active:
 
 ```bash
-node plugins.mjs list
+bun packages/cli/src/commands/platform/plugins.ts list
 ```
 
 Then install the index (about 8 MiB, downloaded from the data repo's GitHub releases):
 
 ```bash
-node plugins/h1b-sponsor/install-h1b-index.mjs
+bun plugins/h1b-sponsor/install-h1b-index.ts
 ```
 
 The installer reads a small pointer file the release publishes, `index-latest.json`, which names the current quarter's index file and its sha256. The download is checked against that digest before it is moved into place, so a truncated or substituted file is never what a lookup reads. It lands in `data/h1b/`, which is already gitignored.
@@ -56,7 +56,7 @@ Both assets live under a permanent `index-latest` release tag whose contents are
 DOL publishes new disclosure data quarterly. Pull the current build over the old one:
 
 ```bash
-node plugins/h1b-sponsor/install-h1b-index.mjs --force
+bun plugins/h1b-sponsor/install-h1b-index.ts --force
 ```
 
 `--force` is required to replace an existing index, so a re-run cannot quietly change the numbers under you. Cached answers are stamped with the index they came from, so a refresh invalidates them rather than mixing builds. The installer prints the build it installed and records it in `index.ndjson.gz.meta.json` next to the index, so you can tell which quarter you are on without downloading anything. `--tag <release>` reads the pointer from a different release tag, for a pinned quarter or a fork.
@@ -68,19 +68,19 @@ Installing is the one thing here that touches the network, and it only happens w
 Default output is a human-readable summary:
 
 ```bash
-node plugins/h1b-sponsor/check.mjs "Acme Corp"
+bun plugins/h1b-sponsor/check.ts "Acme Corp"
 ```
 
 Machine-readable JSON, for scripts and for the agent:
 
 ```bash
-node plugins/h1b-sponsor/check.mjs "Acme Corp" --json
+bun plugins/h1b-sponsor/check.ts "Acme Corp" --json
 ```
 
 One-line output for scripts and shell pipelines:
 
 ```bash
-node plugins/h1b-sponsor/check.mjs "Acme Corp" --summary
+bun plugins/h1b-sponsor/check.ts "Acme Corp" --summary
 # strong: Acme Corp - 412 LCAs, 5 PWDs, 37 PERMs, active 2020-2024
 ```
 
@@ -89,7 +89,7 @@ The LCA number there is what the employer filed. How many of those filings came 
 List matching entities instead of checking one. A large employer files under many distinct FEINs, and the listing shows one page of matches at a time, so a broad name shows the first page and the full count. Narrow the query to reach entities past the page cap, then check a specific one by passing its exact name:
 
 ```bash
-node plugins/h1b-sponsor/check.mjs "Amazon" --search
+bun plugins/h1b-sponsor/check.ts "Amazon" --search
 # 50 of 97 matches for "Amazon" (narrow the query to see the rest):
 #   820544687  Amazon.com Services LLC
 #   204938068  Amazon Web Services, Inc.
@@ -101,13 +101,13 @@ node plugins/h1b-sponsor/check.mjs "Amazon" --search
 Bypass the disk cache and look the employer up again:
 
 ```bash
-node plugins/h1b-sponsor/check.mjs "Acme Corp" --refresh
+bun plugins/h1b-sponsor/check.ts "Acme Corp" --refresh
 ```
 
 Write the cache somewhere else, which is useful for tests and throwaway runs:
 
 ```bash
-node plugins/h1b-sponsor/check.mjs "Acme Corp" --cache-dir /tmp/h1b-cache
+bun plugins/h1b-sponsor/check.ts "Acme Corp" --cache-dir /tmp/h1b-cache
 ```
 
 Answers are cached under `data/cache/h1b/` keyed by the company name passed on the command line. Two spellings of the same employer produce two cache entries. The cache file records `fetchedAt`; re-runs with the same name within the cache window return the cached payload without re-reading the index.
@@ -127,7 +127,7 @@ export H1B_INDEX_PATH=/opt/h1b/index.ndjson.gz
 The companion skill is loaded on demand:
 
 ```bash
-node plugins.mjs skill h1b-sponsor
+bun packages/cli/src/commands/platform/plugins.ts skill h1b-sponsor
 ```
 
 That prints the how-to the agent reads before running a check during an `oferta` evaluation. The skill covers trigger conditions, per-tier interpretation, and the exact Block G bullet template.
@@ -144,7 +144,7 @@ The dataset is public DOL disclosure data and the worker that serves it is open 
 
 If the endpoint goes away or errors, the plugin fails closed: results come back `unknown`, the skill skips the Block G bullet, and nothing is fabricated.
 
-Rate limits on the author's instance are 30 requests per hour per (IP, ASN) anonymously and 200 per hour with a key. A check costs at most two requests. Mint a key with `node plugins/h1b-sponsor/token.mjs request`; it prints the token and the `H1B_API_TOKEN=` line once and writes no file for you, since where a durable credential lives is your call. A new key can take about a minute to work on every server, so a 401 in that window means wait and retry. Minting is metered per address: 2 keys at once, then one more every 12 hours.
+Rate limits on the author's instance are 30 requests per hour per (IP, ASN) anonymously and 200 per hour with a key. A check costs at most two requests. Mint a key with `bun plugins/h1b-sponsor/token.ts request`; it prints the token and the `H1B_API_TOKEN=` line once and writes no file for you, since where a durable credential lives is your call. A new key can take about a minute to work on every server, so a 401 in that window means wait and retry. Minting is metered per address: 2 keys at once, then one more every 12 hours.
 
 Notes on configuring an endpoint:
 
@@ -179,7 +179,7 @@ This is not legal or immigration advice. A tier reflects historical filings, not
 Remove the plugin from the active config:
 
 ```bash
-node plugins.mjs remove h1b-sponsor
+bun packages/cli/src/commands/platform/plugins.ts remove h1b-sponsor
 ```
 
-For a bundled plugin this unregisters it and clears its consent pin; the shipped files stay in `plugins/h1b-sponsor/`, so re-adding it later just needs `node plugins.mjs enable h1b-sponsor --confirm`. To delete it entirely, remove the `plugins/h1b-sponsor/` directory. Everything under `data/cache/h1b/` is safe to delete at any time; those are cached answers and the next lookup rebuilds them. Deleting `data/h1b/` removes the index, which means downloading it again.
+For a bundled plugin this unregisters it and clears its consent pin; the shipped files stay in `plugins/h1b-sponsor/`, so re-adding it later just needs `bun packages/cli/src/commands/platform/plugins.ts enable h1b-sponsor --confirm`. To delete it entirely, remove the `plugins/h1b-sponsor/` directory. Everything under `data/cache/h1b/` is safe to delete at any time; those are cached answers and the next lookup rebuilds them. Deleting `data/h1b/` removes the index, which means downloading it again.

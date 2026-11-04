@@ -98,7 +98,7 @@
 இன்று இரவு நீங்கள் விண்ணப்பிக்க இருந்த ஒரு வேலையை ஒட்டுங்கள். <em>விண்ணப்பிக்க வேண்டாம்</em> என்று வந்தால், உங்கள் இரவை இப்போதுதான் மீட்டுக்கொண்டீர்கள். ஒரு திட்டத்துடன் வந்தால், அடுத்து என்ன செய்வது என்று உங்களுக்குத் தெரியும்.
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 <p align="center"><sub>ஓப்பன் சோர்ஸ். உங்கள் கணினியில். நீங்கள் ஏற்கனவே பயன்படுத்தும் AI CLI-க்குள்ளேயே. <a href="docs/RUNNING_ON_A_BUDGET.md">இலவச மற்றும் லோக்கல் மாடல்களும் உண்டு.</a></sub></p>
@@ -159,7 +159,7 @@ career-ops விண்ணப்பதாரர்களுக்கு எப�
 
 ## career-ops செய்யாதவை
 
-- **விண்ணப்பத்தைத் தானாகச் சமர்ப்பித்தல்.** ஒவ்வொரு புலத்திற்கும் பதிலின் வரைவை எழுதுகிறது; நீங்கள் சரிபார்த்து Submit-ஐ அழுத்துகிறீர்கள். ஸ்கிரிப்ட் ஒருபோதும் POST செய்வதில்லை (`prepare-application.mjs`).
+- **விண்ணப்பத்தைத் தானாகச் சமர்ப்பித்தல்.** ஒவ்வொரு புலத்திற்கும் பதிலின் வரைவை எழுதுகிறது; நீங்கள் சரிபார்த்து Submit-ஐ அழுத்துகிறீர்கள். ஸ்கிரிப்ட் ஒருபோதும் POST செய்வதில்லை (`packages/cli/src/commands/evaluation/prepare-application.ts`).
 - **மின்னஞ்சல் அனுப்புவது.** வரைவுகள் மட்டுமே. இந்த முழு கோட்பேஸிலும் மின்னஞ்சல் அனுப்பும் எந்த வழியும் இல்லை.
 - **வெளியே தரவு அனுப்புவது.** டெலிமெட்ரி இல்லை, எங்கள் பேக்எண்ட் இல்லை. உங்கள் CV உங்கள் கணினியிலிருந்து நீங்கள் தேர்ந்தெடுத்த AI வழங்குநருக்கு மட்டுமே செல்லும், வேறு எங்கும் இல்லை. ஒரே பொதுப் பதிவு இந்த ரெப்போ தான்: `HIRED.md` மற்றும் அதன் issues.
 - **4.0/5-க்குக் கீழே விண்ணப்பிக்கத் தூண்டுவது.** வேண்டாம் என்று சொல்லும். நீங்கள் மீறலாம், அதையும் அது சொல்லும்.
@@ -175,7 +175,7 @@ career-ops விண்ணப்பதாரர்களுக்கு எப�
 | **ATS PDF உருவாக்கம்**   | ATS படிக்கக்கூடிய CV-கள், உங்கள் சொந்த அனுபவத்திலிருந்து ஒவ்வொரு JD-க்கும் ஏற்பத் தனிப்பயனாக்கப்பட்டவை, Space Grotesk + DM Sans வடிவமைப்பில் |
 | **Cover Letter உருவாக்கி** | ஆய்வு அடிப்படையிலான cover letter-கள்: keyword பிரதிபலிப்பு, நான்கு ஊடாடும் கோணக் கேள்விகள் (ஏன்/சிக்கல்கள்/அணுகுமுறை/தொனி), சாட்டில் வரைவு ஒப்புதல், CV-களுக்கான அதே HTML + Playwright பைப்லைன் மூலம் A4 PDF. ஒவ்வொரு மதிப்பீட்டிலும் தானாக வரைவு; `/career-ops cover` மூலம் தேவைப்படும்போது முடித்து உருவாக்குங்கள் |
 | **CV-க்கு அப்பால்**      | நிறுவன ஆய்வு ([`deep`](modes/deep.md)) AI உத்தி, சமீபத்திய நகர்வுகள், பொறியியல் கலாச்சாரம், உங்கள் சுயவிவரம் எடுக்க வேண்டிய கோணம் ஆகியவற்றை வெளிக்கொணர்கிறது. தொடர்பு கண்டறிதல் ([`contacto`](modes/contacto.md)) தொடர்புகொள்ளத் தகுந்த hiring manager, ரிக்ரூட்டர் அல்லது குழு உறுப்பினரை அடையாளம் கண்டு, ஒவ்வொரு தொடர்பு வகைக்கும் ஏற்ப ≤300 எழுத்துகளிலான LinkedIn செய்தியை வரைகிறது. முறையான விண்ணப்ப மின்னஞ்சல் வரைவுகள் ([`email`](modes/email.md)) மதிப்பிடப்பட்ட அறிக்கையையோ ஒட்டப்பட்ட JD-ஐயோ தலைப்பு, உடல், இணைப்புப் பட்டியலாக மாற்றுகின்றன; எதையும் அனுப்பாமல், சமர்ப்பிக்காமல், கிளிக் செய்யாமல். விண்ணப்பம் உங்களை வரிசையில் சேர்க்கும்; ஆய்வு உங்களுக்கு ஒரு உரையாடலைப் பெற்றுத் தரும். |
-| **முறை பகுப்பாய்வு**     | நிராகரிப்பு முறைகளும் ATS சேனல்வாரி முன்னேற்ற விகிதங்களும் (`analyze-patterns.mjs`), முழுத் தேடலின் funnel புள்ளிவிவரங்கள் (`stats.mjs`), மறுபதிவுகளைக் கண்டறிதல், அவை ghost job-இன் அறிகுறியாக இருக்கலாம் (`detect-reposts.mjs`) |
+| **முறை பகுப்பாய்வு**     | நிராகரிப்பு முறைகளும் ATS சேனல்வாரி முன்னேற்ற விகிதங்களும் (`packages/cli/src/commands/insights/analyze-patterns.ts`), முழுத் தேடலின் funnel புள்ளிவிவரங்கள் (`packages/core/src/insights/stats.ts`), மறுபதிவுகளைக் கண்டறிதல், அவை ghost job-இன் அறிகுறியாக இருக்கலாம் (`packages/cli/src/commands/insights/detect-reposts.ts`) |
 
 <details>
 <summary><b>இது செய்யும் மற்ற அனைத்தும்</b></summary>
@@ -192,8 +192,8 @@ career-ops விண்ணப்பதாரர்களுக்கு எப�
 | **Dashboard TUI**        | உங்கள் பைப்லைனை உலாவ, வடிகட்ட, வரிசைப்படுத்த டெர்மினல் UI                                                                                  |
 | **பைப்லைன் ஒருமைப்பாடு** | தானியங்கி ஒருங்கிணைப்பு, நகல் நீக்கம், நிலை சீரமைப்பு, ஆரோக்கிய சோதனைகள்                                                                    |
 | **நேர்காணல் தொகுப்பு**   | நேரப் பிரிவுகளிலான தயாரிப்புத் திட்டங்கள், பின்னூட்டத்துடன் பயிற்சி அமர்வுகள், நேர்காணலுக்குப் பிந்தைய ஆய்வுகள் ([`interview/`](modes/interview/README.md)), நிறுவன எச்சரிக்கை சமிக்ஞை கண்டறிதல் ([`interview-redflag`](modes/interview-redflag.md)) |
-| **ஆஃபர் நிலை**           | ஒப்பந்தம் வாசிக்கும் துணை: ஒவ்வொரு விதியாக நடை மற்றும் வழக்கறிஞருக்கான கேள்விப் பட்டியல் ([`offer-prep`](modes/offer-prep.md)), விரும்பிய/விளம்பரப்படுத்திய/உண்மையான சம்பள இடைவெளி பகுப்பாய்வி (`salary-gap.mjs`) |
-| **தொடர் நடவடிக்கைகள் & பதில்கள்** | தொடர்பு கால அளவு கணிப்பானும் முன்கூட்டியே அமைக்கப்பட்ட நினைவூட்டல்களும் (`followup-cadence.mjs`, `followup-seed.mjs`); முதலாளியின் பதில்களை tracker புதுப்பிப்புகளாக வகைப்படுத்துதல் ([`reply-watch`](modes/reply-watch.md)) |
+| **ஆஃபர் நிலை**           | ஒப்பந்தம் வாசிக்கும் துணை: ஒவ்வொரு விதியாக நடை மற்றும் வழக்கறிஞருக்கான கேள்விப் பட்டியல் ([`offer-prep`](modes/offer-prep.md)), விரும்பிய/விளம்பரப்படுத்திய/உண்மையான சம்பள இடைவெளி பகுப்பாய்வி (`packages/cli/src/commands/insights/salary-gap.ts`) |
+| **தொடர் நடவடிக்கைகள் & பதில்கள்** | தொடர்பு கால அளவு கணிப்பானும் முன்கூட்டியே அமைக்கப்பட்ட நினைவூட்டல்களும் (`packages/core/src/outreach/followup-cadence.ts`, `packages/core/src/outreach/followup-seed.ts`); முதலாளியின் பதில்களை tracker புதுப்பிப்புகளாக வகைப்படுத்துதல் ([`reply-watch`](modes/reply-watch.md)) |
 | **Plugin அமைப்பு**       | விருப்பத் தேர்வு ஒருங்கிணைப்புகள் (Gmail, Notion, Apify + சமூகப் பதிவேடு), இயல்பாக முடக்கப்பட்டவை; [docs/PLUGINS.md](docs/PLUGINS.md) பார்க்கவும் |
 
 </details>
@@ -203,7 +203,7 @@ career-ops விண்ணப்பதாரர்களுக்கு எப�
 **விரைவான வழி, ஒரே கட்டளையில்:**
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 > 💡 `npx` [Node.js](https://nodejs.org)-உடன் வருகிறது: எதையும் global-ஆக நிறுவாமல்
@@ -224,8 +224,8 @@ claude   # or codex / qwen / opencode / agy / grok — open your AI CLI here
 
 ```bash
 git clone https://github.com/career-ops-hq/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # only needed for PDF generation
+cd career-ops && bun install
+bunx playwright install chromium   # only needed for PDF generation
 # On a non-Debian/Ubuntu Linux distro (Fedora, Arch, ...), Chromium's system
 # libraries aren't installed by the line above — install them yourself with
 # your distro's package manager if PDF generation fails to launch the browser
@@ -256,14 +256,14 @@ claude   # or codex / opencode / qwen / agy / grok
 ### Global நிறுவல்
 
 ```bash
-npm i -g @santifer/career-ops
+bun add -g @santifer/career-ops
 ```
 
 இது `career-ops` binary-ஐ global-ஆக நிறுவுகிறது, எனவே `npx` இல்லாமல் `career-ops init [folder]`-ஐ இயக்கலாம். `init` மட்டுமே அதன் ஒரே கட்டளை: அது ஒரு workspace-ஐ அமைக்கிறது; அதன் பிறகு எல்லா வேலையும் இந்த binary வழியாக அல்ல, உங்கள் AI கோடிங் CLI-க்குள் நடக்கிறது (கீழே Usage பார்க்கவும்).
 
 **எதைப் பயன்படுத்த வேண்டும்?**
-- `npx @santifer/career-ops init`: முதல் பயன்பாட்டிற்கு சிறந்தது; தனி project folder-ஐ உருவாக்குகிறது.
-- `npm i -g @santifer/career-ops`: `npx` வடிவத்தை விட `career-ops init` என்று தட்டச்சு செய்ய விரும்பினால். இது வேறு எந்தக் கட்டளையையும் சேர்க்காது.
+- `bunx @santifer/career-ops init`: முதல் பயன்பாட்டிற்கு சிறந்தது; தனி project folder-ஐ உருவாக்குகிறது.
+- `bun add -g @santifer/career-ops`: `npx` வடிவத்தை விட `career-ops init` என்று தட்டச்சு செய்ய விரும்பினால். இது வேறு எந்தக் கட்டளையையும் சேர்க்காது.
 
 > **இந்த அமைப்பு உங்கள் AI கோடிங் CLI-யாலேயே தனிப்பயனாக்கப்பட வடிவமைக்கப்பட்டது.** Modes, archetypes, scoring weights, பேச்சுவார்த்தை ஸ்கிரிப்ட்கள்: மாற்றச் சொன்னால் போதும். அது பயன்படுத்தும் அதே கோப்புகளையே படிக்கிறது, எனவே எதைத் திருத்த வேண்டும் என்பது அதற்குச் சரியாகத் தெரியும்.
 
@@ -454,13 +454,13 @@ cp .env.example .env
 # Edit .env, set GEMINI_API_KEY=your_key_here
 
 # 2. Install dependencies
-npm install
+bun install
 
 # 3. Evaluate a job description
-node gemini-eval.mjs "We are looking for a Senior AI Engineer..."
-node gemini-eval.mjs --file ./jds/my-job.txt
-node agent-inbox.mjs add "..."   # queue a request for the next session
-npm run gemini:eval -- "JD text here"
+bun packages/cli/src/commands/evaluation/gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun packages/cli/src/commands/evaluation/gemini-eval.ts --file ./jds/my-job.txt
+bun packages/cli/src/commands/platform/agent-inbox.ts add "..."   # queue a request for the next session
+bun run gemini:eval -- "JD text here"
 ```
 
 > **இலவச அடுக்கு:** இரண்டு விருப்பங்களும் கட்டணமின்றி வேலை செய்கின்றன. Native CLI Google OAuth-ஐப் பயன்படுத்துகிறது; API ஸ்கிரிப்ட் `gemini-3.6-flash`-ஐப் பயன்படுத்துகிறது (rate limits மாடலையும் அடுக்கையும் பொறுத்தது; தற்போதைய quota-க்களுக்கு Google AI ஆவணங்களைப் பார்க்கவும்).
@@ -480,10 +480,10 @@ npm run gemini:eval -- "JD text here"
 
 **தேடப்படும் job boards:** 55+ provider modules ATS API-கள், board-wide feeds, XML/RSS feeds, markdown feeds, லோக்கல் parsers ஆகியவற்றை உள்ளடக்குகின்றன. முழு அட்டவணைக்கு [ஆதரிக்கப்படும் job boards](docs/SUPPORTED_JOB_BOARDS.md) பார்க்கவும்.
 
-இயல்பாக `node scan.mjs` (அதாவது `npm run scan`) ஒவ்வொரு ATS feed-ஐயும் நம்புகிறது. சில நிறுவனங்கள் பதவி மூடப்பட்ட பிறகும் பழைய விளம்பரங்களைத் தங்கள் பொது API-யில் விட்டுவிடுகின்றன, எனவே காலாவதியான பதிவுகள் `pipeline.md`-க்குள் நுழையலாம். API கட்டத்திற்குப் பிறகு Playwright-ஐ இயக்கி, காலாவதியான விளம்பரங்கள் பைப்லைனை அடையும் முன் நீக்க `--verify` கொடுங்கள்:
+இயல்பாக `bun packages/core/src/scanning/scan.ts` (அதாவது `bun run scan`) ஒவ்வொரு ATS feed-ஐயும் நம்புகிறது. சில நிறுவனங்கள் பதவி மூடப்பட்ட பிறகும் பழைய விளம்பரங்களைத் தங்கள் பொது API-யில் விட்டுவிடுகின்றன, எனவே காலாவதியான பதிவுகள் `pipeline.md`-க்குள் நுழையலாம். API கட்டத்திற்குப் பிறகு Playwright-ஐ இயக்கி, காலாவதியான விளம்பரங்கள் பைப்லைனை அடையும் முன் நீக்க `--verify` கொடுங்கள்:
 
 ```bash
-node scan.mjs --verify          # zero-token discovery + Playwright liveness check
+bun packages/core/src/scanning/scan.ts --verify          # zero-token discovery + Playwright liveness check
 ```
 
 சரிபார்ப்பு வரிசையாகவும், புதிய வாய்ப்புகளுக்கு மட்டுமே (நகல் நீக்கத்திற்குப் பிறகு) இயங்குவதால், செலவு கட்டுக்குள் இருக்கும்.
@@ -493,13 +493,13 @@ node scan.mjs --verify          # zero-token discovery + Playwright liveness che
 உள்ளமைந்த டெர்மினல் dashboard உங்கள் பைப்லைனைக் காட்சி ரீதியாக உலாவ உதவுகிறது:
 
 ```bash
-npm run serve:dashboard   # launch the TUI
-npm run build:dashboard   # optional: build the standalone binary
+bun run serve:dashboard   # launch the TUI
+bun run build:dashboard   # optional: build the standalone binary
 ```
 
 Features: 10 வடிகட்டி tabs, 8 வரிசைப்படுத்தும் முறைகள், grouped/flat view, lazy-loaded previews, inline நிலை மாற்றங்கள்.
 
-**சோதனை web UI**-யும் உள்ளது (alpha மற்றும் opt-in: நீங்கள் தொடங்காதவரை எதுவும் இயங்காது): [`web/README.md`](web/README.md) பார்க்கவும்.
+**சோதனை web UI**-யும் உள்ளது (alpha மற்றும் opt-in: நீங்கள் தொடங்காதவரை எதுவும் இயங்காது): [`apps/web/README.md`](apps/web/README.md) பார்க்கவும்.
 
 ## Project Structure
 
@@ -556,9 +556,9 @@ career-ops/
 
 - **Tracker Override:** விண்ணப்ப tracker கோப்பின் பாதையை நேரடியாக மாற்ற `CAREER_OPS_TRACKER`-ஐயும் அமைக்கலாம்.
 - **Writes:** அனைத்து எழுதும் செயல்பாடுகளும் (merges போன்றவை) நியமப்படி `{DATA_ROOT}/data/applications.md`-ஐ இலக்காகக் கொள்ளும்.
-- **Scanner config:** `portals.yml` கோப்பு `{DATA_ROOT}/portals.yml`-இல் படிக்கப்பட்டுச் சரிபார்க்கப்படுகிறது, எனவே `scan.mjs` படிக்கும் அதே கோப்பையே `node validate-portals.mjs` சரிபார்க்கிறது.
+- **Scanner config:** `portals.yml` கோப்பு `{DATA_ROOT}/portals.yml`-இல் படிக்கப்பட்டுச் சரிபார்க்கப்படுகிறது, எனவே `packages/core/src/scanning/scan.ts` படிக்கும் அதே கோப்பையே `bun packages/cli/src/commands/scanning/validate-portals.ts` சரிபார்க்கிறது.
 - **உருவாக்கப்பட்ட ஆவணங்கள்:** தனிப்பயனாக்கப்பட்ட CV-களும் cover letter-களும் `{DATA_ROOT}/output/`-இன் கீழ் எழுதப்படுகின்றன; அவற்றை ஒரு அறிக்கையுடன் இணைக்கும் PDF manifest `{DATA_ROOT}/data/pdf-index.tsv`-இல் இருக்கும். `CAREER_OPS_TRACKER` அமைக்கப்படாதவரை, அந்த எழுதுதல்களுக்கு எல்லை வகுக்கும் tracker workspace என்பது data root தான், checkout அல்ல.
-- **Tracker override-இன் கீழ் PDF-கள்:** `generate-pdf.mjs` workspace-ஐத் தீர்மானிக்கும் முன் `CAREER_OPS_TRACKER`-ஐத் தீர்க்கிறது, எனவே override அமைக்கப்பட்டிருந்தால் workspace என்பது அந்த tracker உள்ள folder (அல்லது tracker ஒரு `data/` folder-இல் இருந்தால், அதற்கு மேலே உள்ள folder). அப்போது CV-யின் HTML-உம் ஒவ்வொரு PDF-உம் அந்த workspace-க்குள்ளேயே இருக்க வேண்டும், manifest அதன் `data/pdf-index.tsv`-க்கு நகரும். Cover letter-கள் இன்னும் `{DATA_ROOT}/output/`-ஐயே இலக்காகக் கொள்வதால், அந்த folder tracker-இன் workspace-க்கு வெளியே இருந்தால் அவை மறுக்கப்படும்.
+- **Tracker override-இன் கீழ் PDF-கள்:** `packages/cli/src/commands/cv/generate-pdf.ts` workspace-ஐத் தீர்மானிக்கும் முன் `CAREER_OPS_TRACKER`-ஐத் தீர்க்கிறது, எனவே override அமைக்கப்பட்டிருந்தால் workspace என்பது அந்த tracker உள்ள folder (அல்லது tracker ஒரு `data/` folder-இல் இருந்தால், அதற்கு மேலே உள்ள folder). அப்போது CV-யின் HTML-உம் ஒவ்வொரு PDF-உம் அந்த workspace-க்குள்ளேயே இருக்க வேண்டும், manifest அதன் `data/pdf-index.tsv`-க்கு நகரும். Cover letter-கள் இன்னும் `{DATA_ROOT}/output/`-ஐயே இலக்காகக் கொள்வதால், அந்த folder tracker-இன் workspace-க்கு வெளியே இருந்தால் அவை மறுக்கப்படும்.
 - **கோடு அடுக்கு இடம் மாறாது:** `node_modules/`, `providers/`, `modes/` மற்றும் ஸ்கிரிப்ட்கள் எப்போதும் repository-ஐ ஒட்டியே தீர்க்கப்படுகின்றன, data root-ஐ ஒட்டி ஒருபோதும் அல்ல.
 
 Go dashboard TUI, Node.js ஸ்கிரிப்ட்கள், AI ஏஜென்ட் modes அனைத்தும் இந்தத் தீர்வு வரிசையைத் தானாகவே பின்பற்றுகின்றன.
@@ -617,7 +617,7 @@ Go dashboard TUI, Node.js ஸ்கிரிப்ட்கள், AI ஏஜெ�
 career-ops ([career-ops.org](https://career-ops.org), **careerops** என்றும் அழைக்கப்படுகிறது) என்பது உங்கள் AI கோடிங் CLI-யில் (Claude Code, Codex, OpenCode மற்றும் பிற) உங்கள் கணினியிலேயே இயங்கும், ஒவ்வொரு முடிவையும் உங்களிடம் விட்டுவிடும் ஓப்பன் சோர்ஸ் AI வேலை தேடல் அமைப்பு. உங்கள் CV-ஐ வைத்து வேலை வாய்ப்புகளை மதிப்பிடுகிறது, ATS-க்கு ஏற்ற PDF-களை உருவாக்குகிறது, தொடர்புகொள்ள வேண்டிய சரியான நபரைக் கண்டறிகிறது, அனைத்தையும் ஒரே இடத்தில் கண்காணிக்கிறது: இறுதி முடிவு எப்போதும் உங்களுடையது. இது [CareerOps அறிக்கையின்](https://career-ops.org/manifesto) முதல் குறிப்பு செயலாக்கம்.
 
 **தனிப்பயனாக்கப்பட்ட CV எதையாவது புனையுமா?**
-புனையக்கூடாது, ப்ராம்ப்ட்களும் அதையே சொல்கின்றன: மறுவடிவமைக்கலாம், ஒருபோதும் புனையக்கூடாது. உங்கள் மூலங்களில் இல்லாத எண்களோ தகவல்களோ கொண்ட CV-ஐ `generate-pdf` தடுக்கிறது, நீங்கள் `--skip-fact-check` கொடுத்தால் தவிர. `pdf` பயன்முறை `cv-title-check.mjs`-ஐயும் இயக்குகிறது: தனிப்பயனாக்கிய CV-யில் உள்ள ஒவ்வொரு பதவிப் பெயரையும், அதே வேலைக்கு cv.md தரும் பதவிப் பெயருடன் (நிறுவனம், தேதிகள் மூலம் பொருத்தி) ஒப்பிட்டு, வேறுபடும் ஒவ்வொன்றையும் வைத்துக்கொள்வதா திரும்ப மாற்றுவதா என்று உங்களிடம் கேட்கிறது. பதவிப் பெயரை மாற்றி அமைப்பது சில நேரங்களில் உங்கள் முடிவாக இருக்கலாம் என்பதால், அது எச்சரிக்கை மட்டுமே தருகிறது, தடுப்பதில்லை. மாற்றி எழுதியதை இன்னும் எதுவும் மதிப்பிடுவதில்லை: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (பொருந்தாவிட்டால் தடுக்கும் உண்மைத்தன்மைச் சோதனை) இதைக் கண்காணிக்கிறது. அதுவரை, அனுப்பும் முன் ஒவ்வொரு CV-ஐயும் படியுங்கள். [சட்டப்பூர்வ மறுப்பு](LEGAL_DISCLAIMER.md) இதையே அதிக வார்த்தைகளில் சொல்கிறது.
+புனையக்கூடாது, ப்ராம்ப்ட்களும் அதையே சொல்கின்றன: மறுவடிவமைக்கலாம், ஒருபோதும் புனையக்கூடாது. உங்கள் மூலங்களில் இல்லாத எண்களோ தகவல்களோ கொண்ட CV-ஐ `generate-pdf` தடுக்கிறது, நீங்கள் `--skip-fact-check` கொடுத்தால் தவிர. `pdf` பயன்முறை `packages/cli/src/commands/cv/cv-title-check.ts`-ஐயும் இயக்குகிறது: தனிப்பயனாக்கிய CV-யில் உள்ள ஒவ்வொரு பதவிப் பெயரையும், அதே வேலைக்கு cv.md தரும் பதவிப் பெயருடன் (நிறுவனம், தேதிகள் மூலம் பொருத்தி) ஒப்பிட்டு, வேறுபடும் ஒவ்வொன்றையும் வைத்துக்கொள்வதா திரும்ப மாற்றுவதா என்று உங்களிடம் கேட்கிறது. பதவிப் பெயரை மாற்றி அமைப்பது சில நேரங்களில் உங்கள் முடிவாக இருக்கலாம் என்பதால், அது எச்சரிக்கை மட்டுமே தருகிறது, தடுப்பதில்லை. மாற்றி எழுதியதை இன்னும் எதுவும் மதிப்பிடுவதில்லை: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (பொருந்தாவிட்டால் தடுக்கும் உண்மைத்தன்மைச் சோதனை) இதைக் கண்காணிக்கிறது. அதுவரை, அனுப்பும் முன் ஒவ்வொரு CV-ஐயும் படியுங்கள். [சட்டப்பூர்வ மறுப்பு](LEGAL_DISCLAIMER.md) இதையே அதிக வார்த்தைகளில் சொல்கிறது.
 
 **career-ops-ஐ இலவசமாகவோ, மலிவான / லோக்கல் மாடலிலோ இயக்க முடியுமா?**
 ஆம். career-ops CLI-agnostic; இலவச மற்றும் லோக்கல் மாடல்களில் (OpenRouter இலவச மாடல்கள், Ollama, அல்லது எந்த OpenAI-compatible endpoint) இயங்கும், எனவே நீங்கள் கட்டணச் சந்தாவுடன் கட்டுப்படவில்லை. முழு அமைப்பிற்கு [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md) பார்க்கவும்.

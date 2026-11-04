@@ -11,7 +11,7 @@ import (
 )
 
 // LatestDate must follow the ledger's own correction semantics (the fold in
-// funnel-velocity.mjs), not a plain maximum: a retraction removes the latest
+// funnel-velocity.ts), not a plain maximum: a retraction removes the latest
 // observation and a correction re-dates the one it names.
 func TestParseStatusLedgerLatestDate(t *testing.T) {
 	ledger := strings.Join([]string{

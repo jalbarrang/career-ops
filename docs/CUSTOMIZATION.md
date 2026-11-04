@@ -34,7 +34,7 @@ Copy from `templates/portals.example.yml` and customize:
 3. **search_queries**: WebSearch queries for job boards (Ashby, Greenhouse, Lever)
 4. **tracked_companies**: Companies to check directly
 
-Once you have a few scans behind you, `node filter-audit.mjs --summary` shows which `title_filter.positive` keywords actually bring offers, and `node coverage-check.mjs` explains why a posting you found by hand never reached you.
+Once you have a few scans behind you, `career-ops filter-audit --summary` shows which `title_filter.positive` keywords actually bring offers, and `career-ops coverage-check` explains why a posting you found by hand never reached you.
 
 **Filtering on a field other than the title (optional).** When a board publishes a structured field that says more than the title does — an occupation code, a department — define a whitelist for it under `field_filters` and set `filter_on` on that target (`filter_on: noc`, or `filter_on: [title, noc]` to require both). The keywords use the same language as `title_filter`. Targets without `filter_on` keep gating on the title. The provider has to emit the field (for example a `local_parser` script); postings that lack it pass and are counted, and the scan warns when a target never supplies it. See the "Declared-field whitelists" section of `templates/portals.example.yml`.
 
@@ -79,7 +79,7 @@ Save hooks in `.claude/settings.json` (Claude Code). OpenCode does not support h
 
 ## States (templates/states.yml)
 
-`templates/states.yml` lists the tracker's canonical states and the aliases each one accepts (`aplicado` → `Applied`). The Node scripts read it at run time: `set-status.mjs` rejects a status it does not list, and `normalize-statuses.mjs`, `merge-tracker.mjs` and `dedup-tracker.mjs` resolve aliases through it.
+`templates/states.yml` lists the tracker's canonical states and the aliases each one accepts (`aplicado` → `Applied`). The Node scripts read it at run time: `packages/cli/src/commands/tracker/set-status.ts` rejects a status it does not list, and `packages/cli/src/commands/tracker/normalize-statuses.ts`, `packages/cli/src/commands/tracker/merge-tracker.ts` and `packages/cli/src/commands/tracker/dedup-tracker.ts` resolve aliases through it.
 
 It is a system-layer file (see [DATA_CONTRACT.md](../DATA_CONTRACT.md)), so an update replaces it, and no user-layer file adds states or aliases. A state you add only in your own copy is lost on the next update. Until then the scripts and the web app's status API accept it, but the Go dashboard and the web app's tabs, pills and funnel don't, because they keep their own copies of the list. For detail the states don't capture (ghosted, on hold, a referral), use the Notes column.
 
@@ -87,9 +87,9 @@ A new state is a change to career-ops itself, so open an issue first (see [CONTR
 
 1. `templates/states.yml`: the entry (`id`, `label`, `aliases`, `description`, `dashboard_group`, plus `terminal: true` for an end state). A non-terminal state's position in the list is its lifecycle order.
 2. Go dashboard: `NormalizeStatus` and `isCanonicalStatusName` in `dashboard/internal/data/career.go`, the pipeline groups, tabs and colors in `dashboard/internal/ui/screens/pipeline.go`, and the labels in `dashboard/internal/i18n/catalog.go`.
-3. Web app: `web/src/lib/status-alias.mjs`, the status lists in `web/src/lib/format.ts`, `web/src/app/actions/registry.ts` and `web/src/lib/pipeline-navigation.mjs`, and the state lists in the assistant prompt in `web/src/app/api/assistant/route.ts`.
-4. Funnel: where the state sits in the funnel and whether it counts as active, in `funnel-stages.mjs`, `stats.mjs`, `web/src/lib/analytics-metrics.mjs` and the dashboard's funnel in `career.go`.
+3. Web app: `apps/web/src/lib/status-alias.ts`, the status lists in `apps/web/src/lib/format.ts`, `web/src/app/actions/registry.ts` and `web/src/lib/pipeline-navigation.ts`, and the state lists in the assistant prompt in `web/src/app/api/assistant/route.ts`.
+4. Funnel: where the state sits in the funnel and whether it counts as active, in `packages/core/src/insights/funnel-stages.ts`, `packages/core/src/insights/stats.ts`, `apps/web/src/lib/analytics-metrics.ts` and the dashboard's funnel in `career.go`.
 5. Prose that lists the states: the Canonical States table in `AGENTS.md`, `modes/tracker.md`, `batch/batch-prompt.md` and `templates/README.md`. `git grep` for an existing label such as `Assessment` finds the rest.
-6. Tests that classify every state: `tests/analytics-state-contract.test.mjs` and `tests/dedup-tracker-status-aliases.test.mjs`.
+6. Tests that classify every state: `tests/analytics-state-contract.test.ts` and `tests/dedup-tracker-status-aliases.test.ts`.
 
-`node test-all.mjs` and `go test ./...` in `dashboard/` fail on most of the copies above when the new state is missing from them. A new alias for an existing state also needs `NormalizeStatus` and `status-alias.mjs`, which the same tests check.
+`bun test-all.ts` and `go test ./...` in `dashboard/` fail on most of the copies above when the new state is missing from them. A new alias for an existing state also needs `NormalizeStatus` and `status-alias.ts`, which the same tests check.

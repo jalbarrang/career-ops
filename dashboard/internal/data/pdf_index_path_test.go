@@ -63,7 +63,7 @@ func TestPDFIndexReadersKeepArtifactsWithSymlinkedTracker(t *testing.T) {
 		}
 		t.Fatal(err)
 	}
-	// generate-pdf.mjs stores the index beside the canonical tracker, but
+	// generate-pdf.ts stores the index beside the canonical tracker, but
 	// records artifacts relative to the lexical workspace for file links too.
 	pdf, html := "output/cv.pdf", "output/cv.html"
 	writeFixture(t, root, pdf, "local PDF")

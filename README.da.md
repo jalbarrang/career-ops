@@ -98,7 +98,7 @@ Den tilpasser dit CV og skriver udkast til dine&nbsp;svar. <strong>Du&nbsp;trykk
 Indsæt ét job, du var ved at søge i aften. Kommer det tilbage som <em>søg ikke</em>, har du lige fået aftenen tilbage. Kommer det tilbage med en plan, ved du, hvad du skal gøre nu.
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 <p align="center"><sub>Open source. Lokalt. I den AI-CLI, du allerede bruger. <a href="docs/RUNNING_ON_A_BUDGET.md">Gratis og lokale modeller inkluderet.</a></sub></p>
@@ -159,7 +159,7 @@ Ved første start spørger den om alt det i chatten. Intet at konfigurere i hån
 
 ## Hvad career-ops ikke gør
 
-- **Sende en ansøgning automatisk.** Den skriver udkast til svaret i hvert felt; du gennemgår og klikker Send. Scriptet laver aldrig et POST (`prepare-application.mjs`).
+- **Sende en ansøgning automatisk.** Den skriver udkast til svaret i hvert felt; du gennemgår og klikker Send. Scriptet laver aldrig et POST (`packages/cli/src/commands/evaluation/prepare-application.ts`).
 - **Sender en e-mail.** Kun udkast. Der findes ingen mailtransport nogen steder i koden.
 - **Ringer hjem.** Ingen telemetri, ingen backend hos os. Dit CV går fra din maskine til den AI-udbyder, du har valgt, og ingen andre steder. Det eneste offentlige register er dette repository: `HIRED.md` og dets issues.
 - **Presser dig til at søge under 4,0/5.** Den siger, du skal lade være. Du kan tilsidesætte det, og den siger det.
@@ -175,7 +175,7 @@ Den omformulerer dit CV; den må aldrig opdigte det. En kontrol i koden stopper 
 | **ATS-PDF-generering**   | ATS-læsbare CV'er tilpasset hver jobbeskrivelse ud fra din egen erfaring, i Space Grotesk + DM Sans-design                                |
 | **Ansøgningsgenerator**  | Researchbaserede ansøgninger med spejling af nøgleord, fire interaktive vinkelspørgsmål (hvorfor/problemer/tilgang/tone), godkendelse af udkast i chatten og A4-PDF via samme HTML + Playwright-pipeline som CV'er. Laver automatisk udkast ved hver vurdering; færdiggør og generér efter behov via `/career-ops cover` |
 | **Ud over CV'et**        | Virksomhedsresearch ([`deep`](modes/deep.md)) afdækker AI-strategi, seneste træk, engineering-kultur og den vinkel, din profil bør tage. Kontaktsøgning ([`contacto`](modes/contacto.md)) finder den hiring manager, rekrutterer eller kollega, det er værd at kontakte, og skriver et LinkedIn-udkast på ≤300 tegn tilpasset hver kontakttype. Formelle udkast til ansøgningsmails ([`email`](modes/email.md)) gør en vurderet rapport eller indsat jobbeskrivelse til emnelinje, brødtekst og tjekliste over vedhæftninger uden at sende, indsende eller klikke på noget. Ansøgninger sætter dig i køen; research giver dig en samtale. |
-| **Mønsteranalyse**       | Afslagsmønstre og fremgangsrater pr. ATS-kanal (`analyze-patterns.mjs`), tragtstatistik for hele søgningen (`stats.mjs`), registrering af genopslag, et muligt tegn på et spøgelsesjob (`detect-reposts.mjs`) |
+| **Mønsteranalyse**       | Afslagsmønstre og fremgangsrater pr. ATS-kanal (`packages/cli/src/commands/insights/analyze-patterns.ts`), tragtstatistik for hele søgningen (`packages/core/src/insights/stats.ts`), registrering af genopslag, et muligt tegn på et spøgelsesjob (`packages/cli/src/commands/insights/detect-reposts.ts`) |
 
 <details>
 <summary><b>Alt det andet, den gør</b></summary>
@@ -192,8 +192,8 @@ Den omformulerer dit CV; den må aldrig opdigte det. En kontrol i koden stopper 
 | **Dashboard TUI**        | Terminal-UI til at gennemse, filtrere og sortere din pipeline                                                                            |
 | **Pipeline-integritet**  | Automatisk sammenfletning, deduplikering, statusnormalisering, sundhedstjek                                                              |
 | **Interview-pakke**      | Tidsblokkede forberedelsesplaner, øvesessioner med feedback, debriefs efter samtalen ([`interview/`](modes/interview/README.md)) og en detektor for røde flag hos virksomheden ([`interview-redflag`](modes/interview-redflag.md)) |
-| **Tilbudsfasen**         | Følgesvend til kontraktlæsning: gennemgang klausul for klausul plus en spørgsmålsliste til advokaten ([`offer-prep`](modes/offer-prep.md)), og en analyse af gabet mellem ønsket, annonceret og faktisk løn (`salary-gap.mjs`) |
-| **Opfølgning og svar**   | Beregner af opfølgningskadence og forberedte påmindelser (`followup-cadence.mjs`, `followup-seed.mjs`); klassificering af arbejdsgiverens svar til tracker-opdateringer ([`reply-watch`](modes/reply-watch.md)) |
+| **Tilbudsfasen**         | Følgesvend til kontraktlæsning: gennemgang klausul for klausul plus en spørgsmålsliste til advokaten ([`offer-prep`](modes/offer-prep.md)), og en analyse af gabet mellem ønsket, annonceret og faktisk løn (`packages/cli/src/commands/insights/salary-gap.ts`) |
+| **Opfølgning og svar**   | Beregner af opfølgningskadence og forberedte påmindelser (`packages/core/src/outreach/followup-cadence.ts`, `packages/core/src/outreach/followup-seed.ts`); klassificering af arbejdsgiverens svar til tracker-opdateringer ([`reply-watch`](modes/reply-watch.md)) |
 | **Plugin-system**        | Tilvalgsintegrationer (Gmail, Notion, Apify + et community-register), slået fra som standard; se [docs/PLUGINS.md](docs/PLUGINS.md)      |
 
 </details>
@@ -203,7 +203,7 @@ Den omformulerer dit CV; den må aldrig opdigte det. En kontrol i koden stopper 
 **Hurtigste vej, én kommando:**
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 > 💡 `npx` følger med [Node.js](https://nodejs.org): det kører installationen én gang
@@ -224,8 +224,8 @@ claude   # or codex / qwen / opencode / agy / grok — open your AI CLI here
 
 ```bash
 git clone https://github.com/career-ops-hq/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # only needed for PDF generation
+cd career-ops && bun install
+bunx playwright install chromium   # only needed for PDF generation
 # On a non-Debian/Ubuntu Linux distro (Fedora, Arch, ...), Chromium's system
 # libraries aren't installed by the line above — install them yourself with
 # your distro's package manager if PDF generation fails to launch the browser
@@ -256,14 +256,14 @@ claude   # or codex / opencode / qwen / agy / grok
 ### Global installation
 
 ```bash
-npm i -g @santifer/career-ops
+bun add -g @santifer/career-ops
 ```
 
 Det installerer `career-ops`-binæren globalt, så du kan køre `career-ops init [folder]` uden `npx`. `init` er dens eneste kommando: den opretter et arbejdsområde, og alt derefter foregår i din AI-kodnings-CLI (se Brug nedenfor), ikke gennem denne binær.
 
 **Hvilken skal du bruge?**
-- `npx @santifer/career-ops init`: bedst til første brug; opretter en dedikeret projektmappe.
-- `npm i -g @santifer/career-ops`: hvis du hellere vil skrive `career-ops init` end `npx`-formen. Den tilføjer ingen andre kommandoer.
+- `bunx @santifer/career-ops init`: bedst til første brug; opretter en dedikeret projektmappe.
+- `bun add -g @santifer/career-ops`: hvis du hellere vil skrive `career-ops init` end `npx`-formen. Den tilføjer ingen andre kommandoer.
 
 > **Systemet er designet til at blive tilpasset af din AI-kodnings-CLI selv.** Tilstande, arketyper, scorevægte, forhandlingsscripts: bed den bare om at ændre dem. Den læser de samme filer, som den bruger, så den ved præcis, hvad den skal redigere.
 
@@ -454,13 +454,13 @@ cp .env.example .env
 # Edit .env, set GEMINI_API_KEY=your_key_here
 
 # 2. Install dependencies
-npm install
+bun install
 
 # 3. Evaluate a job description
-node gemini-eval.mjs "We are looking for a Senior AI Engineer..."
-node gemini-eval.mjs --file ./jds/my-job.txt
-node agent-inbox.mjs add "..."   # queue a request for the next session
-npm run gemini:eval -- "JD text here"
+bun packages/cli/src/commands/evaluation/gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun packages/cli/src/commands/evaluation/gemini-eval.ts --file ./jds/my-job.txt
+bun packages/cli/src/commands/platform/agent-inbox.ts add "..."   # queue a request for the next session
+bun run gemini:eval -- "JD text here"
 ```
 
 > **Gratis niveau:** Begge muligheder virker uden betaling. Den indbyggede CLI bruger Google OAuth; API-scriptet bruger `gemini-3.6-flash` (rategrænser afhænger af model og niveau; se Google AI-dokumentationen for aktuelle kvoter).
@@ -480,10 +480,10 @@ Scanneren kommer med **100+ virksomheder** klar til scanning og **35+ søgninger
 
 **Jobportaler, der søges i:** 55+ udbydermoduler dækker ATS-API'er, feeds for hele portaler, XML/RSS-feeds, markdown-feeds og lokale parsere. Se [Understøttede jobportaler](docs/SUPPORTED_JOB_BOARDS.md) for den fulde tabel.
 
-Som standard stoler `node scan.mjs` (alias `npm run scan`) på det, hvert ATS-feed returnerer. Nogle virksomheder lader forældede opslag stå i deres offentlige API, selv efter stillingen er lukket, så de udløbne poster kan sive ind i `pipeline.md`. Giv `--verify` for at starte Playwright efter API-gennemløbet og frasortere udløbne opslag, før de rammer pipelinen:
+Som standard stoler `bun packages/core/src/scanning/scan.ts` (alias `bun run scan`) på det, hvert ATS-feed returnerer. Nogle virksomheder lader forældede opslag stå i deres offentlige API, selv efter stillingen er lukket, så de udløbne poster kan sive ind i `pipeline.md`. Giv `--verify` for at starte Playwright efter API-gennemløbet og frasortere udløbne opslag, før de rammer pipelinen:
 
 ```bash
-node scan.mjs --verify          # zero-token discovery + Playwright liveness check
+bun packages/core/src/scanning/scan.ts --verify          # zero-token discovery + Playwright liveness check
 ```
 
 Verifikationen er sekventiel og kører kun på nye opslag (efter deduplikering), så omkostningen forbliver begrænset.
@@ -493,13 +493,13 @@ Verifikationen er sekventiel og kører kun på nye opslag (efter deduplikering),
 Det indbyggede terminal-dashboard lader dig gennemse din pipeline visuelt:
 
 ```bash
-npm run serve:dashboard   # launch the TUI
-npm run build:dashboard   # optional: build the standalone binary
+bun run serve:dashboard   # launch the TUI
+bun run build:dashboard   # optional: build the standalone binary
 ```
 
 Funktioner: 10 filterfaner, 8 sorteringstilstande, grupperet/flad visning, forhåndsvisninger med lazy loading, statusændringer inline.
 
-Der findes også en **eksperimentel web-UI** (alfa og tilvalg: intet kører, medmindre du starter den): se [`web/README.md`](web/README.md).
+Der findes også en **eksperimentel web-UI** (alfa og tilvalg: intet kører, medmindre du starter den): se [`apps/web/README.md`](apps/web/README.md).
 
 ## Projektstruktur
 
@@ -556,9 +556,9 @@ Når det er afgjort, opløses og skrives alle brugerfiler relativt til den mappe
 
 - **Tilsidesæt tracker:** Du kan også sætte `CAREER_OPS_TRACKER` for direkte at tilsidesætte stien til ansøgningstrackerens fil.
 - **Skrivninger:** Alle skriveoperationer (såsom sammenfletninger) retter sig kanonisk mod `{DATA_ROOT}/data/applications.md`.
-- **Scannerkonfiguration:** `portals.yml` læses og valideres i `{DATA_ROOT}/portals.yml`, så `node validate-portals.mjs` tjekker den samme fil, som `scan.mjs` læser.
+- **Scannerkonfiguration:** `portals.yml` læses og valideres i `{DATA_ROOT}/portals.yml`, så `bun packages/cli/src/commands/scanning/validate-portals.ts` tjekker den samme fil, som `packages/core/src/scanning/scan.ts` læser.
 - **Genererede dokumenter:** Tilpassede CV'er og ansøgninger skrives under `{DATA_ROOT}/output/`, og PDF-manifestet, der knytter dem til en rapport, ligger i `{DATA_ROOT}/data/pdf-index.tsv`. Så længe `CAREER_OPS_TRACKER` ikke er sat, er trackerens arbejdsområde, som afgrænser de skrivninger, datamappen og ikke checkoutet.
-- **PDF'er med tilsidesat tracker:** `generate-pdf.mjs` opløser `CAREER_OPS_TRACKER`, før den udleder arbejdsområdet, så når tilsidesættelsen er sat, er arbejdsområdet den mappe, der indeholder trackeren (eller mappen over den, når trackeren ligger i en `data/`-mappe). CV'ets HTML og hver PDF skal så ligge inden for det arbejdsområde, og manifestet flytter til dets `data/pdf-index.tsv`. Ansøgninger skrives stadig til `{DATA_ROOT}/output/`, så de afvises, når den mappe ligger uden for trackerens arbejdsområde.
+- **PDF'er med tilsidesat tracker:** `packages/cli/src/commands/cv/generate-pdf.ts` opløser `CAREER_OPS_TRACKER`, før den udleder arbejdsområdet, så når tilsidesættelsen er sat, er arbejdsområdet den mappe, der indeholder trackeren (eller mappen over den, når trackeren ligger i en `data/`-mappe). CV'ets HTML og hver PDF skal så ligge inden for det arbejdsområde, og manifestet flytter til dets `data/pdf-index.tsv`. Ansøgninger skrives stadig til `{DATA_ROOT}/output/`, så de afvises, når den mappe ligger uden for trackerens arbejdsområde.
 - **Kodelaget bliver, hvor det er:** `node_modules/`, `providers/`, `modes/` og selve scriptene opløses altid i forhold til repositoryet, aldrig datamappen.
 
 Go-dashboardets TUI, Node.js-scripts og AI-agenttilstande respekterer alle automatisk denne rækkefølge.
@@ -617,7 +617,7 @@ Go-dashboardets TUI, Node.js-scripts og AI-agenttilstande respekterer alle autom
 career-ops ([career-ops.org](https://career-ops.org), også kendt som **careerops**) er en open source AI-jobsøgning, der kører lokalt i din AI-kodnings-CLI (Claude Code, Codex, OpenCode og andre) og overlader hver beslutning til dig. Den vurderer jobopslag mod dit CV, genererer ATS-tilpassede PDF'er, finder den rette person at kontakte og holder styr på alt ét sted: du har altid det sidste ord. Den er den første referenceimplementering af [CareerOps-manifestet](https://career-ops.org/manifesto).
 
 **Kan det tilpassede CV finde på ting?**
-Det må det ikke, og prompterne siger det: omformuler, opdigt aldrig. `generate-pdf` blokerer et CV med tal eller fakta, der ikke står i dine kilder, medmindre du angiver `--skip-fact-check`. `pdf`-tilstanden kører også `cv-title-check.mjs`, som sammenligner hver jobtitel i det tilpassede CV med den titel, cv.md giver samme job (matchet på virksomhed og datoer), og spørger dig, om en afvigende titel skal beholdes eller rettes tilbage. Den advarer i stedet for at blokere, fordi en omformuleret titel nogle gange er dit valg. Intet bedømmer omformuleringer endnu: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (troskabskontrol, der blokerer ved afvigelse) følger det. Indtil da: læs hvert CV, før du sender det. [Den juridiske ansvarsfraskrivelse](LEGAL_DISCLAIMER.md) siger det samme med flere ord.
+Det må det ikke, og prompterne siger det: omformuler, opdigt aldrig. `generate-pdf` blokerer et CV med tal eller fakta, der ikke står i dine kilder, medmindre du angiver `--skip-fact-check`. `pdf`-tilstanden kører også `packages/cli/src/commands/cv/cv-title-check.ts`, som sammenligner hver jobtitel i det tilpassede CV med den titel, cv.md giver samme job (matchet på virksomhed og datoer), og spørger dig, om en afvigende titel skal beholdes eller rettes tilbage. Den advarer i stedet for at blokere, fordi en omformuleret titel nogle gange er dit valg. Intet bedømmer omformuleringer endnu: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (troskabskontrol, der blokerer ved afvigelse) følger det. Indtil da: læs hvert CV, før du sender det. [Den juridiske ansvarsfraskrivelse](LEGAL_DISCLAIMER.md) siger det samme med flere ord.
 
 **Kan jeg køre career-ops gratis eller på en billigere / lokal model?**
 Ja. career-ops er CLI-uafhængig og kører på gratis og lokale modeller (gratis OpenRouter-modeller, Ollama eller ethvert OpenAI-kompatibelt endpoint), så du er ikke bundet til et betalt abonnement. Se [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md) for den fulde opsætning.

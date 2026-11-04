@@ -4,14 +4,14 @@ Run the deterministic calibration report and present it. This mode closes the le
 
 > **Non-negotiables:**
 > - **Advisory only.** This mode NEVER edits scoring rules, thresholds, `modes/_shared.md`, or any config. It reports evidence; the user decides what to do with it.
-> - **Deterministic.** The numbers come from `calibrate.mjs` (pure local parsing — no network, no keys, no LLM math). Do not recompute, adjust, or "improve" any rate it prints.
+> - **Deterministic.** The numbers come from `packages/cli/src/commands/insights/calibrate.ts` (pure local parsing — no network, no keys, no LLM math). Do not recompute, adjust, or "improve" any rate it prints.
 > - **Honest floors.** If the script withholds a rate as `(n too small)`, present it that way. Never turn a 2-of-3 anecdote into a percentage.
 
 ## Pipeline
 
 1. Run the script:
    ```bash
-   node calibrate.mjs --json
+   career-ops calibrate --json
    ```
 2. If it exits with "No tracker found" or the verdict is `insufficient`, say so plainly and point the user at `/outcome`: the loop needs recorded outcomes before it can say anything. Do not pad the gap with speculation.
 3. Present, in this order:

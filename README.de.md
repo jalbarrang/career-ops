@@ -100,7 +100,7 @@ Es schneidet deinen Lebenslauf zu und entwirft deine&nbsp;Antworten. <strong>Du&
 Füge eine Stelle ein, auf die du dich heute Abend bewerben wolltest. Kommt <em>nicht bewerben</em> zurück, hast du gerade den Abend zurückgewonnen. Kommt ein Plan zurück, weißt du, was als Nächstes zu tun ist.
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 <p align="center"><sub>Open Source. Lokal. In der KI-CLI, die du schon nutzt. <a href="docs/RUNNING_ON_A_BUDGET.md">Kostenlose und lokale Modelle inklusive.</a></sub></p>
@@ -161,7 +161,7 @@ Beim ersten Start fragt es das alles im Chat ab. Nichts von Hand zu konfiguriere
 
 ## Was career-ops nicht tut
 
-- **Eine Bewerbung automatisch absenden.** Es entwirft die Antwort für jedes Feld; du prüfst und klickst auf Absenden. Das Skript sendet nie einen POST (`prepare-application.mjs`).
+- **Eine Bewerbung automatisch absenden.** Es entwirft die Antwort für jedes Feld; du prüfst und klickst auf Absenden. Das Skript sendet nie einen POST (`packages/cli/src/commands/evaluation/prepare-application.ts`).
 - **Eine E-Mail senden.** Nur Entwürfe. Nirgendwo in diesem Code gibt es einen Mailversand.
 - **Nach Hause funken.** Keine Telemetrie, kein Backend von uns. Dein Lebenslauf geht von deinem Rechner zum KI-Anbieter deiner Wahl, und nirgendwo sonst. Das einzige öffentliche Register ist dieses Repository: `HIRED.md` und seine Issues.
 - **Dich zu Bewerbungen unter 4,0/5 drängen.** Es rät dir davon ab. Du kannst dich darüber hinwegsetzen, und es sagt es dir.
@@ -177,7 +177,7 @@ Es formuliert deinen Lebenslauf um; es darf ihn nie erfinden. Eine Prüfung im C
 | **ATS-PDF-Generierung**  | ATS-lesbare Lebensläufe, aus deiner eigenen Erfahrung auf jede Stellenbeschreibung zugeschnitten, im Space-Grotesk- und DM-Sans-Design  |
 | **Anschreiben-Generator** | Recherchegestützte Anschreiben mit Keyword-Mirroring, vier interaktiven Angle-Prompts (warum/Probleme/Ansatz/Ton), Freigabe des Entwurfs im Chat und A4-PDF über dieselbe HTML- und Playwright-Pipeline wie Lebensläufe. Entwirft bei jeder Bewertung automatisch; vervollständigen und erzeugen bei Bedarf mit `/career-ops cover` |
 | **Über den Lebenslauf hinaus** | Die Unternehmensrecherche ([`deep`](modes/deep.md)) legt KI-Strategie, jüngste Schritte, Engineering-Kultur und den Winkel offen, den dein Profil einnehmen sollte. Die Kontaktsuche ([`contacto`](modes/contacto.md)) identifiziert Hiring Manager, Recruiter:in oder Teammitglied, bei denen sich eine Nachricht lohnt, und entwirft eine LinkedIn-Nachricht mit ≤300 Zeichen, abgestimmt auf den Kontakttyp. Formelle Bewerbungs-E-Mail-Entwürfe ([`email`](modes/email.md)) machen aus einem bewerteten Report oder einer eingefügten Stellenbeschreibung Betreff, Text und Anhang-Checkliste, ohne etwas zu senden, einzureichen oder anzuklicken. Bewerbungen bringen dich in die Warteschlange; Recherche bringt dich ins Gespräch. |
-| **Musteranalyse**        | Ablehnungsmuster und Weiterkommensquoten je ATS-Kanal (`analyze-patterns.mjs`), Funnel-Statistiken über die gesamte Suche (`stats.mjs`), Erkennung von Reposts, die auf einen Ghost Job hindeuten können (`detect-reposts.mjs`) |
+| **Musteranalyse**        | Ablehnungsmuster und Weiterkommensquoten je ATS-Kanal (`packages/cli/src/commands/insights/analyze-patterns.ts`), Funnel-Statistiken über die gesamte Suche (`packages/core/src/insights/stats.ts`), Erkennung von Reposts, die auf einen Ghost Job hindeuten können (`packages/cli/src/commands/insights/detect-reposts.ts`) |
 
 <details>
 <summary><b>Alles andere, was es tut</b></summary>
@@ -194,8 +194,8 @@ Es formuliert deinen Lebenslauf um; es darf ihn nie erfinden. Eine Prüfung im C
 | **Dashboard TUI**        | Terminal-UI zum Durchsuchen, Filtern und Sortieren deiner Pipeline                                                                       |
 | **Pipeline-Integrität**  | Automatisches Mergen, Deduplizieren, Status-Normalisierung, Health Checks                                                                |
 | **Interview-Suite**      | Zeitgeblockte Vorbereitungspläne, Übungssessions mit Feedback, Debriefs nach dem Interview ([`interview/`](modes/interview/README.md)) und ein Red-Flag-Detektor für Unternehmen ([`interview-redflag`](modes/interview-redflag.md)) |
-| **Angebotsphase**        | Begleiter beim Lesen des Vertrags: Klausel für Klausel plus eine Fragenliste für den Anwalt ([`offer-prep`](modes/offer-prep.md)), und ein Analysator für die Lücke zwischen gewünschtem, ausgeschriebenem und tatsächlichem Gehalt (`salary-gap.mjs`) |
-| **Follow-ups & Antworten** | Rechner für die Follow-up-Kadenz und vorbereitete Erinnerungen (`followup-cadence.mjs`, `followup-seed.mjs`); Klassifizierung von Arbeitgeber-Antworten in Tracker-Updates ([`reply-watch`](modes/reply-watch.md)) |
+| **Angebotsphase**        | Begleiter beim Lesen des Vertrags: Klausel für Klausel plus eine Fragenliste für den Anwalt ([`offer-prep`](modes/offer-prep.md)), und ein Analysator für die Lücke zwischen gewünschtem, ausgeschriebenem und tatsächlichem Gehalt (`packages/cli/src/commands/insights/salary-gap.ts`) |
+| **Follow-ups & Antworten** | Rechner für die Follow-up-Kadenz und vorbereitete Erinnerungen (`packages/core/src/outreach/followup-cadence.ts`, `packages/core/src/outreach/followup-seed.ts`); Klassifizierung von Arbeitgeber-Antworten in Tracker-Updates ([`reply-watch`](modes/reply-watch.md)) |
 | **Plugin-System**        | Optionale Integrationen (Gmail, Notion, Apify + ein Community-Registry), standardmäßig deaktiviert; siehe [docs/PLUGINS.md](docs/PLUGINS.md) |
 
 </details>
@@ -205,7 +205,7 @@ Es formuliert deinen Lebenslauf um; es darf ihn nie erfinden. Eine Prüfung im C
 **Am schnellsten geht es mit einem einzigen Befehl:**
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 > 💡 `npx` kommt mit [Node.js](https://nodejs.org): Es führt den Installer einmal aus,
@@ -226,8 +226,8 @@ claude   # or codex / qwen / opencode / agy / grok — open your AI CLI here
 
 ```bash
 git clone https://github.com/career-ops-hq/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # only needed for PDF generation
+cd career-ops && bun install
+bunx playwright install chromium   # only needed for PDF generation
 # On a non-Debian/Ubuntu Linux distro (Fedora, Arch, ...), Chromium's system
 # libraries aren't installed by the line above — install them yourself with
 # your distro's package manager if PDF generation fails to launch the browser
@@ -258,14 +258,14 @@ claude   # or codex / opencode / qwen / agy / grok
 ### Globale Installation
 
 ```bash
-npm i -g @santifer/career-ops
+bun add -g @santifer/career-ops
 ```
 
 Das installiert die `career-ops`-Binary global, sodass du `career-ops init [folder]` ohne `npx` ausführen kannst. `init` ist ihr einziger Befehl: Er richtet einen Arbeitsbereich ein, und alles Weitere passiert in deiner KI-Coding-CLI (siehe Nutzung unten), nicht über diese Binary.
 
 **Welche Variante solltest du nutzen?**
-- `npx @santifer/career-ops init`: am besten für den ersten Einsatz; legt einen eigenen Projektordner an.
-- `npm i -g @santifer/career-ops`: wenn du lieber `career-ops init` tippst als die `npx`-Form. Weitere Befehle kommen dadurch nicht hinzu.
+- `bunx @santifer/career-ops init`: am besten für den ersten Einsatz; legt einen eigenen Projektordner an.
+- `bun add -g @santifer/career-ops`: wenn du lieber `career-ops init` tippst als die `npx`-Form. Weitere Befehle kommen dadurch nicht hinzu.
 
 > **Das System ist dafür gebaut, von deiner KI-Coding-CLI selbst angepasst zu werden.** Modi, Archetypen, Bewertungsgewichte, Verhandlungsskripte: Bitte sie einfach, das zu ändern. Sie liest dieselben Dateien, die sie benutzt, und weiß daher genau, was zu bearbeiten ist.
 
@@ -456,13 +456,13 @@ cp .env.example .env
 # Edit .env, set GEMINI_API_KEY=your_key_here
 
 # 2. Install dependencies
-npm install
+bun install
 
 # 3. Evaluate a job description
-node gemini-eval.mjs "We are looking for a Senior AI Engineer..."
-node gemini-eval.mjs --file ./jds/my-job.txt
-node agent-inbox.mjs add "..."   # queue a request for the next session
-npm run gemini:eval -- "JD text here"
+bun packages/cli/src/commands/evaluation/gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun packages/cli/src/commands/evaluation/gemini-eval.ts --file ./jds/my-job.txt
+bun packages/cli/src/commands/platform/agent-inbox.ts add "..."   # queue a request for the next session
+bun run gemini:eval -- "JD text here"
 ```
 
 > **Free Tier:** Beide Optionen funktionieren ohne Abrechnung. Die native CLI nutzt Google OAuth; das API-Skript nutzt `gemini-3.6-flash` (Rate Limits hängen von Modell und Stufe ab; aktuelle Kontingente stehen in den Google-AI-Docs).
@@ -482,10 +482,10 @@ Der Scanner kommt mit **100+ Unternehmen**, die sofort gescannt werden können, 
 
 **Durchsuchte Jobbörsen:** 55+ Provider-Module decken ATS-APIs, Feeds ganzer Jobbörsen, XML/RSS-Feeds, Markdown-Feeds und lokale Parser ab. Die vollständige Tabelle steht unter [Unterstützte Jobbörsen](docs/SUPPORTED_JOB_BOARDS.md).
 
-Standardmäßig vertraut `node scan.mjs` (alias `npm run scan`) dem, was jeder ATS-Feed zurückgibt. Manche Unternehmen lassen veraltete Anzeigen in ihrer öffentlichen API stehen, auch wenn die Stelle längst geschlossen ist, sodass diese abgelaufenen Einträge in `pipeline.md` durchsickern können. Übergib `--verify`, um nach dem API-Durchlauf Playwright zu starten und abgelaufene Anzeigen zu verwerfen, bevor sie die Pipeline erreichen:
+Standardmäßig vertraut `bun packages/core/src/scanning/scan.ts` (alias `bun run scan`) dem, was jeder ATS-Feed zurückgibt. Manche Unternehmen lassen veraltete Anzeigen in ihrer öffentlichen API stehen, auch wenn die Stelle längst geschlossen ist, sodass diese abgelaufenen Einträge in `pipeline.md` durchsickern können. Übergib `--verify`, um nach dem API-Durchlauf Playwright zu starten und abgelaufene Anzeigen zu verwerfen, bevor sie die Pipeline erreichen:
 
 ```bash
-node scan.mjs --verify          # zero-token discovery + Playwright liveness check
+bun packages/core/src/scanning/scan.ts --verify          # zero-token discovery + Playwright liveness check
 ```
 
 Die Prüfung läuft sequenziell und nur über neue Angebote (nach dem Deduplizieren), sodass die Kosten begrenzt bleiben.
@@ -495,13 +495,13 @@ Die Prüfung läuft sequenziell und nur über neue Angebote (nach dem Deduplizie
 Das eingebaute Terminal-Dashboard lässt dich deine Pipeline visuell durchsuchen:
 
 ```bash
-npm run serve:dashboard   # launch the TUI
-npm run build:dashboard   # optional: build the standalone binary
+bun run serve:dashboard   # launch the TUI
+bun run build:dashboard   # optional: build the standalone binary
 ```
 
 Features: 10 Filter-Tabs, 8 Sortiermodi, gruppierte/flache Ansicht, Vorschauen mit Lazy Loading, Statusänderungen inline.
 
-Es gibt außerdem eine **experimentelle Web-UI** (Alpha und opt-in: Nichts läuft, solange du sie nicht startest): siehe [`web/README.md`](web/README.md).
+Es gibt außerdem eine **experimentelle Web-UI** (Alpha und opt-in: Nichts läuft, solange du sie nicht startest): siehe [`apps/web/README.md`](apps/web/README.md).
 
 ## Projektstruktur
 
@@ -558,9 +558,9 @@ Sobald das aufgelöst ist, werden alle Nutzerdateien relativ zu diesem Ordner au
 
 - **Tracker überschreiben:** Du kannst auch `CAREER_OPS_TRACKER` setzen, um den Pfad der Bewerbungs-Tracker-Datei direkt zu überschreiben.
 - **Schreibvorgänge:** Alle Schreibvorgänge (etwa Merges) zielen kanonisch auf `{DATA_ROOT}/data/applications.md`.
-- **Scanner-Konfiguration:** `portals.yml` wird unter `{DATA_ROOT}/portals.yml` gelesen und validiert, sodass `node validate-portals.mjs` genau die Datei prüft, die `scan.mjs` liest.
+- **Scanner-Konfiguration:** `portals.yml` wird unter `{DATA_ROOT}/portals.yml` gelesen und validiert, sodass `bun packages/cli/src/commands/scanning/validate-portals.ts` genau die Datei prüft, die `packages/core/src/scanning/scan.ts` liest.
 - **Erzeugte Dokumente:** Angepasste Lebensläufe und Anschreiben werden unter `{DATA_ROOT}/output/` geschrieben, und das PDF-Manifest, das sie mit einem Report verknüpft, liegt in `{DATA_ROOT}/data/pdf-index.tsv`. Solange `CAREER_OPS_TRACKER` nicht gesetzt ist, ist der Tracker-Workspace, der diese Schreibvorgänge begrenzt, das Datenverzeichnis, nicht der Checkout.
-- **PDFs bei überschriebenem Tracker:** `generate-pdf.mjs` löst `CAREER_OPS_TRACKER` auf, bevor es den Workspace ableitet; mit gesetztem Override ist der Workspace also der Ordner, der diesen Tracker enthält (oder der Ordner darüber, wenn der Tracker in einem `data/`-Ordner liegt). Das HTML des Lebenslaufs und jedes PDF müssen dann in diesem Workspace liegen, und das Manifest wandert in dessen `data/pdf-index.tsv`. Anschreiben zielen weiterhin auf `{DATA_ROOT}/output/` und werden deshalb abgelehnt, wenn dieser Ordner außerhalb des Tracker-Workspaces liegt.
+- **PDFs bei überschriebenem Tracker:** `packages/cli/src/commands/cv/generate-pdf.ts` löst `CAREER_OPS_TRACKER` auf, bevor es den Workspace ableitet; mit gesetztem Override ist der Workspace also der Ordner, der diesen Tracker enthält (oder der Ordner darüber, wenn der Tracker in einem `data/`-Ordner liegt). Das HTML des Lebenslaufs und jedes PDF müssen dann in diesem Workspace liegen, und das Manifest wandert in dessen `data/pdf-index.tsv`. Anschreiben zielen weiterhin auf `{DATA_ROOT}/output/` und werden deshalb abgelehnt, wenn dieser Ordner außerhalb des Tracker-Workspaces liegt.
 - **Die Code-Ebene bleibt, wo sie ist:** `node_modules/`, `providers/`, `modes/` und die Skripte selbst werden immer relativ zum Repository aufgelöst, nie relativ zum Datenverzeichnis.
 
 Das Go-Dashboard-TUI, die Node.js-Skripte und die KI-Agentenmodi respektieren diese Auflösungshierarchie automatisch.
@@ -619,7 +619,7 @@ Das Go-Dashboard-TUI, die Node.js-Skripte und die KI-Agentenmodi respektieren di
 career-ops ([career-ops.org](https://career-ops.org), auch bekannt als **careerops**) ist eine quelloffene KI-Jobsuche, die lokal in deiner KI-Coding-CLI läuft (Claude Code, Codex, OpenCode und andere) und jede Entscheidung dir überlässt. Es bewertet Stellenangebote gegen deinen Lebenslauf, erzeugt ATS-optimierte PDFs, findet die richtige Kontaktperson und verfolgt alles an einem Ort: Die finale Entscheidung liegt immer bei dir. Es ist die erste Referenzimplementierung des [CareerOps-Manifests](https://career-ops.org/manifesto).
 
 **Kann der zugeschnittene Lebenslauf etwas erfinden?**
-Er darf es nicht, und die Prompts sagen das: umformulieren, nie erfinden. `generate-pdf` blockiert einen Lebenslauf, dessen Zahlen oder Fakten in deinen Quellen fehlen, außer du übergibst `--skip-fact-check`. Der `pdf`-Modus führt zusätzlich `cv-title-check.mjs` aus: Es vergleicht jeden Jobtitel im angepassten Lebenslauf mit dem Titel, den cv.md für dieselbe Stelle nennt (zugeordnet über Firma und Zeitraum), und fragt bei jeder Abweichung, ob du sie behalten oder zurücksetzen willst. Es warnt nur und blockiert nicht, weil ein umformulierter Titel manchmal deine Entscheidung ist. Umformulierungen beurteilt noch nichts: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (Treueprüfung, die bei Verstoß blockiert) verfolgt das. Bis dahin: Lies jeden Lebenslauf, bevor du ihn abschickst. Der [Haftungsausschluss](LEGAL_DISCLAIMER.md) sagt dasselbe mit mehr Worten.
+Er darf es nicht, und die Prompts sagen das: umformulieren, nie erfinden. `generate-pdf` blockiert einen Lebenslauf, dessen Zahlen oder Fakten in deinen Quellen fehlen, außer du übergibst `--skip-fact-check`. Der `pdf`-Modus führt zusätzlich `packages/cli/src/commands/cv/cv-title-check.ts` aus: Es vergleicht jeden Jobtitel im angepassten Lebenslauf mit dem Titel, den cv.md für dieselbe Stelle nennt (zugeordnet über Firma und Zeitraum), und fragt bei jeder Abweichung, ob du sie behalten oder zurücksetzen willst. Es warnt nur und blockiert nicht, weil ein umformulierter Titel manchmal deine Entscheidung ist. Umformulierungen beurteilt noch nichts: [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (Treueprüfung, die bei Verstoß blockiert) verfolgt das. Bis dahin: Lies jeden Lebenslauf, bevor du ihn abschickst. Der [Haftungsausschluss](LEGAL_DISCLAIMER.md) sagt dasselbe mit mehr Worten.
 
 **Kann ich career-ops kostenlos oder mit einem günstigeren / lokalen Modell nutzen?**
 Ja. career-ops ist CLI-unabhängig und läuft mit kostenlosen und lokalen Modellen (über kostenlose OpenRouter-Modelle, Ollama oder jeden OpenAI-kompatiblen Endpoint), sodass du nicht an ein kostenpflichtiges Abo gebunden bist. Die vollständige Einrichtung findest du in [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md).

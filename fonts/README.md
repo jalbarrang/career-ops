@@ -1,7 +1,7 @@
 # Bundled CV fonts
 
 `templates/resume-template.html` embeds these files via `@font-face`, and
-`generate-pdf.mjs` inlines them as `data:` URLs so PDF rendering makes no
+`packages/cli/src/commands/cv/generate-pdf.ts` inlines them as `data:` URLs so PDF rendering makes no
 network requests. Only the latin and latin-ext subsets are bundled.
 
 - DM Sans 4.004 (variable): `dm-sans-latin.woff2`, `dm-sans-latin-ext.woff2`.

@@ -13,7 +13,7 @@ reviews:
   # policy check would then have nobody able to clear it.
   request_changes_workflow: false
   high_level_summary: true
-  high_level_summary_instructions: "Explain what changes from the user's point of view (what they can do, what breaks). Name which system files are touched: AGENTS.md, modes/, update-system.mjs, DATA_CONTRACT.md, providers/, .github/."
+  high_level_summary_instructions: "Explain what changes from the user's point of view (what they can do, what breaks). Name which system files are touched: AGENTS.md, modes/, packages/cli/src/commands/platform/update-system.ts, DATA_CONTRACT.md, providers/, .github/."
   poem: false
   collapse_walkthrough: true
   sequence_diagrams: false
@@ -76,15 +76,15 @@ reviews:
       instructions: "Product prompts. Localized copies (modes/<lang>/) must keep the canonical structure of modes/*.md: same blocks A to H, same report header labels, same placeholders. Flag structure drift, untranslated placeholders, and any real personal data (names, emails, companies) in examples."
     - path: "DATA_CONTRACT.md"
       instructions: "Defines the system vs user file boundary. Adding a new system file to a table is normal. Reclassifying a user-layer file as system, or changing the rules, is critical: flag it explicitly."
-    - path: "update-system.mjs"
+    - path: "packages/cli/src/commands/platform/update-system.ts"
       instructions: "The self-updater touches every user install. Flag anything that could write into the user layer (cv.md, config/profile.yml, data/, reports/, output/, modes/_profile.md, modes/_custom.md), any new top-level shipped file missing from SYSTEM_PATHS, and any change to backup or rollback behavior."
-    - path: "**/*.mjs"
+    - path: "**/*.ts"
       instructions: "Check for command injection, path traversal and SSRF. Scripts must handle a missing data/ directory gracefully and must resolve user files through the data-root helpers (CAREER_OPS_ROOT), never from the code root."
     - path: "providers/**"
-      instructions: "Scanner providers read PUBLIC job listings only. Check against providers/ADDING_A_PROVIDER.md: host allowlist, no redirects to other hosts, SSRF guards, timeouts, parsing pinned with concrete assertions, and a contract test in tests/providers/<name>.test.mjs. Flag any provider that needs credentials, scrapes behind a login, or aggregates listings that are not attributed to an identifiable employer (Source Indexing Policy in CONTRIBUTING.md)."
+      instructions: "Scanner providers read PUBLIC job listings only. Check against packages/core/src/scanning/providers/ADDING_A_PROVIDER.md: host allowlist, no redirects to other hosts, SSRF guards, timeouts, parsing pinned with concrete assertions, and a contract test in tests/providers/<name>.test.ts. Flag any provider that needs credentials, scrapes behind a login, or aggregates listings that are not attributed to an identifiable employer (Source Indexing Policy in CONTRIBUTING.md)."
     - path: "tests/**"
-      instructions: "New tests belong in their own tests/**/*.test.mjs file (auto-discovered). Flag tests that depend on network, on the developer's real data, or on execution order."
-    - path: "test-all.mjs"
+      instructions: "New tests belong in their own tests/**/*.test.ts file (auto-discovered). Flag tests that depend on network, on the developer's real data, or on execution order."
+    - path: "test-all.ts"
       instructions: "The harness every check runs through. Flag new numbered sections (they belong in tests/ files) and any change that could make a failure look like a pass."
     - path: "dashboard/**"
       instructions: "Go TUI code. Check for proper error handling, no hardcoded paths, and that it reads the tracker through the same canonical formats the CLI writes."
@@ -92,7 +92,7 @@ reviews:
       instructions: "First-party web UI. It must remain a view over the canonical files (tracker, pipeline, reports), never a parallel engine. Flag any write to user files that bypasses the CLI scripts, any agent CLI invocation outside the spawn boundary, and any secret or API key committed."
     - path: ".github/workflows/**"
       instructions: "Treat as security-sensitive. Flag pull_request_target with a checkout of the fork, secrets exposed to fork code, unpinned third-party actions, and permissions broader than needed."
-    - path: "plugins/_*.mjs"
+    - path: "plugins/_*.ts"
       instructions: "Plugin engine and registry chokepoint: a mistake ships unreviewed code to every user. Flag any relaxation of pin, hash or lock verification."
     - path: "plugins-registry.json"
       instructions: "Registry entries must be pinned to a commit SHA and reviewed under docs/PLUGIN_REVIEW.md. Flag unpinned refs or entries that fetch from a mutable branch."
@@ -131,10 +131,10 @@ reviews:
     custom:
       - name: register-shipped-file
         enabled: true
-        instructions: "For every new top-level file this PR adds that users must receive through the updater (a .mjs script, a template, a config sample or a doc that ships), add it to the SYSTEM_PATHS list in update-system.mjs, in the section that matches its kind, keeping the existing order and formatting. Do not add user-layer files as defined in DATA_CONTRACT.md. Change nothing else."
+        instructions: "For every new top-level file this PR adds that users must receive through the updater (a .ts script, a template, a config sample or a doc that ships), add it to the SYSTEM_PATHS list in packages/cli/src/commands/platform/update-system.ts, in the section that matches its kind, keeping the existing order and formatting. Do not add user-layer files as defined in DATA_CONTRACT.md. Change nothing else."
       - name: provider-test-scaffold
         enabled: true
-        instructions: "For every provider implementation this PR adds or changes under providers/ (a .mjs file whose name does NOT begin with an underscore: the leading underscore is this repo's convention for shared helpers such as _http.mjs or _safe-url.mjs, which are not providers and need no provider contract test, and the rule never applies to README.md or ADDING_A_PROVIDER.md), create or extend tests/providers/<name>.test.mjs following the existing files in that directory: no test framework, import pass and fail from ../helpers.mjs, never call process.exit, no network access in the test itself. Cover at minimum: the provider is registered, its host allowlist and timeout are set, and a malformed API response does not throw. Change nothing else."
+        instructions: "For every provider implementation this PR adds or changes under providers/ (a .ts file whose name does NOT begin with an underscore: the leading underscore is this repo's convention for shared helpers such as _http.ts or _safe-url.ts, which are not providers and need no provider contract test, and the rule never applies to README.md or ADDING_A_PROVIDER.md), create or extend tests/providers/<name>.test.ts following the existing files in that directory: no test framework, import pass and fail from ../helpers.ts, never call process.exit, no network access in the test itself. Cover at minimum: the provider is registered, its host allowlist and timeout are set, and a malformed API response does not throw. Change nothing else."
       - name: sync-language-mode
         enabled: true
         instructions: "Compare the language mode files this PR touches under modes/<lang>/ against their canonical English counterpart under modes/, and bring the translated file up to date: same block structure, same headings order, same placeholders. Translate new prose into the target language; never translate file names, flags, code fences, or the block letters A to H. Do not change the canonical English file. Change nothing else."
@@ -161,10 +161,10 @@ reviews:
         instructions: "Fail if the diff contains real personal data: a person's real name paired with contact details, real emails, phone numbers, or a real CV. Sample data must use obvious placeholders."
       - name: "Shipped file registered"
         mode: warning
-        instructions: "Warn if the PR adds a new top-level .mjs, .md, template or config file that users should receive through the updater but SYSTEM_PATHS in update-system.mjs was not updated in the same PR."
+        instructions: "Warn if the PR adds a new top-level .ts, .md, template or config file that users should receive through the updater but SYSTEM_PATHS in packages/cli/src/commands/platform/update-system.ts was not updated in the same PR."
       - name: "Provider contract"
         mode: warning
-        instructions: "Warn if the PR adds or changes a provider implementation under providers/ (a .mjs file whose name does NOT begin with an underscore: an underscore prefix marks a shared helper such as _http.mjs or _safe-url.mjs, not a provider; documentation such as README.md or ADDING_A_PROVIDER.md does not count either) without a matching tests/providers/<name>.test.mjs, or without host allowlisting and timeouts."
+        instructions: "Warn if the PR adds or changes a provider implementation under providers/ (a .ts file whose name does NOT begin with an underscore: an underscore prefix marks a shared helper such as _http.ts or _safe-url.ts, not a provider; documentation such as README.md or ADDING_A_PROVIDER.md does not count either) without a matching tests/providers/<name>.test.ts, or without host allowlisting and timeouts."
       - name: "Agent-operated PR disclosure"
         mode: warning
         instructions: "If the PR author is a coding agent (branch copilot/* or author app/copilot-swe-agent), warn unless the description contains the sections '## AI assistance' and '## Human review' and the PR carries the label agent-generated."
@@ -182,7 +182,7 @@ reviews:
 
   labeling_instructions:
     - label: "🔴 core-architecture"
-      instructions: "Apply when the PR touches AGENTS.md, CLAUDE.md, modes/_shared.md, DATA_CONTRACT.md or update-system.mjs."
+      instructions: "Apply when the PR touches AGENTS.md, CLAUDE.md, modes/_shared.md, DATA_CONTRACT.md or update-system.ts."
     - label: "⚠️ agent-behavior"
       instructions: "Apply when the PR changes any file under modes/ or any per-CLI instruction file."
     - label: "🌐 i18n"
@@ -221,7 +221,7 @@ knowledge_base:
       - "CONTRIBUTING.md"
       - "DATA_CONTRACT.md"
       - "ARCHITECTURE.md"
-      - "providers/ADDING_A_PROVIDER.md"
+      - "packages/core/src/scanning/providers/ADDING_A_PROVIDER.md"
       - "docs/PLUGIN_REVIEW.md"
       - "SECURITY.md"
   linked_repositories:
@@ -233,15 +233,15 @@ knowledge_base:
 code_generation:
   unit_tests:
     path_instructions:
-      - path: "**/*.mjs"
-        instructions: "Put the suite in tests/<subject>.test.mjs. test-all.mjs discovers that directory automatically, so no registration is needed. Do not use node:test, jest, vitest or any other framework and do not add a dependency: import pass, fail and the run helper from ./helpers.mjs, print a one-line header with console.log, and never call process.exit. Keep every test hermetic: no network, and no writes outside a temporary directory. Never read or write a user-layer path as defined in DATA_CONTRACT.md (cv.md, config/profile.yml, data/, reports/, output/, modes/_profile.md, modes/_custom.md); use a fixture instead."
+      - path: "**/*.ts"
+        instructions: "Put the suite in tests/<subject>.test.ts. test-all.ts discovers that directory automatically, so no registration is needed. Do not use node:test, jest, vitest or any other framework and do not add a dependency: import pass, fail and the run helper from ./helpers.ts, print a one-line header with console.log, and never call process.exit. Keep every test hermetic: no network, and no writes outside a temporary directory. Never read or write a user-layer path as defined in DATA_CONTRACT.md (cv.md, config/profile.yml, data/, reports/, output/, modes/_profile.md, modes/_custom.md); use a fixture instead."
       - path: "dashboard/**/*.go"
         instructions: "Standard library table-driven tests in the same package, _test.go suffix, no external test framework, no network."
       - path: "web/**"
-        instructions: "Use Node's built-in test runner. Import test from node:test and assert from node:assert/strict; no vitest, jest, chai or any external framework, and no describe blocks. Place tests at web/tests/lib/<subject>.test.mjs and import the subject as a relative path (../../src/lib/x.mjs): the @/ alias does not resolve under node --test, which is why testable logic lives in plain .mjs. Prefer assert.deepEqual on a whole returned value over several assert.equal on its parts. Each test name must state the property being asserted, not the function being called. Cover the negative case: what must NOT happen, and the value that would be wrong. When a test pins a past bug, say which one and what it cost in a comment above it."
+        instructions: "Use Node's built-in test runner. Import test from node:test and assert from node:assert/strict; no vitest, jest, chai or any external framework, and no describe blocks. Place tests at web/tests/lib/<subject>.test.ts and import the subject as a relative path (../../src/lib/x.ts): the @/ alias does not resolve under node --test, which is why testable logic lives in plain .ts. Prefer assert.deepEqual on a whole returned value over several assert.equal on its parts. Each test name must state the property being asserted, not the function being called. Cover the negative case: what must NOT happen, and the value that would be wrong. When a test pins a past bug, say which one and what it cost in a comment above it."
   docstrings:
     path_instructions:
-      - path: "**/*.mjs"
+      - path: "**/*.ts"
         instructions: "Only add a JSDoc block where the function contract is not obvious from its name and signature: what it returns, what it throws, and any invariant a caller must respect. Never restate the code in prose."
 
 issue_enrichment:

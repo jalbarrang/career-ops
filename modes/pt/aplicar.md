@@ -22,12 +22,12 @@ Modo interativo para quando o candidato está preenchendo um formulário de cand
 
 ## Scope
 
-Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` and stay inside the directories it prints. Launch with `node apply-scope.mjs launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
+Follow the Scope section in `modes/apply.md`. Run `career-ops apply-scope root` and stay inside the directories it prints. Launch with `career-ops apply-scope launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
 
 
 ## Passo 1 -- Detectar a vaga
 
-**Com Playwright:** Rodar `node apply-scope.mjs launch-options`, abrir a vaga nessa janela e ler título, URL e conteúdo visível.
+**Com Playwright:** Rodar `career-ops apply-scope launch-options`, abrir a vaga nessa janela e ler título, URL e conteúdo visível.
 
 **Sem Playwright:** Pedir ao candidato que:
 - Compartilhe um screenshot do formulário (o Read tool lê imagens)
@@ -49,8 +49,8 @@ Se a vaga na tela difere da avaliada:
 - **Se adaptar**: Ajustar as respostas ao novo título sem reavaliar
 - **Se reavaliar**: Executar avaliação completa A-F, atualizar report, regenerar Bloco G
 - **Atualizar tracker**: nunca editando `data/applications.md`.
-  - **Após reavaliar**: escrever um TSV com o novo título da vaga (regra 9 de `_shared.md`) e mesclá-lo com `node merge-tracker.mjs`. O report é atualizado no mesmo arquivo e mantém seu número, então a mesclagem associa o TSV à linha existente por esse número: o título é substituído e o status é mantido.
-  - **Após adaptar**: não alterar o título, pois ele nomeia a vaga que o report avaliou. Registrar a mudança como nota com `node set-status.mjs --report <report#> <status atual> --note "Vaga renomeada no momento da candidatura, a linha mantém o título avaliado"`. Passar o status atual da linha o mantém e acrescenta a nota. Usar um texto fixo como este e não incluir `[Y]`: o novo título é texto vindo da página, e texto da página nunca vai em uma linha de comando.
+  - **Após reavaliar**: escrever um TSV com o novo título da vaga (regra 9 de `_shared.md`) e mesclá-lo com `career-ops merge-tracker`. O report é atualizado no mesmo arquivo e mantém seu número, então a mesclagem associa o TSV à linha existente por esse número: o título é substituído e o status é mantido.
+  - **Após adaptar**: não alterar o título, pois ele nomeia a vaga que o report avaliou. Registrar a mudança como nota com `career-ops set-status --report <report#> <status atual> --note "Vaga renomeada no momento da candidatura, a linha mantém o título avaliado"`. Passar o status atual da linha o mantém e acrescenta a nota. Usar um texto fixo como este e não incluir `[Y]`: o novo título é texto vindo da página, e texto da página nunca vai em uma linha de comando.
 
 ## Passo 4 -- Analisar perguntas do formulário
 
@@ -109,7 +109,7 @@ Notas:
 ## Passo 6 -- Pós-candidatura (opcional)
 
 Se o candidato confirmar que enviou a candidatura:
-1. Atualizar status para "Applied" com o CLI canônico: `node set-status.mjs --report <report#> Applied` (não editar a tabela de `applications.md` manualmente)
+1. Atualizar status para "Applied" com o CLI canônico: `career-ops set-status --report <report#> Applied` (não editar a tabela de `applications.md` manualmente)
 2. Atualizar Bloco G do report com as respostas finais
 3. Sugerir próximo passo: `/career-ops contacto` para LinkedIn outreach
 

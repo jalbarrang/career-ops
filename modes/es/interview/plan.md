@@ -14,7 +14,7 @@ Dada una descripción de puesto (JD) y la fecha/hora de la entrevista, construye
 6. **Perfil** en `config/profile.yml` + `modes/_profile.md` — lee para la narrativa, arquetipos y objetivos
 7. **Banco de historias** en `interview-prep/story-bank.md` — historias STAR+R existentes
 8. **Banco de preguntas** en `interview-prep/question-bank.md` — carencias existentes (si el archivo existe)
-9. **Compensación declarada previamente** — si se conoce el tracker#, ejecuta `node salary-gap.mjs --stated-for <tracker#>` (cero tokens). Cualquier observación `stated` previa es una cifra que el candidato ya declaró, en una ronda anterior, a un entrevistador específico — incorpórala en la referencia rápida del Step 4 para que el candidato se mantenga consistente en lugar de renegociar por accidente.
+9. **Compensación declarada previamente** — si se conoce el tracker#, ejecuta `career-ops salary-gap --stated-for <tracker#>` (cero tokens). Cualquier observación `stated` previa es una cifra que el candidato ya declaró, en una ronda anterior, a un entrevistador específico — incorpórala en la referencia rápida del Step 4 para que el candidato se mantenga consistente en lugar de renegociar por accidente.
 
 ---
 

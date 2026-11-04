@@ -1,0 +1,57 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [
+      "web-svelte/src/components/explore/discovering-state.svelte"
+    ],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-11-03T01:06:29.680Z",
+        "reason": "Faithful Next-to-SvelteKit port: Inter is the existing app's vendored body font in web/src/lib/fonts.ts. Replacing it would be a redesign, not a conversion."
+      },
+      {
+        "rule": "overused-font",
+        "value": "instrument serif",
+        "createdAt": "2026-11-03T01:06:29.700Z",
+        "reason": "Faithful port: existing vendored display font (Instrument Serif) carried over verbatim from web/src/app CSS + lib/fonts.ts."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "web-svelte/src/app.css"
+        ],
+        "createdAt": "2026-11-03T01:06:32.797Z",
+        "reason": "Ported stylesheet: the only side border is .report-prose blockquote's 3px left rule, standard Markdown quote typography from the existing app's globals.css. Not a card accent."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "web-svelte/src/components/followups/followups-view.svelte"
+        ],
+        "createdAt": "2026-11-03T01:30:39.478Z"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "apps/web/src/app.css"
+        ],
+        "createdAt": "2026-11-03T02:17:06.838Z",
+        "reason": "Ported stylesheet: the only side border is .report-prose blockquote's 3px left rule — standard Markdown quote typography carried over from the Next app's globals.css, not a card accent."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "apps/web/src/components/followups/followups-view.svelte"
+        ],
+        "createdAt": "2026-11-03T02:19:20.833Z",
+        "reason": "Ported verbatim from the Next app's followups-view.tsx: the border-l-4 is the narrative card's severity accent, not a decorative card tab."
+      }
+    ]
+  }
+}

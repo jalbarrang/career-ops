@@ -98,7 +98,7 @@ Dopasowuje twoje CV i pisze szkice twoich&nbsp;odpowiedzi. <strong>Ty&nbsp;klika
 Wklej jedną ofertę, na którą miałeś dziś wieczorem aplikować. Jeśli wróci jako <em>nie aplikuj</em>, właśnie odzyskałeś wieczór. Jeśli wróci z planem, wiesz, co robić dalej.
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 <p align="center"><sub>Open source. Lokalnie. W CLI AI, którego już używasz. <a href="docs/RUNNING_ON_A_BUDGET.md">Darmowe i lokalne modele w zestawie.</a></sub></p>
@@ -159,7 +159,7 @@ Przy pierwszym uruchomieniu pyta o to wszystko na czacie. Nic do ręcznej konfig
 
 ## Czego career-ops nie robi
 
-- **Automatycznie wysyłać aplikacji.** Przygotowuje szkic odpowiedzi do każdego pola; ty sprawdzasz i klikasz Wyślij. Skrypt nigdy nie wykonuje POST (`prepare-application.mjs`).
+- **Automatycznie wysyłać aplikacji.** Przygotowuje szkic odpowiedzi do każdego pola; ty sprawdzasz i klikasz Wyślij. Skrypt nigdy nie wykonuje POST (`packages/cli/src/commands/evaluation/prepare-application.ts`).
 - **Nie wysyła maili.** Tylko szkice. W całym kodzie nie ma żadnego transportu poczty.
 - **Nie dzwoni do domu.** Bez telemetrii, bez naszego backendu. Twoje CV idzie z twojej maszyny do wybranego przez ciebie dostawcy AI i nigdzie indziej. Jedyny publiczny rejestr to to repozytorium: `HIRED.md` i jego issues.
 - **Nie namawia do aplikowania poniżej 4.0/5.** Powie, żeby tego nie robić. Możesz to zignorować, a on to powie.
@@ -175,7 +175,7 @@ Przeredagowuje twoje CV; nigdy nie wolno mu go zmyślać. Kontrola w kodzie zatr
 | **Generowanie PDF pod ATS** | CV czytelne dla ATS, dopasowane do każdego opisu oferty na podstawie twojego własnego doświadczenia, w designie Space Grotesk + DM Sans |
 | **Generator listów motywacyjnych** | Listy oparte na researchu z odbiciem słów kluczowych, czterema interaktywnymi pytaniami o kąt (dlaczego/problemy/podejście/ton), zatwierdzaniem szkicu w czacie i PDF A4 przez ten sam pipeline HTML + Playwright co CV. Tworzy szkic przy każdej ocenie; dokończ i wygeneruj na żądanie przez `/career-ops cover` |
 | **Poza CV**              | Research firmy ([`deep`](modes/deep.md)) odsłania strategię AI, ostatnie ruchy, kulturę inżynierską i kąt, jaki powinien przyjąć twój profil. Wyszukiwanie kontaktów ([`contacto`](modes/contacto.md)) wskazuje hiring managera, rekrutera lub członka zespołu, do którego warto napisać, i tworzy szkic wiadomości na LinkedIn do 300 znaków dopasowanej do typu kontaktu. Szkice formalnych maili aplikacyjnych ([`email`](modes/email.md)) zamieniają oceniony raport lub wklejony opis w temat, treść i checklistę załączników bez wysyłania, składania ani klikania czegokolwiek. Aplikacja ustawia cię w kolejce; research daje ci rozmowę. |
-| **Analiza wzorców**      | Wzorce odrzuceń i wskaźniki przejścia per kanał ATS (`analyze-patterns.mjs`), statystyki lejka z całego poszukiwania (`stats.mjs`), wykrywanie ponownych publikacji, które mogą wskazywać na ofertę-widmo (`detect-reposts.mjs`) |
+| **Analiza wzorców**      | Wzorce odrzuceń i wskaźniki przejścia per kanał ATS (`packages/cli/src/commands/insights/analyze-patterns.ts`), statystyki lejka z całego poszukiwania (`packages/core/src/insights/stats.ts`), wykrywanie ponownych publikacji, które mogą wskazywać na ofertę-widmo (`packages/cli/src/commands/insights/detect-reposts.ts`) |
 
 <details>
 <summary><b>Wszystko inne, co robi</b></summary>
@@ -192,8 +192,8 @@ Przeredagowuje twoje CV; nigdy nie wolno mu go zmyślać. Kontrola w kodzie zatr
 | **Dashboard TUI**        | Interfejs terminalowy do przeglądania, filtrowania i sortowania pipeline'u                                                               |
 | **Integralność pipeline'u** | Automatyczne scalanie, deduplikacja, normalizacja statusów, kontrole stanu                                                            |
 | **Zestaw do rozmów**     | Plany przygotowań w blokach czasowych, sesje ćwiczeniowe z feedbackiem, podsumowania po rozmowie ([`interview/`](modes/interview/README.md)) i detektor sygnałów ostrzegawczych firmy ([`interview-redflag`](modes/interview-redflag.md)) |
-| **Etap oferty**          | Towarzysz czytania umowy: przejście po klauzulach plus lista pytań do prawnika ([`offer-prep`](modes/offer-prep.md)), i analizator luki między wynagrodzeniem oczekiwanym, ogłoszonym i rzeczywistym (`salary-gap.mjs`) |
-| **Follow-upy i odpowiedzi** | Kalkulator rytmu follow-upów i przygotowane przypomnienia (`followup-cadence.mjs`, `followup-seed.mjs`); klasyfikacja odpowiedzi pracodawcy na aktualizacje trackera ([`reply-watch`](modes/reply-watch.md)) |
+| **Etap oferty**          | Towarzysz czytania umowy: przejście po klauzulach plus lista pytań do prawnika ([`offer-prep`](modes/offer-prep.md)), i analizator luki między wynagrodzeniem oczekiwanym, ogłoszonym i rzeczywistym (`packages/cli/src/commands/insights/salary-gap.ts`) |
+| **Follow-upy i odpowiedzi** | Kalkulator rytmu follow-upów i przygotowane przypomnienia (`packages/core/src/outreach/followup-cadence.ts`, `packages/core/src/outreach/followup-seed.ts`); klasyfikacja odpowiedzi pracodawcy na aktualizacje trackera ([`reply-watch`](modes/reply-watch.md)) |
 | **System wtyczek**       | Opcjonalne integracje (Gmail, Notion, Apify + rejestr społeczności), domyślnie wyłączone; zobacz [docs/PLUGINS.md](docs/PLUGINS.md)       |
 
 </details>
@@ -203,7 +203,7 @@ Przeredagowuje twoje CV; nigdy nie wolno mu go zmyślać. Kontrola w kodzie zatr
 **Najszybsza droga, jedna komenda:**
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 > 💡 `npx` jest dostarczany z [Node.js](https://nodejs.org): uruchamia instalator raz,
@@ -224,8 +224,8 @@ claude   # or codex / qwen / opencode / agy / grok — open your AI CLI here
 
 ```bash
 git clone https://github.com/career-ops-hq/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # only needed for PDF generation
+cd career-ops && bun install
+bunx playwright install chromium   # only needed for PDF generation
 # On a non-Debian/Ubuntu Linux distro (Fedora, Arch, ...), Chromium's system
 # libraries aren't installed by the line above — install them yourself with
 # your distro's package manager if PDF generation fails to launch the browser
@@ -256,14 +256,14 @@ claude   # or codex / opencode / qwen / agy / grok
 ### Instalacja globalna
 
 ```bash
-npm i -g @santifer/career-ops
+bun add -g @santifer/career-ops
 ```
 
 To instaluje binarkę `career-ops` globalnie, więc możesz uruchamiać `career-ops init [folder]` bez `npx`. `init` to jej jedyna komenda: tworzy przestrzeń roboczą, a wszystko dalej dzieje się w twoim AI CLI (zobacz Użycie poniżej), nie przez tę binarkę.
 
 **Której użyć?**
-- `npx @santifer/career-ops init`: najlepsza na pierwszy raz; tworzy dedykowany folder projektu.
-- `npm i -g @santifer/career-ops`: jeśli wolisz wpisywać `career-ops init` zamiast formy z `npx`. Nie dodaje żadnych innych komend.
+- `bunx @santifer/career-ops init`: najlepsza na pierwszy raz; tworzy dedykowany folder projektu.
+- `bun add -g @santifer/career-ops`: jeśli wolisz wpisywać `career-ops init` zamiast formy z `npx`. Nie dodaje żadnych innych komend.
 
 > **System jest zaprojektowany tak, by dostosowywało go samo twoje AI CLI.** Tryby, archetypy, wagi oceny, skrypty negocjacyjne: po prostu poproś, żeby je zmieniło. Czyta te same pliki, których używa, więc wie dokładnie, co edytować.
 
@@ -454,13 +454,13 @@ cp .env.example .env
 # Edit .env, set GEMINI_API_KEY=your_key_here
 
 # 2. Install dependencies
-npm install
+bun install
 
 # 3. Evaluate a job description
-node gemini-eval.mjs "We are looking for a Senior AI Engineer..."
-node gemini-eval.mjs --file ./jds/my-job.txt
-node agent-inbox.mjs add "..."   # queue a request for the next session
-npm run gemini:eval -- "JD text here"
+bun packages/cli/src/commands/evaluation/gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun packages/cli/src/commands/evaluation/gemini-eval.ts --file ./jds/my-job.txt
+bun packages/cli/src/commands/platform/agent-inbox.ts add "..."   # queue a request for the next session
+bun run gemini:eval -- "JD text here"
 ```
 
 > **Darmowy plan:** obie opcje działają bez rozliczeń. Natywne CLI używa Google OAuth; skrypt API używa `gemini-3.6-flash` (limity zapytań zależą od modelu i planu; aktualne kwoty w dokumentacji Google AI).
@@ -480,10 +480,10 @@ Skaner ma **100+ firm** gotowych do skanowania i **35+ zapytań wyszukiwania** p
 
 **Przeszukiwane portale:** 55+ modułów dostawców obejmuje API ATS, feedy całych portali, feedy XML/RSS, feedy markdown i lokalne parsery. Pełna tabela: [Obsługiwane portale](docs/SUPPORTED_JOB_BOARDS.md).
 
-Domyślnie `node scan.mjs` (czyli `npm run scan`) ufa temu, co zwraca każdy feed ATS. Niektóre firmy zostawiają nieaktualne ogłoszenia w publicznym API nawet po zamknięciu rekrutacji, więc te wygasłe wpisy mogą przeciec do `pipeline.md`. Przekaż `--verify`, by po przejściu API uruchomić Playwrighta i odrzucić wygasłe ogłoszenia, zanim trafią do pipeline'u:
+Domyślnie `bun packages/core/src/scanning/scan.ts` (czyli `bun run scan`) ufa temu, co zwraca każdy feed ATS. Niektóre firmy zostawiają nieaktualne ogłoszenia w publicznym API nawet po zamknięciu rekrutacji, więc te wygasłe wpisy mogą przeciec do `pipeline.md`. Przekaż `--verify`, by po przejściu API uruchomić Playwrighta i odrzucić wygasłe ogłoszenia, zanim trafią do pipeline'u:
 
 ```bash
-node scan.mjs --verify          # zero-token discovery + Playwright liveness check
+bun packages/core/src/scanning/scan.ts --verify          # zero-token discovery + Playwright liveness check
 ```
 
 Weryfikacja jest sekwencyjna i dotyczy tylko nowych ofert (po deduplikacji), więc koszt pozostaje ograniczony.
@@ -518,13 +518,13 @@ career-ops uwzględnia specyfikę polskiego rynku pracy przy ocenianiu ofert:
 Wbudowany dashboard terminalowy pozwala przeglądać pipeline wizualnie:
 
 ```bash
-npm run serve:dashboard   # launch the TUI
-npm run build:dashboard   # optional: build the standalone binary
+bun run serve:dashboard   # launch the TUI
+bun run build:dashboard   # optional: build the standalone binary
 ```
 
 Funkcje: 10 zakładek filtrów, 8 trybów sortowania, widok zgrupowany/płaski, podglądy ładowane leniwie, zmiany statusu w linii.
 
-Jest też **eksperymentalny interfejs webowy** (alpha i opt-in: nic nie działa, dopóki go nie uruchomisz): zobacz [`web/README.md`](web/README.md).
+Jest też **eksperymentalny interfejs webowy** (alpha i opt-in: nic nie działa, dopóki go nie uruchomisz): zobacz [`apps/web/README.md`](apps/web/README.md).
 
 ## Struktura projektu
 
@@ -581,9 +581,9 @@ Po rozwiązaniu wszystkie pliki użytkownika są rozwiązywane i zapisywane wzgl
 
 - **Nadpisanie trackera:** możesz też ustawić `CAREER_OPS_TRACKER`, by bezpośrednio wskazać ścieżkę pliku trackera aplikacji.
 - **Zapisy:** wszystkie operacje zapisu (np. scalanie) kanonicznie trafiają do `{DATA_ROOT}/data/applications.md`.
-- **Konfiguracja skanera:** `portals.yml` jest czytany i walidowany w `{DATA_ROOT}/portals.yml`, więc `node validate-portals.mjs` sprawdza ten sam plik, który czyta `scan.mjs`.
+- **Konfiguracja skanera:** `portals.yml` jest czytany i walidowany w `{DATA_ROOT}/portals.yml`, więc `bun packages/cli/src/commands/scanning/validate-portals.ts` sprawdza ten sam plik, który czyta `packages/core/src/scanning/scan.ts`.
 - **Generowane dokumenty:** dopasowane CV i listy motywacyjne są zapisywane w `{DATA_ROOT}/output/`, a manifest PDF, który łączy je z raportem, znajduje się w `{DATA_ROOT}/data/pdf-index.tsv`. Dopóki `CAREER_OPS_TRACKER` nie jest ustawiony, przestrzenią roboczą trackera, która ogranicza te zapisy, jest katalog danych, a nie checkout.
-- **PDF-y przy nadpisanym trackerze:** `generate-pdf.mjs` rozwiązuje `CAREER_OPS_TRACKER`, zanim wyznaczy przestrzeń roboczą, więc przy ustawionym nadpisaniu przestrzenią roboczą jest folder, w którym leży ten tracker (albo folder nad nim, gdy tracker leży w folderze `data/`). HTML CV i każdy PDF muszą wtedy znajdować się w tej przestrzeni roboczej, a manifest przenosi się do jej `data/pdf-index.tsv`. Listy motywacyjne nadal trafiają do `{DATA_ROOT}/output/`, więc są odrzucane, gdy ten folder wypada poza przestrzeń roboczą trackera.
+- **PDF-y przy nadpisanym trackerze:** `packages/cli/src/commands/cv/generate-pdf.ts` rozwiązuje `CAREER_OPS_TRACKER`, zanim wyznaczy przestrzeń roboczą, więc przy ustawionym nadpisaniu przestrzenią roboczą jest folder, w którym leży ten tracker (albo folder nad nim, gdy tracker leży w folderze `data/`). HTML CV i każdy PDF muszą wtedy znajdować się w tej przestrzeni roboczej, a manifest przenosi się do jej `data/pdf-index.tsv`. Listy motywacyjne nadal trafiają do `{DATA_ROOT}/output/`, więc są odrzucane, gdy ten folder wypada poza przestrzeń roboczą trackera.
 - **Warstwa kodu zostaje na miejscu:** `node_modules/`, `providers/`, `modes/` i same skrypty zawsze są rozwiązywane względem repozytorium, nigdy względem katalogu danych.
 
 Dashboard TUI w Go, skrypty Node.js i tryby agenta AI automatycznie respektują tę hierarchię.
@@ -642,7 +642,7 @@ Dashboard TUI w Go, skrypty Node.js i tryby agenta AI automatycznie respektują 
 career-ops ([career-ops.org](https://career-ops.org), znany też jako **careerops**) to open source'owe wyszukiwanie pracy z AI, które działa lokalnie w twoim AI CLI (Claude Code, Codex, OpenCode i inne) i zostawia każdą decyzję tobie. Ocenia oferty względem twojego CV, generuje PDF-y dopasowane pod ATS, znajduje właściwą osobę do kontaktu i śledzi wszystko w jednym miejscu: ostatnie słowo zawsze należy do ciebie. To pierwsza referencyjna implementacja [Manifestu CareerOps](https://career-ops.org/manifesto).
 
 **Czy dopasowane CV może coś zmyślić?**
-Nie wolno mu, i prompty to mówią: przeredagować, nigdy nie zmyślać. `generate-pdf` blokuje CV z liczbami lub faktami, których nie ma w twoich źródłach, chyba że przekażesz `--skip-fact-check`. Tryb `pdf` uruchamia też `cv-title-check.mjs`, który porównuje każdą nazwę stanowiska w dopasowanym CV z nazwą, jaką cv.md podaje dla tej samej pracy (dopasowanie po firmie i datach), i pyta, czy zachować, czy cofnąć każdą, która się różni. Tylko ostrzega, nie blokuje, bo przeredagowanie nazwy stanowiska bywa twoją decyzją. Nic jeszcze nie ocenia przeformułowań: śledzi to [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (kontrola wierności blokująca przy niezgodności). Do tego czasu czytaj każde CV przed wysłaniem. [Zastrzeżenie prawne](LEGAL_DISCLAIMER.md) mówi to samo dłużej.
+Nie wolno mu, i prompty to mówią: przeredagować, nigdy nie zmyślać. `generate-pdf` blokuje CV z liczbami lub faktami, których nie ma w twoich źródłach, chyba że przekażesz `--skip-fact-check`. Tryb `pdf` uruchamia też `packages/cli/src/commands/cv/cv-title-check.ts`, który porównuje każdą nazwę stanowiska w dopasowanym CV z nazwą, jaką cv.md podaje dla tej samej pracy (dopasowanie po firmie i datach), i pyta, czy zachować, czy cofnąć każdą, która się różni. Tylko ostrzega, nie blokuje, bo przeredagowanie nazwy stanowiska bywa twoją decyzją. Nic jeszcze nie ocenia przeformułowań: śledzi to [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (kontrola wierności blokująca przy niezgodności). Do tego czasu czytaj każde CV przed wysłaniem. [Zastrzeżenie prawne](LEGAL_DISCLAIMER.md) mówi to samo dłużej.
 
 **Czy mogę uruchamiać career-ops za darmo albo na tańszym / lokalnym modelu?**
 Tak. career-ops jest niezależny od CLI i działa na darmowych i lokalnych modelach (darmowe modele OpenRouter, Ollama lub dowolny endpoint zgodny z OpenAI), więc nie jesteś przywiązany do płatnej subskrypcji. Pełna konfiguracja: [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md).

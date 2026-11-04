@@ -1,0 +1,372 @@
+// tests/web-core-argv-contract.test.ts — the web app spawns core scripts with
+// a fixed argv, and the core validates its own flags. Nothing linked the two.
+//
+// packages/core/src/outreach/followup-cadence.ts gained validateFlags() without `--json` on its
+// KNOWN_FLAGS list, while both web follow-up routes had been spawning
+// `[script, '--json']` all along. The script started exiting 1 with
+// "unrecognized flag(s): --json"; both routes discard the error and resolve to
+// "", so the UI rendered an empty follow-up list and told the user they were
+// caught up. No test could see it: the suite exercised the cadence analysis
+// in-process and never spawned the CLI with the web's argv.
+//
+// This file is that missing link. Every web call site that spawns a root
+// script is listed below with the argv it passes, and the argv is put to the
+// real script.
+import { pass, fail, ROOT, NODE, rmSync, walkFiles } from './helpers.ts';
+import { spawnSync } from 'child_process';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { join, relative, sep } from 'path';
+
+console.log('\nweb → core argv contract');
+
+// Probe kinds:
+//   'run'        — spawn the exact argv the web passes and require exit 0.
+//   'flags-only' — the real run would sweep live job boards, so append --help
+//                  instead. validateFlags() checks unrecognized flags BEFORE
+//                  --help, so an argv the script rejects still exits 1 naming
+//                  the flag, and exit 0 with usage means every flag was
+//                  accepted. Same verdict on the flags, no network.
+//   'json-any-exit' — spawn the exact argv and require stdout to parse as JSON,
+//                  WHATEVER the exit status. For scripts whose contract is "you
+//                  always get a payload": packages/cli/src/commands/insights/analyze-patterns.ts exits 1 when it
+//                  is under its minimum sample while still printing the object
+//                  that explains why, and /api/patterns renders that object. A
+//                  'run' probe would read the by-design exit 1 as a break; not
+//                  probing at all would miss the core dropping the payload,
+//                  which is the one change that silently empties the panel.
+//   'none'       — the call site spawns node with an inline module rather than
+//                  a root script with flags; listed so the enumeration at the
+//                  bottom stays complete.
+const CALL_SITES = [
+  {
+    source: 'apps/web/src/routes/api/followups/+server.ts',
+    script: 'packages/core/src/outreach/followup-cadence.ts',
+    args: ['--json'],
+    probe: 'run',
+  },
+  {
+    source: 'apps/web/src/routes/api/followups/cadence/+server.ts',
+    script: 'packages/core/src/outreach/followup-cadence.ts',
+    args: ['--json'],
+    probe: 'run',
+  },
+  {
+    source: 'apps/web/src/routes/api/doctor/+server.ts',
+    script: 'packages/cli/src/commands/platform/doctor.ts',
+    args: ['--json'],
+    probe: 'run',
+  },
+  {
+    source: 'apps/web/src/routes/api/status/+server.ts',
+    script: 'packages/cli/src/commands/tracker/set-status.ts',
+    // The route builds ['--row', row, canon, '--source', 'web', '--detach-jd-archive', '--json'];
+    // row 1 and Responded are the fixture tracker's row and a canonical state.
+    args: ['--row', '1', 'Responded', '--source', 'web', '--detach-jd-archive', '--json'],
+    probe: 'run',
+  },
+  {
+    source: 'apps/web/src/routes/api/portals/verify/+server.ts',
+    script: 'packages/core/src/scanning/verify-portals.ts',
+    args: [],
+    probe: 'run',
+  },
+  {
+    source: 'apps/web/src/routes/api/tracker/delete/+server.ts',
+    script: 'packages/cli/src/commands/tracker/tracker.ts',
+    // --dry-run is conditional in the route (added when the caller asks for a
+    // preview); passing it keeps the probe off the fixture tracker.
+    args: ['delete', '--num', '1', '--dry-run'],
+    probe: 'run',
+  },
+  {
+    source: 'apps/web/src/lib/core/scan.ts',
+    script: 'packages/cli/src/commands/scanning/scan-ats-full.ts',
+    // The values are the route's own defaults; only the flag names matter here.
+    args: ['--dry-run', '--since', '7', '--ats', 'greenhouse', '--limit', '150', '--json'],
+    probe: 'flags-only',
+  },
+  {
+    source: 'apps/web/src/routes/api/quiet-companies/+server.ts',
+    script: 'packages/cli/src/commands/outreach/rejection-latency.ts',
+    // The route parses stdout, so the payload is the contract, not just exit 0.
+    expectJson: true,
+    // No flags: it prints JSON by default, like packages/core/src/insights/stats.ts and upskill.ts. With
+    // no data/active-interviews.md in the fixture it reports zero rows checked
+    // and still exits 0, which is the shape the route reads.
+    args: [],
+    probe: 'run',
+  },
+  {
+    source: 'apps/web/src/routes/api/stats/+server.ts',
+    script: 'packages/core/src/insights/stats.ts',
+    // NO FLAGS. packages/core/src/insights/stats.ts prints JSON by default and rejects `--json` outright
+    // ("unrecognized flag(s): --json"), unlike every other route here — which is
+    // exactly the drift this file exists to catch, so the empty argv is the
+    // assertion.
+    args: [],
+    probe: 'json-any-exit',
+  },
+  {
+    source: 'apps/web/src/routes/api/patterns/+server.ts',
+    script: 'packages/cli/src/commands/insights/analyze-patterns.ts',
+    // Exits 1 on this one-row fixture, by design: it is under its minimum
+    // sample and says so in a JSON payload the route renders. The contract is
+    // the payload, not the status.
+    args: [],
+    probe: 'json-any-exit',
+  },
+  {
+    source: 'apps/web/src/lib/core/pipeline.ts',
+    script: null,
+    args: [],
+    probe: 'none',
+  },
+  // Profile write/validate routes (the Master Career Profile): all four call
+  // `packages/cli/src/commands/profile/career-profile.ts validate <file>` through a local validateWithCore, so
+  // the probe checks that argv is accepted.
+  {
+    // `validate` needs a profile file, which the probe sandbox does not have;
+    // --help proves the flag surface without one.
+    source: 'apps/web/src/lib/server/profile-write.ts',
+    script: 'packages/cli/src/commands/profile/career-profile.ts',
+    args: [],
+    probe: 'flags-only',
+  },
+  {
+    source: 'apps/web/src/routes/api/cv/profile/+server.ts',
+    script: 'packages/cli/src/commands/profile/career-profile.ts',
+    args: [],
+    probe: 'flags-only',
+  },
+  {
+    // `import --review` is listed but NOT probed: it reads cv.md and can write
+    // data/career-profile.yml, so a probe would touch the developer's data.
+    // The enumeration below still requires this source to be listed.
+    source: 'apps/web/src/routes/api/cv/profile/import/+server.ts',
+    script: 'packages/cli/src/commands/profile/career-profile.ts',
+    args: ['import', '--review'],
+    probe: 'none',
+  },
+  {
+    // CV generation spawns packages/cli/src/commands/cv/build-cv-html.ts and packages/cli/src/commands/cv/generate-pdf.ts with paths
+    // only; --help proves the flag surface without rendering.
+    source: 'apps/web/src/routes/api/cv/generate/+server.ts',
+    script: 'packages/cli/src/commands/cv/build-cv-html.ts',
+    args: [],
+    probe: 'flags-only',
+  },
+  {
+    // The review queue spawns packages/cli/src/commands/platform/doctor.ts (and packages/cli/src/commands/cv/verify-cv-facts.ts) with --json.
+    source: 'apps/web/src/routes/api/cv/review/+server.ts',
+    script: 'packages/cli/src/commands/platform/doctor.ts',
+    args: ['--json'],
+    probe: 'flags-only',
+  },
+  {
+    // The backend persistence step (#2185) runs three scripts with NO flags:
+    // reserve-report-num, persist-evaluation-report (payload on stdin) and
+    // merge-tracker. Listed so a new argv here is a visible change.
+    source: 'apps/web/src/lib/evaluate-persist.ts',
+    script: 'packages/cli/src/commands/evaluation/persist-evaluation-report.ts',
+    args: [],
+    probe: 'none',
+  },
+];
+
+/**
+ * Verify the static half of the contract against a checkout root.
+ *
+ * `tests/` is deliberately shipped by the updater while `apps/web/` is not. The
+ * dynamic argv probes above still apply to that core-only install, but there
+ * are no web call sites to inspect there. Treat that absence as a scoped skip;
+ * if apps/web/ is present, keep every source-consistency assertion strict.
+ *
+ * @param {{root?: string, reportPass?: (message: string) => void, reportFail?: (message: string) => void}} options
+ * @returns {{skipped: boolean}}
+ */
+export function verifyWebStaticSources({ root = ROOT, reportPass = pass, reportFail = fail } = {}) {
+  // apps/web/ ships as its own release-please component and is excluded from
+  // SYSTEM_PATHS wholesale (packages/cli/src/commands/platform/validate-system-paths-coverage.ts,
+  // EXCLUDE_PREFIXES = ['apps/web/']), so `packages/cli/src/commands/platform/update-system.ts apply` never installs
+  // it. An install created that way has no apps/web/ at all, and the two checks
+  // below read the web sources unconditionally: readFileSync threw ENOENT and
+  // took the whole suite with it, so the argv probes above — which need only
+  // the core scripts and are the point of this file — reported nothing either.
+  const webRoot = join(root, 'apps/web');
+  if (!existsSync(webRoot)) {
+    reportPass('apps/web/ is not present in this checkout — skipping static argv-source contract');
+    return { skipped: true };
+  }
+
+  const webSrcRoot = join(webRoot, 'src');
+  if (!existsSync(webSrcRoot)) {
+    reportFail('apps/web/ exists but apps/web/src is missing — cannot verify the static argv-source contract');
+    return { skipped: false };
+  }
+
+  // Every `"--flag"` literal in a listed source must appear in its argv here.
+  // This covers the argv literals the routes write inline; it does NOT cover a
+  // flag assembled at runtime from a variable or a template string. A route
+  // that spawns through a shared runner names its own file as `argvSource`.
+  const flagDrift = [];
+  for (const site of CALL_SITES) {
+    const argvSource = site.argvSource ?? site.source;
+    const src = readFileSync(join(root, argvSource), 'utf-8');
+    const literals = [...new Set([...src.matchAll(/"(--[a-z][a-z0-9-]*)"/g)].map((m) => m[1]))];
+    for (const flag of literals) {
+      if (!site.args.includes(flag))
+        flagDrift.push(`${argvSource} passes ${flag}, which no probe above covers`);
+    }
+  }
+  if (flagDrift.length === 0)
+    reportPass('every --flag literal in the listed web sources is covered by a probe');
+  else for (const d of flagDrift) reportFail(d);
+
+  // Every web source that spawns a core script must be listed. A new route is
+  // a new argv nobody has put to the script.
+  const spawners = walkFiles(webSrcRoot, /\.(ts|tsx|mjs)$/)
+    .map((f) => relative(root, f).split(sep).join('/'))
+    .filter((rel) => {
+      const src = readFileSync(join(root, rel), 'utf-8');
+      return /\brootScript\(/.test(src) && /\b(execFile|spawn)\(/.test(src);
+    });
+  const listed = new Set(CALL_SITES.map((s) => s.source));
+  const unlisted = spawners.filter((f) => !listed.has(f));
+  if (unlisted.length === 0)
+    reportPass(`all ${spawners.length} web sources that spawn a core script are listed here`);
+  else reportFail(`web sources spawning a core script with no argv probe: ${unlisted.join(', ')}`);
+
+  const stale = [...listed].filter((f) => !spawners.includes(f));
+  if (stale.length === 0) reportPass('no stale entries — every listed source still spawns a core script');
+  else reportFail(`listed sources that no longer spawn a core script: ${stale.join(', ')}`);
+
+  return { skipped: false };
+}
+
+export function runWebCoreArgvContract() {
+  const sandbox = mkdtempSync(join(tmpdir(), 'co-web-argv-'));
+  try {
+    // A minimal data root: one Applied row, enough for every script here to have
+    // something to report on. Fictional company and role.
+    const tracker = join(sandbox, 'data', 'applications.md');
+    mkdirSync(join(sandbox, 'data'), { recursive: true });
+    writeFileSync(
+      tracker,
+      '# Applications Tracker\n\n' +
+        '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |\n' +
+        '|---|------|---------|------|-------|--------|-----|--------|-------|\n' +
+        '| 1 | 2026-01-05 | Northwind Robotics | Backend Engineer | 4.2/5 | Applied | ✅ | [1](reports/001-northwind-robotics-2026-01-05.md) | fixture |\n',
+      'utf-8',
+    );
+
+    // The report the fixture tracker already links to, which until now was not
+    // written. packages/cli/src/commands/evaluation/keyword-match.ts reads a report's `## Keywords extracted` block,
+    // so a probe of its argv needs one to exist.
+    const reportFile = join(sandbox, 'reports', '001-northwind-robotics-2026-01-05.md');
+    mkdirSync(join(sandbox, 'reports'), { recursive: true });
+    writeFileSync(
+      reportFile,
+      '**URL:** https://example.invalid/northwind\n**Legitimacy:** verified\n\n' +
+        '## Keywords extracted\n\n- Go\n- PostgreSQL\n- Kubernetes\n\n' +
+        '## Job Description (archived verbatim)\n\nFixture posting text.\n',
+      'utf-8',
+    );
+
+    // packages/cli/src/commands/evaluation/keyword-match.ts compares the report against the CV at the data root and
+    // exits 1 when there is none, so the fixture needs both halves of the
+    // comparison. Two of the three keywords above appear here on purpose: the
+    // probe asserts the argv and the JSON shape, and a run with no overlap at
+    // all would exercise a narrower path than the web's.
+    writeFileSync(
+      join(sandbox, 'cv.md'),
+      '# Fixture CV\n\nBackend engineer. Go and PostgreSQL in production.\n',
+      'utf-8',
+    );
+
+    const env = {
+      ...process.env,
+      CAREER_OPS_ROOT: sandbox,
+      CAREER_OPS_DATA_DIR: '',
+      // packages/cli/src/commands/tracker/set-status.ts resolves its root from the codebase, not from
+      // CAREER_OPS_ROOT, so without this the probe would read and write the
+      // developer's own tracker.
+      CAREER_OPS_TRACKER: tracker,
+      // packages/core/src/scanning/verify-portals.ts reads portals.yml relative to the codebase root, and
+      // a real one would put this probe on the network. Point it at a path that
+      // does not exist: the script's documented no-op for a fresh setup.
+      CAREER_OPS_PORTALS: join(sandbox, 'no-portals.yml'),
+    };
+
+    for (const site of CALL_SITES) {
+      if (site.probe === 'none') continue;
+      // {{report}} is the only token: a couple of scripts take a FILE rather
+      // than flags, and the file only exists once the sandbox is built.
+      const resolved = site.args.map((a) => (a === '{{report}}' ? reportFile : a));
+      const argv = site.probe === 'flags-only' ? [...resolved, '--help'] : resolved;
+      // Label with the TOKEN, not the resolved temp path: a failure message
+      // naming /var/folders/…/T/co-web-argv-xyz/reports/… is unreadable and
+      // changes every run.
+      const label = `${site.script} ${(site.probe === 'flags-only' ? [...site.args, '--help'] : site.args).join(' ')}`.trim();
+      const result = spawnSync(NODE, [join(ROOT, site.script), ...argv], {
+        cwd: ROOT,
+        encoding: 'utf-8',
+        timeout: 60_000,
+        env,
+      });
+
+      if (result.error || result.signal) {
+        fail(`${label} — did not run (${result.error?.message || `killed by ${result.signal}`})`);
+        continue;
+      }
+      if (site.probe === 'json-any-exit') {
+        // The status is deliberately not asserted; the payload is the contract.
+        // A rejected flag still fails here, because the script then prints usage
+        // to stderr and nothing parseable to stdout.
+        const start = (result.stdout || '').indexOf('{');
+        try {
+          if (start < 0) throw new Error('no JSON object on stdout');
+          JSON.parse(result.stdout.slice(start));
+          pass(`${label} — stdout parses as JSON at exit ${result.status} (${site.source})`);
+        } catch (e) {
+          const why = /unrecognized flag/.test(result.stderr || '')
+            ? `${site.script} rejects a flag ${site.source} passes — ${result.stderr.trim()}`
+            : `${e.message}; stderr: ${(result.stderr || '').trim().split('\n').slice(0, 2).join(' | ')}`;
+          fail(`${label} — exit ${result.status} and ${why}`);
+        }
+        continue;
+      }
+      if (result.status !== 0) {
+        // The flag rejection is the failure this file exists to catch, so name it.
+        const why = /unrecognized flag/.test(result.stderr || '')
+          ? `${site.script} rejects a flag ${site.source} passes — ${result.stderr.trim()}`
+          : `exit ${result.status}: ${(result.stderr || result.stdout || '').trim().split('\n').slice(0, 3).join(' | ')}`;
+        fail(`${label} — ${why}`);
+        continue;
+      }
+      // JSON is asserted for a no-flag probe too. Three of these scripts
+      // (stats, upskill, rejection-latency) print JSON BY DEFAULT and reject a
+      // --json flag, so keying the check on the flag skipped exactly the sites
+      // whose routes parse stdout — a script that started printing a banner
+      // would have passed this probe and returned `available: false` in the app.
+      if (site.probe === 'run' && (argv.includes('--json') || site.expectJson)) {
+        try {
+          JSON.parse(result.stdout);
+          pass(`${label} — exit 0, stdout parses as JSON (${site.source})`);
+        } catch (e) {
+          fail(`${label} — exit 0 but stdout is not JSON: ${e.message}`);
+        }
+      } else {
+        pass(`${label} — exit 0 (${site.source})`);
+      }
+    }
+
+    verifyWebStaticSources();
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+}
+
+if (process.env.CAREER_OPS_WEB_ARGV_CONTRACT_STATIC_ONLY !== '1') {
+  runWebCoreArgvContract();
+}

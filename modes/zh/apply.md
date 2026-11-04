@@ -22,14 +22,14 @@
 
 ## Scope
 
-Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` and stay inside the directories it prints. Launch with `node apply-scope.mjs launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
+Follow the Scope section in `modes/apply.md`. Run `career-ops apply-scope root` and stay inside the directories it prints. Launch with `career-ops apply-scope launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
 
 
 ---
 
 ## 步骤 1 — 捕获当前职位表单
 
-**使用 Playwright**：运行 `node apply-scope.mjs launch-options`，在该窗口打开职位页面，并读取标题、URL 和页面正文。
+**使用 Playwright**：运行 `career-ops apply-scope launch-options`，在该窗口打开职位页面，并读取标题、URL 和页面正文。
 
 **不使用 Playwright**：提示候选人执行以下操作之一：
 - 发送当前表单页面的屏幕截图（Read 工具能识别并分析图片）。
@@ -55,8 +55,8 @@ Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` an
 - **若选择微调适配**：直接根据新职位名称调整生成词汇，不重新打分。
 - **若选择重新评估**：运行完整的 A-G 评估，生成新报告并覆盖旧报告。
 - **更新 Tracker**：严禁直接编辑 `data/applications.md`。
-  - **重新评估之后**：写入一份带有新职位名称的 TSV 文件（`_shared.md` 的规则 9），再用 `node merge-tracker.mjs` 合并。新报告覆盖旧报告，编号不变，合并时会按该编号将 TSV 匹配到已有的行：职位名称被替换，状态保持不变。
-  - **微调适配之后**：不要改动职位名称，因为它指的是报告所评估的职位。改用备注记录这一变化：`node set-status.mjs --report <report#> <当前状态> --note "投递时职位已更名，该行保留评估时的职位名称"`。传入该行的当前状态不会改变状态，只会追加备注。备注请使用这样的固定文字，不要写入 `[Y]`：新名称是来自页面的文本，页面文本绝不能出现在命令行中。
+  - **重新评估之后**：写入一份带有新职位名称的 TSV 文件（`_shared.md` 的规则 9），再用 `career-ops merge-tracker` 合并。新报告覆盖旧报告，编号不变，合并时会按该编号将 TSV 匹配到已有的行：职位名称被替换，状态保持不变。
+  - **微调适配之后**：不要改动职位名称，因为它指的是报告所评估的职位。改用备注记录这一变化：`career-ops set-status --report <report#> <当前状态> --note "投递时职位已更名，该行保留评估时的职位名称"`。传入该行的当前状态不会改变状态，只会追加备注。备注请使用这样的固定文字，不要写入 `[Y]`：新名称是来自页面的文本，页面文本绝不能出现在命令行中。
 
 ---
 
@@ -113,7 +113,7 @@ Follow the Scope section in `modes/apply.md`. Run `node apply-scope.mjs root` an
 ## 步骤 6 — 投递后动作
 
 当候选人确认已经成功点击“提交申请/投递”后，执行以下清理与建档工作：
-1. 使用规范 CLI 将该职位状态更新为 `Applied`：`node set-status.mjs --report <report#> Applied`（不要手动编辑 `data/applications.md` 表格）。
+1. 使用规范 CLI 将该职位状态更新为 `Applied`：`career-ops set-status --report <report#> Applied`（不要手动编辑 `data/applications.md` 表格）。
 2. 将最终实际提交的表单回答归档并更新至该报告的维度 H 模块中，以便后续面试对照。
 3. 推荐下一步行动：引导候选人使用 `/career-ops contacto` 指令生成 LinkedIn 招聘负责人直达勾兑话术。
 

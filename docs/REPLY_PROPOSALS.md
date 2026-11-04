@@ -74,7 +74,7 @@ own opt-in access; core does not connect to Gmail or execute plugin code.
 
 ## Review and acceptance
 
-Run `node reply-watch.mjs`. The existing candidate digest and drop proposals
+Run `career-ops reply-watch`. The existing candidate digest and drop proposals
 share one review prompt. It shows the proposed transition, source identity,
 and quoted evidence. `y` or `yes` accepts the displayed nonconflicting batch;
 comma-separated tracker row IDs (for example `7,12`) accept only those rows.
@@ -91,7 +91,7 @@ including conflicts with legacy reply candidates, require manual review.
 
 No write occurs during proposal reading. On acceptance core re-reads the
 tracker, checks that the reviewed row is unchanged and that the source has
-not been accepted already, then calls `set-status.mjs --row N --source
+not been accepted already, then calls `packages/cli/src/commands/tracker/set-status.ts --row N --source
 reply-watch --expect-tracker <sha256> --note <receipt> --json`. The writer
 compares the exact UTF-8 tracker content's SHA-256 **under its shared lock**.
 A concurrent write causes refusal and requires another review. The reader

@@ -249,7 +249,7 @@ Trước khi gán `confidence`, phân loại bằng chứng cho từng chiều (
 
 0. **Cover letter:** Nếu form cho phép, LUÔN kèm theo. PDF cùng thiết kế với CV. Trích dẫn từ JD ánh xạ với proof point. Tối đa 1 trang.
 1. Đọc cv.md, _profile.md và article-digest.md (nếu có) trước khi đánh giá
-1b. **Lần đánh giá đầu tiên trong phiên:** chạy `node cv-sync-check.mjs`. Nếu có cảnh báo, báo cho ứng viên
+1b. **Lần đánh giá đầu tiên trong phiên:** chạy `career-ops cv-sync-check`. Nếu có cảnh báo, báo cho ứng viên
 2. Nhận diện archetype của vai trò và điều chỉnh framing theo _profile.md
 3. Trích dẫn đúng dòng trong CV khi match
 4. Dùng WebSearch cho dữ liệu đãi ngộ và công ty
@@ -258,7 +258,7 @@ Trước khi gán `confidence`, phân loại bằng chứng cho từng chiều (
 7. Thẳng thắn và cụ thể -- không rào đón
 8. Tiếng Việt kỹ thuật tự nhiên cho văn bản được tạo. Câu ngắn, động từ chủ động, tránh câu bị động. Không ép dịch thuật ngữ kỹ thuật (stack, pipeline, deployment, embedding)
 8b. **URL case study trong Professional Summary của PDF:** nếu PDF nhắc đến case study hoặc demo, URL phải xuất hiện ở đoạn đầu tiên. Nhà tuyển dụng thường chỉ đọc phần summary. Mọi URL trong HTML dùng `white-space: nowrap`
-9. **Thêm tracker bằng TSV** -- KHÔNG BAO GIỜ sửa trực tiếp applications.md để thêm dòng mới. Ghi TSV vào `batch/tracker-additions/`: một dòng **tên cột** trước, rồi đúng một dòng dữ liệu (xem AGENTS.md, "TSV Format for Tracker Additions"). Dòng tên cột giúp `merge-tracker.mjs` xác định từng field theo TÊN thay vì đoán cột nào là score, cột nào là status
+9. **Thêm tracker bằng TSV** -- KHÔNG BAO GIỜ sửa trực tiếp applications.md để thêm dòng mới. Ghi TSV vào `batch/tracker-additions/`: một dòng **tên cột** trước, rồi đúng một dòng dữ liệu (xem AGENTS.md, "TSV Format for Tracker Additions"). Dòng tên cột giúp `packages/cli/src/commands/tracker/merge-tracker.ts` xác định từng field theo TÊN thay vì đoán cột nào là score, cột nào là status
 10. **`**URL:**` trong header của mọi báo cáo**
 
 ### Công cụ
@@ -270,8 +270,8 @@ Trước khi gán `confidence`, phân loại bằng chứng cho từng chiều (
 | Playwright | Xác minh tin còn mở (browser_navigate + browser_snapshot). **KHÔNG BAO GIỜ để 2+ agent cùng điều khiển một phiên Playwright/MCP browser** -- chúng tranh quyền điều khiển và có thể đọc nhầm trạng thái trang của nhau |
 | Read | cv.md, _profile.md, article-digest.md, cv-template.html |
 | Write | HTML tạm cho PDF, báo cáo .md, TSV bổ sung tracker trong `batch/tracker-additions/` (KHÔNG BAO GIỜ ghi trực tiếp vào `applications.md`) |
-| Edit | Sửa báo cáo và nội dung sinh ra khác. Không bao giờ sửa bảng tracker: dòng mới đi vào dưới dạng TSV được gộp bằng `node merge-tracker.mjs`, thay đổi trạng thái và ghi chú đi qua `node set-status.mjs` |
-| Bash | `node generate-pdf.mjs`, `node merge-tracker.mjs`, `node set-status.mjs` |
+| Edit | Sửa báo cáo và nội dung sinh ra khác. Không bao giờ sửa bảng tracker: dòng mới đi vào dưới dạng TSV được gộp bằng `career-ops merge-tracker`, thay đổi trạng thái và ghi chú đi qua `career-ops set-status` |
+| Bash | `career-ops generate-pdf`, `career-ops merge-tracker`, `career-ops set-status` |
 
 ### Giao việc cho subagent (giới hạn chi phí)
 
@@ -295,7 +295,7 @@ Các quy tắc này áp dụng cho MỌI văn bản tạo cho ứng viên: CV PD
 - "Trong thời đại công nghệ 4.0 phát triển nhanh chóng"
 
 ### Chuẩn hóa Unicode cho ATS
-`generate-pdf.mjs` tự chuẩn hóa em-dash, dấu ngoặc kép thông minh và ký tự zero-width để tương thích ATS. Tiếng Việt có dấu được giữ nguyên (NFC); không bỏ dấu khi tạo văn bản. Tốt nhất là đừng tạo ra những ký tự đó ngay từ đầu.
+`packages/cli/src/commands/cv/generate-pdf.ts` tự chuẩn hóa em-dash, dấu ngoặc kép thông minh và ký tự zero-width để tương thích ATS. Tiếng Việt có dấu được giữ nguyên (NFC); không bỏ dấu khi tạo văn bản. Tốt nhất là đừng tạo ra những ký tự đó ngay từ đầu.
 
 ### Đa dạng cấu trúc câu
 - Không bắt đầu mọi bullet bằng cùng một động từ

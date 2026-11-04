@@ -6,11 +6,11 @@ Common questions from the community, answered in one place. For setup details se
 
 ## 1. Skills aren't loading on Windows — symlink error on install
 
-Windows does not create symlinks by default, so Git checks out the CLI skill entrypoints (`.claude/skills/`, `.opencode/skills/`, etc.) as plain pointer files instead of real symlinks. The installer and updater both detect this automatically: run `node update-system.mjs apply --confirm` (or `npx @santifer/career-ops init` on a fresh install) and the `materializeSkillEntrypoints` step will replace the pointer files with the full canonical skill content. From a linked Git worktree, `apply` makes this repair in your `main` checkout; run `git merge main` in the worktree to pick it up (new worktrees get it automatically). With `CAREER_OPS_UPDATE_IN_WORKTREE=1` set, `apply` repairs only that worktree's branch instead, and `main` stays unrepaired. No manual `mklink` or Developer Mode changes are needed.
+Windows does not create symlinks by default, so Git checks out the CLI skill entrypoints (`.claude/skills/`, `.opencode/skills/`, etc.) as plain pointer files instead of real symlinks. The installer and updater both detect this automatically: run `career-ops update-system apply --confirm` (or `bunx @santifer/career-ops init` on a fresh install) and the `materializeSkillEntrypoints` step will replace the pointer files with the full canonical skill content. From a linked Git worktree, `apply` makes this repair in your `main` checkout; run `git merge main` in the worktree to pick it up (new worktrees get it automatically). With `CAREER_OPS_UPDATE_IN_WORKTREE=1` set, `apply` repairs only that worktree's branch instead, and `main` stays unrepaired. No manual `mklink` or Developer Mode changes are needed.
 
 ## 2. What is the difference between `scan` and `scan:full`?
 
-`npm run scan` is the standard portal scanner — it reads the companies you have configured in `portals.yml`, hits their ATS APIs (Greenhouse, Ashby, Lever, PrevueAPS) directly, and consumes zero LLM tokens. Use it for your regular daily or weekly discovery run. `npm run scan:full` inverts the direction: instead of scanning only your curated list, it walks public ATS company directories. Pass `--history-seeds` when you also want it to derive board seeds from posting URLs already present in your local tracker and `data/scan-history.tsv`; those history files remain local and are read-only inputs. Fresh postings are still filtered through your `title_filter` / `location_filter`, so you catch roles from companies you haven't manually added to `portals.yml`. Run `scan:full` when you want broader discovery beyond your tracked list.
+`bun run scan` is the standard portal scanner — it reads the companies you have configured in `portals.yml`, hits their ATS APIs (Greenhouse, Ashby, Lever, PrevueAPS) directly, and consumes zero LLM tokens. Use it for your regular daily or weekly discovery run. `bun run scan:full` inverts the direction: instead of scanning only your curated list, it walks public ATS company directories. Pass `--history-seeds` when you also want it to derive board seeds from posting URLs already present in your local tracker and `data/scan-history.tsv`; those history files remain local and are read-only inputs. Fresh postings are still filtered through your `title_filter` / `location_filter`, so you catch roles from companies you haven't manually added to `portals.yml`. Run `scan:full` when you want broader discovery beyond your tracked list.
 
 ## 3. How do I avoid hitting token or rate limits during a batch run?
 
@@ -60,7 +60,7 @@ career-ops therefore uses two trust tiers:
 Audit the story bank locally, without an LLM call:
 
 ```bash
-node story-provenance-check.mjs --summary
+career-ops story-provenance-check --summary
 ```
 
 The checker classifies each numeric claim as `existing`, `supportedByResume`, `derived-unverified`, or `user-cannot-confirm`. It is read-only: for a flagged claim, verify it against a primary source, provide the correct figure, remove the number and keep the story as narrative, or say "I don't know." That last answer is intentionally first-class — a `**Provenance:** user-cannot-confirm` marker keeps the number from being treated as verified on a later scan, so an honest unknown is never laundered into a confident fact through repetition.
@@ -91,7 +91,7 @@ No. `templates/` has `cv-template.html`, `cv-template.tex` (LaTeX/Overleaf), `cv
 
 ## Why does Chrome open during some scans but not others?
 
-Chromium only launches with `--verify`. A normal scan reads public ATS APIs and needs no browser; `--verify` checks a posting is genuinely still live, which needs a real page load. If it fails, the error asks you to run `npx playwright install chromium`.
+Chromium only launches with `--verify`. A normal scan reads public ATS APIs and needs no browser; `--verify` checks a posting is genuinely still live, which needs a real page load. If it fails, the error asks you to run `bunx playwright install chromium`.
 
 ## Can I run career-ops in Docker / self-hosted?
 
@@ -107,4 +107,4 @@ Comment on it and we'll assign it (this is in CONTRIBUTING.md). A PR with no pri
 
 ## Can I use career-ops without a terminal?
 
-Yes: see [`docs/COWORK.md`](COWORK.md) which covers running it inside Claude Cowork, verified end to end. One step people trip on: Cowork's shell has no npm network access, so clone and `npm install` in a terminal *before* opening the folder.
+Yes: see [`docs/COWORK.md`](COWORK.md) which covers running it inside Claude Cowork, verified end to end. One step people trip on: Cowork's shell has no network access to the npm registry, so clone and `bun install` in a terminal *before* opening the folder.

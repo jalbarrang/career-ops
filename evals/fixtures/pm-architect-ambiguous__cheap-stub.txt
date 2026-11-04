@@ -1,5 +1,5 @@
 [recorded fixture — candidate model "cheap-stub" output for golden case pm-architect-ambiguous]
-[Only the ---SCORE_SUMMARY--- block is parsed by eval-golden.mjs; the prose above
+[Only the ---SCORE_SUMMARY--- block is parsed by eval-golden.ts; the prose above
 it is illustrative and intentionally trimmed so fixtures stay small and reviewable.]
 
 Roadmap, stakeholder alignment, and PRDs stand out to the candidate model, which

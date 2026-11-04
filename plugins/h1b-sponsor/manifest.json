@@ -10,6 +10,6 @@
   "requiredEnv": [],
   "optionalEnv": ["H1B_API_TOKEN", "H1B_API_BASE", "H1B_INDEX_PATH"],
   "allowedHosts": ["github.com", "objects.githubusercontent.com", "release-assets.githubusercontent.com", "api.surakshith.com"],
-  "entry": "index.mjs",
+  "entry": "index.ts",
   "skill": "skill.md"
 }

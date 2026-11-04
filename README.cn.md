@@ -100,7 +100,7 @@
 把你今晚本来打算投的一个职位粘贴进来。如果返回的是<em>不要投</em>，你刚刚把这个晚上赢回来了。如果返回的是一份计划，你就知道下一步该做什么。
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 <p align="center"><sub>开源。本地运行。就在你已经在用的 AI CLI 里。<a href="docs/RUNNING_ON_A_BUDGET.md">包含免费模型和本地模型。</a></sub></p>
@@ -161,7 +161,7 @@ career-ops 对求职者永久免费。这些公司赞助了本项目：
 
 ## career-ops 不做的事
 
-- **自动提交申请。** 它为每个字段起草答案；你审阅，然后点击提交。脚本从不发出 POST（`prepare-application.mjs`）。
+- **自动提交申请。** 它为每个字段起草答案；你审阅，然后点击提交。脚本从不发出 POST（`packages/cli/src/commands/evaluation/prepare-application.ts`）。
 - **发送邮件。** 只写草稿。整个代码库里没有任何邮件发送模块。
 - **回传数据。** 没有遥测，没有我们的后端。你的简历只从你的机器发往你选择的 AI 提供商，不去任何别的地方。唯一的公开记录就是这个仓库：`HIRED.md` 和它的 issue。
 - **催你申请低于 4.0/5 的职位。** 它会告诉你别申请。你可以不听，它会明说。
@@ -177,7 +177,7 @@ career-ops 对求职者永久免费。这些公司赞助了本项目：
 | **ATS PDF 生成**         | ATS 可读的简历，基于你自己的经历、针对每份职位描述定制，采用 Space Grotesk + DM Sans 设计                                                  |
 | **求职信生成器**         | 基于调研的求职信：关键词呼应、四个交互式角度提问（为什么/问题/方法/语气）、在聊天中审批草稿，以及通过与简历相同的 HTML + Playwright 流水线生成 A4 PDF。每次评估自动起草；用 `/career-ops cover` 按需完成并生成 |
 | **简历之外**             | 公司调研（[`deep`](modes/deep.md)）揭示 AI 战略、近期动向、工程文化，以及你的简历应该采取的角度。联系人发现（[`contacto`](modes/contacto.md)）找出值得联系的招聘经理、招聘人员或团队成员，并起草一条不超过 300 字符、针对联系人类型调整过的 LinkedIn 消息。正式申请邮件草稿（[`email`](modes/email.md)）把已评估的报告或粘贴的职位描述变成主题、正文和附件清单，不发送、不提交、不点击任何内容。申请让你排进队伍，调研让你获得对话。 |
-| **模式分析**             | 拒信模式和各 ATS 渠道的推进率（`analyze-patterns.mjs`）、整个求职周期的漏斗统计（`stats.mjs`）、重复发布检测，重复发布可能是幽灵职位的迹象（`detect-reposts.mjs`） |
+| **模式分析**             | 拒信模式和各 ATS 渠道的推进率（`packages/cli/src/commands/insights/analyze-patterns.ts`）、整个求职周期的漏斗统计（`packages/core/src/insights/stats.ts`）、重复发布检测，重复发布可能是幽灵职位的迹象（`packages/cli/src/commands/insights/detect-reposts.ts`） |
 
 <details>
 <summary><b>它还能做的所有事</b></summary>
@@ -194,8 +194,8 @@ career-ops 对求职者永久免费。这些公司赞助了本项目：
 | **Dashboard TUI**        | 在终端里浏览、筛选和排序你的流水线                                                                                                        |
 | **流水线完整性**         | 自动合并、去重、状态规范化、健康检查                                                                                                      |
 | **面试套件**             | 按时间块安排的准备计划、带反馈的练习环节、面试后复盘（[`interview/`](modes/interview/README.md)），以及公司危险信号检测器（[`interview-redflag`](modes/interview-redflag.md)） |
-| **Offer 阶段**           | 合同阅读助手：逐条款解读加上给律师的问题清单（[`offer-prep`](modes/offer-prep.md)），以及期望/公布/实际薪资差距分析器（`salary-gap.mjs`）   |
-| **跟进与回复**           | 跟进节奏计算器和预置提醒（`followup-cadence.mjs`、`followup-seed.mjs`）；把雇主回复归类为追踪记录更新（[`reply-watch`](modes/reply-watch.md)） |
+| **Offer 阶段**           | 合同阅读助手：逐条款解读加上给律师的问题清单（[`offer-prep`](modes/offer-prep.md)），以及期望/公布/实际薪资差距分析器（`packages/cli/src/commands/insights/salary-gap.ts`）   |
+| **跟进与回复**           | 跟进节奏计算器和预置提醒（`packages/core/src/outreach/followup-cadence.ts`、`packages/core/src/outreach/followup-seed.ts`）；把雇主回复归类为追踪记录更新（[`reply-watch`](modes/reply-watch.md)） |
 | **插件系统**             | 可选集成（Gmail、Notion、Apify + 社区注册表），默认关闭；见 [docs/PLUGINS.md](docs/PLUGINS.md)                                              |
 
 </details>
@@ -205,7 +205,7 @@ career-ops 对求职者永久免费。这些公司赞助了本项目：
 **最快的方式，一条命令：**
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 > 💡 `npx` 随 [Node.js](https://nodejs.org) 一起提供：它只运行一次安装程序，
@@ -226,8 +226,8 @@ claude   # or codex / qwen / opencode / agy / grok — open your AI CLI here
 
 ```bash
 git clone https://github.com/career-ops-hq/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # only needed for PDF generation
+cd career-ops && bun install
+bunx playwright install chromium   # only needed for PDF generation
 # On a non-Debian/Ubuntu Linux distro (Fedora, Arch, ...), Chromium's system
 # libraries aren't installed by the line above — install them yourself with
 # your distro's package manager if PDF generation fails to launch the browser
@@ -258,14 +258,14 @@ claude   # or codex / opencode / qwen / agy / grok
 ### 全局安装
 
 ```bash
-npm i -g @santifer/career-ops
+bun add -g @santifer/career-ops
 ```
 
 这会全局安装 `career-ops` 二进制文件，让你不用 `npx` 就能运行 `career-ops init [folder]`。`init` 是它唯一的命令：它只负责搭建工作区，之后的一切都在你的 AI 编码 CLI 里进行（见下方“用法”），而不是通过这个二进制文件。
 
 **该用哪个？**
-- `npx @santifer/career-ops init`：最适合首次使用；会创建一个专用的项目文件夹。
-- `npm i -g @santifer/career-ops`：如果你更想输入 `career-ops init` 而不是 `npx` 的写法。它不会增加其他命令。
+- `bunx @santifer/career-ops init`：最适合首次使用；会创建一个专用的项目文件夹。
+- `bun add -g @santifer/career-ops`：如果你更想输入 `career-ops init` 而不是 `npx` 的写法。它不会增加其他命令。
 
 > **这个系统就是设计成由你的 AI 编码 CLI 自己来定制的。** 模式、原型、评分权重、谈判话术：直接让它改就行。它读取的正是它自己使用的文件，所以它清楚该改哪里。
 
@@ -456,13 +456,13 @@ cp .env.example .env
 # Edit .env, set GEMINI_API_KEY=your_key_here
 
 # 2. Install dependencies
-npm install
+bun install
 
 # 3. Evaluate a job description
-node gemini-eval.mjs "We are looking for a Senior AI Engineer..."
-node gemini-eval.mjs --file ./jds/my-job.txt
-node agent-inbox.mjs add "..."   # queue a request for the next session
-npm run gemini:eval -- "JD text here"
+bun packages/cli/src/commands/evaluation/gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun packages/cli/src/commands/evaluation/gemini-eval.ts --file ./jds/my-job.txt
+bun packages/cli/src/commands/platform/agent-inbox.ts add "..."   # queue a request for the next session
+bun run gemini:eval -- "JD text here"
 ```
 
 > **免费层：** 两种方式都无需付费。原生 CLI 使用 Google OAuth；API 脚本使用 `gemini-3.6-flash`（速率限制取决于模型和层级；当前配额见 Google AI 文档）。
@@ -482,10 +482,10 @@ npm run gemini:eval -- "JD text here"
 
 **搜索的招聘网站：** 55+ 个提供方模块覆盖 ATS API、整站数据源、XML/RSS 源、markdown 源和本地解析器。完整表格见[支持的招聘网站](docs/SUPPORTED_JOB_BOARDS.md)。
 
-默认情况下 `node scan.mjs`（即 `npm run scan`）信任每个 ATS 数据源返回的内容。有些公司在职位关闭后仍会把过期职位留在公开 API 里，这些过期条目可能会混进 `pipeline.md`。加上 `--verify` 可以在 API 阶段之后启动 Playwright，在过期职位进入流水线之前把它们剔除：
+默认情况下 `bun packages/core/src/scanning/scan.ts`（即 `bun run scan`）信任每个 ATS 数据源返回的内容。有些公司在职位关闭后仍会把过期职位留在公开 API 里，这些过期条目可能会混进 `pipeline.md`。加上 `--verify` 可以在 API 阶段之后启动 Playwright，在过期职位进入流水线之前把它们剔除：
 
 ```bash
-node scan.mjs --verify          # zero-token discovery + Playwright liveness check
+bun packages/core/src/scanning/scan.ts --verify          # zero-token discovery + Playwright liveness check
 ```
 
 验证是顺序执行的，并且只针对新职位（去重之后），所以成本是有上限的。
@@ -495,13 +495,13 @@ node scan.mjs --verify          # zero-token discovery + Playwright liveness che
 内置的终端仪表板让你可视化地浏览你的流水线：
 
 ```bash
-npm run serve:dashboard   # launch the TUI
-npm run build:dashboard   # optional: build the standalone binary
+bun run serve:dashboard   # launch the TUI
+bun run build:dashboard   # optional: build the standalone binary
 ```
 
 功能：10 个筛选标签、8 种排序模式、分组/平铺视图、延迟加载预览、内联状态修改。
 
-还有一个**实验性的 Web UI**（alpha 版，可选：除非你主动启动，否则不会运行任何东西）：见 [`web/README.md`](web/README.md)。
+还有一个**实验性的 Web UI**（alpha 版，可选：除非你主动启动，否则不会运行任何东西）：见 [`apps/web/README.md`](apps/web/README.md)。
 
 ## 项目结构
 
@@ -558,9 +558,9 @@ career-ops/
 
 - **覆盖追踪文件：** 你也可以设置 `CAREER_OPS_TRACKER` 直接覆盖申请追踪文件的路径。
 - **写入：** 所有写入操作（如合并）都以 `{DATA_ROOT}/data/applications.md` 为规范目标。
-- **扫描器配置：** `portals.yml` 在 `{DATA_ROOT}/portals.yml` 读取和校验，所以 `node validate-portals.mjs` 检查的正是 `scan.mjs` 读取的那个文件。
+- **扫描器配置：** `portals.yml` 在 `{DATA_ROOT}/portals.yml` 读取和校验，所以 `bun packages/cli/src/commands/scanning/validate-portals.ts` 检查的正是 `packages/core/src/scanning/scan.ts` 读取的那个文件。
 - **生成的文档：** 定制简历和求职信写入 `{DATA_ROOT}/output/`，把它们关联到报告的 PDF 清单位于 `{DATA_ROOT}/data/pdf-index.tsv`。在未设置 `CAREER_OPS_TRACKER` 时，限定这些写入范围的追踪工作区是数据根目录，而不是代码检出目录。
-- **追踪文件覆盖下的 PDF：** `generate-pdf.mjs` 会先解析 `CAREER_OPS_TRACKER`，再推导工作区，所以设置了覆盖时，工作区就是存放该追踪文件的文件夹（如果追踪文件位于 `data/` 文件夹中，则是它的上一级文件夹）。这时简历的 HTML 和每个 PDF 都必须位于该工作区内，清单也会移到它的 `data/pdf-index.tsv`。求职信仍以 `{DATA_ROOT}/output/` 为目标，所以当该文件夹不在追踪文件的工作区内时，求职信会被拒绝写入。
+- **追踪文件覆盖下的 PDF：** `packages/cli/src/commands/cv/generate-pdf.ts` 会先解析 `CAREER_OPS_TRACKER`，再推导工作区，所以设置了覆盖时，工作区就是存放该追踪文件的文件夹（如果追踪文件位于 `data/` 文件夹中，则是它的上一级文件夹）。这时简历的 HTML 和每个 PDF 都必须位于该工作区内，清单也会移到它的 `data/pdf-index.tsv`。求职信仍以 `{DATA_ROOT}/output/` 为目标，所以当该文件夹不在追踪文件的工作区内时，求职信会被拒绝写入。
 - **代码层保持不动：** `node_modules/`、`providers/`、`modes/` 以及脚本本身始终相对于仓库解析，从不相对于数据根目录。
 
 Go 版仪表板 TUI、Node.js 脚本和 AI 代理模式都会自动遵循这一解析层级。
@@ -619,7 +619,7 @@ Go 版仪表板 TUI、Node.js 脚本和 AI 代理模式都会自动遵循这一�
 career-ops（[career-ops.org](https://career-ops.org)，也称 **careerops**） 是一个开源的 AI 求职工具，在你的 AI 编码 CLI（Claude Code、Codex、OpenCode 等）里本地运行，把每一个决定都留给你。它根据你的简历评估职位，生成适配 ATS 的 PDF，找到合适的联系人，并在一个地方追踪所有进展：最终决定始终在你手中。它是 [CareerOps 宣言](https://career-ops.org/manifesto)的首个参考实现。
 
 **定制简历会编造内容吗？**
-不应该，提示词里也这么写：只改写，绝不编造。`generate-pdf` 会拦下数字或事实在你的资料来源中找不到的简历，除非你传入 `--skip-fact-check`。`pdf` 模式还会运行 `cv-title-check.mjs`：它按公司和日期，把定制简历中的每个职位名称与 cv.md 中同一份工作的职位名称对比，有不同就请你决定保留还是改回。它只提醒、不拦截，因为调整职位名称的写法有时是你自己的选择。目前还没有任何检查评判改写：[#1411](https://github.com/career-ops-hq/career-ops/issues/1411)（不通过即阻止的真实性检查）在跟进这一点。在此之前，每份简历发出前都请自己读一遍。[法律声明](LEGAL_DISCLAIMER.md) 用更长的篇幅说了同样的话。
+不应该，提示词里也这么写：只改写，绝不编造。`generate-pdf` 会拦下数字或事实在你的资料来源中找不到的简历，除非你传入 `--skip-fact-check`。`pdf` 模式还会运行 `packages/cli/src/commands/cv/cv-title-check.ts`：它按公司和日期，把定制简历中的每个职位名称与 cv.md 中同一份工作的职位名称对比，有不同就请你决定保留还是改回。它只提醒、不拦截，因为调整职位名称的写法有时是你自己的选择。目前还没有任何检查评判改写：[#1411](https://github.com/career-ops-hq/career-ops/issues/1411)（不通过即阻止的真实性检查）在跟进这一点。在此之前，每份简历发出前都请自己读一遍。[法律声明](LEGAL_DISCLAIMER.md) 用更长的篇幅说了同样的话。
 
 **我可以免费运行 career-ops，或使用更便宜的本地模型吗？**
 可以。career-ops 不受特定 CLI 限制，可以用免费和本地模型运行（OpenRouter 免费模型、Ollama 或任何兼容 OpenAI 的端点），因此你不必绑定付费订阅。完整设置见 [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md)。

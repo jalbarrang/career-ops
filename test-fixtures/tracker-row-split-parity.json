@@ -1,5 +1,5 @@
 {
-  "_comment": "One table, two readers. Node (tracker-parse.mjs splitTrackerCells, asserted in tests/tracker-row-split-parity.test.mjs) and Go (dashboard/internal/data splitTrackerRow, asserted in career_test.go) must each split every line into these trimmed cells, first real column (#) first. A line is tab-delimited only when it holds a tab and at most two pipes; a tab inside a pipe table is note text. Generated from the Node reader; a change to either reader that breaks parity fails CI.",
+  "_comment": "One table, two readers. Node (packages/core/src/tracker/tracker-parse.ts splitTrackerCells, asserted in tests/tracker-row-split-parity.test.ts) and Go (dashboard/internal/data splitTrackerRow, asserted in career_test.go) must each split every line into these trimmed cells, first real column (#) first. A line is tab-delimited only when it holds a tab and at most two pipes; a tab inside a pipe table is note text. Generated from the Node reader; a change to either reader that breaks parity fails CI.",
   "cases": [
     {
       "name": "pipe row",

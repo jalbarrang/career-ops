@@ -309,11 +309,11 @@
 （職缺描述全文，逐字貼上——見下方要求）
 ```
 
-**JD 存檔（必要，#2789）：** 每份報告都必須包含 `## Job Description (archived verbatim)` 一節，原樣貼上職缺描述全文，不得摘要或改寫。該標題維持英文，因為 `check-jd-archive.mjs` 依名稱尋找它。`**URL:**` 不是存檔：職缺關閉後連結就會失效，原始要求也再也找不回來。該節第一行寫來源上可見的刊登日期（`Posted: {日期或頁面上顯示的相對時間}`，確實沒有時寫 `Posted: not visible in source`），不要用報告檔案本身的時間代替。若 JD 過長或無法完整引用，用 `archive-posting.mjs <url> --company={company-slug} --report={num}` 存檔，並在該節中**只**寫這一句：`See jds/{filename} for the full archive (archive-posting.mjs --report={num}).`。不得以改寫代替原文；完整規則見 `modes/oferta.md` 的 **JD archival**。
+**JD 存檔（必要，#2789）：** 每份報告都必須包含 `## Job Description (archived verbatim)` 一節，原樣貼上職缺描述全文，不得摘要或改寫。該標題維持英文，因為 `packages/core/src/evaluation/check-jd-archive.ts` 依名稱尋找它。`**URL:**` 不是存檔：職缺關閉後連結就會失效，原始要求也再也找不回來。該節第一行寫來源上可見的刊登日期（`Posted: {日期或頁面上顯示的相對時間}`，確實沒有時寫 `Posted: not visible in source`），不要用報告檔案本身的時間代替。若 JD 過長或無法完整引用，用 `packages/cli/src/commands/evaluation/archive-posting.ts <url> --company={company-slug} --report={num}` 存檔，並在該節中**只**寫這一句：`See jds/{filename} for the full archive (packages/cli/src/commands/evaluation/archive-posting.ts --report={num}).`。不得以改寫代替原文；完整規則見 `modes/oferta.md` 的 **JD archival**。
 
 ### 2. 登錄到 Tracker 紀錄簿
 
-將這筆紀錄登記到 tracker：寫入 TSV 檔（`_shared.md` 的規則 9），再以 `node merge-tracker.mjs` 合併；嚴禁直接在 `data/applications.md` 中手動新增資料列。欄位：
+將這筆紀錄登記到 tracker：寫入 TSV 檔（`_shared.md` 的規則 9），再以 `career-ops merge-tracker` 合併；嚴禁直接在 `data/applications.md` 中手動新增資料列。欄位：
 - 依序遞增的 ID 編號
 - 日期
 - 公司名稱

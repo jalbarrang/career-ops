@@ -1,11 +1,11 @@
 # Career-Ops: Canonical Discard Reasons
 # Source of truth for the Machine Summary `discard_reasons` vocabulary (#2785).
 # Writers: batch/batch-prompt.md (and modes/oferta.md, which defers to it).
-# Readers: analyze-patterns.mjs, dashboard discard picker
+# Readers: packages/cli/src/commands/insights/analyze-patterns.ts, dashboard discard picker
 # (dashboard/internal/ui/screens/pipeline.go `canonicalDiscardReasons`).
 #
 # Rule: each `discard_reasons` item is one of these ids. When none fits,
-# write a short free-text reason instead. analyze-patterns.mjs counts
+# write a short free-text reason instead. packages/cli/src/commands/insights/analyze-patterns.ts counts
 # canonical ids in `predictedDiscardReasonStats` and reports every other
 # label under `predictedDiscardReasonOther` with its raw spelling, never
 # rolled into the stats. If `other` keeps growing around one idea, that

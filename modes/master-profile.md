@@ -9,15 +9,15 @@ existing `data/` user-layer rule.
 
 ## Initial CV import
 
-1. Run `node career-profile.mjs import [cv.md]` to preview extracted candidates.
+1. Run `career-ops career-profile import [cv.md]` to preview extracted candidates.
 2. Review candidates with the user. For the interactive item-by-item gate, run
-   `node career-profile.mjs import [cv.md] --review`; accept, edit, or skip each
+   `career-ops career-profile import [cv.md] --review`; accept, edit, or skip each
    candidate. Nothing is written before this review.
 3. The importer preserves the source quote and line number for each approved
    item. Approval marks the extracted statement `verified`; it does not verify
    claims beyond what the source actually says. Never embellish metrics,
    ownership, dates, skills, or outcomes.
-4. Run `node career-profile.mjs validate` and report any errors. Import merges
+4. Run `career-ops career-profile validate` and report any errors. Import merges
    additively and keeps existing profile entries; it does not replace them.
 
 The parser is intentionally conservative and heading-based. Tell the user
@@ -41,14 +41,14 @@ flowchart LR
   D -. Future integration .-> E[Existing CV checks and PDF workflow]
 ```
 
-The shared APIs live in `lib/career-profile.mjs` and
-`lib/profile-cv-selection.mjs`. A caller constructs a manifest like this
+The shared APIs live in `packages/core/src/profile/career-profile.ts` and
+`packages/core/src/profile/profile-cv-selection.ts`. A caller constructs a manifest like this
 (the IDs and target slot below are illustrative; use the user's choices):
 
 ```js
-import { loadValidatedProfile } from './lib/career-profile.mjs';
+import { loadValidatedProfile } from 'packages/core/src/profile/career-profile.ts';
 import { selectionDigest, prepareCvSelection, verifyCvSelection }
-  from './lib/profile-cv-selection.mjs';
+  from 'packages/core/src/profile/profile-cv-selection.ts';
 
 const profile = loadValidatedProfile(); // respects the Data Root override
 // basePayload is the original HTML CV payload, read independently.
@@ -75,8 +75,8 @@ dropping them. Save the manifest only as part of the user's requested workflow.
 The CLI reads JSON manifests and prints the prepared bundle to stdout:
 
 ```bash
-node career-profile.mjs prepare-cv --payload base.json --selection selection.json > prepared.json
-node career-profile.mjs verify-cv --payload base.json --selection selection.json --prepared prepared.json
+career-ops career-profile prepare-cv --payload base.json --selection selection.json > prepared.json
+career-ops career-profile verify-cv --payload base.json --selection selection.json --prepared prepared.json
 ```
 
 All input paths resolve from the Data Root (absolute paths also work). Both

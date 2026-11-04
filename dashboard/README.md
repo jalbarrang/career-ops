@@ -22,11 +22,11 @@ value.
 Requires Go 1.24+ (`go.mod`). From the repo root:
 
 ```bash
-npm run serve:dashboard    # go run . --path .. (The script automatically resolves external data directories by falling back through CAREER_OPS_ROOT and CAREER_OPS_DATA_DIR enviornment variables,defaulting to repository root.)
-npm run build:dashboard    # build the standalone binary
+bun run serve:dashboard    # go run . --path .. (The script automatically resolves external data directories by falling back through CAREER_OPS_ROOT and CAREER_OPS_DATA_DIR enviornment variables,defaulting to repository root.)
+bun run build:dashboard    # build the standalone binary
 ```
 
-`build-dashboard.mjs` exists because `go build -o career-dashboard .` writes
+`packages/cli/src/commands/platform/build-dashboard.ts` exists because `go build -o career-dashboard .` writes
 an extension-less binary on Windows; the wrapper picks the platform-correct
 output name (`career-dashboard.exe` on Windows, `career-dashboard` elsewhere).
 
@@ -64,4 +64,4 @@ side; it only reads the tracker files.
 ## Tests
 
 Go tests live next to their packages (`*_test.go`). The Node suite builds
-the dashboard as part of `node test-all.mjs` (skipped with `--quick`).
+the dashboard as part of `bun test-all.ts` (skipped with `--quick`).

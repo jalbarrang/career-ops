@@ -98,7 +98,7 @@
 الصق إعلان وظيفة كنت ستقدّم عليه الليلة. إن عاد بـ<em>لا تقدّم</em>، فقد استعدت ليلتك للتو. وإن عاد بخطة، فأنت تعرف الخطوة التالية.
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 <p align="center" dir="rtl"><sub>مفتوح المصدر. محلي. داخل واجهة الذكاء الاصطناعي التي تستخدمها أصلًا. <a href="docs/RUNNING_ON_A_BUDGET.md">النماذج المجانية والمحلية مشمولة.</a></sub></p>
@@ -159,7 +159,7 @@ career-ops مجاني للمرشحين، إلى الأبد. هذه الشركا�
 
 ## ما لا يفعله career-ops
 
-- **إرسال طلب تقديم تلقائيًا.** يصوغ الإجابة لكل حقل؛ أنت تراجع وتضغط إرسال. السكربت لا يرسل POST أبدًا (`prepare-application.mjs`).
+- **إرسال طلب تقديم تلقائيًا.** يصوغ الإجابة لكل حقل؛ أنت تراجع وتضغط إرسال. السكربت لا يرسل POST أبدًا (`packages/cli/src/commands/evaluation/prepare-application.ts`).
 - **إرسال بريد إلكتروني.** مسودات فقط. لا يوجد أي وسيلة لإرسال البريد في هذا الكود كله.
 - **الاتصال بالخارج.** لا قياس عن بُعد، ولا خادم خلفي لنا. سيرتك الذاتية تنتقل من جهازك إلى مزوّد الذكاء الاصطناعي الذي اخترته، ولا مكان آخر. السجل العلني الوحيد هو هذا المستودع: `HIRED.md` وقضاياه.
 - **دفعك للتقديم تحت 4.0/5.** سيقول لك ألا تفعل. يمكنك تجاوز ذلك، وسيخبرك بذلك.
@@ -175,7 +175,7 @@ career-ops مجاني للمرشحين، إلى الأبد. هذه الشركا�
 | **إنشاء PDF متوافق مع ATS** | سير ذاتية تقرؤها أنظمة ATS، مكيّفة لكل وصف وظيفي انطلاقًا من خبرتك أنت، بتصميم Space Grotesk + DM Sans                                                                    |
 | **مولّد خطابات التقديم** | خطابات تقديم مبنية على البحث مع مرآة الكلمات المفتاحية، وأربعة أسئلة تفاعلية للزاوية (لماذا/المشكلات/المنهج/النبرة)، وبوابة موافقة على المسودة داخل المحادثة، وPDF بحجم A4 عبر خط عمل HTML + Playwright نفسه المستخدم للسير الذاتية. يصيغ مسودة تلقائيًا مع كل تقييم؛ أكملها وأنشئها عند الطلب عبر `/career-ops cover` |
 | **ما وراء السيرة الذاتية** | بحث الشركة ([`deep`](modes/deep.md)) يكشف استراتيجية الذكاء الاصطناعي والتحركات الأخيرة وثقافة الهندسة والزاوية التي ينبغي لملفك أن يتخذها. اكتشاف جهات الاتصال ([`contacto`](modes/contacto.md)) يحدد مدير التوظيف أو مسؤول التوظيف أو زميل الفريق الذي يستحق التواصل ويصيغ رسالة LinkedIn لا تتجاوز 300 حرف مضبوطة لكل نوع من جهات الاتصال. مسودات رسائل التقديم الرسمية ([`email`](modes/email.md)) تحوّل تقريرًا مقيّمًا أو وصفًا ملصقًا إلى سطر موضوع ونص وقائمة مرفقات دون إرسال أو تقديم أو نقر على أي شيء. التقديم يضعك في الطابور؛ والبحث يمنحك محادثة. |
-| **تحليل الأنماط**        | أنماط الرفض ومعدلات التقدم لكل قناة ATS (`analyze-patterns.mjs`)، إحصاءات القمع طوال البحث (`stats.mjs`)، رصد إعادة نشر الإعلانات، وهي علامة محتملة على وظيفة وهمية (`detect-reposts.mjs`) |
+| **تحليل الأنماط**        | أنماط الرفض ومعدلات التقدم لكل قناة ATS (`packages/cli/src/commands/insights/analyze-patterns.ts`)، إحصاءات القمع طوال البحث (`packages/core/src/insights/stats.ts`)، رصد إعادة نشر الإعلانات، وهي علامة محتملة على وظيفة وهمية (`packages/cli/src/commands/insights/detect-reposts.ts`) |
 
 <details>
 <summary><b>كل ما يفعله غير ذلك</b></summary>
@@ -192,8 +192,8 @@ career-ops مجاني للمرشحين، إلى الأبد. هذه الشركا�
 | **لوحة تحكم TUI**        | واجهة طرفية لتصفح خط عملك وتصفيته وترتيبه                                                                                                |
 | **سلامة خط العمل**       | دمج تلقائي، إزالة التكرار، توحيد الحالات، فحوصات صحية                                                                                    |
 | **حزمة المقابلات**       | خطط تحضير بكتل زمنية، جلسات تدريب مع ملاحظات، مراجعات ما بعد المقابلة ([`interview/`](modes/interview/README.md))، وكاشف للإشارات التحذيرية في الشركة ([`interview-redflag`](modes/interview-redflag.md)) |
-| **مرحلة العرض**          | رفيق قراءة العقد: مرور بندًا بندًا مع قائمة أسئلة للمحامي ([`offer-prep`](modes/offer-prep.md))، ومحلل للفجوة بين الراتب المطلوب والمعلن والفعلي (`salary-gap.mjs`) |
-| **المتابعات والردود**    | حاسبة إيقاع المتابعة وتذكيرات مُعدّة مسبقًا (`followup-cadence.mjs`، `followup-seed.mjs`)؛ تصنيف ردود جهة التوظيف إلى تحديثات في المتتبع ([`reply-watch`](modes/reply-watch.md)) |
+| **مرحلة العرض**          | رفيق قراءة العقد: مرور بندًا بندًا مع قائمة أسئلة للمحامي ([`offer-prep`](modes/offer-prep.md))، ومحلل للفجوة بين الراتب المطلوب والمعلن والفعلي (`packages/cli/src/commands/insights/salary-gap.ts`) |
+| **المتابعات والردود**    | حاسبة إيقاع المتابعة وتذكيرات مُعدّة مسبقًا (`packages/core/src/outreach/followup-cadence.ts`، `packages/core/src/outreach/followup-seed.ts`)؛ تصنيف ردود جهة التوظيف إلى تحديثات في المتتبع ([`reply-watch`](modes/reply-watch.md)) |
 | **نظام الإضافات**        | تكاملات اختيارية (Gmail و Notion و Apify + سجل مجتمعي)، معطّلة افتراضيًا؛ انظر [docs/PLUGINS.md](docs/PLUGINS.md)                          |
 
 </details>
@@ -203,7 +203,7 @@ career-ops مجاني للمرشحين، إلى الأبد. هذه الشركا�
 **أسرع طريقة، بأمر واحد:**
 
 ```bash
-npx @santifer/career-ops init
+bunx @santifer/career-ops init
 ```
 
 > 💡 `npx` يأتي مع [Node.js](https://nodejs.org): يشغّل المثبّت مرة واحدة
@@ -224,8 +224,8 @@ claude   # or codex / qwen / opencode / agy / grok — open your AI CLI here
 
 ```bash
 git clone https://github.com/career-ops-hq/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # only needed for PDF generation
+cd career-ops && bun install
+bunx playwright install chromium   # only needed for PDF generation
 # On a non-Debian/Ubuntu Linux distro (Fedora, Arch, ...), Chromium's system
 # libraries aren't installed by the line above — install them yourself with
 # your distro's package manager if PDF generation fails to launch the browser
@@ -256,14 +256,14 @@ claude   # or codex / opencode / qwen / agy / grok
 ### التثبيت العام
 
 ```bash
-npm i -g @santifer/career-ops
+bun add -g @santifer/career-ops
 ```
 
 يثبّت هذا الملف التنفيذي `career-ops` بشكل عام لتتمكن من تشغيل `career-ops init [folder]` دون `npx`. الأمر `init` هو أمره الوحيد: يُعِدّ مساحة عمل، وكل ما يأتي بعد ذلك يجري داخل واجهة الذكاء الاصطناعي البرمجية التي تستخدمها (انظر الاستخدام أدناه)، لا عبر هذا الملف التنفيذي.
 
 **أيهما تستخدم؟**
-- `npx @santifer/career-ops init`: الأفضل للاستخدام الأول؛ ينشئ مجلد مشروع مخصصًا.
-- `npm i -g @santifer/career-ops`: إذا كنت تفضّل كتابة `career-ops init` بدلًا من صيغة `npx`. لا يضيف أي أوامر أخرى.
+- `bunx @santifer/career-ops init`: الأفضل للاستخدام الأول؛ ينشئ مجلد مشروع مخصصًا.
+- `bun add -g @santifer/career-ops`: إذا كنت تفضّل كتابة `career-ops init` بدلًا من صيغة `npx`. لا يضيف أي أوامر أخرى.
 
 > **النظام مصمم ليخصّصه وكيل واجهة الذكاء الاصطناعي نفسه.** الأوضاع والأنماط وأوزان التقييم ونصوص التفاوض: اطلب منه تغييرها فحسب. إنه يقرأ الملفات نفسها التي يستخدمها، لذا يعرف تمامًا ما الذي يجب تحريره.
 
@@ -454,13 +454,13 @@ cp .env.example .env
 # Edit .env, set GEMINI_API_KEY=your_key_here
 
 # 2. Install dependencies
-npm install
+bun install
 
 # 3. Evaluate a job description
-node gemini-eval.mjs "We are looking for a Senior AI Engineer..."
-node gemini-eval.mjs --file ./jds/my-job.txt
-node agent-inbox.mjs add "..."   # queue a request for the next session
-npm run gemini:eval -- "JD text here"
+bun packages/cli/src/commands/evaluation/gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun packages/cli/src/commands/evaluation/gemini-eval.ts --file ./jds/my-job.txt
+bun packages/cli/src/commands/platform/agent-inbox.ts add "..."   # queue a request for the next session
+bun run gemini:eval -- "JD text here"
 ```
 
 > **الطبقة المجانية:** يعمل الخياران دون فوترة. تستخدم الواجهة الأصلية Google OAuth؛ ويستخدم سكربت API نموذج `gemini-3.6-flash` (حدود المعدل تعتمد على النموذج والطبقة؛ راجع وثائق Google AI للحصص الحالية).
@@ -480,10 +480,10 @@ npm run gemini:eval -- "JD text here"
 
 **لوحات الوظائف التي يتم البحث فيها:** أكثر من 55 وحدة مزوّد تغطي واجهات ATS البرمجية، وتغذيات اللوحات الكاملة، وتغذيات XML/RSS، وتغذيات markdown، ومحللات محلية. انظر [لوحات الوظائف المدعومة](docs/SUPPORTED_JOB_BOARDS.md) للجدول الكامل.
 
-افتراضيًا، يثق `node scan.mjs` (أي `npm run scan`) بما تعيده كل تغذية ATS. بعض الشركات تترك إعلانات قديمة في واجهتها البرمجية العامة حتى بعد إغلاق الوظيفة، فقد تتسرب تلك الإدخالات المنتهية إلى `pipeline.md`. مرّر `--verify` لتشغيل Playwright بعد المرور بالواجهة البرمجية وإسقاط الإعلانات المنتهية قبل وصولها إلى خط العمل:
+افتراضيًا، يثق `bun packages/core/src/scanning/scan.ts` (أي `bun run scan`) بما تعيده كل تغذية ATS. بعض الشركات تترك إعلانات قديمة في واجهتها البرمجية العامة حتى بعد إغلاق الوظيفة، فقد تتسرب تلك الإدخالات المنتهية إلى `pipeline.md`. مرّر `--verify` لتشغيل Playwright بعد المرور بالواجهة البرمجية وإسقاط الإعلانات المنتهية قبل وصولها إلى خط العمل:
 
 ```bash
-node scan.mjs --verify          # zero-token discovery + Playwright liveness check
+bun packages/core/src/scanning/scan.ts --verify          # zero-token discovery + Playwright liveness check
 ```
 
 التحقق متسلسل ويعمل فقط على العروض الجديدة (بعد إزالة التكرار)، لذا تبقى التكلفة محدودة.
@@ -493,13 +493,13 @@ node scan.mjs --verify          # zero-token discovery + Playwright liveness che
 تتيح لك لوحة التحكم الطرفية المدمجة تصفح خط عملك بصريًا:
 
 ```bash
-npm run serve:dashboard   # launch the TUI
-npm run build:dashboard   # optional: build the standalone binary
+bun run serve:dashboard   # launch the TUI
+bun run build:dashboard   # optional: build the standalone binary
 ```
 
 الميزات: 10 تبويبات تصفية، 8 أوضاع ترتيب، عرض مجمّع/مسطّح، معاينات بتحميل كسول، تغيير الحالات في السطر.
 
-توجد أيضًا **واجهة ويب تجريبية** (ألفا واختيارية: لا يعمل شيء ما لم تشغّلها بنفسك): انظر [`web/README.md`](web/README.md).
+توجد أيضًا **واجهة ويب تجريبية** (ألفا واختيارية: لا يعمل شيء ما لم تشغّلها بنفسك): انظر [`apps/web/README.md`](apps/web/README.md).
 
 ## هيكلية المشروع
 
@@ -556,9 +556,9 @@ career-ops/
 
 - **تجاوز المتتبع:** يمكنك أيضًا ضبط `CAREER_OPS_TRACKER` لتجاوز مسار ملف متتبع الطلبات مباشرة.
 - **الكتابات:** جميع عمليات الكتابة (مثل الدمج) تستهدف قانونيًا `{DATA_ROOT}/data/applications.md`.
-- **إعدادات الماسح:** يُقرأ `portals.yml` ويُتحقَّق منه في `{DATA_ROOT}/portals.yml`، لذا يفحص `node validate-portals.mjs` الملف نفسه الذي يقرؤه `scan.mjs`.
+- **إعدادات الماسح:** يُقرأ `portals.yml` ويُتحقَّق منه في `{DATA_ROOT}/portals.yml`، لذا يفحص `bun packages/cli/src/commands/scanning/validate-portals.ts` الملف نفسه الذي يقرؤه `packages/core/src/scanning/scan.ts`.
 - **المستندات المولَّدة:** تُكتب السير الذاتية المخصّصة وخطابات التقديم داخل `{DATA_ROOT}/output/`، أما فهرس ملفات PDF الذي يربطها بتقرير فموجود في `{DATA_ROOT}/data/pdf-index.tsv`. وما دام `CAREER_OPS_TRACKER` غير مضبوط، فإن مساحة عمل المتتبع التي تحصر هذه الكتابات هي جذر البيانات، لا نسخة المستودع.
-- **ملفات PDF عند تجاوز المتتبع:** يحلّ `generate-pdf.mjs` قيمة `CAREER_OPS_TRACKER` قبل أن يستنتج مساحة العمل، لذا عند ضبط التجاوز تكون مساحة العمل هي المجلد الذي يحتوي ذلك المتتبع (أو المجلد الذي فوقه، عندما يكون المتتبع داخل مجلد `data/`). وعندها يجب أن يقع ملف HTML الخاص بالسيرة الذاتية وكل ملفات PDF داخل مساحة العمل تلك، وينتقل الفهرس إلى `data/pdf-index.tsv` التابع لها. أما خطابات التقديم فتبقى وجهتها `{DATA_ROOT}/output/`، لذا تُرفض عندما يقع ذلك المجلد خارج مساحة عمل المتتبع.
+- **ملفات PDF عند تجاوز المتتبع:** يحلّ `packages/cli/src/commands/cv/generate-pdf.ts` قيمة `CAREER_OPS_TRACKER` قبل أن يستنتج مساحة العمل، لذا عند ضبط التجاوز تكون مساحة العمل هي المجلد الذي يحتوي ذلك المتتبع (أو المجلد الذي فوقه، عندما يكون المتتبع داخل مجلد `data/`). وعندها يجب أن يقع ملف HTML الخاص بالسيرة الذاتية وكل ملفات PDF داخل مساحة العمل تلك، وينتقل الفهرس إلى `data/pdf-index.tsv` التابع لها. أما خطابات التقديم فتبقى وجهتها `{DATA_ROOT}/output/`، لذا تُرفض عندما يقع ذلك المجلد خارج مساحة عمل المتتبع.
 - **طبقة الكود تبقى في مكانها:** تُحلّ `node_modules/` و`providers/` و`modes/` والسكربتات نفسها دائمًا نسبةً إلى المستودع، ولا تُحلّ أبدًا نسبةً إلى جذر البيانات.
 
 تحترم لوحة تحكم Go الطرفية وسكربتات Node.js وأوضاع وكيل الذكاء الاصطناعي هذا التسلسل تلقائيًا.
@@ -617,7 +617,7 @@ career-ops/
 career-ops ([career-ops.org](https://career-ops.org)، ويُعرف أيضًا باسم **careerops**) أداة بحث عن الوظائف بالذكاء الاصطناعي، مفتوحة المصدر، تعمل محليًا في واجهة الذكاء الاصطناعي التي تستخدمها (Claude Code و Codex و OpenCode وغيرها) وتترك كل قرار لك. تقيّم العروض مقابل سيرتك الذاتية، وتنشئ ملفات PDF مكيّفة لأنظمة ATS، وتجد الشخص المناسب للتواصل، وتتابع كل شيء في مكان واحد: القرار الأخير دائمًا لك. وهي أول تطبيق مرجعي [لبيان CareerOps](https://career-ops.org/manifesto).
 
 **هل يمكن للسيرة الذاتية المخصّصة أن تختلق أشياء؟**
-لا يجوز لها، والأوامر النصية تقول ذلك: أعد الصياغة، ولا تختلق أبدًا. يمنع `generate-pdf` إنشاء سيرة ذاتية تتضمن أرقامًا أو حقائق غير موجودة في مصادرك، ما لم تمرّر `--skip-fact-check`. ويشغّل وضع `pdf` أيضًا `cv-title-check.mjs`، الذي يقارن كل مسمى وظيفي في السيرة الذاتية المخصّصة بالمسمى الذي يذكره cv.md للوظيفة نفسها (بمطابقة الشركة والتواريخ)، ويسألك هل تُبقي أي مسمى مختلف أم تعيده. وهو ينبّه ولا يمنع، لأن إعادة صياغة المسمى قد تكون قرارك أحيانًا. ولا شيء يحكم على إعادة الصياغة بعدُ: تتابع ذلك القضية [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (تحقق من الدقة يوقف العملية عند الاختلاف). حتى ذلك الحين، اقرأ كل سيرة ذاتية قبل إرسالها. [إخلاء المسؤولية القانوني](LEGAL_DISCLAIMER.md) يقول الشيء نفسه بكلمات أكثر.
+لا يجوز لها، والأوامر النصية تقول ذلك: أعد الصياغة، ولا تختلق أبدًا. يمنع `generate-pdf` إنشاء سيرة ذاتية تتضمن أرقامًا أو حقائق غير موجودة في مصادرك، ما لم تمرّر `--skip-fact-check`. ويشغّل وضع `pdf` أيضًا `packages/cli/src/commands/cv/cv-title-check.ts`، الذي يقارن كل مسمى وظيفي في السيرة الذاتية المخصّصة بالمسمى الذي يذكره cv.md للوظيفة نفسها (بمطابقة الشركة والتواريخ)، ويسألك هل تُبقي أي مسمى مختلف أم تعيده. وهو ينبّه ولا يمنع، لأن إعادة صياغة المسمى قد تكون قرارك أحيانًا. ولا شيء يحكم على إعادة الصياغة بعدُ: تتابع ذلك القضية [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (تحقق من الدقة يوقف العملية عند الاختلاف). حتى ذلك الحين، اقرأ كل سيرة ذاتية قبل إرسالها. [إخلاء المسؤولية القانوني](LEGAL_DISCLAIMER.md) يقول الشيء نفسه بكلمات أكثر.
 
 **هل يمكنني تشغيل career-ops مجانًا، أو بنموذج أرخص أو محلي؟**
 نعم. career-ops لا يعتمد على واجهة بعينها ويعمل على النماذج المجانية والمحلية (نماذج OpenRouter المجانية أو Ollama أو أي نقطة نهاية متوافقة مع OpenAI)، فلست مقيدًا باشتراك مدفوع. انظر [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md) للإعداد الكامل.

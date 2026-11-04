@@ -7,9 +7,9 @@
 % Requires a XeTeX-based engine — pdflatex has no Unicode font support and
 % cannot compile this file. Locally that means the tectonic engine; on
 % Overleaf, set Menu -> Compiler -> XeLaTeX (Overleaf's default pdfLaTeX
-% compiler cannot build this file either). generate-latex.mjs does NOT
+% compiler cannot build this file either). generate-latex.ts does NOT
 % select this template automatically — you must explicitly generate from
-% it: `node build-cv-latex.mjs <input.json> <output.tex> --template=cjk`.
+% it: `bun build-cv-latex.ts <input.json> <output.tex> --template=cjk`.
 % See #3553.
 %
 % Font requirement: \setCJKmainfont below names a font that must be
@@ -22,7 +22,7 @@
 %
 % Keep in sync with cv-template.tex: this file mirrors it byte-for-byte
 % apart from the CJK preamble block below, INCLUDING the %%%% banner
-% comments cv-sections-core.mjs's stripEmptySections() matches on to drop
+% comments cv-sections-core.ts's stripEmptySections() matches on to drop
 % empty optional sections (Projects/Education/Awards/Skills). Renaming or
 % reordering a banner here without updating cv-template.tex breaks that.
 %------------------------

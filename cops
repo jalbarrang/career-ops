@@ -6,12 +6,12 @@
 #   ./cops verify
 #   ./cops pdf cv.html output/cv.pdf
 #   ./cops scan
-#   ./cops node generate-pdf.mjs cv.html output/cv.pdf
+#   ./cops bun packages/cli/src/commands/cv/generate-pdf.ts cv.html output/cv.pdf
 #   ./cops shell                     # interactive bash
 #   ./cops bash -c 'ls reports'      # bash one-liner
 #   ./cops up | down | rebuild | logs
 #
-# Anything not matching a known subcommand is forwarded to npm run <subcommand>
+# Anything not matching a known subcommand is forwarded to bun run <subcommand>
 # when package.json defines it, otherwise executed verbatim inside the container.
 
 set -euo pipefail
@@ -58,19 +58,19 @@ case "${1:-}" in
     ensure_up
     exec docker compose exec -it "$SERVICE" bash
     ;;
-  node|npm|npx|go|bash|sh)
+  bun|bunx|node|go|bash|sh)
     ensure_up
     exec docker compose exec -it "$SERVICE" "$@"
     ;;
 esac
 
-# Map known npm scripts → `npm run <name>`. Anything else is forwarded raw.
+# Map known scripts → `bun run <name>`. Anything else is forwarded raw.
 cmd="$1"; shift || true
 
 case "$cmd" in
   doctor|verify|normalize|dedup|merge|pdf|sync-check|liveness|scan|gemini:eval|update|update:check|rollback)
     ensure_up
-    exec docker compose exec -it "$SERVICE" npm run --silent "$cmd" -- "$@"
+    exec docker compose exec -it "$SERVICE" bun run --silent "$cmd" -- "$@"
     ;;
   *)
     ensure_up

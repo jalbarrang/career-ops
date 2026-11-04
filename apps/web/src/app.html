@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="%lang%" dir="%dir%">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="icon" href="%sveltekit.assets%/favicon.svg" />
+    <link rel="apple-touch-icon" href="%sveltekit.assets%/favicon.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="career-ops" />
+    <!--
+      Before paint: set the theme class AND tint the browser chrome (theme-color)
+      so Safari's status bar / URL bar unify with the header instead of a jarring
+      light seam. Matches --bg (light #f7f6f3 / dark #0a0a0a).
+    -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("career-ops:theme");
+          var s = t === "light" || t === "dark" ? t : null;
+          var d = s === "dark" || (!s && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (d) document.documentElement.classList.add("dark");
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (!m) {
+            m = document.createElement("meta");
+            m.setAttribute("name", "theme-color");
+            document.head.appendChild(m);
+          }
+          m.setAttribute("content", d ? "#0a0a0a" : "#f7f6f3");
+        } catch (e) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+    %sveltekit.head%
+  </head>
+  <body data-sveltekit-preload-data="hover">
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
+</html>

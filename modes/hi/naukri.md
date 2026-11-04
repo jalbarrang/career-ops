@@ -107,7 +107,7 @@ Offer की requirements पर mapped 6-10 STAR+R stories (STAR + **Reflection
 
 पूरा evaluation `reports/{###}-{company-slug}-{YYYY-MM-DD}.md` में save करें।
 
-- `{###}` = अगला sequential number (3 digits, zero-padded)। इसे atomically allocate करने के लिए `node reserve-report-num.mjs` run करें (stdout `{###}` return करता है), report लिखें, फिर sentinel release करने के लिए `node reserve-report-num.mjs --release {###}` run करें।
+- `{###}` = अगला sequential number (3 digits, zero-padded)। इसे atomically allocate करने के लिए `career-ops reserve-report-num` run करें (stdout `{###}` return करता है), report लिखें, फिर sentinel release करने के लिए `career-ops reserve-report-num --release {###}` run करें।
 - `{company-slug}` = company name lowercase, no spaces (dashes use करें)
 - `{YYYY-MM-DD}` = आज की date
 
@@ -156,7 +156,7 @@ Offer की requirements पर mapped 6-10 STAR+R stories (STAR + **Reflection
 
 ### 2. Tracker में Record करें
 
-**हमेशा** tracker में record करें। एक TSV लिखें (`_shared.md` का rule 9) और उसे `node merge-tracker.mjs` से merge करें; `data/applications.md` में सीधे row कभी न लिखें। Fields:
+**हमेशा** tracker में record करें। एक TSV लिखें (`_shared.md` का rule 9) और उसे `career-ops merge-tracker` से merge करें; `data/applications.md` में सीधे row कभी न लिखें। Fields:
 - अगला sequential number
 - आज की date
 - Company
