@@ -48,8 +48,7 @@ jobs:
           persist-credentials: false
       # The declared floor (packages/core/src/kernel/bun-floor.ts, package.json engines). Exact on
       # purpose: a bare '1' resolves to the newest 1.x and tests nothing.
-      # Renovate is told to leave bun-version in this file alone (renovate.json);
-      # tests/bun-floor.test.ts fails if this drifts from BUN_MIN.
+      # tests/bun-floor.test.ts fails if this drifts from BUN_MIN, so it is hand-edited.
       - name: Set up the Bun floor (1.4.3)
         uses: oven-sh/setup-bun@v2
         with:

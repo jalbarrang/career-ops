@@ -48,8 +48,8 @@ In short:
   `pipeline` step, so honouring it is a maintainer call on a source
   proposal, not an automatic no.
 
-If such a source is operator-run, or its eligibility is not obvious, open a
-[source proposal](../.github/ISSUE_TEMPLATE/source-proposal.yml) before
+If such a source is operator-run, or its eligibility is not obvious, open an
+issue proposing the source before
 writing code — a routing decision made on a design doc is cheaper than one
 made on a finished PR. The [Source Indexing Log](../docs/SOURCE_INDEXING_LOG.md)
 records how the rules were applied to sources that went through that process.
@@ -766,7 +766,7 @@ provider whose tuning needs differ from the shared default
       [Source Indexing Policy](../CONTRIBUTING.md#source-indexing-policy) —
       real employer-attributed listings, free for the candidate, one source
       per provider (not a meta-aggregator of other boards); operator-run or
-      borderline → a [source proposal](../.github/ISSUE_TEMPLATE/source-proposal.yml)
+      borderline → a source-proposal issue
       was opened first. A single-company ATS adapter skips this line.
 - [ ] If a posting's payload carries both an upstream employer URL and the
       source's own page, `job.url` is the employer's one (rule 2), the
