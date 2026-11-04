@@ -2,14 +2,14 @@
  * doctor-missing-deps.test.ts — doctor reports missing Bun dependencies
  * instead of crashing at import.
  *
- * doctor.ts is the first-run gate every agent runs, and it already has a
+ * packages/cli/src/commands/platform/doctor.ts is the first-run gate every agent runs, and it already has a
  * "Dependencies missing → bun install" check. It never got to run on a copy
- * with no node_modules: doctor imported js-yaml (through lib/yaml-document.ts)
+ * with no node_modules: doctor imported js-yaml (through packages/core/src/kernel/yaml-document.ts)
  * and dotenv statically, and a static import of a missing package fails while
  * Node links the module graph, before any of doctor's code runs. The user got
  * an ERR_MODULE_NOT_FOUND stack trace from the onboarding check.
  *
- * The fixture copies doctor.ts and the local modules it imports, with no
+ * The fixture copies packages/cli/src/commands/platform/doctor.ts and the local modules it imports, with no
  * node_modules anywhere above it. A second copy with node_modules linked is
  * the control: every module loads there, so the first run fails on the
  * packages and not on a module this test forgot to copy. The control asserts
@@ -25,13 +25,13 @@ import { pass, fail, NODE, ROOT, rmSync, linkNodeModules } from './helpers.ts';
 
 console.log('\n🧪 Testing doctor with dependencies not installed...');
 
-// doctor.ts plus every local module it reaches through a static import or a
+// packages/cli/src/commands/platform/doctor.ts plus every local module it reaches through a static import or a
 // literal dynamic import(), and package.json, which the dependency check reads.
 // The scan is textual, so it also sees example imports inside comments; those
 // name files that do not exist and are skipped.
 function doctorClosure() {
-  const files = new Set(['package.json']);
-  const queue = [join(ROOT, 'doctor.ts')];
+  const files = new Set(['package.json', 'packages/core/package.json']);
+  const queue = [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts')];
   while (queue.length) {
     const file = queue.pop();
     const rel = relative(ROOT, file);
@@ -63,7 +63,7 @@ function runDoctor(dir) {
   // installed here" run; Node ignores an argument it does not know? It does
   // not, so it is passed only when the running runtime is Bun.
   const bunArgs = process.versions.bun ? ['--no-install'] : [];
-  return spawnSync(NODE, [...bunArgs, 'doctor.ts', '--json'], {
+  return spawnSync(NODE, [...bunArgs, 'packages/cli/src/commands/platform/doctor.ts', '--json'], {
     cwd: dir,
     encoding: 'utf-8',
     timeout: 60000,

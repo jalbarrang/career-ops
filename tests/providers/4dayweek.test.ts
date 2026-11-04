@@ -7,8 +7,8 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — 4dayweek');
 
 try {
-  const fdwModule = await import(pathToFileURL(join(ROOT, 'providers/4dayweek.ts')).href);
-  const { resolveProvider } = await import(pathToFileURL(join(ROOT, 'providers/_registry.ts')).href);
+  const fdwModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/4dayweek.ts')).href);
+  const { resolveProvider } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_registry.ts')).href);
   const fourdayweek = fdwModule.default;
   const { normalize4dwJob } = fdwModule;
 

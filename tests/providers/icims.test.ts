@@ -6,7 +6,7 @@ import { pass, fail, ROOT } from '../helpers.ts';
 
 console.log('\nProvider — icims');
 
-const mod = await import(pathToFileURL(join(ROOT, 'providers/icims.ts')).href);
+const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/icims.ts')).href);
 const icims = mod.default;
 const { parseIcimsSearchPage } = mod;
 

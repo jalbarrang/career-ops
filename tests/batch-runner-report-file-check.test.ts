@@ -8,7 +8,7 @@
 // completion builtin, and some bash builds (NixOS among them) leave it out of
 // non-interactive shells — the shebang case. There the call failed, its error
 // went to /dev/null, the check saw no report, and EVERY worker was recorded as
-// failed even with its report on disk. merge-tracker.ts then refused those
+// failed even with its report on disk. packages/cli/src/commands/tracker/merge-tracker.ts then refused those
 // reports as possibly fabricated, so good evaluations were stranded.
 //
 // This test extracts the REAL has_report_file() out of batch/batch-runner.sh and

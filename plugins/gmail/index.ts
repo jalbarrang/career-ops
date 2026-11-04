@@ -10,13 +10,13 @@
 // (with thanks), reshaped to the plugin contract: OAuth credentials come from
 // the scoped ctx.env (not credential files), the label/days_back come from
 // ctx.settings (config/plugins.yml), and the hook RETURNS Job[] — the engine
-// (plugins.ts), not this plugin, writes them to pipeline.md canonically. No
+// (packages/cli/src/commands/platform/plugins.ts), not this plugin, writes them to pipeline.md canonically. No
 // `search://` rows are emitted (they aren't real URLs the pipeline can open).
 //
 // Enable in config/plugins.yml:
 //   gmail: { enabled: true, label: "Job Leads", days_back: 7 }
 // Add to .env: GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN.
-// Run:  bun plugins.ts run gmail
+// Run:  bun packages/cli/src/commands/platform/plugins.ts run gmail
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { dirname, join, resolve } from 'path';

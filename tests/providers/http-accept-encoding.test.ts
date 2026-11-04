@@ -9,7 +9,7 @@ import { pass, fail, ROOT } from '../helpers.ts';
 
 console.log('\nProvider — _http accept-encoding');
 
-const { fetchJson, fetchText } = await import(pathToFileURL(join(ROOT, 'providers/_http.ts')).href);
+const { fetchJson, fetchText } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_http.ts')).href);
 
 const realFetch = globalThis.fetch;
 let seen = null;

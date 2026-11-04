@@ -1,6 +1,6 @@
 // tests/merge-tracker-url-dedup.test.ts — URL-keyed deterministic dedup.
 //
-// Drives the REAL merge-tracker.ts CLI end-to-end against a temp tracker via
+// Drives the REAL packages/cli/src/commands/tracker/merge-tracker.ts CLI end-to-end against a temp tracker via
 // the CAREER_OPS_TRACKER / CAREER_OPS_ADDITIONS env hooks — the merge path is
 // where the bug lived, so asserting on the resulting tracker rows is what
 // actually proves the fix. normalizeUrl's own unit cases live in
@@ -14,10 +14,10 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 // The written cell is a markdown link since #3516; the KEY is its href, so the
 // assertions below read the href and check the rendering separately.
-import { extractCellUrl } from '../tracker-parse.ts';
+import { extractCellUrl } from '../packages/core/src/tracker/tracker-parse.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const MERGE = join(HERE, '..', 'merge-tracker.ts');
+const MERGE = join(HERE, '..', 'packages/cli/src/commands/tracker/merge-tracker.ts');
 const ok = (name, fn) => { try { fn(); pass(name); } catch (e) { fail(`${name} — ${e.message}`); } };
 
 // ───────────────────────── merge-tracker (integration) ─────────────────────────
@@ -402,7 +402,7 @@ ok('aggregator vs employer board: same requisition, stays ONE row', () => {
 // actually scans. It named thirteen hosts that no provider emits, so every row
 // arriving through scan then pipeline then evaluate still hit #3652. These two
 // pin the scanner's own multi-employer boards, keyed on hosts that
-// providers/remoteok.ts, providers/himalayas.ts and providers/remotive.ts
+// packages/core/src/scanning/providers/remoteok.ts, packages/core/src/scanning/providers/himalayas.ts and packages/core/src/scanning/providers/remotive.ts
 // really produce.
 ok('scanner board vs scanner board: one requisition on two of our own boards stays ONE row', () => {
   const rows = mergeTwoWithUrls(
@@ -478,7 +478,7 @@ ok('KNOWN LIMITATION: an unmapped aggregator id shape over-merges two requisitio
   // over-merge direction, which loses the second posting. It is accepted here
   // only because the alternative available today is a guessed regex, whose own
   // failure mode is splitting one posting into two rows: the outcome the
-  // cross-host gate was rejected for. url-key.ts extracts only ids it can
+  // cross-host gate was rejected for. packages/core/src/kernel/url-key.ts extracts only ids it can
   // point at a verified shape for, so the fix is a verified Glassdoor shape,
   // and the workaround meanwhile is the req-id-in-notes rule (#1524). Pinned so
   // that adding that shape is a deliberate change with a failing test behind it
@@ -567,7 +567,7 @@ ok('row with `---` in its URL (Workday slug) stays visible to dedup', () => {
 // runMerge spreads process.env and overrides only CAREER_OPS_TRACKER and
 // CAREER_OPS_ADDITIONS, so CAREER_OPS_ROOT, CAREER_OPS_DATA_DIR,
 // CAREER_OPS_BATCH_STATE and CAREER_OPS_CODE_ROOT leak in from whatever shell
-// runs the suite. merge-tracker.ts:68 says CAREER_OPS_BATCH_STATE exists "used
+// runs the suite. packages/cli/src/commands/tracker/merge-tracker.ts:68 says CAREER_OPS_BATCH_STATE exists "used
 // by tests", and this suite was the one not using it.
 //
 // The leak is observable because a batch-state row marked `failed` for a report

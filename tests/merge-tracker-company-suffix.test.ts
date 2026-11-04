@@ -5,7 +5,7 @@
 // punctuation but not corporate suffixes, so the fuzzy company+role tier never
 // fired and a duplicate row was written (#3665).
 //
-// Every case drives the REAL merge-tracker.ts CLI against a temp tracker via
+// Every case drives the REAL packages/cli/src/commands/tracker/merge-tracker.ts CLI against a temp tracker via
 // the CAREER_OPS_TRACKER / CAREER_OPS_ADDITIONS env hooks: the merge path is
 // where the bug lives, so the resulting rows are what proves the fix. The
 // over-merge guards below matter more than the fix itself, because folding two
@@ -19,7 +19,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const MERGE = join(HERE, '..', 'merge-tracker.ts');
+const MERGE = join(HERE, '..', 'packages/cli/src/commands/tracker/merge-tracker.ts');
 const ok = (name, fn) => { try { fn(); pass(name); } catch (e) { fail(`${name} — ${e.message}`); } };
 
 const HEADER = '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |';

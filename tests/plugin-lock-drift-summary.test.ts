@@ -175,7 +175,7 @@ test('lockGate still blocks a drifted local plugin, and the warning explains the
     assert.match(warnings[0], /possible tampering/);
     assert.match(warnings[0], /1 modified: index\.ts/);
     assert.match(warnings[0], /7 added: worktrees\/ \(6\), logs\/run\.log/);
-    assert.match(warnings[0], /bun plugins\.ts trust lp/);
+    assert.match(warnings[0], /career-ops plugins trust lp/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 

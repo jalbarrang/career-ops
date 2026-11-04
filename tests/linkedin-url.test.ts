@@ -1,7 +1,7 @@
 // tests/linkedin-url.test.ts — the shared LinkedIn job-URL parser.
 //
-// lib/linkedin-url.ts is the one body that reads a LinkedIn posting URL. The
-// `linkedin` rung of liveness-api.ts and aggregatorPostingId in url-key.ts
+// packages/core/src/outreach/linkedin-url.ts is the one body that reads a LinkedIn posting URL. The
+// `linkedin` rung of packages/core/src/liveness/liveness-api.ts and aggregatorPostingId in packages/core/src/kernel/url-key.ts
 // resolve through it, and any other
 // consumer is meant to import it (or test parity against it) instead of copying
 // the regexes. So the shapes are pinned here on the module itself, and the later
@@ -10,9 +10,9 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { pass, fail, ROOT } from './helpers.ts';
-import { linkedInJobId, linkedInPathJobId, linkedInGuestUrl } from '../lib/linkedin-url.ts';
-import { resolveAtsApi } from '../liveness-api.ts';
-import { aggregatorPostingId } from '../url-key.ts';
+import { linkedInJobId, linkedInPathJobId, linkedInGuestUrl } from '../packages/core/src/outreach/linkedin-url.ts';
+import { resolveAtsApi } from '../packages/core/src/liveness/liveness-api.ts';
+import { aggregatorPostingId } from '../packages/core/src/kernel/url-key.ts';
 
 console.log('\nlib/linkedin-url.ts — LinkedIn job-URL parser');
 
@@ -87,7 +87,7 @@ for (const [desc, url] of [...ACCEPTS, ...REJECTS]) {
   check(`liveness rung agrees: ${desc}`, agrees, `${url} -> ${JSON.stringify(rung)}`);
 }
 
-// -- 5. url-key.ts reads the same id --------------------------------------
+// -- 5. packages/core/src/kernel/url-key.ts reads the same id --------------------------------------
 // aggregatorPostingId matches the host its own way (it folds trailing dots), then
 // reads the path through linkedInPathJobId: same answer on every URL above.
 for (const [desc, url] of [...ACCEPTS, ...REJECTS]) {
@@ -106,10 +106,10 @@ check('linkedInPathJobId reads the path without the host',
 
 // -- 6. loadable outside Node, and shipped by the updater --------------------
 // A browser bundle has to be able to load this file, so it must import nothing.
-const src = readFileSync(join(ROOT, 'lib', 'linkedin-url.ts'), 'utf-8');
+const src = readFileSync(join(ROOT, 'packages/core/src/outreach/linkedin-url.ts'), 'utf-8');
 check('the module has no imports', !/^\s*import\b|\bimport\s*\(|\brequire\s*\(/m.test(src));
 
-// liveness-api.ts is a SYSTEM_PATHS file: an upgraded install whose updater
+// packages/core/src/liveness/liveness-api.ts is a SYSTEM_PATHS file: an upgraded install whose updater
 // had no entry for this module would check out a liveness-api that cannot load.
-const manifestSrc = readFileSync(join(ROOT, 'lib', 'update-manifest.ts'), 'utf-8');
-check('the updater ships lib/linkedin-url.ts', manifestSrc.includes("'lib/linkedin-url.ts'"));
+const manifestSrc = readFileSync(join(ROOT, 'packages/core/src/platform/update-manifest.ts'), 'utf-8');
+check('the updater ships packages/core/src/outreach/linkedin-url.ts', manifestSrc.includes("'packages/core/src/outreach/linkedin-url.ts'"));

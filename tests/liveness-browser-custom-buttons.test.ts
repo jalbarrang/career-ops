@@ -12,7 +12,7 @@
 // served by a route registered after the liveness guard's, which makes it run
 // first: nothing is resolved or fetched.
 import { pass, fail, warn } from './helpers.ts';
-import { checkUrlLiveness, installLivenessRouteGuard, newLivenessPage } from '../liveness-browser.ts';
+import { checkUrlLiveness, installLivenessRouteGuard, newLivenessPage } from '../packages/core/src/liveness/liveness-browser.ts';
 
 console.log('\nliveness-browser — custom-element buttons');
 

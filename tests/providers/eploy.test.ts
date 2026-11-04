@@ -11,8 +11,8 @@ console.log('\nProvider — eploy');
 const fixture = (name) => readFileSync(join(ROOT, 'tests', 'fixtures', name), 'utf8');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/eploy.ts')).href);
-  const { resolveProvider } = await import(pathToFileURL(join(ROOT, 'providers/_registry.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/eploy.ts')).href);
+  const { resolveProvider } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_registry.ts')).href);
   const eploy = mod.default;
 
   if (eploy.id === 'eploy') pass('eploy.id is "eploy"');

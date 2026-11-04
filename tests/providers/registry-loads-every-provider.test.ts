@@ -9,11 +9,11 @@
 // That is right for a plugin loader — one bad module must not take the whole
 // scan down. But it means a provider lost to a typo, a renamed import, a
 // removed export or an id collision leaves nothing behind except a line on
-// stderr, and `scan.ts` then skips every board that provider claimed on every
+// stderr, and `packages/core/src/scanning/scan.ts` then skips every board that provider claimed on every
 // run while the scan still reports success. AGENTS.md names this exact shape as
 // the highest-value check for portals.yml:
 //
-//   "no provider claims its careers_url (so scan.ts skips it silently on
+//   "no provider claims its careers_url (so packages/core/src/scanning/scan.ts skips it silently on
 //    every run while it reads as coverage)"
 //
 // The same thing one layer down — the provider module itself vanishing — had
@@ -43,11 +43,11 @@ import { readdirSync } from 'fs';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { pass, fail, ROOT } from '../helpers.ts';
-import { loadProviders } from '../../providers/_registry.ts';
+import { loadProviders } from '../../packages/core/src/scanning/providers/_registry.ts';
 
 console.log('\nProvider — the registry loads every provider file');
 
-const PROVIDERS_DIR = join(ROOT, 'providers');
+const PROVIDERS_DIR = join(ROOT, 'packages/core/src/scanning/providers');
 
 // `_`-prefixed files are shared helpers and are never loaded as providers.
 const files = readdirSync(PROVIDERS_DIR)
@@ -90,7 +90,7 @@ if (providers.size === files.length) {
     return !ids.has(stem) && !registeredFiles.has(f);
   });
   fail(
-    `${providers.size} of ${files.length} provider files registered — scan.ts will skip every board `
+    `${providers.size} of ${files.length} provider files registered — packages/core/src/scanning/scan.ts will skip every board `
     + `the missing one(s) claim, on every run, while still reporting success. `
     + `Unaccounted for (by filename stem; a provider whose id differs from its filename may appear here harmlessly): `
     + `${unaccounted.join(', ') || '(none by stem — compare ids)'}`,

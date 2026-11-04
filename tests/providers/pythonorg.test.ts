@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — pythonorg');
 
 try {
-  const pythonorgModule = await import(pathToFileURL(join(ROOT, 'providers/pythonorg.ts')).href);
+  const pythonorgModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/pythonorg.ts')).href);
   const pythonorg = pythonorgModule.default;
   const { parsePythonOrgFeed, assertPythonOrgUrl } = pythonorgModule;
 

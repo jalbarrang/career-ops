@@ -1,8 +1,8 @@
 /**
- * calibrate-tracker-colmap.test.ts — regression suite for calibrate.ts's
+ * calibrate-tracker-colmap.test.ts — regression suite for packages/cli/src/commands/insights/calibrate.ts's
  * tracker loader.
  *
- * calibrate.ts's `--self-test` covers computeCalibration() against in-memory
+ * packages/cli/src/commands/insights/calibrate.ts's `--self-test` covers computeCalibration() against in-memory
  * rows, so it never exercises the step that turns applications.md into those
  * rows. That gap hid a column-map bug: loadTrackerRows() called
  * `resolveColumns(headerLine)` with a single string, but resolveColumns()
@@ -23,7 +23,7 @@
  * Run: bun tests/calibrate-tracker-colmap.test.ts
  */
 
-import { loadTrackerRows } from '../calibrate.ts';
+import { loadTrackerRows } from '../packages/cli/src/commands/insights/calibrate.ts';
 import { writeFileSync, mkdtempSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';

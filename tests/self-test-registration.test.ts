@@ -5,7 +5,7 @@
 // (tests/**/*.test.ts, #1440) never sees it. It runs only when someone names
 // it: an entry in the `scripts` list in test-all.ts, or a suite under tests/
 // that spawns `<script> --self-test`. Forgetting that entry costs nothing
-// visible. linkedin-join.ts (43 checks) and validate-profile.ts (14 checks)
+// visible. packages/cli/src/commands/outreach/linkedin-join.ts (43 checks) and packages/cli/src/commands/profile/validate-profile.ts (14 checks)
 // both shipped that way and were never run by CI, the same shape
 // tests/root-tests-registration.test.ts guards for root *-tests.ts suites
 // and that #3303 found for a root *.test.ts.
@@ -32,7 +32,7 @@
 // a false red resolved by registering the script in test-all.ts.
 import { readFileSync } from 'fs';
 import { basename, join, relative, sep } from 'path';
-import { trackedFiles } from '../lib/source-files.ts';
+import { trackedFiles } from '../packages/core/src/kernel/source-files.ts';
 import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\ntest-all.ts — every --self-test is run by something');
@@ -106,8 +106,11 @@ function scriptsBlock(harnessSrc) {
 
 /** Whether test-all.ts's `scripts` array registers `<name> --self-test`. */
 function registeredInHarness(block, name) {
-  const entry = `'${name} --self-test'`;
-  return codeLines(block).some((line) => line.includes(entry) && /\bexpectExit:\s*0\b/.test(line));
+  // Scripts live under packages/ now, so the harness entry carries a path and
+  // the scan yields a basename: match the basename of the entry's first token.
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`name:\\s*'(?:[^']*/)?${escaped} --self-test'`);
+  return codeLines(block).some((line) => re.test(line) && /\bexpectExit:\s*0\b/.test(line));
 }
 
 /** Whether a test suite's source launches `<name> --self-test` on one line. */
@@ -150,7 +153,9 @@ const block = scriptsBlock(harnessSrc);
 if (block === null) {
   fail('test-all.ts has no `const scripts = [ ... ];` array — this guard is reading the wrong shape and would pass on any tree');
 } else {
-  const rootScripts = trackedFiles(ROOT, (rel) => rel.endsWith('.ts') && !rel.includes('/') && rel !== 'test-all.ts');
+  // The engine tree, not the root: scripts moved under packages/ in the monorepo
+  // split, and a root-only scan reads as "nothing to check" instead.
+  const rootScripts = trackedFiles(ROOT, (rel) => rel.startsWith('packages/') && rel.endsWith('.ts'));
   const declaring = rootScripts
     .filter((abs) => declaresSelfTest(readFileSync(abs, 'utf-8')))
     .map((abs) => basename(abs));

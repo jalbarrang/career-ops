@@ -199,7 +199,7 @@ Work passes, benefits, and hiring norms differ materially from the US/EU. Apply 
 
 0. **Cover letter:** If the form allows it, ALWAYS include one. PDF with the same visual design as the CV. Posting quotes mapped to proof points. Maximum 1 page. Business-English tone: direct, concrete, no flattery.
 1. Read `cv.md` and `article-digest.md` (if present) before evaluating a posting
-1b. **First evaluation of each session:** run `bun cv-sync-check.ts` via Bash. On warnings, inform the candidate.
+1b. **First evaluation of each session:** run `career-ops cv-sync-check` via Bash. On warnings, inform the candidate.
 2. Detect the role archetype and adapt framing
 3. Cite exact CV lines during matching
 4. Use WebSearch for comp data and company intel
@@ -208,7 +208,7 @@ Work passes, benefits, and hiring norms differ materially from the US/EU. Apply 
 7. Be direct and concrete — no beating around the bush
 8. Natural tech English for generated text. Short sentences, action verbs, avoid the passive. Do not force-translate technical terms.
 8b. **Case-study URLs in the PDF Professional Summary:** If the PDF mentions demos or case studies, their URLs MUST appear in the first paragraph (Professional Summary) — recruiters often read only that. All URLs in HTML with `white-space: nowrap`
-9. **Tracker insertions in TSV format** — NEVER edit `applications.md` directly for new insertions. Write the TSV file in `batch/tracker-additions/`; `merge-tracker.ts` handles the merge. Write a **column-names** row first and exactly one data row beneath it (see AGENTS.md, "TSV Format for Tracker Additions"). The names row lets `merge-tracker.ts` resolve fields by NAME instead of guessing which column is score and which is status
+9. **Tracker insertions in TSV format** — NEVER edit `applications.md` directly for new insertions. Write the TSV file in `batch/tracker-additions/`; `packages/cli/src/commands/tracker/merge-tracker.ts` handles the merge. Write a **column-names** row first and exactly one data row beneath it (see AGENTS.md, "TSV Format for Tracker Additions"). The names row lets `packages/cli/src/commands/tracker/merge-tracker.ts` resolve fields by NAME instead of guessing which column is score and which is status
 10. **`**URL:**` in every report header** — placed between Score and PDF
 
 ### Tools
@@ -220,5 +220,5 @@ Work passes, benefits, and hiring norms differ materially from the US/EU. Apply 
 | Playwright | Verify postings are live (browser_navigate + browser_snapshot), extract postings from SPAs. **CRITICAL: NEVER run 2+ agents in parallel with Playwright — they share the same browser instance** |
 | Read | cv.md, article-digest.md, cv-template.html |
 | Write | Temporary HTML for PDF, .md reports, tracker-addition TSVs in `batch/tracker-additions/` (never `applications.md` directly) |
-| Edit | Fixes to reports and other generated content. Never the tracker table: new rows go in as a TSV merged by `bun merge-tracker.ts`; status and notes changes go through `bun set-status.ts` |
-| Bash | `bun generate-pdf.ts`, `bun merge-tracker.ts`, `bun set-status.ts` |
+| Edit | Fixes to reports and other generated content. Never the tracker table: new rows go in as a TSV merged by `career-ops merge-tracker`; status and notes changes go through `career-ops set-status` |
+| Bash | `career-ops generate-pdf`, `career-ops merge-tracker`, `career-ops set-status` |

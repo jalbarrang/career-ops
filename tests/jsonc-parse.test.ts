@@ -1,5 +1,5 @@
 // tests/jsonc-parse.test.ts — the JSONC tolerance used for OpenCode configs
-// (#2252). doctor.ts's end-to-end detection lives in
+// (#2252). packages/cli/src/commands/platform/doctor.ts's end-to-end detection lives in
 // tests/playwright-mcp-detection.test.ts; this file owns the parser itself,
 // where the interesting cases are the ones a naive regex stripper corrupts:
 // "//" inside a string, an escaped quote, a comma inside a string value.
@@ -11,7 +11,7 @@ console.log('\njsonc-parse.ts — comment and trailing-comma tolerance');
 
 try {
   const { parseJsonc, parseConfigByExtension } = await import(
-    pathToFileURL(join(ROOT, 'jsonc-parse.ts')).href
+    pathToFileURL(join(ROOT, 'packages/core/src/kernel/jsonc-parse.ts')).href
   );
 
   const check = (label, actual, expected) => {

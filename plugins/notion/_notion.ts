@@ -16,7 +16,7 @@
 import { readFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { loadYaml } from '../../lib/yaml-document.ts';
+import { loadYaml } from '../../packages/core/src/kernel/yaml-document.ts';
 
 const DIR = dirname(fileURLToPath(import.meta.url));
 const STATES_PATH = join(DIR, '..', '..', 'templates', 'states.yml');

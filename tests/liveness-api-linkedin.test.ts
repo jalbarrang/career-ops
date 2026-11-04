@@ -25,7 +25,7 @@ import { readFileSync } from 'fs';
 import { pathToFileURL } from 'url';
 
 const { resolveAtsApi, classifyLinkedInPosting, checkLivenessViaApi, throttleProviderRequest } =
-  await import(pathToFileURL(join(ROOT, 'liveness-api.ts')).href);
+  await import(pathToFileURL(join(ROOT, 'packages/core/src/liveness/liveness-api.ts')).href);
 
 console.log('\nLinkedIn liveness rung');
 
@@ -214,9 +214,9 @@ const API = `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${ID}`;
 // browser rung is the thing being avoided here, so assert the caller checks the
 // API first rather than trusting the ordering to stay put.
 {
-  const src = readFileSync(join(ROOT, 'check-liveness.ts'), 'utf-8');
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/liveness/check-liveness.ts'), 'utf-8');
   const apiAt = src.indexOf('checkLivenessViaApi(');
   const browserAt = src.indexOf('checkUrlLivenessWithFallback(');
-  check('check-liveness.ts consults the API rung before the browser rung',
+  check('packages/cli/src/commands/liveness/check-liveness.ts consults the API rung before the browser rung',
     apiAt > -1 && browserAt > -1 && apiAt < browserAt, `api=${apiAt} browser=${browserAt}`);
 }

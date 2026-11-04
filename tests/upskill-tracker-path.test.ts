@@ -36,7 +36,7 @@ function writeFixture(root) {
 }
 
 function reportsRead(root, tracker = '') {
-  const out = execFileSync(NODE, [join(ROOT, 'upskill.ts'), '--min-reports', '1'], {
+  const out = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/insights/upskill.ts'), '--min-reports', '1'], {
     encoding: 'utf-8',
     timeout: 60000,
     env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_TRACKER: tracker },
@@ -62,7 +62,7 @@ try {
     if (read === 1) pass('data root under the tmpdir: the tracker-relative report link is read');
     else fail(`data root under the tmpdir: reportsRead=${read}, expected 1`);
   } catch (e) {
-    fail(`upskill.ts failed on a data root under the tmpdir: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
+    fail(`packages/cli/src/commands/insights/upskill.ts failed on a data root under the tmpdir: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
   } finally {
     rmSync(tmpRoot, { recursive: true, force: true });
   }
@@ -86,7 +86,7 @@ try {
       if (read === 1) pass('symlinked tracker file: links relative to its target still resolve');
       else fail(`symlinked tracker file lost its reports: reportsRead=${read}, expected 1`);
     } catch (e) {
-      fail(`upskill.ts failed through a symlinked tracker file: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
+      fail(`packages/cli/src/commands/insights/upskill.ts failed through a symlinked tracker file: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
     }
 
     try {
@@ -94,7 +94,7 @@ try {
       if (read === 1) pass('symlinked data root: the tracker-relative report link still resolves after the tracker is realpathed');
       else fail(`symlinked data root lost its reports: reportsRead=${read}, expected 1`);
     } catch (e) {
-      fail(`upskill.ts failed through a symlinked data root: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
+      fail(`packages/cli/src/commands/insights/upskill.ts failed through a symlinked data root: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
     }
   }
 } finally {

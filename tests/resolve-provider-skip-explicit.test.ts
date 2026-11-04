@@ -1,7 +1,7 @@
 // tests/resolve-provider-skip-explicit.test.ts — a provider id in `skipIds` is
 // skipped even when the entry names it in an explicit `provider:` field.
 //
-// `skipIds: ['local-parser']` is how verify-portals.ts and audit-portals.ts
+// `skipIds: ['local-parser']` is how packages/core/src/scanning/verify-portals.ts and packages/cli/src/commands/scanning/audit-portals.ts
 // stay network-only: local-parser's fetch() executes the command configured in
 // portals.yml, and a health check must not do that. resolveProvider() honored
 // the list for an entry that reaches local-parser through detect() (it has
@@ -9,13 +9,13 @@
 // explicit `provider: local-parser` before looking at the list, so the same
 // entry written with the field was executed by both checks.
 //
-// The third caller is scan.ts's fallback: when a local parser fails it resolves
+// The third caller is packages/core/src/scanning/scan.ts's fallback: when a local parser fails it resolves
 // the entry again with local-parser skipped, to find an API provider to fall
 // back to. For the explicit form that returned local-parser itself, and the
 // failed command ran a second time.
 //
 // Offline: stub providers, and the local-parser stand-in only counts its calls.
-// The last check runs a real scan.ts in a sandbox over a parser fixture that
+// The last check runs a real packages/core/src/scanning/scan.ts in a sandbox over a parser fixture that
 // always fails, and counts how many times the scanner executed it.
 import { pass, fail, ROOT, NODE, rmSync } from './helpers.ts';
 import { execFileSync } from 'child_process';
@@ -28,9 +28,9 @@ console.log('\nresolveProvider — skipIds also covers an explicit provider: fie
 
 try {
   const load = (file) => import(pathToFileURL(join(ROOT, file)).href);
-  const { resolveProvider } = await load('providers/_registry.ts');
-  const { verifyCompanies } = await load('verify-portals.ts');
-  const { auditCompanies } = await load('audit-portals.ts');
+  const { resolveProvider } = await load('packages/core/src/scanning/providers/_registry.ts');
+  const { verifyCompanies } = await load('packages/core/src/scanning/verify-portals.ts');
+  const { auditCompanies } = await load('packages/cli/src/commands/scanning/audit-portals.ts');
 
   let parserRuns = 0;
   const localParser = {
@@ -68,7 +68,7 @@ try {
   if (viaDetect === skipped) pass('the explicit and the detected form of one entry resolve the same way');
   else fail(`the two forms diverge: detected=${JSON.stringify(viaDetect)} explicit=${JSON.stringify(skipped)}`);
 
-  // What scan.ts's fallback asks for: the next provider that claims the entry.
+  // What packages/core/src/scanning/scan.ts's fallback asks for: the next provider that claims the entry.
   const fallback = resolveProvider(explicitOnBoard, reg, skip);
   if (fallback?.provider?.id === 'board') pass('with local-parser skipped, the entry falls through to the provider that detects it');
   else fail(`no fallback provider for a skipped explicit entry: ${JSON.stringify(fallback)}`);
@@ -98,7 +98,7 @@ try {
     fail(`audit-portals ran the local parser ${parserRuns} time(s): ${JSON.stringify(auditRows)}`);
   }
 
-  // ── scan.ts itself: a failing explicit local parser runs once, not twice ──
+  // ── packages/core/src/scanning/scan.ts itself: a failing explicit local parser runs once, not twice ──
   // No other provider claims this careers_url, so the fallback has nothing to
   // fall back to and the scanner must report the parser's own failure. Before
   // the fix the fallback resolved to local-parser again and re-ran the command.
@@ -116,7 +116,7 @@ ${withField ? '    provider: local-parser\n' : ''}    parser:
 `;
   // The spawn must see the sandbox and nothing else, so every inherited
   // CAREER_OPS_* variable is dropped by prefix rather than by a list: a list
-  // goes stale the day scan.ts learns a new override. CAREER_OPS_TRACKER was
+  // goes stale the day packages/core/src/scanning/scan.ts learns a new override. CAREER_OPS_TRACKER was
   // the one a list missed, and with it set this test followed the developer's
   // real tracker.
   const parserRunsInScan = (withField) => {
@@ -130,7 +130,7 @@ ${withField ? '    provider: local-parser\n' : ''}    parser:
       const env = { ...process.env };
       for (const name of Object.keys(env)) if (name.toUpperCase().startsWith('CAREER_OPS_')) delete env[name];
       try {
-        execFileSync(NODE, [join(ROOT, 'scan.ts')], {
+        execFileSync(NODE, [join(ROOT, 'packages/core/src/scanning/scan.ts')], {
           cwd: dir,
           env: { ...env, CAREER_OPS_ROOT: dir, CAREER_OPS_PORTALS: portals, CO_TEST_PARSER_MARKER: marker },
           encoding: 'utf-8',
@@ -146,12 +146,12 @@ ${withField ? '    provider: local-parser\n' : ''}    parser:
   };
 
   const detectedRuns = parserRunsInScan(false);
-  if (detectedRuns === 1) pass('scan.ts runs a failing detected local parser once (control)');
+  if (detectedRuns === 1) pass('packages/core/src/scanning/scan.ts runs a failing detected local parser once (control)');
   else fail(`control drifted: the detected form ran ${detectedRuns} time(s), expected 1`);
 
   const explicitRuns = parserRunsInScan(true);
-  if (explicitRuns === 1) pass('scan.ts runs a failing explicit local parser once, not twice');
-  else fail(`scan.ts ran a failing explicit local parser ${explicitRuns} time(s), expected 1`);
+  if (explicitRuns === 1) pass('packages/core/src/scanning/scan.ts runs a failing explicit local parser once, not twice');
+  else fail(`packages/core/src/scanning/scan.ts ran a failing explicit local parser ${explicitRuns} time(s), expected 1`);
 } catch (err) {
   fail(`resolveProvider skipIds tests could not run: ${err.message}`);
 }

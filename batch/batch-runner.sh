@@ -30,12 +30,12 @@ esac
 # can place outside the checkout. Every path here used to be built from
 # PROJECT_DIR, so under an external data root workers were scored against the
 # checkout's template profile, and their reports and tracker lines were looked
-# for in directories reserve-report-num.ts and merge-tracker.ts never read
-# (#5115). path-resolver.ts owns the precedence, so ask it instead of
+# for in directories packages/cli/src/commands/tracker/reserve-report-num.ts and packages/cli/src/commands/tracker/merge-tracker.ts never read
+# (#5115). packages/core/src/kernel/path-resolver.ts owns the precedence, so ask it instead of
 # re-deriving it in bash. It prints nothing when the data root is the checkout,
 # which keeps DATA_ROOT spelled exactly like PROJECT_DIR in the default layout.
 DATA_ROOT="$PROJECT_DIR"
-if [[ -f "$PROJECT_DIR/path-resolver.ts" ]]; then
+if [[ -f "$PROJECT_DIR/packages/core/src/kernel/path-resolver.ts" ]]; then
   if ! resolved_data_root="$(bun --input-type=module -e '
     import { realpathSync } from "node:fs";
     import { dirname } from "node:path";
@@ -44,11 +44,11 @@ if [[ -f "$PROJECT_DIR/path-resolver.ts" ]]; then
     const { getCareerOpsRoot } = await import(pathToFileURL(resolver).href);
     const real = (p) => { try { return realpathSync(p); } catch { return p; } };
     const root = getCareerOpsRoot();
-    if (real(root) !== real(dirname(resolver))) {
+    if (real(root) !== real(process.argv[2])) {
       process.stdout.write(process.platform === "win32" ? root.replace(/\\/g, "/") : root);
     }
-  ' "$PROJECT_DIR/path-resolver.ts")"; then
-    echo "ERROR: could not resolve the career-ops data root through path-resolver.ts" >&2
+  ' "$PROJECT_DIR/packages/core/src/kernel/path-resolver.ts" "$PROJECT_DIR")"; then
+    echo "ERROR: could not resolve the career-ops data root through packages/core/src/kernel/path-resolver.ts" >&2
     exit 1
   fi
   if [[ -n "$resolved_data_root" ]]; then
@@ -60,14 +60,14 @@ INPUT_FILE="$BATCH_DIR/batch-input.tsv"
 STATE_FILE="$BATCH_DIR/batch-state.tsv"
 PROMPT_FILE="$BATCH_DIR/batch-prompt.md"
 # The profile follows CAREER_OPS_PROFILE as well as the data root, like every
-# other reader does through path-resolver.ts (#5144). Building it from the
+# other reader does through packages/core/src/kernel/path-resolver.ts (#5144). Building it from the
 # data root here left a run reading the data root's profile for spend_tier and
 # for the prompt's personalization while the .ts readers used the override.
 # The .md prompt files still name config/profile.yml; the script-generated
 # runtime block and the injected personalization use $PROFILE_FILE.
 PROFILE_FILE="$DATA_ROOT/config/profile.yml"
 PROFILE_RESOLVED=false
-if [[ -f "$PROJECT_DIR/path-resolver.ts" ]]; then
+if [[ -f "$PROJECT_DIR/packages/core/src/kernel/path-resolver.ts" ]]; then
   if ! resolved_profile_file="$(bun --input-type=module -e '
     import { pathToFileURL } from "node:url";
     const resolver = process.argv[1];
@@ -78,8 +78,8 @@ if [[ -f "$PROJECT_DIR/path-resolver.ts" ]]; then
       const profile = getProfilePath();
       process.stdout.write(process.platform === "win32" ? profile.replace(/\\/g, "/") : profile);
     }
-  ' "$PROJECT_DIR/path-resolver.ts")"; then
-    echo "ERROR: could not resolve the career-ops profile path through path-resolver.ts" >&2
+  ' "$PROJECT_DIR/packages/core/src/kernel/path-resolver.ts")"; then
+    echo "ERROR: could not resolve the career-ops profile path through packages/core/src/kernel/path-resolver.ts" >&2
     exit 1
   fi
   if [[ -n "$resolved_profile_file" ]]; then
@@ -99,7 +99,7 @@ DISCARD_LOG="$LOGS_DIR/discard.log"
 TRACKER_DIR="$DATA_ROOT/batch/tracker-additions"
 REPORTS_DIR="$DATA_ROOT/reports"
 # The runner's own bookkeeping (input, state, logs, locks) stays beside the
-# script. reserve-report-num.ts and merge-tracker.ts default batch-state.tsv
+# script. packages/cli/src/commands/tracker/reserve-report-num.ts and packages/cli/src/commands/tracker/merge-tracker.ts default batch-state.tsv
 # to the data root, where this runner never writes it, so name the real file
 # for them: both skip report numbers this run recorded as failed. Built from
 # PROJECT_DIR, which is the form bun can open under Git Bash (see above).
@@ -180,7 +180,7 @@ Options:
                        page, empty shell): 'webfetch' (default) spawns the worker and
                        lets it try WebFetch; 'skip' records the offer as skipped with
                        a needs-playwright marker and spawns no worker; 'browser-extract'
-                       renders the page with browser-extract.ts (headless Chromium,
+                       renders the page with packages/cli/src/commands/scanning/browser-extract.ts (headless Chromium,
                        zero model tokens, needs 'bunx playwright install chromium') and
                        hands the recovered text to the worker
   --rate-limit-sleep N Maximum adaptive retry delay in seconds; 0 pauses immediately
@@ -349,7 +349,7 @@ check_prerequisites() {
     exit 1
   fi
 
-  if [[ "$THIN_ACTION" == "browser-extract" && ! -f "$PROJECT_DIR/browser-extract.ts" ]]; then
+  if [[ "$THIN_ACTION" == "browser-extract" && ! -f "$PROJECT_DIR/packages/cli/src/commands/scanning/browser-extract.ts" ]]; then
     echo "ERROR: --thin-action browser-extract needs browser-extract.ts (and 'bunx playwright install chromium')."
     exit 1
   fi
@@ -977,24 +977,24 @@ reserve_report_num_unlocked() {
   local id="$1" url="$2" started="$3" retries="$4"
 
   # Use the shared, cross-process-atomic reservation system (O_CREAT|O_EXCL
-  # sentinel files in reserve-report-num.ts) instead of the old bash-native
+  # sentinel files in packages/cli/src/commands/tracker/reserve-report-num.ts) instead of the old bash-native
   # max(existing report files, batch-state.tsv numbers)+1 scan. The bash-native
   # version had zero visibility into reservations made by any OTHER process
-  # calling `bun reserve-report-num.ts` directly -- e.g. an interactively
+  # calling `bun packages/cli/src/commands/tracker/reserve-report-num.ts` directly -- e.g. an interactively
   # dispatched Agent evaluating one offer with a browser tool while a batch
   # run is in flight. Both could independently compute the same "next" number
   # and collide on disk. Found 2026-07-30: two separate collisions (report
   # 049, report 051) in one batch run for exactly this reason -- routing every
   # caller through the same bun process means they all share one real lock.
   local report_num=""
-  report_num=$(bun "$PROJECT_DIR/reserve-report-num.ts" 2>/dev/null | tr -d '[:space:]') || report_num=""
+  report_num=$(bun "$PROJECT_DIR/packages/cli/src/commands/tracker/reserve-report-num.ts" 2>/dev/null | tr -d '[:space:]') || report_num=""
   # No number means the allocator failed (lock timeout, unwritable reports/,
   # exhausted retries). Returning success with an empty number let the caller
   # launch a paid worker with a blank "Report number:" and write an empty
   # report_num cell into batch-state.tsv; the retry wrapper below is what
   # handles a failed reservation, so fail here and let it.
   if [[ ! "$report_num" =~ ^[0-9]+$ ]]; then
-    echo "    ❌ reserve-report-num.ts returned no report number for offer id=$id" >&2
+    echo "    ❌ packages/cli/src/commands/tracker/reserve-report-num.ts returned no report number for offer id=$id" >&2
     return 1
   fi
   update_state_unlocked "$id" "$url" "processing" "$started" "-" "$report_num" "-" "-" "$retries"
@@ -1008,7 +1008,7 @@ reserve_report_num_unlocked() {
 release_report_num() {
   local report_num="$1"
   [[ -n "$report_num" && "$report_num" != "-" ]] || return 0
-  bun "$PROJECT_DIR/reserve-report-num.ts" --release "$report_num" >/dev/null 2>&1 || true
+  bun "$PROJECT_DIR/packages/cli/src/commands/tracker/reserve-report-num.ts" --release "$report_num" >/dev/null 2>&1 || true
 }
 
 reserve_report_num() {
@@ -1016,14 +1016,14 @@ reserve_report_num() {
 }
 
 # Succeed if reports/ holds a real report for this number. The reservation
-# sentinel ({num}-RESERVED.md) never counts: reserve-report-num.ts creates it
+# sentinel ({num}-RESERVED.md) never counts: packages/cli/src/commands/tracker/reserve-report-num.ts creates it
 # before the worker runs, so counting it would mark a no-op worker completed.
 #
 # A plain glob loop, not `compgen -G`: compgen exists only when bash is built
 # with programmable completion, and some distro builds (NixOS among them) omit
 # it from non-interactive shells. There, compgen fails, the check sees no
 # report, and every worker is recorded as failed even though its report is on
-# disk. merge-tracker.ts then refuses those reports as possibly fabricated.
+# disk. packages/cli/src/commands/tracker/merge-tracker.ts then refuses those reports as possibly fabricated.
 has_report_file() {
   local report_num="$1" f
   for f in "$REPORTS_DIR/${report_num}"-*.md; do
@@ -1233,24 +1233,24 @@ process_offer() {
 
   # ATS API fallback (#4246). When the static fetch above left $jd_file empty
   # (thin JS shell, curl failure, curl absent), ask the ATS's own public API
-  # through fetch-jd.ts before the worker falls back to WebFetch, which hits
+  # through packages/cli/src/commands/scanning/fetch-jd.ts before the worker falls back to WebFetch, which hits
   # the same unrendered shell on Ashby and embedded Greenhouse boards.
   # The call lives here and not in the worker prompt on purpose: the offer URL
   # is untrusted, and here it travels as one argv element ("$url"), never as
-  # text inside a shell command the worker composes. fetch-jd.ts only talks to
+  # text inside a shell command the worker composes. packages/cli/src/commands/scanning/fetch-jd.ts only talks to
   # the known ATS API hosts it resolves from the URL, so a private or unknown
   # host is a miss (exit 1), not a request.
   local jd_api_words=0
-  if [[ ! -s "$jd_file" && -f "$PROJECT_DIR/fetch-jd.ts" ]]; then
+  if [[ ! -s "$jd_file" && -f "$PROJECT_DIR/packages/cli/src/commands/scanning/fetch-jd.ts" ]]; then
     local jd_api_tmp
     jd_api_tmp="$(mktemp "${TMPDIR:-/tmp}/batch-jd-api.XXXXXX")"
-    if bun "$PROJECT_DIR/fetch-jd.ts" "$url" > "$jd_api_tmp" 2>/dev/null; then
+    if bun "$PROJECT_DIR/packages/cli/src/commands/scanning/fetch-jd.ts" "$url" > "$jd_api_tmp" 2>/dev/null; then
       jd_api_words=$(wc -w < "$jd_api_tmp" 2>/dev/null) || jd_api_words=0
       jd_api_words="${jd_api_words//[^0-9]/}"
       jd_api_words="${jd_api_words:-0}"
       if [[ "$jd_api_words" -ge "$prefetch_min_words" ]]; then
         cat "$jd_api_tmp" > "$jd_file"
-        echo "    ℹ️  JD prefetch: ${jd_api_words} words from the ATS API (fetch-jd.ts)"
+        echo "    ℹ️  JD prefetch: ${jd_api_words} words from the ATS API (packages/cli/src/commands/scanning/fetch-jd.ts)"
       fi
     fi
     rm -f "$jd_api_tmp"
@@ -1262,7 +1262,7 @@ process_offer() {
   # here; the skip is recorded after the "Processing offer" line below.
   local jd_thin_skip=0 jd_thin_note="" jd_thin_retryable=0
   if [[ ! -s "$jd_file" && "$THIN_ACTION" != "webfetch" ]]; then
-    if [[ "$THIN_ACTION" == "browser-extract" && -f "$PROJECT_DIR/browser-extract.ts" ]]; then
+    if [[ "$THIN_ACTION" == "browser-extract" && -f "$PROJECT_DIR/packages/cli/src/commands/scanning/browser-extract.ts" ]]; then
       # Real-browser read: zero model tokens, ~5-15s of Chromium. Success is
       # compact JSON on stdout, a failure is exit 1 with a JSON error on stderr.
       # A near-empty or taken-down page is a failure there, so the word floor
@@ -1270,7 +1270,7 @@ process_offer() {
       local be_out be_err be_words=0 be_code=""
       be_out="$(mktemp "${TMPDIR:-/tmp}/batch-jd-browser.XXXXXX")"
       be_err="$(mktemp "${TMPDIR:-/tmp}/batch-jd-browser-err.XXXXXX")"
-      if bun "$PROJECT_DIR/browser-extract.ts" "$url" --mode jd > "$be_out" 2> "$be_err"; then
+      if bun "$PROJECT_DIR/packages/cli/src/commands/scanning/browser-extract.ts" "$url" --mode jd > "$be_out" 2> "$be_err"; then
         bun -e '
           let d = "";
           process.stdin.on("data", (c) => d += c);
@@ -1550,7 +1550,7 @@ process_offer() {
     # Without this check such offers were silently marked "completed" with no
     # report file on disk and score "-" (found 2026-07-29, offer id 6 / report
     # 019 — Deepgram JD unextractable in headless mode). Only the downstream
-    # reconcile-pipeline.ts safety net (which leaves an entry in Pending when
+    # packages/cli/src/commands/pipeline/reconcile-pipeline.ts safety net (which leaves an entry in Pending when
     # its report file is missing) prevented the offer from being lost.
     # Extract only the LAST ```json fenced block in the log -- that's the
     # worker's one authoritative final result (batch-prompt.md Step 6), not
@@ -1785,9 +1785,9 @@ process_offer() {
 merge_tracker() {
   echo ""
   echo "=== Merging tracker additions ==="
-  bun "$PROJECT_DIR/merge-tracker.ts"
+  bun "$PROJECT_DIR/packages/cli/src/commands/tracker/merge-tracker.ts"
   # A dealbreaker SKIP row holds its report number until it is merged. The
-  # tracker row now holds it for reserve-report-num.ts, so drop the sentinel.
+  # tracker row now holds it for packages/cli/src/commands/tracker/reserve-report-num.ts, so drop the sentinel.
   if [[ -f "$STATE_FILE" ]]; then
     local mid mstatus mnum merror
     while IFS=$'\t' read -r mid _ mstatus _ _ mnum _ merror _; do
@@ -1798,10 +1798,10 @@ merge_tracker() {
   fi
   echo ""
   echo "=== Reconciling pipeline.md ==="
-  bun "$PROJECT_DIR/reconcile-pipeline.ts" || echo "⚠️  Pipeline reconcile had issues (see above)"
+  bun "$PROJECT_DIR/packages/cli/src/commands/pipeline/reconcile-pipeline.ts" || echo "⚠️  Pipeline reconcile had issues (see above)"
   echo ""
   echo "=== Verifying pipeline integrity ==="
-  bun "$PROJECT_DIR/verify-pipeline.ts" || echo "⚠️  Verification found issues (see above)"
+  bun "$PROJECT_DIR/packages/cli/src/commands/platform/verify-pipeline.ts" || echo "⚠️  Verification found issues (see above)"
 }
 
 report_progress() {
@@ -1976,11 +1976,11 @@ watch_status() {
   echo "Showing final status:"
   print_status_table full
 
-  # Chain verify-pipeline.ts
-  if [[ -f "$PROJECT_DIR/verify-pipeline.ts" ]]; then
+  # Chain packages/cli/src/commands/platform/verify-pipeline.ts
+  if [[ -f "$PROJECT_DIR/packages/cli/src/commands/platform/verify-pipeline.ts" ]]; then
     echo ""
     echo "=== Running pipeline verification ==="
-    bun "$PROJECT_DIR/verify-pipeline.ts" || echo "⚠️  Verification found issues"
+    bun "$PROJECT_DIR/packages/cli/src/commands/platform/verify-pipeline.ts" || echo "⚠️  Verification found issues"
   fi
 }
 

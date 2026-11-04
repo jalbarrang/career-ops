@@ -138,7 +138,7 @@ export function validateRegistryEntry(e, { idRe, hookKinds, reservedEnv }) {
 /**
  * The registry entry that is the maintained successor of a bundled plugin id
  * (declares `supersedesBundled: true` and shares the id), or null. Used only to
- * SURFACE the relationship in `plugins.ts list`/`available` — precedence itself
+ * SURFACE the relationship in `packages/cli/src/commands/platform/plugins.ts list`/`available` — precedence itself
  * is decided by the engine's resolveSuccessorIds() (which also checks install + sha).
  */
 export function successorFor(root, bundledId) {

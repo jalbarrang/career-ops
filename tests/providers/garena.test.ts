@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — garena');
 
 try {
-  const garenaModule = await import(pathToFileURL(join(ROOT, 'providers/garena.ts')).href);
+  const garenaModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/garena.ts')).href);
   const garena = garenaModule.default;
   const { parseGarenaResponse } = garenaModule;
 

@@ -1,11 +1,11 @@
 // tests/liveness-browser-web-imports.test.ts — the core files the web app loads
 // at runtime import nothing from npm.
 //
-// web/src/lib/apply/url-guard.ts loads liveness-browser.ts from the core
-// checkout. The web install only has web/node_modules, so a bare package import
+// apps/web/src/lib/apply/url-guard.ts loads packages/core/src/liveness/liveness-browser.ts from the core
+// checkout. The web install only has apps/web/node_modules, so a bare package import
 // anywhere in that file's import closure fails there with ERR_MODULE_NOT_FOUND.
-// #5177 made liveness-core.ts import history-ats-seeds.ts, which reaches
-// tracker-utils.ts and js-yaml, and Web CI went red on main. The core suite
+// #5177 made packages/core/src/liveness/liveness-core.ts import packages/core/src/scanning/history-ats-seeds.ts, which reaches
+// packages/core/src/tracker/tracker-utils.ts and js-yaml, and Web CI went red on main. The core suite
 // cannot see this: the root install has js-yaml.
 //
 // Run:  bun test tests/liveness-browser-web-imports.test.ts
@@ -18,7 +18,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const ENTRY_POINTS = ['liveness-browser.ts'];
+const ENTRY_POINTS = ['packages/core/src/liveness/liveness-browser.ts'];
 const BUILTINS = new Set(builtinModules);
 const SPECIFIER = /(?:^|[\s;])(?:import|export)\s[^'"]*?from\s*['"]([^'"]+)['"]|import\s*\(\s*['"]([^'"]+)['"]\s*\)|^\s*import\s*['"]([^'"]+)['"]/gm;
 

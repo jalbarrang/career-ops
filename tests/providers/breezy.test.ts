@@ -7,7 +7,7 @@ console.log('\nProvider — breezy');
 
 
 try {
-  const breezyModule = await import(pathToFileURL(join(ROOT, 'providers/breezy.ts')).href);
+  const breezyModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/breezy.ts')).href);
   const breezy = breezyModule.default;
   const { parseBreezyResponse } = breezyModule;
 

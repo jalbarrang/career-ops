@@ -17,11 +17,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
-import { structuredFieldClaims, verifyFacts } from '../verify-cv-facts.ts';
+import { structuredFieldClaims, verifyFacts } from '../packages/cli/src/commands/cv/verify-cv-facts.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const tmp = mkdtempSync(join(tmpdir(), 'career-ops-structured-facts-'));
@@ -48,7 +48,7 @@ writeFileSync(source, CV);
 const options = (extra = {}) => ({ sourcePaths: [source], configPath: join(tmp, 'none.json'), ...extra });
 
 function build(script, payload, ext) {
-  const input = join(tmp, `${script}-${Math.random().toString(36).slice(2)}.json`);
+  const input = join(tmp, `${basename(script, '.ts')}-${Math.random().toString(36).slice(2)}.json`);
   const output = `${input}.${ext}`;
   writeFileSync(input, JSON.stringify(payload));
   const run = spawnSync(process.execPath, [join(ROOT, script), input, output], { encoding: 'utf-8' });
@@ -83,12 +83,12 @@ const TRUE = {
 const kinds = (facts) => facts.map(({ kind, value }) => `${kind}=${value}`).sort();
 
 test('a truthful built HTML CV passes', () => {
-  const result = verifyFacts(build('build-cv-html.ts', htmlPayload(TRUE), 'html'), options());
+  const result = verifyFacts(build('packages/cli/src/commands/cv/build-cv-html.ts', htmlPayload(TRUE), 'html'), options());
   assert.equal(result.verdict, 'pass', JSON.stringify(result));
 });
 
 test('a swapped employer, degree, institution and certification in built HTML block', () => {
-  const html = build('build-cv-html.ts', htmlPayload({
+  const html = build('packages/cli/src/commands/cv/build-cv-html.ts', htmlPayload({
     ...TRUE, company: 'Google', degree: 'PhD Computer Science', org: 'MIT', certs: ['CKA'],
   }), 'html');
   const result = verifyFacts(html, options());
@@ -99,9 +99,9 @@ test('a swapped employer, degree, institution and certification in built HTML bl
 });
 
 test('an unsourced job title in built HTML warns and does not block', () => {
-  const html = build('build-cv-html.ts', htmlPayload({ ...TRUE, role: 'Principal Engineer' }), 'html');
+  const html = build('packages/cli/src/commands/cv/build-cv-html.ts', htmlPayload({ ...TRUE, role: 'Principal Engineer' }), 'html');
   const result = verifyFacts(html, options());
-  assert.equal(result.verdict, 'warn', 'titles warn, as cv-title-check.ts does');
+  assert.equal(result.verdict, 'warn', 'titles warn, as packages/cli/src/commands/cv/cv-title-check.ts does');
   assert.deepEqual(kinds(result.advisoryFacts), ['title=principal engineer']);
   assert.deepEqual(result.unsupportedFacts, []);
 });
@@ -109,18 +109,18 @@ test('an unsourced job title in built HTML warns and does not block', () => {
 test('allow_facts accepts a verified structured field', () => {
   const config = join(tmp, 'allow.json');
   writeFileSync(config, JSON.stringify({ allow_facts: ['Google'] }));
-  const html = build('build-cv-html.ts', htmlPayload({ ...TRUE, company: 'Google' }), 'html');
+  const html = build('packages/cli/src/commands/cv/build-cv-html.ts', htmlPayload({ ...TRUE, company: 'Google' }), 'html');
   assert.equal(verifyFacts(html, options({ configPath: config })).verdict, 'pass');
 });
 
 test('the organization slot of a built LaTeX CV blocks, the title slot warns', () => {
-  assert.equal(verifyFacts(build('build-cv-latex.ts', texPayload(TRUE), 'tex'), options()).verdict, 'pass');
+  assert.equal(verifyFacts(build('packages/cli/src/commands/cv/build-cv-latex.ts', texPayload(TRUE), 'tex'), options()).verdict, 'pass');
 
-  const swapped = verifyFacts(build('build-cv-latex.ts', texPayload({ ...TRUE, company: 'Google', org: 'MIT' }), 'tex'), options());
+  const swapped = verifyFacts(build('packages/cli/src/commands/cv/build-cv-latex.ts', texPayload({ ...TRUE, company: 'Google', org: 'MIT' }), 'tex'), options());
   assert.equal(swapped.verdict, 'block');
   assert.deepEqual(kinds(swapped.unsupportedFacts), ['organization=google', 'organization=mit']);
 
-  const retitled = verifyFacts(build('build-cv-latex.ts', texPayload({ ...TRUE, role: 'Principal Engineer' }), 'tex'), options());
+  const retitled = verifyFacts(build('packages/cli/src/commands/cv/build-cv-latex.ts', texPayload({ ...TRUE, role: 'Principal Engineer' }), 'tex'), options());
   assert.equal(retitled.verdict, 'warn');
   assert.deepEqual(kinds(retitled.advisoryFacts), ['title=principal engineer']);
 });
@@ -143,7 +143,7 @@ test('the \\resumeSubheading definition in a preamble is not a claim', () => {
 });
 
 test('skills lists are not structured claims', () => {
-  const html = build('build-cv-html.ts', {
+  const html = build('packages/cli/src/commands/cv/build-cv-html.ts', {
     ...htmlPayload(TRUE),
     skills: [{ category: 'Platforms', items: 'Kubernetes, Terraform' }],
   }, 'html');

@@ -10,7 +10,7 @@ try {
     parseAggregatorDomains,
     checkAggregatorRepost,
     loadAggregatorDomains,
-  } = await import(pathToFileURL(join(ROOT, 'scan.ts')).href);
+  } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
 
   // 1. Test parsing function
   const sample = [

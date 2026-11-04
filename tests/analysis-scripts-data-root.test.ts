@@ -72,7 +72,7 @@ const cleanup = (f) => {
 test('funnel-velocity reads the configured data root', () => {
   const f = fixture();
   try {
-    const r = run('funnel-velocity.ts', ['--summary'], f);
+    const r = run('packages/core/src/insights/funnel-velocity.ts', ['--summary'], f);
     assert.doesNotMatch(r.all, /No tracker found/i, `it looked in the checkout, not the data root:\n${r.all.slice(0, 400)}`);
     assert.match(r.all, /Funnel Calibration/i, `no report was produced:\n${r.all.slice(0, 400)}`);
   } finally { cleanup(f); }
@@ -81,7 +81,7 @@ test('funnel-velocity reads the configured data root', () => {
 test('calibrate reads the configured data root', () => {
   const f = fixture();
   try {
-    const r = run('calibrate.ts', ['--summary'], f);
+    const r = run('packages/cli/src/commands/insights/calibrate.ts', ['--summary'], f);
     assert.doesNotMatch(
       r.all,
       /No tracker found/i,
@@ -94,7 +94,7 @@ test('calibrate reads the configured data root', () => {
 test('weekly-digest reads the configured data root', () => {
   const f = fixture();
   try {
-    const r = run('weekly-digest.ts', ['--summary', '--from', '2026-08-24', '--to', '2026-08-30'], f);
+    const r = run('packages/cli/src/commands/interview/weekly-digest.ts', ['--summary', '--from', '2026-08-24', '--to', '2026-08-30'], f);
     assert.match(
       r.all,
       /Sessions:\s+1 in range/,
@@ -109,9 +109,9 @@ test('and none of them writes into the cwd it was launched from', () => {
   // writer, so the decoy must come back untouched.
   const f = fixture();
   try {
-    run('funnel-velocity.ts', ['--summary'], f);
-    run('calibrate.ts', ['--summary'], f);
-    run('weekly-digest.ts', ['--summary'], f);
+    run('packages/core/src/insights/funnel-velocity.ts', ['--summary'], f);
+    run('packages/cli/src/commands/insights/calibrate.ts', ['--summary'], f);
+    run('packages/cli/src/commands/interview/weekly-digest.ts', ['--summary'], f);
     assert.deepEqual(readdirSync(f.decoyCwd), [], 'a script wrote into the directory it was launched from');
   } finally { cleanup(f); }
 });
@@ -122,7 +122,7 @@ test('system files still resolve from the CODE root, not the data root', () => {
   // data root — pointing everything at DATA_ROOT would have broken those.
   const f = fixture();
   try {
-    const r = run('funnel-velocity.ts', ['--summary'], f);
+    const r = run('packages/core/src/insights/funnel-velocity.ts', ['--summary'], f);
     assert.doesNotMatch(r.all, /states\.yml|benchmarks\.yml/i, `a system template was reported missing:\n${r.all.slice(0, 400)}`);
     assert.equal(r.status, 0, describeSpawn(r, `exited ${r.status}: ${r.all.slice(0, 400)}`));
   } finally { cleanup(f); }
@@ -134,7 +134,7 @@ test('no analysis script derives a data path from its own directory', () => {
   // and joins user-layer paths onto it, which reads as correct and is not.
   const offenders = [];
   const USER_LAYER = /join\(\s*(CAREER_OPS|CODE_ROOT)\s*,\s*'(data|interview-prep|reports|output|jds|documents)[/']/;
-  for (const file of ['funnel-velocity.ts', 'calibrate.ts', 'weekly-digest.ts', 'stats.ts', 'company-history.ts']) {
+  for (const file of ['packages/core/src/insights/funnel-velocity.ts', 'packages/cli/src/commands/insights/calibrate.ts', 'packages/cli/src/commands/interview/weekly-digest.ts', 'packages/core/src/insights/stats.ts', 'packages/cli/src/commands/insights/company-history.ts']) {
     const src = readFileSync(join(ROOT, file), 'utf-8');
     for (const line of src.split('\n')) {
       if (USER_LAYER.test(line)) offenders.push(`${file}: ${line.trim().slice(0, 80)}`);

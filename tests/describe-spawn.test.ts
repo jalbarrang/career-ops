@@ -15,7 +15,7 @@
 // That is a real failure, not a hypothetical: tests/tracker-mode-query.test.ts
 // failed exactly that way on windows-latest, where a slow runner hit its 20s
 // timeout. The report could not say so, so it looked like a logic failure in
-// tracker.ts rather than a runner that ran out of time.
+// packages/cli/src/commands/tracker/tracker.ts rather than a runner that ran out of time.
 //
 // `status` can be null, `signal` says a kill happened, and `error` carries
 // ETIMEDOUT or ENOENT. All three live on the result; all three were discarded.

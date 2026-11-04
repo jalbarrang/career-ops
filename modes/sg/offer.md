@@ -87,4 +87,4 @@ In addition to the canonical header, include:
 ## Post-evaluation
 
 Follow `oferta.md` Post-evaluation verbatim (report `.md` in `reports/`,
-tracker registration via TSV + `merge-tracker.ts`, Machine Summary).
+tracker registration via TSV + `packages/cli/src/commands/tracker/merge-tracker.ts`, Machine Summary).

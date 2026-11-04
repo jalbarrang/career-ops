@@ -4,7 +4,7 @@
 // that tell an agent to read config/profile.yml are outside it.
 // batch/batch-runner.sh is covered by tests/batch-runner-profile-override.test.ts.
 //
-// tests/profile-path-override.test.ts pins the resolver and the doctor.ts
+// tests/profile-path-override.test.ts pins the resolver and the packages/cli/src/commands/platform/doctor.ts
 // reproduction. This file runs the REAL modules that used to build the data-root
 // path themselves, because "the resolver is correct" says nothing about whether
 // each module calls it.
@@ -158,36 +158,36 @@ const cli = (file, ...args) => [join(ROOT, file), ...args];
 // [class, label, argv]
 const SUBJECTS = [
   // 1. evaluators that read the profile into a prompt
-  ['evaluators', 'gemini-eval.ts', cli('gemini-eval.ts', '--file', join(scratch, 'jd.txt'))],
-  ['evaluators', 'ollama-eval.ts', cli('ollama-eval.ts', '--file', join(scratch, 'jd.txt'), '--no-save')],
-  ['evaluators', 'openai-eval.ts', cli('openai-eval.ts', '--file', join(scratch, 'jd.txt'))],
-  ['evaluators', 'openai-tailor.ts', cli('openai-tailor.ts', '--jd', join(scratch, 'jd.txt'), '--report', join(scratch, 'jd.txt'))],
-  ['evaluators', 'batch-evaluate-gemini.ts', cli('batch-evaluate-gemini.ts')],
-  ['evaluators', 'openrouter-runner.ts', cli('openrouter-runner.ts', 'evaluate', 'http://127.0.0.1:9/posting')],
+  ['evaluators', 'packages/cli/src/commands/evaluation/gemini-eval.ts', cli('packages/cli/src/commands/evaluation/gemini-eval.ts', '--file', join(scratch, 'jd.txt'))],
+  ['evaluators', 'packages/cli/src/commands/evaluation/ollama-eval.ts', cli('packages/cli/src/commands/evaluation/ollama-eval.ts', '--file', join(scratch, 'jd.txt'), '--no-save')],
+  ['evaluators', 'packages/cli/src/commands/evaluation/openai-eval.ts', cli('packages/cli/src/commands/evaluation/openai-eval.ts', '--file', join(scratch, 'jd.txt'))],
+  ['evaluators', 'packages/cli/src/commands/cv/openai-tailor.ts', cli('packages/cli/src/commands/cv/openai-tailor.ts', '--jd', join(scratch, 'jd.txt'), '--report', join(scratch, 'jd.txt'))],
+  ['evaluators', 'packages/cli/src/commands/evaluation/batch-evaluate-gemini.ts', cli('packages/cli/src/commands/evaluation/batch-evaluate-gemini.ts')],
+  ['evaluators', 'packages/cli/src/commands/evaluation/openrouter-runner.ts', cli('packages/cli/src/commands/evaluation/openrouter-runner.ts', 'evaluate', 'http://127.0.0.1:9/posting')],
   // 2. pdf / cv builders
-  ['builders', 'generate-pdf.ts (single document)', cli('generate-pdf.ts', join(dataRoot, 'input.html'), join(dataRoot, 'output', 'single.pdf'))],
-  ['builders', 'generate-pdf.ts (--batch)', cli('generate-pdf.ts', `--batch=${join(dataRoot, 'batch.json')}`)],
-  ['builders', 'generate-pdf.ts (injectPrintPageCss, no format)', inline(`const m = await import(${JSON.stringify(module('generate-pdf.ts'))}); m.injectPrintPageCss('<html><head></head><body></body></html>');`)],
-  ['builders', 'build-cv-html.ts', cli('build-cv-html.ts', join(scratch, 'payload.json'), join(scratch, 'out.html'))],
-  ['builders', 'theme-style.ts (default arguments)', inline(`const m = await import(${JSON.stringify(module('theme-style.ts'))}); m.readStyleTokens(); m.readCvSectionOrder();`)],
-  ['builders', 'prepare-application.ts', cli('prepare-application.ts', '--url', 'https://jobs.lever.co/acme/abc123', '--pdf', join(dataRoot, 'output', 'applied.pdf'))],
-  ['builders', 'cv-sync-check.ts', cli('cv-sync-check.ts')],
+  ['builders', 'packages/cli/src/commands/cv/generate-pdf.ts (single document)', cli('packages/cli/src/commands/cv/generate-pdf.ts', join(dataRoot, 'input.html'), join(dataRoot, 'output', 'single.pdf'))],
+  ['builders', 'packages/cli/src/commands/cv/generate-pdf.ts (--batch)', cli('packages/cli/src/commands/cv/generate-pdf.ts', `--batch=${join(dataRoot, 'batch.json')}`)],
+  ['builders', 'packages/cli/src/commands/cv/generate-pdf.ts (injectPrintPageCss, no format)', inline(`const m = await import(${JSON.stringify(module('packages/cli/src/commands/cv/generate-pdf.ts'))}); m.injectPrintPageCss('<html><head></head><body></body></html>');`)],
+  ['builders', 'packages/cli/src/commands/cv/build-cv-html.ts', cli('packages/cli/src/commands/cv/build-cv-html.ts', join(scratch, 'payload.json'), join(scratch, 'out.html'))],
+  ['builders', 'packages/cli/src/commands/cv/theme-style.ts (default arguments)', inline(`const m = await import(${JSON.stringify(module('packages/cli/src/commands/cv/theme-style.ts'))}); m.readStyleTokens(); m.readCvSectionOrder();`)],
+  ['builders', 'packages/cli/src/commands/evaluation/prepare-application.ts', cli('packages/cli/src/commands/evaluation/prepare-application.ts', '--url', 'https://jobs.lever.co/acme/abc123', '--pdf', join(dataRoot, 'output', 'applied.pdf'))],
+  ['builders', 'packages/cli/src/commands/cv/cv-sync-check.ts', cli('packages/cli/src/commands/cv/cv-sync-check.ts')],
   // 3. analyzers
-  ['analyzers', 'salary-gap.ts', cli('salary-gap.ts')],
-  ['analyzers', 'upskill.ts', cli('upskill.ts', '--url-text', join(scratch, 'jd.txt'))],
-  ['analyzers', 'check-table-freshness.ts', cli('check-table-freshness.ts')],
+  ['analyzers', 'packages/cli/src/commands/insights/salary-gap.ts', cli('packages/cli/src/commands/insights/salary-gap.ts')],
+  ['analyzers', 'packages/cli/src/commands/insights/upskill.ts', cli('packages/cli/src/commands/insights/upskill.ts', '--url-text', join(scratch, 'jd.txt'))],
+  ['analyzers', 'packages/cli/src/commands/platform/check-table-freshness.ts', cli('packages/cli/src/commands/platform/check-table-freshness.ts')],
   // 0. the modules that already honored the override, now routed through the resolver
-  ['resolver users', 'cv-templates.ts', inline(`const m = await import(${JSON.stringify(module('cv-templates.ts'))}); m.loadProfileDefault('cv');`)],
-  ['resolver users', 'validate-profile.ts', cli('validate-profile.ts')],
-  ['resolver users', 'github-evidence.ts', cli('github-evidence.ts')],
-  ['resolver users', 'scan.ts (country, re-apply windows)', inline(`const m = await import(${JSON.stringify(module('scan.ts'))}); m.loadCandidateCountry(); m.loadReApplyWindows();`)],
-  ['resolver users', 'followup-cadence.ts', cli('followup-cadence.ts')],
-  ['resolver users', 'rejection-latency.ts', cli('rejection-latency.ts', '--summary')],
-  ['resolver users', 'company-history.ts (resolveRegion)', inline(`const m = await import(${JSON.stringify(module('company-history.ts'))}); m.resolveRegion();`)],
+  ['resolver users', 'packages/cli/src/commands/cv/cv-templates.ts', inline(`const m = await import(${JSON.stringify(module('packages/cli/src/commands/cv/cv-templates.ts'))}); m.loadProfileDefault('cv');`)],
+  ['resolver users', 'packages/cli/src/commands/profile/validate-profile.ts', cli('packages/cli/src/commands/profile/validate-profile.ts')],
+  ['resolver users', 'packages/cli/src/commands/profile/github-evidence.ts', cli('packages/cli/src/commands/profile/github-evidence.ts')],
+  ['resolver users', 'packages/core/src/scanning/scan.ts (country, re-apply windows)', inline(`const m = await import(${JSON.stringify(module('packages/core/src/scanning/scan.ts'))}); m.loadCandidateCountry(); m.loadReApplyWindows();`)],
+  ['resolver users', 'packages/core/src/outreach/followup-cadence.ts', cli('packages/core/src/outreach/followup-cadence.ts')],
+  ['resolver users', 'packages/cli/src/commands/outreach/rejection-latency.ts', cli('packages/cli/src/commands/outreach/rejection-latency.ts', '--summary')],
+  ['resolver users', 'packages/cli/src/commands/insights/company-history.ts (resolveRegion)', inline(`const m = await import(${JSON.stringify(module('packages/cli/src/commands/insights/company-history.ts'))}); m.resolveRegion();`)],
   // 5. provider / script fallbacks
-  ['fallbacks', 'providers/_profile-keywords.ts', inline(`const m = await import(${JSON.stringify(module('providers/_profile-keywords.ts'))}); m.resolveProfileKeywords();`)],
+  ['fallbacks', 'packages/core/src/scanning/providers/_profile-keywords.ts', inline(`const m = await import(${JSON.stringify(module('packages/core/src/scanning/providers/_profile-keywords.ts'))}); m.resolveProfileKeywords();`)],
   ['fallbacks', 'scripts/export-ats-text.ts', cli('scripts/export-ats-text.ts')],
-  ['fallbacks', 'browser-extract.ts (default argument)', inline(`const m = await import(${JSON.stringify(module('browser-extract.ts'))}); m.resolveExtractorMode();`)],
+  ['fallbacks', 'packages/cli/src/commands/scanning/browser-extract.ts (default argument)', inline(`const m = await import(${JSON.stringify(module('packages/cli/src/commands/scanning/browser-extract.ts'))}); m.resolveExtractorMode();`)],
 ];
 
 try {
@@ -203,19 +203,19 @@ try {
       : failOnce(`${group}: ${label} touched ${JSON.stringify(fallback.paths.map((p) => p.replace(scratch, '<scratch>')))} with the override unset; expected only <scratch>/data-root/config/profile.yml (exit ${fallback.code})`);
   }
 
-  // An override named only in a .env reaches the readers that load one: scan.ts from
-  // the data root, the evaluators and openai-tailor.ts from the working directory.
+  // An override named only in a .env reaches the readers that load one: packages/core/src/scanning/scan.ts from
+  // the data root, the evaluators and packages/cli/src/commands/cv/openai-tailor.ts from the working directory.
   // The cases above export the variable, so they cannot see a regression in that
-  // loading order. (openrouter-runner.ts loads the code root's .env, which a test
+  // loading order. (packages/cli/src/commands/evaluation/openrouter-runner.ts loads the code root's .env, which a test
   // must not write to, so it is covered by the exported-variable case above.)
   const bySubject = new Map(SUBJECTS.map(([, label, argv]) => [label, argv]));
   for (const [label, dotEnvDir] of [
-    ['scan.ts (country, re-apply windows)', dataRoot],
-    ['gemini-eval.ts', decoyCwd],
-    ['ollama-eval.ts', decoyCwd],
-    ['openai-eval.ts', decoyCwd],
-    ['openai-tailor.ts', decoyCwd],
-    ['batch-evaluate-gemini.ts', decoyCwd],
+    ['packages/core/src/scanning/scan.ts (country, re-apply windows)', dataRoot],
+    ['packages/cli/src/commands/evaluation/gemini-eval.ts', decoyCwd],
+    ['packages/cli/src/commands/evaluation/ollama-eval.ts', decoyCwd],
+    ['packages/cli/src/commands/evaluation/openai-eval.ts', decoyCwd],
+    ['packages/cli/src/commands/cv/openai-tailor.ts', decoyCwd],
+    ['packages/cli/src/commands/evaluation/batch-evaluate-gemini.ts', decoyCwd],
   ]) {
     const fromEnv = await touched(bySubject.get(label), { override: false, dotEnvDir });
     fromEnv.paths.length === 1 && fromEnv.paths[0] === profileB
@@ -236,7 +236,7 @@ try {
   // that far: it stops at newPage(), which keeps the check independent of whether a
   // Chromium is installed (CI's test job has none).
   const render = (workspaceRootArg) => inline(`
-    const { renderHtmlToPdf } = await import(${JSON.stringify(module('generate-pdf.ts'))});
+    const { renderHtmlToPdf } = await import(${JSON.stringify(module('packages/cli/src/commands/cv/generate-pdf.ts'))});
     const launchBrowser = async () => ({
       newPage: async () => { throw new Error('probe: stopped at newPage()'); },
       close: async () => {},
@@ -258,7 +258,7 @@ try {
   // root (tests and apply() both pass one) and an optional profilePath that names
   // the file outright.
   const snapshot = (profilePathArg) => inline(`
-    const { snapshotConfiguredTemplateVariants } = await import(${JSON.stringify(module('update-system.ts'))});
+    const { snapshotConfiguredTemplateVariants } = await import(${JSON.stringify(module('packages/cli/src/commands/platform/update-system.ts'))});
     await snapshotConfiguredTemplateVariants({ dataRoot: ${JSON.stringify(dataRoot)}${profilePathArg ? `, profilePath: ${JSON.stringify(profilePathArg)}` : ''} });
   `);
   const fromRoot = await touched(snapshot(null), { override: true });
@@ -315,7 +315,7 @@ try {
   writeFileSync(join(pdfWorkspace, 'config', 'profile.yml'), 'page_format: letter\n', 'utf-8');
   writeFileSync(join(pdfWorkspace, 'data', 'applications.md'), '# Applications Tracker\n', 'utf-8');
   const sheetFor = (profileEnv) => spawnSync(NODE, ['--input-type=module', '-e',
-    `const m = await import(${JSON.stringify(module('generate-pdf.ts'))}); console.log(m.injectPrintPageCss('<html><head></head><body></body></html>'));`], {
+    `const m = await import(${JSON.stringify(module('packages/cli/src/commands/cv/generate-pdf.ts'))}); console.log(m.injectPrintPageCss('<html><head></head><body></body></html>'));`], {
     cwd: decoyCwd, encoding: 'utf-8', timeout: 60_000,
     env: { ...process.env, CAREER_OPS_ROOT: pdfRoot, CAREER_OPS_DATA_DIR: '', CAREER_OPS_TRACKER: join(pdfWorkspace, 'data', 'applications.md'), CAREER_OPS_PROFILE: profileEnv },
   }).stdout;
@@ -334,7 +334,7 @@ try {
   // its source: apply() must hand the snapshot BOTH the profile in force
   // (getProfilePath()) and the data root's own. The templates directory is the data
   // root's, so reading only one profile leaves the other's variants unprotected.
-  const updaterSource = readFileSync(join(ROOT, 'update-system.ts'), 'utf-8').split('\n').filter((l) => !/^\s*(\/\/|\*)/.test(l)).join('\n');
+  const updaterSource = readFileSync(join(ROOT, 'packages/cli/src/commands/platform/update-system.ts'), 'utf-8').split('\n').filter((l) => !/^\s*(\/\/|\*)/.test(l)).join('\n');
   const takesProfile = /profilePaths = \[getProfilePath\(\), getProfilePath\(dataRoot\)\];/.test(updaterSource);
   const callAt = updaterSource.indexOf('await snapshotConfiguredTemplateVariantsAcrossProfiles({');
   const snapshotCall = callAt === -1 ? null : [updaterSource.slice(callAt, updaterSource.indexOf('readRemoteContent', callAt))];
@@ -346,7 +346,7 @@ try {
   // CAREER_OPS_PROFILE would name a different file there than in the user's shell.
   // The parent resolves it and hands the child the absolute path.
   const reexecEnvFor = (profile) => JSON.parse(spawnSync(NODE, inline(
-    `const { reexecProfileEnv } = await import(${JSON.stringify(module('update-system.ts'))}); console.log(JSON.stringify(await reexecProfileEnv()));`), {
+    `const { reexecProfileEnv } = await import(${JSON.stringify(module('packages/cli/src/commands/platform/update-system.ts'))}); console.log(JSON.stringify(await reexecProfileEnv()));`), {
     cwd: decoyCwd, encoding: 'utf-8', timeout: 60_000,
     env: { ...process.env, CAREER_OPS_ROOT: dataRoot, CAREER_OPS_DATA_DIR: '', CAREER_OPS_PROFILE: profile },
   }).stdout);
@@ -366,25 +366,25 @@ try {
 
   // 4e. Doctor's .env warning has to be true at this change: the evaluators follow
   // CAREER_OPS_PROFILE now, after their working-directory config(), so it names them
-  // beside scan.ts as the commands that load a .env for the profile.
+  // beside packages/core/src/scanning/scan.ts as the commands that load a .env for the profile.
   const envWarnRoot = join(scratch, 'env-warn-root');
   mkdirSync(join(envWarnRoot, 'config'), { recursive: true });
   writeFileSync(join(envWarnRoot, 'config', 'profile.yml'), profileBody('Root'), 'utf-8');
   writeFileSync(join(envWarnRoot, '.env'), `CAREER_OPS_PROFILE=${profileB}\n`, 'utf-8');
-  const envWarnRun = spawnSync(NODE, [join(ROOT, 'doctor.ts'), '--json'], {
+  const envWarnRun = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), '--json'], {
     cwd: decoyCwd, encoding: 'utf-8', timeout: 60_000,
     env: { ...process.env, CAREER_OPS_ROOT: envWarnRoot, CAREER_OPS_DATA_DIR: '', CAREER_OPS_PROFILE: '' },
   });
   const envWarning = (JSON.parse(envWarnRun.stdout).warnings.find((w) => /\.env sets CAREER_OPS_PROFILE/.test(w))) ?? '';
   /only scan\.ts, the evaluators, openai-tailor\.ts and openrouter-runner\.ts load \.env/.test(envWarning)
-    ? pass('doctor: the .env warning names scan.ts, the evaluators, openai-tailor.ts and openrouter-runner.ts as the .env loaders')
+    ? pass('doctor: the .env warning names packages/core/src/scanning/scan.ts, the evaluators, packages/cli/src/commands/cv/openai-tailor.ts and packages/cli/src/commands/evaluation/openrouter-runner.ts as the .env loaders')
     : failOnce(`doctor: the .env warning is not true at this change: ${JSON.stringify(envWarning.slice(0, 160))}`);
 
   // 3c. cv-sync-check's advice for a missing profile. With an override that names a
   // file that is not there, "copy the example into config/profile.yml" changes
   // nothing; the message has to name the variable and the path it points at.
   const missingNamed = join(scratch, 'typo-profile.yml');
-  const sync = spawnSync(NODE, [join(ROOT, 'cv-sync-check.ts')], {
+  const sync = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/cv-sync-check.ts')], {
     cwd: decoyCwd, encoding: 'utf-8', timeout: 60_000,
     env: { ...process.env, CAREER_OPS_ROOT: dataRoot, CAREER_OPS_DATA_DIR: '', CAREER_OPS_PROFILE: missingNamed },
   });

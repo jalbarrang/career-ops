@@ -24,9 +24,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const spec = (rel) => pathToFileURL(join(ROOT, rel)).href;
 
-const { isBlockedAddress, blockedAddressError, providerFetchContext } = await import(spec('providers/_ip-guard.ts'));
-const { fetchText } = await import(spec('providers/_http.ts'));
-const { RESOLVER_FAILURE_CODES } = await import(spec('providers/_dns-cache.ts'));
+const { isBlockedAddress, blockedAddressError, providerFetchContext } = await import(spec('packages/core/src/scanning/providers/_ip-guard.ts'));
+const { fetchText } = await import(spec('packages/core/src/scanning/providers/_http.ts'));
+const { RESOLVER_FAILURE_CODES } = await import(spec('packages/core/src/scanning/providers/_dns-cache.ts'));
 
 /** Start a loopback server; returns its port and a close(). */
 async function localServer(body = 'SECRET-LOCAL-DATA') {
@@ -169,7 +169,7 @@ test('the block code is not a resolver-failure code', () => {
 });
 
 test('the context is entered only for provider requests', async () => {
-  const { inProviderFetch } = await import(spec('providers/_ip-guard.ts'));
+  const { inProviderFetch } = await import(spec('packages/core/src/scanning/providers/_ip-guard.ts'));
   assert.equal(inProviderFetch(), false);
   providerFetchContext.run({ url: 'x' }, () => assert.equal(inProviderFetch(), true));
   assert.equal(inProviderFetch(), false);

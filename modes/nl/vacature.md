@@ -103,7 +103,7 @@ Bevat ook:
 
 Sla de volledige evaluatie op in `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
-- `{###}` = volgend volgnummer (3 cijfers, nullen opgevuld). Om het atomair toe te wijzen en racecondities te vermijden, zou je `bun reserve-report-num.ts` uitvoeren om het nummer te reserveren (stdout retourneert `{###}`), het rapport schrijven en vervolgens `bun reserve-report-num.ts --release {###}` uitvoeren om de sentinel vrij te geven.
+- `{###}` = volgend volgnummer (3 cijfers, nullen opgevuld). Om het atomair toe te wijzen en racecondities te vermijden, zou je `career-ops reserve-report-num` uitvoeren om het nummer te reserveren (stdout retourneert `{###}`), het rapport schrijven en vervolgens `career-ops reserve-report-num --release {###}` uitvoeren om de sentinel vrij te geven.
 - `{company-slug}` = bedrijfsnaam in kleine letters, zonder spaties (gebruik koppeltekens)
 - `{JJJJ-MM-DD}` = huidige datum
 
@@ -152,7 +152,7 @@ Sla de volledige evaluatie op in `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
 ### 2. Opslaan in tracker
 
-**ALTIJD** registreren via een TSV-bestand in `batch/tracker-additions/`; bewerk `data/applications.md` nooit rechtstreeks. Voer vóór voltooiing, in deze volgorde, `bun merge-tracker.ts`, `bun verify-pipeline.ts`, `bun normalize-statuses.ts` en `bun dedup-tracker.ts` uit:
+**ALTIJD** registreren via een TSV-bestand in `batch/tracker-additions/`; bewerk `data/applications.md` nooit rechtstreeks. Voer vóór voltooiing, in deze volgorde, `career-ops merge-tracker`, `career-ops verify-pipeline`, `career-ops normalize-statuses` en `career-ops dedup-tracker` uit:
 - Volgend opeenvolgend nummer
 - De datum van vandaag
 - Bedrijf
@@ -162,7 +162,7 @@ Sla de volledige evaluatie op in `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 - PDF: nee (of ja als de auto-pipeline een PDF heeft gegenereerd)
 - Rapport: relatieve link naar het rapportbestand (bijvoorbeeld: `[001](reports/001-company-2026-01-01.md)`)
 - Notities: optioneel
-- URL: de URL van de vacature. Dit is de **deterministische dedup-sleutel**: `merge-tracker.ts` vergelijkt rijen eerst hierop en valt alleen terug op de vage bedrijf+rol-match wanneer een rij er geen heeft. Is er geen URL, laat de cel dan **leeg** — nooit `N/A` of `-`, want die placeholders worden weggegooid en de rij blijft zonder sleutel achter.
+- URL: de URL van de vacature. Dit is de **deterministische dedup-sleutel**: `packages/cli/src/commands/tracker/merge-tracker.ts` vergelijkt rijen eerst hierop en valt alleen terug op de vage bedrijf+rol-match wanneer een rij er geen heeft. Is er geen URL, laat de cel dan **leeg** — nooit `N/A` of `-`, want die placeholders worden weggegooid en de rij blijft zonder sleutel achter.
 
 **TSV-formaat (door tabs gescheiden):** schrijf **twee** regels — eerst de regel met de kolomnamen, daaronder precies één regel met de waarden:
 
@@ -171,4 +171,4 @@ num	date	company	role	status	score	pdf	report	notes	url
 {num}	{datum}	{bedrijf}	{rol}	{status}	{score}	{pdf_emoji}	[{num}](reports/{num}-{slug}-{datum}.md)	{notitie}	{url}
 ```
 
-Schrijf beide regels **exact zoals hierboven**: de kolomnamen in het Engels, en de waarden **in dezelfde volgorde als de namen erboven**. `merge-tracker.ts` herleidt elk veld op NAAM, en juist daarom moeten de namen de regel eronder beschrijven: herschik je maar één van de twee regels, dan wisselen `company` en `role` geruisloos van plaats (beide zijn vrije tekst, dus een controle op inhoud ziet dat niet).
+Schrijf beide regels **exact zoals hierboven**: de kolomnamen in het Engels, en de waarden **in dezelfde volgorde als de namen erboven**. `packages/cli/src/commands/tracker/merge-tracker.ts` herleidt elk veld op NAAM, en juist daarom moeten de namen de regel eronder beschrijven: herschik je maar één van de twee regels, dan wisselen `company` en `role` geruisloos van plaats (beide zijn vrije tekst, dus een controle op inhoud ziet dat niet).

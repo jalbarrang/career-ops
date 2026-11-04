@@ -6,7 +6,7 @@
 //   - a language ranks by its place in the list, -1 when absent or unknown;
 //   - one provider's jobs are ordered preferred-language first, stably, so the
 //     dedup that keeps the first version keeps the preferred one;
-//   - validate-portals.ts reports a malformed list.
+//   - packages/cli/src/commands/scanning/validate-portals.ts reports a malformed list.
 import { pass, fail, ROOT, NODE } from './helpers.ts';
 import { mkdtempSync, writeFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
@@ -16,7 +16,7 @@ import {
   resolvePreferredLanguages,
   preferredLanguageRanker,
   orderByPreferredLanguage,
-} from '../scan.ts';
+} from '../packages/core/src/scanning/scan.ts';
 
 console.log('\nScan — preferred posting languages');
 
@@ -67,7 +67,7 @@ const separateUrls = [
 check('versions on separate URLs are ordered the same way',
   orderByPreferredLanguage(separateUrls, rank).map(j => j.language), ['en', 'de']);
 
-// ── validate-portals.ts ────────────────────────────────────────────
+// ── packages/cli/src/commands/scanning/validate-portals.ts ────────────────────────────────────────────
 // Run as the CLI, the way a user meets it: the paths it reports for the key.
 function validatorPaths(yamlValue) {
   const dir = mkdtempSync(join(tmpdir(), 'scan-preferred-languages-'));
@@ -76,7 +76,7 @@ function validatorPaths(yamlValue) {
     writeFileSync(portals, `preferred_languages: ${yamlValue}\ntracked_companies: []\n`);
     let out;
     try {
-      out = execFileSync(NODE, ['validate-portals.ts', '--file', portals], {
+      out = execFileSync(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', portals], {
         cwd: ROOT, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60000,
       });
     } catch (err) {

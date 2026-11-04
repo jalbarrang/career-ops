@@ -11,8 +11,8 @@
 // after the path's first underscore (tested below).
 //
 // The providers already receive the id and were discarding it. These checks pin the
-// capture (providers/_types.ts Job.requisitionId / .externalId) so a future provider
-// edit cannot silently drop it back to the lossy path. scan.ts records
+// capture (packages/core/src/scanning/providers/_types.ts Job.requisitionId / .externalId) so a future provider
+// edit cannot silently drop it back to the lossy path. packages/core/src/scanning/scan.ts records
 // requisitionId in scan-history.tsv's requisition_id column (#4613); externalId
 // has no consumer yet.
 //
@@ -24,16 +24,16 @@ import { pass, fail } from '../helpers.ts';
 // helpers' fail() takes one message, so a second argument is silently dropped.
 // Every check here names the case AND what it got; keep both in the output.
 const failWith = (what, detail) => fail(`${what}: ${detail}`);
-import { parseWorkdayResponse, workdayDedupKey } from '../../providers/workday.ts';
-import greenhouse from '../../providers/greenhouse.ts';
-import ashby from '../../providers/ashby.ts';
-import lever from '../../providers/lever.ts';
-import eightfold from '../../providers/eightfold.ts';
+import { parseWorkdayResponse, workdayDedupKey } from '../../packages/core/src/scanning/providers/workday.ts';
+import greenhouse from '../../packages/core/src/scanning/providers/greenhouse.ts';
+import ashby from '../../packages/core/src/scanning/providers/ashby.ts';
+import lever from '../../packages/core/src/scanning/providers/lever.ts';
+import eightfold from '../../packages/core/src/scanning/providers/eightfold.ts';
 
 console.log('\nproviders — ATS-native identifier capture');
 
 // ── PROVIDER-LEVEL: these must fail if the capture is deleted from the provider.
-// An earlier version of this file only exercised scan.ts's formatters with
+// An earlier version of this file only exercised packages/core/src/scanning/scan.ts's formatters with
 // hand-built literals, so stripping externalId/requisitionId from all five
 // providers left the whole suite green, so a provider edit could drop the
 // capture with no failing test.

@@ -10,18 +10,18 @@
 // lib/context-budget.test.ts sat there with the #2234 guard that every
 // modes/_shared.md heading is classified in SECTION_PRIORITY, so a
 // scoring-critical section cannot silently become compressible. That guard
-// had never run in CI. The sibling check for web/'s own discovery glob is
+// had never run in CI. The sibling check for apps/web/'s own discovery glob is
 // tests/web-test-layout.test.ts; this is the core half, kept in tests/
 // rather than inline in test-all.ts so `--only` can reach it.
 import { pass, fail, ROOT } from './helpers.ts';
-import { collectSourceFiles } from '../lib/source-files.ts';
+import { collectSourceFiles } from '../packages/core/src/kernel/source-files.ts';
 import { relative, sep } from 'path';
 
 console.log('\ncore test layout — every suite lives where a runner can find it');
 
 // The two trees a runner actually discovers: test-all.ts's discoverTests()
-// over tests/, and web/'s own `bun test` glob over web/tests/.
-const DISCOVERED_ROOTS = ['tests/', 'web/tests/'];
+// over tests/, and apps/web/'s own `bun test` glob over apps/web/tests/.
+const DISCOVERED_ROOTS = ['tests/', 'apps/web/tests/'];
 
 // collectSourceFiles() skips node_modules, output/, data/ and any nested checkout
 // (a linked worktree marks itself with a `.git` FILE, #3499), so a developer

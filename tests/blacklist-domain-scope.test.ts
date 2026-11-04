@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseBlacklist, findBlacklistEntry } from '../scan.ts';
-import { filterBlacklistedOffers } from '../scan-ats-full.ts';
+import { parseBlacklist, findBlacklistEntry } from '../packages/core/src/scanning/scan.ts';
+import { filterBlacklistedOffers } from '../packages/cli/src/commands/scanning/scan-ats-full.ts';
 
 const table = rows => '| Company | Since | Scope | Reason |\n|---|---|---|---|\n' + rows.join('\n');
 

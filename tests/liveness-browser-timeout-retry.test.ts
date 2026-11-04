@@ -13,7 +13,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { gotoWithTimeoutRetry } from '../liveness-browser.ts';
+import { gotoWithTimeoutRetry } from '../packages/core/src/liveness/liveness-browser.ts';
 
 const timeoutError = () => Object.assign(new Error('page.goto: Timeout 15000ms exceeded.'), { name: 'TimeoutError' });
 

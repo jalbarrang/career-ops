@@ -8,7 +8,7 @@ import { tmpdir } from 'os';
 console.log('\nProvider — vdab');
 
 try {
-  const vdabModule = await import(pathToFileURL(join(ROOT, 'providers/vdab.ts')).href);
+  const vdabModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/vdab.ts')).href);
   const vdab = vdabModule.default;
   const { parseVdabConfig, normalizeJob, extractDescription } = vdabModule;
 
@@ -336,7 +336,7 @@ try {
   if (totalOutageThrew) pass('vdab.fetch() throws when every keyword request fails (total outage)');
   else fail('vdab.fetch() should throw when every keyword request fails');
 
-  // fetch() — cooperates with verify-portals.ts's bounded health-check probe
+  // fetch() — cooperates with packages/core/src/scanning/verify-portals.ts's bounded health-check probe
   // (ctx.maxPages set): caps pagination per keyword, and does NOT swallow a
   // mid-run error into the recall-first per-keyword tolerance loop, so the
   // probe's own budget-exhaustion sentinel (or any real error hit while
@@ -360,7 +360,7 @@ try {
 
     // probing: a per-keyword error propagates immediately, unwrapped, instead
     // of being flattened into a generic "all keyword requests failed" Error —
-    // this is what lets verify-portals.ts's `err instanceof
+    // this is what lets packages/core/src/scanning/verify-portals.ts's `err instanceof
     // ProbePageBudgetReached` check (and any other error-identity check)
     // still work when a provider is probed instead of scanned normally.
     class FakeSentinel extends Error {}

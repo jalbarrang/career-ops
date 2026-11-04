@@ -8,7 +8,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — redrover');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/redrover.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/redrover.ts')).href);
   const redrover = mod.default;
   const { parseRedRoverResponse } = mod;
 

@@ -8,9 +8,9 @@ import type { PathLike, RmOptions, Stats } from 'fs';
 import { tmpdir } from 'os';
 import { basename, join, dirname, resolve, sep } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
-import { isNestedCheckout, trackedFiles } from '../lib/source-files.ts';
-import { localToday } from '../lib/local-today.ts';
-import { getCareerOpsRoot } from '../path-resolver.ts';
+import { isNestedCheckout, trackedFiles } from '../packages/core/src/kernel/source-files.ts';
+import { localToday } from '../packages/core/src/kernel/local-today.ts';
+import { getCareerOpsRoot } from '../packages/core/src/kernel/path-resolver.ts';
 import { describeDrift, diffSnapshots, snapshotDataRoot } from './data-root-guard.ts';
 
 /**
@@ -84,7 +84,7 @@ export const NODE = process.execPath;
 
 // The suite must never follow a developer's own tracker override into their
 // real data. CAREER_OPS_TRACKER outranks the CAREER_OPS_ROOT that fixtures pin,
-// so with it set in the shell a test that runs normalize-statuses.ts against
+// so with it set in the shell a test that runs packages/cli/src/commands/tracker/normalize-statuses.ts against
 // its fixture root rewrote the developer's tracker instead (and left a .bak
 // beside it), and a dozen checks failed on rows that were not theirs.
 //
@@ -109,7 +109,7 @@ process.env.CAREER_OPS_TRACKER = '';
 //
 // So the suite gets a data root of its own. Pinned through CAREER_OPS_ROOT
 // because that outranks both CAREER_OPS_DATA_DIR and the `.career-ops-data`
-// marker (path-resolver.ts), and set here for the reason the tracker override
+// marker (packages/core/src/kernel/path-resolver.ts), and set here for the reason the tracker override
 // is cleared here: the runner and every child it spawns inherit it, and a suite
 // run on its own is covered as well. A test that needs a particular root pins
 // its own, in its child's env or around its own import.
@@ -174,7 +174,7 @@ pinSandboxDataRoot();
 /**
  * Environment for a child that runs a COPY of the scripts as its own checkout.
  *
- * Many fixtures copy a script and path-resolver.ts into a temp directory and
+ * Many fixtures copy a script and packages/core/src/kernel/path-resolver.ts into a temp directory and
  * expect the copy to treat that directory as its data root, which is what the
  * resolver does when nothing overrides it. Something does now — the pin above —
  * and a developer's exported CAREER_OPS_ROOT always did, so the expectation is
@@ -526,7 +526,7 @@ export function run(cmd: string, args: string[] = [], opts: RunOptions = {}): st
   lastFailure = null;
   const exe = resolveAllowedExecutable(cmd);
   const env = opts.env ?? process.env;
-  const isolatedOpts: RunOptions = args.includes('merge-tracker.ts') && env.CAREER_OPS_ADDITIONS
+  const isolatedOpts: RunOptions = args.includes('packages/cli/src/commands/tracker/merge-tracker.ts') && env.CAREER_OPS_ADDITIONS
     ? { ...opts, env: { ...env, CAREER_OPS_BATCH_STATE: isolatedBatchStatePath(env.CAREER_OPS_ADDITIONS) } }
     : opts;
   opts = isolatedOpts;
@@ -650,7 +650,7 @@ export function runAcrossUtcDay(cmd: string, args: string[] = [], opts: RunOptio
 
 /**
  * Like {@link runAcrossUtcDay}, for a child that dates its output with the LOCAL
- * calendar day (lib/local-today.ts) instead of the UTC one.
+ * calendar day (packages/core/src/kernel/local-today.ts) instead of the UTC one.
  *
  * Same midnight hazard, different midnight: a single capture taken before the
  * call fails a run that crosses the child's LOCAL midnight (#3816 is the UTC
@@ -738,7 +738,7 @@ export function fileExists(path: string): boolean { return existsSync(join(ROOT,
 /**
  * Every TRACKED file under `dir` whose basename matches `match`.
  *
- * Enumerated through lib/source-files.ts (#3890), not a private walk. This used
+ * Enumerated through packages/core/src/kernel/source-files.ts (#3890), not a private walk. This used
  * to recurse the working tree with a skip-list its one caller passed in
  * (`node_modules`, `.next`, `.git`, `out`, `dist`, `coverage`) — the same
  * hand-maintained shape #3419 removed from the syntax gate, and the same silent
@@ -832,6 +832,7 @@ function copyPackageWithDependencies(source: string, dest: string, chain: Set<st
   // package as a symlink, and copying that would recreate the link this
   // fallback exists because we could not make.
   const real = realpathSync(source);
+  mkdirSync(dirname(dest), { recursive: true });
   cpSync(real, dest, { recursive: true });
   const within = new Set(chain).add(real);
   let manifest: PackageManifest;
@@ -883,7 +884,7 @@ function placePackage(nodeModulesDir: string, pkgName: string, source: string, l
  * reach `ROOT/node_modules` from.
  *
  * The PDF sandboxes are created under `ROOT/output` and run a copy of
- * generate-pdf.ts, whose siblings theme-style.ts and tracker-utils.ts both
+ * packages/cli/src/commands/cv/generate-pdf.ts, whose siblings packages/cli/src/commands/cv/theme-style.ts and packages/core/src/tracker/tracker-utils.ts both
  * `import * as yaml from 'js-yaml'`. That specifier resolves by walking parent
  * directories up into `ROOT/node_modules`, and the walk starts from the
  * importer's REALPATH, because --preserve-symlinks is off by default. On a
@@ -1012,7 +1013,7 @@ export function startsRegex(src: string, i: number): boolean {
  * scan-history call is actually written with — the status string argument
  * (`'added'`, `'skipped_title'`), a commented-out call, and the template-string
  * child snippet the repo already uses to drive these writers
- * (web/src/lib/core/pipeline.ts builds one).
+ * (apps/web/src/lib/core/pipeline.ts builds one).
  *
  * Regex literals are NOT distinguished from division. A `/.../ ` argument to
  * appendToScanHistory would make the gate fail LOUDLY, which is the safe
@@ -1071,7 +1072,7 @@ export function codeMask(src: string): boolean[] {
     if (c === '/' && startsRegex(src, i)) {
       // A regex literal's contents are DATA. Not masking them let a quote or a
       // backtick inside one open a phantom string or template frame that then
-      // swallowed real code — scan-hn.ts carries `/```yaml|```/g`, six
+      // swallowed real code — packages/cli/src/commands/scanning/scan-hn.ts carries `/```yaml|```/g`, six
       // backticks, which is that hazard live in a writer file today.
       mask[i++] = false;                                  // opening slash
       let inClass = false;
@@ -1451,7 +1452,7 @@ export async function captureConsoleErrors<T>(fn: () => Promise<T> | T): Promise
  * (#3801). So the fixture runs git through `hermeticGitRunner` rather than
  * through the updater's own `gitIn`, which inherits the environment as a real
  * install must. That also keeps this module on Node builtins alone: most suites
- * import it, and none of them should pull in update-system.ts as a side effect
+ * import it, and none of them should pull in packages/cli/src/commands/platform/update-system.ts as a side effect
  * of asking for `pass`/`fail`.
  *
  * @param {object} [options]
@@ -1712,7 +1713,7 @@ export function directoryDenyBinds(): boolean {
 /**
  * Point provider requests for a public-looking origin at a local test server.
  *
- * providers/_http.ts refuses a loopback destination, by name (`localhost`,
+ * packages/core/src/scanning/providers/_http.ts refuses a loopback destination, by name (`localhost`,
  * at lookup time) and as a literal (`127.0.0.1`, before dialling), so a test
  * can no longer hand it a local URL. Address the request to `publicOrigin`
  * instead and run it inside this wrapper: the guard sees the public name, and

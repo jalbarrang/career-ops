@@ -196,7 +196,7 @@
 
 0. **커버레터:** 폼이 허용하면 항상 포함합니다. CV와 같은 visual design의 PDF. 공고 문구를 proof point와 매핑. 최대 1페이지.
 1. 공고 평가 전 `cv.md`와 `article-digest.md`(있다면)를 읽습니다.
-1b. **세션 첫 평가:** Bash로 `bun cv-sync-check.ts`를 실행합니다. 경고가 있으면 후보자에게 알립니다.
+1b. **세션 첫 평가:** Bash로 `career-ops cv-sync-check`를 실행합니다. 경고가 있으면 후보자에게 알립니다.
 2. 역할 archetype을 감지하고 framing을 조정합니다.
 3. matching 시 CV의 정확한 문장을 인용합니다.
 4. 보상/회사 데이터에는 WebSearch를 사용합니다.
@@ -205,7 +205,7 @@
 7. 직접적이고 구체적으로 씁니다. 불필요한 말은 줄입니다.
 8. 한국 테크 채용 문맥에 맞는 자연스러운 한국어를 사용합니다. 짧은 문장, 동사 중심, 수동태 회피. stack, pipeline, deployment, embedding 같은 현장 용어는 억지로 번역하지 않습니다.
 8b. **PDF Professional Summary의 case study URL:** PDF가 case study나 demo를 언급하면 URL은 반드시 첫 문단(Professional Summary)에 들어갑니다. recruiter는 summary만 읽는 경우가 많습니다. HTML에서는 모든 URL에 `white-space: nowrap` 적용.
-9. **Tracker entry는 TSV로 작성** -- 새 항목을 위해 applications.md를 직접 수정하지 않습니다. `batch/tracker-additions/`에 TSV를 쓰고 `merge-tracker.ts`가 병합합니다. 먼저 **컬럼 이름 줄**을 쓰고 그 아래에 데이터 줄을 정확히 하나 씁니다 (AGENTS.md의 "TSV Format for Tracker Additions" 참조). 이 이름 줄 덕분에 `merge-tracker.ts`는 어느 컬럼이 score이고 어느 것이 status인지 추측하지 않고 이름으로 필드를 해석합니다.
+9. **Tracker entry는 TSV로 작성** -- 새 항목을 위해 applications.md를 직접 수정하지 않습니다. `batch/tracker-additions/`에 TSV를 쓰고 `packages/cli/src/commands/tracker/merge-tracker.ts`가 병합합니다. 먼저 **컬럼 이름 줄**을 쓰고 그 아래에 데이터 줄을 정확히 하나 씁니다 (AGENTS.md의 "TSV Format for Tracker Additions" 참조). 이 이름 줄 덕분에 `packages/cli/src/commands/tracker/merge-tracker.ts`는 어느 컬럼이 score이고 어느 것이 status인지 추측하지 않고 이름으로 필드를 해석합니다.
 10. **모든 report header에 `**URL:**` 포함** -- Score와 PDF 사이에 둡니다.
 
 ### 도구
@@ -217,5 +217,5 @@
 | Playwright | 공고 활성 여부 확인(browser_navigate + browser_snapshot), SPA에서 공고 추출. **중요: Playwright를 쓰는 agent를 2개 이상 병렬로 띄우지 않습니다 -- 같은 browser instance를 공유합니다** |
 | Read | cv.md, article-digest.md, cv-template.html |
 | Write | PDF용 임시 HTML, reports .md, `batch/tracker-additions/`의 tracker 추가용 TSV (`applications.md`는 직접 쓰지 않음) |
-| Edit | report 등 생성된 콘텐츠 수정. tracker 표는 직접 편집하지 않음: 새 행은 TSV로 추가해 `bun merge-tracker.ts`로 병합하고, status와 notes 변경은 `bun set-status.ts`로 처리 |
-| Bash | `bun generate-pdf.ts`, `bun merge-tracker.ts`, `bun set-status.ts` |
+| Edit | report 등 생성된 콘텐츠 수정. tracker 표는 직접 편집하지 않음: 새 행은 TSV로 추가해 `career-ops merge-tracker`로 병합하고, status와 notes 변경은 `career-ops set-status`로 처리 |
+| Bash | `career-ops generate-pdf`, `career-ops merge-tracker`, `career-ops set-status` |

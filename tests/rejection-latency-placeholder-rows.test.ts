@@ -13,9 +13,9 @@
 // visibility and ghosting is most common. A report that omits them silently
 // reads as "nothing is overdue", not "I did not look at these".
 //
-// Two sibling readers of the same two files, reply-matcher.ts and
-// process-quality.ts, each already recognised placeholders explicitly. This
-// one had neither copy, which is why lib/placeholder-cell.ts now holds the
+// Two sibling readers of the same two files, packages/core/src/outreach/reply-matcher.ts and
+// packages/cli/src/commands/outreach/process-quality.ts, each already recognised placeholders explicitly. This
+// one had neither copy, which is why packages/core/src/tracker/placeholder-cell.ts now holds the
 // single definition all three import.
 //
 // Run:  bun test tests/rejection-latency-placeholder-rows.test.ts
@@ -30,7 +30,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const { placeholderInterviewRows, parseTrackerInterviewRows, groupIdentity } =
-  await import(pathToFileURL(join(ROOT, 'rejection-latency.ts')).href);
+  await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/outreach/rejection-latency.ts')).href);
 
 // One named employer and three that name nothing: the `?` of #1596 and both
 // no-data sentinels. All four are in Interview state.
@@ -90,7 +90,7 @@ test('the CLI states the gap in its warnings and metadata', () => {
       '| Acme | Backend Engineer | 2026-01-20 | 2 | n |',
       '',
     ].join('\n'));
-    const r = spawnSync(process.execPath, [join(ROOT, 'rejection-latency.ts'), '--today', '2026-06-01'], {
+    const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/outreach/rejection-latency.ts'), '--today', '2026-06-01'], {
       cwd: ROOT, encoding: 'utf-8', timeout: 30_000,
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_DATA_DIR: '' },
     });
@@ -117,7 +117,7 @@ test('the CLI states the gap in its warnings and metadata', () => {
 // warning. Advice the code does not honour is worse than no advice, because the
 // user spends the effort and gets the same output.
 //
-// process-quality.ts:190-205 had already solved this for the same data — a `?`
+// packages/cli/src/commands/outreach/process-quality.ts:190-205 had already solved this for the same data — a `?`
 // row that names its CHANNEL identifies something real, since every round
 // brokered by one agency is one relationship, and that is the thing going quiet.
 // groupIdentity mirrors it, including the normalized `?` prefix that keeps
@@ -187,7 +187,7 @@ test('an unattributable round in active-interviews.md is reported too', () => {
       '|---|---|---|---|---|',
       '| ? | Staff Engineer | 2026-01-21 | 2 | agency-brokered |', '',
     ].join('\n'));
-    const r = spawnSync(process.execPath, [join(ROOT, 'rejection-latency.ts'), '--today', '2026-06-01'], {
+    const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/outreach/rejection-latency.ts'), '--today', '2026-06-01'], {
       cwd: ROOT, encoding: 'utf-8', timeout: 30_000,
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_DATA_DIR: '' },
     });
@@ -215,7 +215,7 @@ test('--summary does not print an all-clear over rows it could not assess', () =
       '| 1 | 2026-01-05 | ? | Staff Engineer | 4.5/5 | Interview | ✅ | [1](r1.md) | n |', '',
     ].join('\n'));
     writeFileSync(join(dir, 'data', 'active-interviews.md'), '| Company | Role | Date | Round | Notes |\n|---|---|---|---|---|\n');
-    const r = spawnSync(process.execPath, [join(ROOT, 'rejection-latency.ts'), '--summary', '--today', '2026-06-01'], {
+    const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/outreach/rejection-latency.ts'), '--summary', '--today', '2026-06-01'], {
       cwd: ROOT, encoding: 'utf-8', timeout: 30_000,
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_DATA_DIR: '' },
     });

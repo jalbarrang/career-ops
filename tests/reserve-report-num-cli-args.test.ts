@@ -13,7 +13,7 @@ import { join } from 'path';
 import { spawnSync } from 'child_process';
 import { pass, fail, rmSync, NODE, ROOT } from './helpers.ts';
 
-const CLI = join(ROOT, 'reserve-report-num.ts');
+const CLI = join(ROOT, 'packages/cli/src/commands/tracker/reserve-report-num.ts');
 
 function runIn(dir, args) {
   return spawnSync(NODE, [CLI, ...args], {

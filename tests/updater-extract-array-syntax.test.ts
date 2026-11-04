@@ -22,7 +22,7 @@
  */
 
 import { pass, fail } from './helpers.ts';
-import { extractArrayFromSource } from '../update-system.ts';
+import { extractArrayFromSource } from '../packages/cli/src/commands/platform/update-system.ts';
 
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 

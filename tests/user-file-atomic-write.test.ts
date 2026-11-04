@@ -1,5 +1,5 @@
-// tests/user-file-atomic-write.test.ts — add-entry.ts (cv.md, article-digest.md)
-// and fix-slugs.ts (portals.yml) replace the user's file atomically.
+// tests/user-file-atomic-write.test.ts — packages/cli/src/commands/cv/add-entry.ts (cv.md, article-digest.md)
+// and packages/cli/src/commands/scanning/fix-slugs.ts (portals.yml) replace the user's file atomically.
 //
 // Both used to overwrite it in place with a bare writeFileSync, which truncates
 // first: a crash or a full disk mid-write left the only copy empty or cut
@@ -14,7 +14,7 @@ import { execFileSync } from 'child_process';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { pass, fail, warn, rmSync, stripJsComments, ROOT, NODE } from './helpers.ts';
-import { replaceUserFile } from '../tracker-utils.ts';
+import { replaceUserFile } from '../packages/core/src/tracker/tracker-utils.ts';
 
 console.log('\nuser files (cv.md, article-digest.md, portals.yml) are replaced atomically');
 
@@ -85,7 +85,7 @@ try {
     }
   }
 
-  // ── 2. add-entry.ts end to end, with cv.md a symlink to the real file ──
+  // ── 2. packages/cli/src/commands/cv/add-entry.ts end to end, with cv.md a symlink to the real file ──
   {
     const realDir = join(tmp, 'real');
     const dataRoot = join(tmp, 'data-root');
@@ -107,32 +107,32 @@ try {
       const realBefore = statSync(realCv);
       let out = '';
       try {
-        out = execFileSync(NODE, [join(ROOT, 'add-entry.ts'), payload], {
+        out = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/cv/add-entry.ts'), payload], {
           encoding: 'utf8', timeout: 30000,
           env: { ...process.env, CAREER_OPS_ROOT: dataRoot, CAREER_OPS_CV: linkCv, CAREER_OPS_ARTICLE_DIGEST: digest },
         });
       } catch (e) {
         out = `${e.stdout || ''}${e.stderr || ''}`;
       }
-      if (lstatSync(linkCv).isSymbolicLink()) pass('add-entry.ts keeps a symlinked cv.md a symlink');
-      else fail('add-entry.ts replaced the symlinked cv.md with a regular file');
-      if (readFileSync(realCv, 'utf8').includes('**New Project**')) pass('add-entry.ts writes the entry into the symlink target');
-      else fail(`add-entry.ts did not update the symlink target: ${out.slice(0, 300)}`);
-      if (!IS_WINDOWS && statSync(realCv).ino !== realBefore.ino) pass('add-entry.ts replaces cv.md atomically (new inode)');
-      else if (!IS_WINDOWS) fail('add-entry.ts wrote cv.md in place (same inode)');
-      if (existsSync(digest) && readFileSync(digest, 'utf8').includes('New Project')) pass('add-entry.ts creates article-digest.md through the same writer');
-      else fail(`add-entry.ts did not write article-digest.md: ${out.slice(0, 300)}`);
+      if (lstatSync(linkCv).isSymbolicLink()) pass('packages/cli/src/commands/cv/add-entry.ts keeps a symlinked cv.md a symlink');
+      else fail('packages/cli/src/commands/cv/add-entry.ts replaced the symlinked cv.md with a regular file');
+      if (readFileSync(realCv, 'utf8').includes('**New Project**')) pass('packages/cli/src/commands/cv/add-entry.ts writes the entry into the symlink target');
+      else fail(`packages/cli/src/commands/cv/add-entry.ts did not update the symlink target: ${out.slice(0, 300)}`);
+      if (!IS_WINDOWS && statSync(realCv).ino !== realBefore.ino) pass('packages/cli/src/commands/cv/add-entry.ts replaces cv.md atomically (new inode)');
+      else if (!IS_WINDOWS) fail('packages/cli/src/commands/cv/add-entry.ts wrote cv.md in place (same inode)');
+      if (existsSync(digest) && readFileSync(digest, 'utf8').includes('New Project')) pass('packages/cli/src/commands/cv/add-entry.ts creates article-digest.md through the same writer');
+      else fail(`packages/cli/src/commands/cv/add-entry.ts did not write article-digest.md: ${out.slice(0, 300)}`);
     }
   }
 
   // ── 3. Structural: neither writer goes back to an in-place write. fix-slugs'
   //    --fix path needs live board probes, so it is pinned here rather than run.
   {
-    const inPlace = ['add-entry.ts', 'fix-slugs.ts'].filter((f) => {
+    const inPlace = ['packages/cli/src/commands/cv/add-entry.ts', 'packages/cli/src/commands/scanning/fix-slugs.ts'].filter((f) => {
       const src = stripJsComments(readFileSync(join(ROOT, f), 'utf8'));
       return /\bwriteFileSync\s*\(/.test(src) || !/\breplaceUserFile\s*\(/.test(src);
     });
-    if (inPlace.length === 0) pass('add-entry.ts and fix-slugs.ts write user files only through replaceUserFile()');
+    if (inPlace.length === 0) pass('packages/cli/src/commands/cv/add-entry.ts and packages/cli/src/commands/scanning/fix-slugs.ts write user files only through replaceUserFile()');
     else fail(`these writers still overwrite a user file in place: ${inPlace.join(', ')}`);
   }
 } finally {

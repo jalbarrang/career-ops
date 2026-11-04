@@ -1,4 +1,4 @@
-// tests/audit-portals-providers-root.test.ts — audit-portals.ts loads its
+// tests/audit-portals-providers-root.test.ts — packages/cli/src/commands/scanning/audit-portals.ts loads its
 // provider registry from the CHECKOUT, not from the user's data root (#4171).
 //
 // `providers/` is system layer: it ships with the code and never travels to a
@@ -6,7 +6,7 @@
 // and the checkout were the same directory. Under the external-data-root layout
 // (CAREER_OPS_ROOT / CAREER_OPS_DATA_DIR, or a `.career-ops-data` marker),
 // loadProviders() read a directory that does not exist and returned an EMPTY
-// registry — so audit-portals.ts, the script whose whole job is catching the
+// registry — so packages/cli/src/commands/scanning/audit-portals.ts, the script whose whole job is catching the
 // silent "enabled but nothing scans it" state, reported `0 audited` and exited
 // 0. A green run that audited nothing is the worst shape this failure can take.
 //
@@ -24,12 +24,12 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { loadProviders } from '../providers/_registry.ts';
+import { loadProviders } from '../packages/core/src/scanning/providers/_registry.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
 /**
- * Import audit-portals.ts with the data root pointed OUTSIDE the checkout and
+ * Import packages/cli/src/commands/scanning/audit-portals.ts with the data root pointed OUTSIDE the checkout and
  * report what it resolved, in a CHILD process.
  *
  * A cache-busting query string is not enough: Bun resolves `file:///x.ts?a` and
@@ -47,7 +47,7 @@ function probeUnderDataRoot(dataRoot, expr) {
   const env = { ...process.env, CAREER_OPS_ROOT: dataRoot };
   delete env.CAREER_OPS_DATA_DIR;
   delete env.CAREER_OPS_PORTALS;
-  const src = `const m = await import(${JSON.stringify(pathToFileURL(join(ROOT, 'audit-portals.ts')).href)});\n${expr}`;
+  const src = `const m = await import(${JSON.stringify(pathToFileURL(join(ROOT, 'packages/cli/src/commands/scanning/audit-portals.ts')).href)});\n${expr}`;
   const r = spawnSync(process.execPath, ['--input-type=module', '-e', src], {
     cwd: ROOT, env, encoding: 'utf-8', timeout: 60_000,
   });
@@ -71,7 +71,7 @@ test('the provider registry is loaded from the checkout under an external data r
   try {
     const providersDir = probeUnderDataRoot(dataRoot, 'console.log(JSON.stringify(m.PROVIDERS_DIR));');
 
-    assert.equal(providersDir, join(ROOT, 'providers'), 'PROVIDERS_DIR must point at the checkout copy of providers/');
+    assert.equal(providersDir, join(ROOT, 'packages/core/src/scanning/providers'), 'PROVIDERS_DIR must point at the checkout copy of providers/');
     assert.ok(!providersDir.startsWith(dataRoot), `PROVIDERS_DIR followed the data root: ${providersDir}`);
 
     const providers = await loadProviders(providersDir);

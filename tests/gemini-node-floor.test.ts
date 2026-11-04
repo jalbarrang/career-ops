@@ -8,11 +8,11 @@
 //
 // These pin the verdict itself, so the number has one home and every surface
 // derives from it. The failing branch matters most — it is the one that protects
-// that user — and it cannot be exercised through doctor.ts on a machine that
+// that user — and it cannot be exercised through packages/cli/src/commands/platform/doctor.ts on a machine that
 // already runs a recent Node, which is why the logic is a pure module.
 
 import { pass, fail } from './helpers.ts';
-import { geminiNodeFloor, GEMINI_MIN_MAJOR } from '../lib/gemini-node-floor.ts';
+import { geminiNodeFloor, GEMINI_MIN_MAJOR } from '../packages/core/src/kernel/gemini-node-floor.ts';
 
 console.log('\n🔎 Gemini Node floor (the requirement that only applies to one CLI)');
 

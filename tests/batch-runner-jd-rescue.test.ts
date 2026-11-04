@@ -25,7 +25,7 @@ const apiAt = SRC.indexOf('local jd_api_words=0');
 if (rawAt !== -1 && rawAt < stripAt && stripAt < rescueAt && rescueAt < thinAt && thinAt < apiAt) {
   pass('raw copy → strip → rescue → thin check → ATS API fallback, in that order');
 } else {
-  fail('the order must be: copy raw bytes, strip, rescue, thin check, fetch-jd.ts fallback');
+  fail('the order must be: copy raw bytes, strip, rescue, thin check, packages/cli/src/commands/scanning/fetch-jd.ts fallback');
 }
 if (/jd-rescue\.ts" "\$url" "\$jd_raw_file" "\$jd_file" "\$jd_prefetch_words"/.test(SRC)) pass('the URL reaches jd-rescue.ts as a quoted argument, never in a shell string');
 else fail('jd-rescue.ts must be called with quoted arguments');

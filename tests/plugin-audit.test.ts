@@ -5,11 +5,11 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { auditPlugin } from '../plugin-audit.ts';
+import { auditPlugin } from '../packages/cli/src/commands/platform/plugin-audit.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const SCRIPT = join(ROOT, 'plugin-audit.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/platform/plugin-audit.ts');
 
 function runAudit(...args) {
   const r = spawnSync(process.execPath, [SCRIPT, ...args], {
@@ -17,22 +17,22 @@ function runAudit(...args) {
     encoding: 'utf-8',
     timeout: 10_000,
   });
-  assert.equal(r.error, undefined, `plugin-audit.ts failed to spawn: ${r.error?.message}`);
-  assert.equal(r.signal, null, `plugin-audit.ts was killed by ${r.signal} (timeout?)`);
+  assert.equal(r.error, undefined, `packages/cli/src/commands/platform/plugin-audit.ts failed to spawn: ${r.error?.message}`);
+  assert.equal(r.signal, null, `packages/cli/src/commands/platform/plugin-audit.ts was killed by ${r.signal} (timeout?)`);
   return { ...r, all: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 }
 
 test('--help prints usage and exits 0', () => {
   const r = runAudit('--help');
   assert.match(r.stdout, /Usage:/);
-  assert.match(r.stdout, /bun plugin-audit\.ts <plugin-dir>/);
+  assert.match(r.stdout, /career-ops plugin-audit <plugin-dir>/);
   assert.equal(r.status, 0, describeSpawn(r, '--help must exit 0'));
 });
 
 test('-h prints usage and exits 0', () => {
   const r = runAudit('-h');
   assert.match(r.stdout, /Usage:/);
-  assert.match(r.stdout, /bun plugin-audit\.ts <plugin-dir>/);
+  assert.match(r.stdout, /career-ops plugin-audit <plugin-dir>/);
   assert.equal(r.status, 0, describeSpawn(r, '-h must exit 0'));
 });
 

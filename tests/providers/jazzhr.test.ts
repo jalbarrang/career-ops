@@ -4,7 +4,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — jazzhr');
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/jazzhr.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/jazzhr.ts')).href);
   const provider = mod.default;
   const board = 'https://exampleco.applytojob.com/apply';
 
@@ -12,7 +12,7 @@ try {
   else fail('wrong provider id');
 
   // ── detect(): only the host is trusted — any path resolves to the board root ──
-  // Mirrors providers/bamboohr.ts / providers/breezy.ts: the input path
+  // Mirrors packages/core/src/scanning/providers/bamboohr.ts / packages/core/src/scanning/providers/breezy.ts: the input path
   // is never validated, just discarded and rebuilt as /apply.
   for (const [label, url] of [
     ['bare host with trailing slash', 'https://exampleco.applytojob.com/'],

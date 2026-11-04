@@ -28,8 +28,8 @@ import { chmodSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync,
 import { tmpdir } from 'os';
 import { delimiter, join, dirname } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
-import { seedFixture, loadExpectations } from './seed-fixture.ts';
-import { isMainModule } from './lib/is-main-module.ts';
+import { seedFixture, loadExpectations } from './packages/cli/src/commands/platform/seed-fixture.ts';
+import { isMainModule } from './packages/core/src/kernel/is-main-module.ts';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const CANONICAL = 'https://github.com/career-ops-hq/career-ops.git';
@@ -123,7 +123,7 @@ function hermeticEnv(cfg) {
     // during a run (any merge elsewhere) the old install's apply() refuses the
     // PR with "does not descend from upstream main" and the gate goes RED on a
     // change that has nothing to do with it. That check is the old install's
-    // own code, so no change to update-system.ts can stop it here; only the
+    // own code, so no change to packages/cli/src/commands/platform/update-system.ts can stop it here; only the
     // environment can. With the API unreachable, apply() prints its "could not
     // be cross-checked" note and goes on, which is the answer that is true of
     // a mirror: there is no upstream to compare the target with.
@@ -138,7 +138,7 @@ function hermeticEnv(cfg) {
  *  the target and the leg would go spuriously RED. */
 function pickOracle(mirror, oldTag, targetSha, systemPaths) {
   const changed = git(mirror, 'diff', '--name-only', `${oldTag}..${targetSha}`).split('\n').filter(Boolean);
-  if (changed.includes('update-system.ts')) return { oracle: 'update-system.ts', changed };
+  if (changed.includes('packages/cli/src/commands/platform/update-system.ts')) return { oracle: 'packages/cli/src/commands/platform/update-system.ts', changed };
   const managed = (f) => systemPaths.some((p) => (p.endsWith('/') ? f.startsWith(p) : f === p));
   const candidate = changed.find((f) => {
     if (!managed(f)) return false;
@@ -158,18 +158,18 @@ function pickOracle(mirror, oldTag, targetSha, systemPaths) {
   return { oracle: candidate, changed };
 }
 
-// Where a commit keeps its SYSTEM_PATHS: lib/update-manifest.ts since #5554,
-// update-system.ts before it. Same rule as the updater's manifestSystemPathsAt.
-const MANIFEST_MODULE = 'lib/update-manifest.ts';
+// Where a commit keeps its SYSTEM_PATHS: packages/core/src/platform/update-manifest.ts since #5554,
+// packages/cli/src/commands/platform/update-system.ts before it. Same rule as the updater's manifestSystemPathsAt.
+const MANIFEST_MODULE = 'packages/core/src/platform/update-manifest.ts';
 function manifestSourceAt(cwd, sha) {
   let file = MANIFEST_MODULE;
-  try { git(cwd, 'cat-file', '-e', `${sha}:${file}`); } catch { file = 'update-system.ts'; }
+  try { git(cwd, 'cat-file', '-e', `${sha}:${file}`); } catch { file = 'packages/cli/src/commands/platform/update-system.ts'; }
   return { file, source: git(cwd, 'show', `${sha}:${file}`) };
 }
 
 /** Prepend `entry` to the SYSTEM_PATHS in worktree `wt`; returns the file it edited. */
 function injectManifestEntry(wt, entry) {
-  const file = existsSync(join(wt, MANIFEST_MODULE)) ? MANIFEST_MODULE : 'update-system.ts';
+  const file = existsSync(join(wt, MANIFEST_MODULE)) ? MANIFEST_MODULE : 'packages/cli/src/commands/platform/update-system.ts';
   const before = readFileSync(join(wt, file), 'utf-8');
   const after = before.replace(/((?:export\s+)?const\s+SYSTEM_PATHS\s*=\s*\[)/, `$1\n  '${entry}',`);
   if (after === before) throw new Error(`Could not inject the poisoned SYSTEM_PATHS entry into ${file} (constant renamed?)`);
@@ -217,7 +217,7 @@ export function runLeg({ oldTag, targetSha, label = oldTag, mutateMirror = null,
     const { manifest } = seedFixture(install, { state });
 
     // Dismiss an update before applying one — the shape a user reaches by
-    // running `update-system.ts dismiss` and then `apply`. Both marker states
+    // running `packages/cli/src/commands/platform/update-system.ts dismiss` and then `apply`. Both marker states
     // have to be exercised, because apply() branches on trackedness and each
     // branch fails differently:
     //
@@ -253,12 +253,12 @@ export function runLeg({ oldTag, targetSha, label = oldTag, mutateMirror = null,
       .filter((p) => { try { git(mirror, 'cat-file', '-e', `${targetSha}:${p}`); return true; } catch { return false; } });
 
     // The updater that runs first and makes the cross-check is the old install's.
-    const oldUpdater = git(mirror, 'show', `${oldTag}:update-system.ts`);
+    const oldUpdater = git(mirror, 'show', `${oldTag}:packages/cli/src/commands/platform/update-system.ts`);
     // The fixture is an explicit installation acceptance test, so pass the
     // same confirmation a user would provide after reviewing the preview.
     // spawnSync rather than execFileSync: the cross-check note below goes to
     // stderr, which execFileSync drops when the run succeeds.
-    const run = spawnSync(process.execPath, ['update-system.ts', 'apply', '--confirm'], {
+    const run = spawnSync(process.execPath, ['packages/cli/src/commands/platform/update-system.ts', 'apply', '--confirm'], {
       cwd: install, encoding: 'utf-8', timeout: 300000,
       env: { ...hermeticEnv(cfg), CAREER_OPS_UPDATE_CONFIRM: '1' },
     });
@@ -343,11 +343,11 @@ export function runLeg({ oldTag, targetSha, label = oldTag, mutateMirror = null,
     // Secondary smoke only (runs the PR's own code — never the sole oracle).
     let doctorOk = false, doctorReason = '';
     try {
-      const d = JSON.parse(execFileSync(process.execPath, ['doctor.ts', '--json'], { cwd: install, encoding: 'utf-8', timeout: 60000 }));
+      const d = JSON.parse(execFileSync(process.execPath, ['packages/cli/src/commands/platform/doctor.ts', '--json'], { cwd: install, encoding: 'utf-8', timeout: 60000 }));
       doctorOk = d.onboardingNeeded === false;
       if (!doctorOk) doctorReason = ` (onboardingNeeded=${JSON.stringify(d.onboardingNeeded)}, missing=${JSON.stringify(d.missing ?? [])})`;
     } catch (e) { doctorReason = ` (${String(e.stderr || e.message || e).split('\n')[0].slice(0, 160)})`; }
-    ok(doctorOk, `doctor.ts --json smoke: onboardingNeeded false${doctorReason}`);
+    ok(doctorOk, `packages/cli/src/commands/platform/doctor.ts --json smoke: onboardingNeeded false${doctorReason}`);
     if (failures.length && output) {
       console.log(`  --- apply output tail [${label}] ---`);
       console.log(output.split('\n').slice(-15).join('\n'));
@@ -406,16 +406,16 @@ function canary() {
       const wt = join(work, 'poison-wt');
       git(mirror, 'worktree', 'add', wt, 'main');
       const completion = "    console.log(`\\nUpdate complete: v${local} → v${remote}`);";
-      const updater = readFileSync(join(wt, 'update-system.ts'), 'utf-8')
+      const updater = readFileSync(join(wt, 'packages/cli/src/commands/platform/update-system.ts'), 'utf-8')
         .replace(
           completion,
           `    writeFileSync(join(ROOT, 'cv.md'), '# CLOBBERED BY UPDATE\\n');\n${completion}`,
         );
-      if (updater === readFileSync(join(wt, 'update-system.ts'), 'utf-8')) {
+      if (updater === readFileSync(join(wt, 'packages/cli/src/commands/platform/update-system.ts'), 'utf-8')) {
         throw new Error('Could not inject the canary user-file clobber');
       }
-      writeFileSync(join(wt, 'update-system.ts'), updater);
-      git(wt, 'add', 'update-system.ts');
+      writeFileSync(join(wt, 'packages/cli/src/commands/platform/update-system.ts'), updater);
+      git(wt, 'add', 'packages/cli/src/commands/platform/update-system.ts');
       git(wt, '-c', 'user.name=canary', '-c', 'user.email=canary@test', 'commit', '-qm', 'canary: poison');
       const sha = git(wt, 'rev-parse', 'HEAD');
       git(mirror, 'worktree', 'remove', '--force', wt);
@@ -503,7 +503,7 @@ function localPathsLeg() {
 
     let exitCode = 0, output = '';
     try {
-      output = execFileSync(process.execPath, ['update-system.ts', 'apply', '--confirm'], {
+      output = execFileSync(process.execPath, ['packages/cli/src/commands/platform/update-system.ts', 'apply', '--confirm'], {
         cwd: install, encoding: 'utf-8', timeout: 300000,
         env: hermeticEnv(cfg),
       });
@@ -553,7 +553,7 @@ function userLayerRefusalLeg() {
   const ok = (cond, msg) => { console.log(`  ${cond ? 'PASS' : 'FAIL'} [user-layer-refusal] ${msg}`); if (!cond) failures.push(msg); };
   const run = (cwd, cfg, ...args) => {
     try {
-      return { exitCode: 0, output: execFileSync(process.execPath, ['update-system.ts', ...args], {
+      return { exitCode: 0, output: execFileSync(process.execPath, ['packages/cli/src/commands/platform/update-system.ts', ...args], {
         cwd, encoding: 'utf-8', timeout: 300000, env: hermeticEnv(cfg), stdio: ['ignore', 'pipe', 'pipe'],
       }) };
     } catch (e) { return { exitCode: e.status ?? 1, output: `${e.stdout ?? ''}${e.stderr ?? ''}` }; }
@@ -591,7 +591,7 @@ function userLayerRefusalLeg() {
     );
     ok(applied.output.includes('Update complete'), 'apply reports the update as complete');
     ok(
-      git(install, 'rev-parse', 'HEAD:update-system.ts') === git(mirror, 'rev-parse', `${targetSha}:update-system.ts`),
+      git(install, 'rev-parse', 'HEAD:packages/cli/src/commands/platform/update-system.ts') === git(mirror, 'rev-parse', `${targetSha}:packages/cli/src/commands/platform/update-system.ts`),
       'the rest of the update landed (updater matches the target)',
     );
     ok(intact(), `user file is byte-identical after apply: ${USER_FILE}`);
@@ -667,7 +667,7 @@ function failedInstallLeg() {
   const failures = [];
   const ok = (cond, msg) => { console.log(`  ${cond ? 'PASS' : 'FAIL'} [failed-install] ${msg}`); if (!cond) failures.push(msg); };
   const run = (cwd, env, ...args) => {
-    const result = spawnSync(process.execPath, ['update-system.ts', ...args], {
+    const result = spawnSync(process.execPath, ['packages/cli/src/commands/platform/update-system.ts', ...args], {
       cwd, encoding: 'utf-8', timeout: 300000, env,
     });
     return { exitCode: result.status ?? 1, output: `${result.stdout ?? ''}${result.stderr ?? ''}${result.error ? `\n${result.error.message}` : ''}` };
@@ -696,7 +696,7 @@ function failedInstallLeg() {
     ok(!applied.output.includes('Update complete'), 'apply does not print "Update complete"');
     ok(applied.output.includes('Run `bun install`'), 'apply tells the user what to run');
     ok(
-      git(install, 'rev-parse', 'HEAD:update-system.ts') === git(mirror, 'rev-parse', `${targetSha}:update-system.ts`),
+      git(install, 'rev-parse', 'HEAD:packages/cli/src/commands/platform/update-system.ts') === git(mirror, 'rev-parse', `${targetSha}:packages/cli/src/commands/platform/update-system.ts`),
       'the update itself landed (updater matches the target)',
     );
     for (const [f, hash] of Object.entries(manifest)) {

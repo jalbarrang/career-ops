@@ -1,8 +1,8 @@
 // tests/set-status-session-activity.test.ts — advisory in-progress claim
-// wired into set-status.ts, the canonical tracker-row writer (#4532).
+// wired into packages/cli/src/commands/tracker/set-status.ts, the canonical tracker-row writer (#4532).
 //
-// session-activity.ts is deliberately never a hard lock (see its own header
-// and reserve-report-num.ts, the sentinel pattern it mirrors): a status
+// packages/core/src/platform/session-activity.ts is deliberately never a hard lock (see its own header
+// and packages/cli/src/commands/tracker/reserve-report-num.ts, the sentinel pattern it mirrors): a status
 // change must succeed whether or not another session already claimed the
 // same row, and a collision only ever produces a console.warn advisory line,
 // never a different exit code or JSON shape. These tests prove exactly that
@@ -21,7 +21,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync } from 'node
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { claimActivity } from '../session-activity.ts';
+import { claimActivity } from '../packages/core/src/platform/session-activity.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const HEADER = '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |';
@@ -39,7 +39,7 @@ function sandbox({ status = 'Evaluated', reportCell = '[7](../reports/007-acme-2
 }
 
 function setStatus(dir, args, { activityDir } = {}) {
-  const r = spawnSync(process.execPath, [join(ROOT, 'set-status.ts'), ...args], {
+  const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/tracker/set-status.ts'), ...args], {
     cwd: ROOT,
     encoding: 'utf-8',
     timeout: 30_000,
@@ -75,7 +75,7 @@ test('an existing claim on the same report does not block the status change (adv
   const activityDir = mkdtempSync(join(tmpdir(), 'session-activity-'));
   try {
     // Simulate another (still "live", since it is this same test process)
-    // session already claiming report #7 before set-status.ts runs.
+    // session already claiming report #7 before packages/cli/src/commands/tracker/set-status.ts runs.
     const preExisting = claimActivity('report:7', { activityDir, label: 'another session' });
     assert.equal(preExisting.claimed, true);
 
@@ -90,8 +90,8 @@ test('an existing claim on the same report does not block the status change (adv
     assert.match(result.stderr, /another session appears to already be active/);
     assert.match(result.stderr, /report:7/);
 
-    // The pre-existing claim (owned by THIS test, not by set-status.ts) must
-    // still be there afterward — set-status.ts must never release a claim
+    // The pre-existing claim (owned by THIS test, not by packages/cli/src/commands/tracker/set-status.ts) must
+    // still be there afterward — packages/cli/src/commands/tracker/set-status.ts must never release a claim
     // it does not own.
     const sentinels = readdirSync(activityDir).filter((f) => f.endsWith('.json'));
     assert.equal(sentinels.length, 1);

@@ -1,5 +1,5 @@
 // tests/analyze-patterns-cli-flags.test.ts -- CLI flag validation for
-// analyze-patterns.ts (#2979).
+// packages/cli/src/commands/insights/analyze-patterns.ts (#2979).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const SCRIPT = join(ROOT, 'analyze-patterns.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/insights/analyze-patterns.ts');
 const VALID_FLAGS = [
   '--min-threshold',
   '--min-vendor-n',
@@ -42,8 +42,8 @@ function runAnalyze(...args) {
       timeout: 30_000,
       env: { ...process.env, CAREER_OPS_ROOT: dataRoot },
     });
-    assert.equal(result.error, undefined, `analyze-patterns.ts failed to spawn: ${result.error?.message}`);
-    assert.equal(result.signal, null, `analyze-patterns.ts was killed by ${result.signal} (timeout?)`);
+    assert.equal(result.error, undefined, `packages/cli/src/commands/insights/analyze-patterns.ts failed to spawn: ${result.error?.message}`);
+    assert.equal(result.signal, null, `packages/cli/src/commands/insights/analyze-patterns.ts was killed by ${result.signal} (timeout?)`);
     return { ...result, all: `${result.stdout ?? ''}${result.stderr ?? ''}` };
   } finally {
     rmSync(dataRoot, { recursive: true, force: true });
@@ -66,7 +66,7 @@ test('analyze-patterns help exits before reading application data', () => {
 
     assert.equal(result.status, 0, describeSpawn(result, `${flag} exited ${result.status}, want 0`));
     assert.match(result.stdout, /Usage:/i, `${flag} printed no usage block`);
-    assert.match(result.stdout, /bun analyze-patterns\.ts/, `${flag} did not identify the command`);
+    assert.match(result.stdout, /career-ops analyze-patterns/, `${flag} did not identify the command`);
     assert.doesNotMatch(result.all, /Not enough data/i, `${flag} continued into application analysis`);
   }
 });

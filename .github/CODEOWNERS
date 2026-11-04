@@ -46,19 +46,19 @@
 /DATA_CONTRACT.md      @santifer
 
 # The self-updater (catastrophic if wrong — touches user installs)
-/update-system.ts     @santifer
+/packages/cli/src/commands/platform/update-system.ts  @santifer
 # Its system-layer list (#5554). Kept here: the run-time checks refuse an entry
 # that names the user layer, not one that ships a file installs should not get.
-/lib/update-manifest.ts  @santifer
+/packages/core/src/platform/update-manifest.ts  @santifer
 /updater-migration-tests.ts  @santifer
 
 # Plugin governance chokepoint (a bad change here ships unreviewed code to
 # every user — the registry pin, the gates, and the CI must stay single-owner).
 # The registry is one file per plugin under plugins-registry/ (#1401).
 /plugins-registry/             @santifer
-/validate-plugin-registry.ts  @santifer
-/plugin-install.ts            @santifer
-/plugin-audit.ts              @santifer
+/packages/cli/src/commands/platform/validate-plugin-registry.ts  @santifer
+/packages/cli/src/commands/platform/plugin-install.ts  @santifer
+/packages/cli/src/commands/platform/plugin-audit.ts  @santifer
 /plugins/_engine.ts           @santifer
 /plugins/_lock.ts             @santifer
 /plugins/_net.ts              @santifer
@@ -68,7 +68,7 @@
 
 # The experimental web UI — owned by the web track (dual-track review with the
 # core maintainer on any PR that also touches root files).
-/web/ @santifer
+/apps/web/ @santifer
 
 # ── Area owners ────────────────────────────────────────────────────────────
 # Not red lines: these are the day-to-day areas, routed to whoever has been

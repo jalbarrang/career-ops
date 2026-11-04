@@ -1,5 +1,5 @@
 // tests/providers/greenhouse.test.ts — direct provider-contract tests (#1499).
-// Covers the id/detect/fetch contract scan.ts calls: api: precedence with the
+// Covers the id/detect/fetch contract packages/core/src/scanning/scan.ts calls: api: precedence with the
 // host allowlist, careers_url auto-detection, normalization from the
 // boards-api JSON shape, and the guard chain running before any request.
 // (Indirect coverage elsewhere: liveness tests exercise Greenhouse URL
@@ -11,7 +11,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — greenhouse');
 
 try {
-  const greenhouseModule = await import(pathToFileURL(join(ROOT, 'providers/greenhouse.ts')).href);
+  const greenhouseModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/greenhouse.ts')).href);
   const greenhouse = greenhouseModule.default;
   const { isWorkModelOnly, officesUrlFor, buildOfficeMap, contentToText } = greenhouseModule;
 
@@ -402,7 +402,7 @@ try {
   // Order stability (#3750). The folded city list must not inherit the order
   // Greenhouse happened to return its offices in: that order is not promised to
   // be stable, and this string is what lands in scan-history.tsv AND what
-  // scan.ts keys the location dedupe on. Same two offices as above, declared
+  // packages/core/src/scanning/scan.ts keys the location dedupe on. Same two offices as above, declared
   // the other way round — the emitted location must be byte-identical.
   const reversedOffices = {
     offices: [

@@ -5,13 +5,13 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listTemplates } from '../cv-templates.ts';
+import { listTemplates } from '../packages/cli/src/commands/cv/cv-templates.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const TEMPLATE_DIR = join(ROOT, 'templates');
 const BASE_TEMPLATE = join(TEMPLATE_DIR, 'cv-template.html');
 
-// listTemplates() is the same registry build-cv-html.ts's callers resolve
+// listTemplates() is the same registry packages/cli/src/commands/cv/build-cv-html.ts's callers resolve
 // names against, so this walks the flat cv-template*.html files AND one-level
 // packs (templates/ats/cv-template.ats.html) without hand-rolling a second
 // discovery rule that can drift from the real one (nikitacometa's #3763
@@ -43,7 +43,7 @@ function render(inputPayload, template = BASE_TEMPLATE) {
   const input = join(dir, 'input.json');
   const output = join(dir, 'output.html');
   writeFileSync(input, JSON.stringify(inputPayload));
-  execFileSync(process.execPath, ['build-cv-html.ts', input, output, template], { cwd: ROOT, encoding: 'utf8' });
+  execFileSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', input, output, template], { cwd: ROOT, encoding: 'utf8' });
   return readFileSync(output, 'utf8');
 }
 

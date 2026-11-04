@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * tests/followup-seed.test.ts — regression tests for followup-seed.ts (#1430).
+ * tests/followup-seed.test.ts — regression tests for packages/core/src/outreach/followup-seed.ts (#1430).
  *
  * Marking a tracker row Applied used to leave data/follow-ups.md untouched
  * until the user ran the `followup` mode by hand — the seed step never ran on
- * its own. These tests drive followup-seed.ts's CLI (via execFileSync)
+ * its own. These tests drive packages/core/src/outreach/followup-seed.ts's CLI (via execFileSync)
  * end-to-end against sandboxed fixtures, plus a few
  * direct unit-level imports of the exported functions.
  *
@@ -22,11 +22,11 @@ import { pass, fail, ROOT } from './helpers.ts';
 console.log('\nfollowup-seed.ts — pinned first follow-up on Applied');
 const DEFAULT_CADENCE_PROFILE = join(ROOT, 'tests', 'fixtures', 'profile-default-cadence.yml');
 
-// Pin the cadence source BEFORE followup-cadence.ts is evaluated: it resolves
+// Pin the cadence source BEFORE packages/core/src/outreach/followup-cadence.ts is evaluated: it resolves
 // its cadence at module load from CAREER_OPS_PROFILE and otherwise falls back
 // to the USER's config/profile.yml, so a customized followup_cadence turned
 // these date assertions red on a healthy install (#2268). The spawned
-// followup-seed.ts inherits the same pin through run()'s env.
+// packages/core/src/outreach/followup-seed.ts inherits the same pin through run()'s env.
 //
 // The import below must stay DYNAMIC: ESM hoists static imports above every
 // statement here, so a static one would run the module first and the pin would
@@ -35,13 +35,13 @@ const DEFAULT_CADENCE_PROFILE = join(ROOT, 'tests', 'fixtures', 'profile-default
 // The pin is also RESTORED the moment that import resolves, and this is not
 // tidiness. As a root suite this ran in its own process, so a leaked env var
 // died with it; discovery runs every suite in ONE process, and
-// providers/_profile-keywords.ts reads CAREER_OPS_PROFILE at module scope to
+// packages/core/src/scanning/providers/_profile-keywords.ts reads CAREER_OPS_PROFILE at module scope to
 // pick its fallback profile. Leaving the pin set poisons every provider suite
 // that sorts after this one — they went red together with "no
 // config/profile.yml target_roles to fall back to" while passing alone, which
 // is the #3411 failure exactly, and the reason it is worth restoring in a
 // `finally`: #3411's own restore turned out to be skippable on a throw.
-// followup-cadence.ts has captured its value by the time the import resolves,
+// packages/core/src/outreach/followup-cadence.ts has captured its value by the time the import resolves,
 // and run()'s child env sets CAREER_OPS_PROFILE explicitly rather than
 // inheriting it, so nothing below needs the process-wide pin.
 const PRIOR_PROFILE = process.env.CAREER_OPS_PROFILE;
@@ -49,7 +49,7 @@ process.env.CAREER_OPS_PROFILE = DEFAULT_CADENCE_PROFILE;
 
 let cadence;
 try {
-  cadence = await import('../followup-cadence.ts');
+  cadence = await import('../packages/core/src/outreach/followup-cadence.ts');
 } finally {
   if (PRIOR_PROFILE === undefined) delete process.env.CAREER_OPS_PROFILE;
   else process.env.CAREER_OPS_PROFILE = PRIOR_PROFILE;
@@ -57,10 +57,10 @@ try {
 
 const { parseNextOverrides, resolveNextOverride, normalizeStatus, addDays, parseDate } = cadence;
 const NODE = process.execPath;
-const SCRIPT = join(ROOT, 'followup-seed.ts');
+const SCRIPT = join(ROOT, 'packages/core/src/outreach/followup-seed.ts');
 
 
-// Mirror of followup-seed.ts's todayStr(): the LOCAL date, not the UTC one.
+// Mirror of packages/core/src/outreach/followup-seed.ts's todayStr(): the LOCAL date, not the UTC one.
 // This helper used toISOString() too, so tests 1 and 4 asserted the seed's
 // today against UTC's today. They agree only while the host is west of nothing
 // — every US evening after 20:00 Eastern the two dates differ and both
@@ -97,7 +97,7 @@ function trackerRow(num, date, company, role, score, status, notes) {
   return `| ${num} | ${date} | ${company} | ${role} | ${score} | ${status} | ❌ | — | ${notes} |`;
 }
 
-// Run followup-seed.ts against a sandbox. Returns { code, stdout, stderr }.
+// Run packages/core/src/outreach/followup-seed.ts against a sandbox. Returns { code, stdout, stderr }.
 function run(args, sandbox, extraEnv = {}) {
   const env = {
     ...process.env,
@@ -458,8 +458,8 @@ function cleanup(sandbox) {
 // the guard behind forever. Because the guard is the ticket required to run
 // stale-lock recovery at all, an abandoned one permanently disables recovery:
 // every later seed run times out at exit 4 until someone deletes the directory
-// under tmpdir by hand. tracker-utils.ts and pipeline-lock.ts both age the
-// guard out for exactly this reason; followup-seed.ts was the outlier.
+// under tmpdir by hand. packages/core/src/tracker/tracker-utils.ts and packages/core/src/kernel/pipeline-lock.ts both age the
+// guard out for exactly this reason; packages/core/src/outreach/followup-seed.ts was the outlier.
 {
   const sb = makeSandbox();
   writeTracker(sb, [trackerRow(1, '2026-05-01', 'Acme', 'Engineer', '4.0/5', 'Applied', 'Applied 2026-06-20.')]);
@@ -529,7 +529,7 @@ function cleanup(sandbox) {
   //
   // The floor itself is widened to 30s via CAREER_OPS_OWNERLESS_GRACE_MS
   // (#4537): at the production 1s default, the child's own startup cost —
-  // execFileSync, Node boot, the module graph behind followup-seed.ts, plus
+  // execFileSync, Node boot, the module graph behind packages/core/src/outreach/followup-seed.ts, plus
   // up to 300ms of retries — could itself eat past 900ms of the window on a
   // loaded CI runner, so the lock read as aged-out before the child ever
   // looked, and this test failed by measuring exactly the race it exists to

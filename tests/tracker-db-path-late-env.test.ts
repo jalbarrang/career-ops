@@ -1,15 +1,15 @@
 // tests/tracker-db-path-late-env.test.ts — openDb() must honor
-// CAREER_OPS_TRACKER_DB set AFTER tracker.ts is already in the module cache
+// CAREER_OPS_TRACKER_DB set AFTER packages/cli/src/commands/tracker/tracker.ts is already in the module cache
 // (#3506).
 //
-// tracker.ts resolved DB_PATH at module scope. That is correct for a CLI — one
+// packages/cli/src/commands/tracker/tracker.ts resolved DB_PATH at module scope. That is correct for a CLI — one
 // process, one invocation, env fixed before node starts — and wrong the moment
 // the module is imported rather than executed: the first importer froze the path
 // for the whole process, and a later assignment to the documented override was
 // silently ignored.
 //
 // tests/tracker-busy-timeout.test.ts is exactly that shape. It pins the variable
-// before importing tracker.ts, but test-all.ts imports tracker.ts earlier in
+// before importing packages/cli/src/commands/tracker/tracker.ts, but test-all.ts imports packages/cli/src/commands/tracker/tracker.ts earlier in
 // the same process (removeRowByNum), so under a full-suite run the pin did
 // nothing and openDb() created its schema at the unpinned path — a stray
 // applications.db in the repo root, or in a user's data/ if they ran the suite
@@ -29,14 +29,14 @@ console.log('\ntracker.ts — CAREER_OPS_TRACKER_DB honored after import (#3506)
 const work = mkdtempSync(join(tmpdir(), 'cops-db-late-'));
 const before = process.env.CAREER_OPS_TRACKER_DB;
 
-// The path a frozen DB_PATH would have used — computed the way tracker.ts
+// The path a frozen DB_PATH would have used — computed the way packages/cli/src/commands/tracker/tracker.ts
 // computes it, from the ambient env, before this suite changes anything. That is
 // where the pre-fix build writes, and it is outside the fixture by definition, so
 // the suite has to name it: assert nothing appeared there, and clean up if
 // something did. Otherwise a FAILING run of this test leaves behind exactly the
 // stray database the change is meant to prevent — and only ever removes what it
 // created itself, never a real index that was already on disk.
-const { getCareerOpsRoot, resolveTrackerPath } = await import('../path-resolver.ts');
+const { getCareerOpsRoot, resolveTrackerPath } = await import('../packages/core/src/kernel/path-resolver.ts');
 const mdPath = resolveTrackerPath(getCareerOpsRoot());
 const fallbackDb = mdPath.endsWith('.md') ? mdPath.slice(0, -3) + '.db' : mdPath + '.db';
 const fallbackExisted = existsSync(fallbackDb);
@@ -64,7 +64,7 @@ try {
   // 1. Import with the override ABSENT, the way an unrelated consumer would.
   //    Any module-scope resolution happens here, at the wrong path.
   delete process.env.CAREER_OPS_TRACKER_DB;
-  const { openDb } = await import(new URL('../tracker.ts', import.meta.url).href);
+  const { openDb } = await import(new URL('../packages/cli/src/commands/tracker/tracker.ts', import.meta.url).href);
 
   // 2. Only now pin it. A module-scope const cannot see this.
   const pinned = join(work, 'applications.db');

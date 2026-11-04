@@ -5,14 +5,14 @@
 // Three readers put story-bank figures in front of someone else, and each let
 // an unverified one through:
 //
-//   story-provenance-check.ts  `existing` matched digits, not units, inside a
+//   packages/cli/src/commands/interview/story-provenance-check.ts  `existing` matched digits, not units, inside a
 //                               window that crossed sentences: a cv.md "40%"
 //                               verified a story's "40-person team".
-//   negotiation-roi.ts         never read the Provenance marker, and accepted
+//   packages/cli/src/commands/insights/negotiation-roi.ts         never read the Provenance marker, and accepted
 //                               "8 hours" and "2 hours" from two unrelated cv.md
 //                               bullets as an 8-to-2-hours reduction, so a story
 //                               marked user-cannot-confirm became a dollar figure.
-//   match-star.ts              printed a user-cannot-confirm story as paste-ready
+//   packages/cli/src/commands/interview/match-star.ts              printed a user-cannot-confirm story as paste-ready
 //                               ATS text, figures and all, with no warning.
 //
 // Run:  bun test tests/story-provenance-gates.test.ts
@@ -24,9 +24,9 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { classifyStoryBank } from '../story-provenance-check.ts';
-import { analyze, verifyClaim } from '../negotiation-roi.ts';
-import { formatAts, parseStories } from '../match-star.ts';
+import { classifyStoryBank } from '../packages/cli/src/commands/interview/story-provenance-check.ts';
+import { analyze, verifyClaim } from '../packages/cli/src/commands/insights/negotiation-roi.ts';
+import { formatAts, parseStories } from '../packages/cli/src/commands/interview/match-star.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -176,7 +176,7 @@ test('bun run star reads the marker from the story bank on disk', () => {
     mkdirSync(join(dir, 'interview-prep'));
     writeFileSync(join(dir, 'interview-prep', 'story-bank.md'), `# Story Bank\n\n${SCALING}\n${REPORTING}`);
     writeFileSync(join(dir, 'cv.md'), CV);
-    const run = spawnSync(process.execPath, [join(ROOT, 'match-star.ts'), 'Tell me about an automation you built'], {
+    const run = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/interview/match-star.ts'), 'Tell me about an automation you built'], {
       cwd: dir, encoding: 'utf-8', env: { ...process.env, CAREER_OPS_ROOT: dir },
     });
     assert.equal(run.status, 0, run.stderr);

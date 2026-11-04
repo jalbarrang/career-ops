@@ -45,20 +45,20 @@ env.STATE_PATH = statePath;
 const previous = { status: 'never', askedAt: '2026-01-01T00:00:00Z' };
 writeFileSync(statePath, JSON.stringify({ byReport: { '999': previous } }));
 try {
-  const writers = await Promise.all(reports.map(n => child('hired-share.ts', ['--report', n, '--mark', 'never'])));
+  const writers = await Promise.all(reports.map(n => child('packages/cli/src/commands/insights/hired-share.ts', ['--report', n, '--mark', 'never'])));
   check('every concurrent never decision persists with existing marks', () => {
     for (const r of writers) assert.equal(r.status, 0, r.stderr);
     const state = JSON.parse(readFileSync(statePath, 'utf8')).byReport;
     for (const n of reports) assert.equal(state[n]?.status, 'never', `lost report ${n}`);
     assert.deepEqual(state['999'], previous);
   });
-  const status = spawnSync(process.execPath, [join(ROOT, 'hired-share.ts'), '--status'], { env, encoding: 'utf8' });
+  const status = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/insights/hired-share.ts'), '--status'], { env, encoding: 'utf8' });
   check('status does not ask about a hire whose sharing was declined', () => {
     assert.equal(status.status, 0, status.stderr);
     assert.deepEqual(JSON.parse(status.stdout).askable, []);
   });
   const declinedBeforeDraft = JSON.parse(readFileSync(statePath, 'utf8')).byReport['1'];
-  const draft = await child('hired-share.ts', ['--report', '1']);
+  const draft = await child('packages/cli/src/commands/insights/hired-share.ts', ['--report', '1']);
   check('drafting preserves a permanent decline and every other report', () => {
     assert.equal(draft.status, 0, draft.stderr);
     const state = JSON.parse(readFileSync(statePath, 'utf8')).byReport;
@@ -68,10 +68,10 @@ try {
   });
   env.HISTORY_PATH = join(root, 'data', 'scan-history.tsv');
   writeFileSync(env.HISTORY_PATH, '2026-01-01\tfictional\n');
-  const later = await child('hired-share.ts', ['--report', '2', '--mark', 'later']);
+  const later = await child('packages/cli/src/commands/insights/hired-share.ts', ['--report', '2', '--mark', 'later']);
   assert.equal(later.status, 0, later.stderr);
   const ready = join(root, 'draft-ready'), resume = join(root, 'draft-resume');
-  const pendingDraft = child('hired-share.ts', ['--report', '2'], { DRAFT_READY: ready, DRAFT_RESUME: resume });
+  const pendingDraft = child('packages/cli/src/commands/insights/hired-share.ts', ['--report', '2'], { DRAFT_READY: ready, DRAFT_RESUME: resume });
   let declined;
   try {
     const deadline = Date.now() + 30000;
@@ -79,7 +79,7 @@ try {
       assert.ok(Date.now() < deadline, 'draft did not reach the payload barrier');
       await new Promise(resolve => setTimeout(resolve, 10));
     }
-    const never = await child('hired-share.ts', ['--report', '2', '--mark', 'never']);
+    const never = await child('packages/cli/src/commands/insights/hired-share.ts', ['--report', '2', '--mark', 'never']);
     assert.equal(never.status, 0, never.stderr);
     declined = JSON.parse(readFileSync(statePath, 'utf8')).byReport['2'];
   } finally { writeFileSync(resume, 'resume'); }
@@ -88,9 +88,9 @@ try {
     assert.equal(finishedDraft.status, 0, finishedDraft.stderr);
     assert.deepEqual(JSON.parse(readFileSync(statePath, 'utf8')).byReport['2'], declined);
   });
-  const allowed = await child('hired-share.ts', ['--report', '3', '--mark', 'later']);
+  const allowed = await child('packages/cli/src/commands/insights/hired-share.ts', ['--report', '3', '--mark', 'later']);
   assert.equal(allowed.status, 0, allowed.stderr);
-  const allowedDraft = await child('hired-share.ts', ['--report', '3']);
+  const allowedDraft = await child('packages/cli/src/commands/insights/hired-share.ts', ['--report', '3']);
   check('a draft still records drafted when the saved decision is later', () => {
     assert.equal(allowedDraft.status, 0, allowedDraft.stderr);
     assert.equal(JSON.parse(readFileSync(statePath, 'utf8')).byReport['3'].status, 'drafted');

@@ -2,7 +2,7 @@
 // config file nothing checked the shape of.
 //
 // It steers scoring targets, output language, spend tier, CV format and
-// location policy. doctor.ts checked that it EXISTS; every reader then does
+// location policy. packages/cli/src/commands/platform/doctor.ts checked that it EXISTS; every reader then does
 // `profile?.language?.output` and takes the fallback when the key is absent —
 // which is indistinguishable from the key being MISSPELLED:
 //
@@ -13,8 +13,8 @@
 // English output at the default tier, no signal anywhere. The user's only clue
 // is noticing the wrong language in finished work.
 //
-// portals.yml has validate-portals.ts and the plugin registry has
-// validate-plugin-registry.ts; this is the same family for the file that had
+// portals.yml has packages/cli/src/commands/scanning/validate-portals.ts and the plugin registry has
+// packages/cli/src/commands/platform/validate-plugin-registry.ts; this is the same family for the file that had
 // none.
 //
 // Run:  bun test tests/profile-schema-validation.test.ts
@@ -29,7 +29,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const { validateProfile, knownKeysFromExample, UNDOCUMENTED_KEYS, EXAMPLE_PATH } =
-  await import(pathToFileURL(join(ROOT, 'validate-profile.ts')).href);
+  await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/profile/validate-profile.ts')).href);
 
 const EXAMPLE = existsSync(EXAMPLE_PATH) ? readFileSync(EXAMPLE_PATH, 'utf-8') : '';
 
@@ -78,7 +78,7 @@ test('the known-key set is derived from the example, not hardcoded here', () => 
 
 test('a section the example ships commented out is known, not "no effect"', () => {
   // style (#1837) and page_format (#4405) are documented only as commented-out
-  // blocks, and theme-style.ts / lib/page-format.ts read them. Deriving keys
+  // blocks, and packages/cli/src/commands/cv/theme-style.ts / packages/core/src/cv/page-format.ts read them. Deriving keys
   // from the parsed example alone told a user who set them that the setting had
   // no effect. scan is the same case: the example shows `# scan:`.
   const profile = [
@@ -94,7 +94,7 @@ test('a section the example ships commented out is known, not "no effect"', () =
 test('prose comments and keys nested in a commented block are not top-level keys', () => {
   // Lines taken from the shipped example. A looser rule (`#`, any spaces, then
   // `word:`) also matches every nested key there, so a misplaced top-level
-  // `margin:`, which theme-style.ts never reads, would pass as known.
+  // `margin:`, which packages/cli/src/commands/cv/theme-style.ts never reads, would pass as known.
   const example = [
     'candidate:',
     '  full_name: x',
@@ -172,7 +172,7 @@ test('doctor surfaces it as a warning, and does not fail the run', () => {
   try {
     mkdirSync(join(dir, 'config'), { recursive: true });
     writeFileSync(join(dir, 'config', 'profile.yml'), 'langauge:\n  output: ja\n');
-    const r = spawnSync(process.execPath, [join(ROOT, 'doctor.ts'), '--target', dir], {
+    const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), '--target', dir], {
       cwd: dir, encoding: 'utf-8', timeout: 60_000,
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_DATA_DIR: '' },
     });
@@ -192,7 +192,7 @@ test('a clean profile adds no doctor noise', () => {
     // profile that sets them is as clean as one that does not.
     writeFileSync(join(dir, 'config', 'profile.yml'),
       'language:\n  output: ja\npage_format: a4\nstyle:\n  accent_color: "#2563eb"\n');
-    const r = spawnSync(process.execPath, [join(ROOT, 'doctor.ts'), '--target', dir], {
+    const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), '--target', dir], {
       cwd: dir, encoding: 'utf-8', timeout: 60_000,
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_DATA_DIR: '' },
     });

@@ -6,7 +6,7 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { pass, fail, ROOT, NODE, rmSync } from './helpers.ts';
-import { buildPredictedDiscardReasonSignals, OUTCOME_BUCKETS } from '../analyze-patterns.ts';
+import { buildPredictedDiscardReasonSignals, OUTCOME_BUCKETS } from '../packages/cli/src/commands/insights/analyze-patterns.ts';
 
 console.log('\nanalyze-patterns — predicted reasons remain separate from outcomes');
 
@@ -135,7 +135,7 @@ for (const [num, status, reasons, notes] of rows) {
 writeFixture(join(work, 'data', 'applications.md'), tracker.join('\n') + '\n');
 
 try {
-  const run = (...flags) => execFileSync(NODE, [join(ROOT, 'analyze-patterns.ts'), '--min-threshold', '1', ...flags], {
+  const run = (...flags) => execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/insights/analyze-patterns.ts'), '--min-threshold', '1', ...flags], {
     encoding: 'utf8', timeout: 30000,
     env: { ...process.env, CAREER_OPS_ROOT: work, CAREER_OPS_DATA_DIR: work },
   });

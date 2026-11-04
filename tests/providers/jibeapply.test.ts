@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — jibeapply');
 
 try {
-  const jibeapplyModule = await import(pathToFileURL(join(ROOT, 'providers/jibeapply.ts')).href);
+  const jibeapplyModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/jibeapply.ts')).href);
   const jibeapply = jibeapplyModule.default;
   const { parseJibeapplyResponse } = jibeapplyModule;
 
@@ -160,7 +160,7 @@ try {
   }
 
   // fetch() pagination cap — an inflated totalCount must not trigger unbounded
-  // concurrent requests (MAX_PAGES = 50 in providers/jibeapply.ts), and
+  // concurrent requests (MAX_PAGES = 50 in packages/core/src/scanning/providers/jibeapply.ts), and
   // hitting the cap must be visible (console.error), not silent.
   let hugeRequests = 0;
   const jibeCapWarnings = [];

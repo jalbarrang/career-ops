@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { ROOT, NODE, rmSync } from './helpers.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
-const SCRIPT = join(ROOT, 'reply-watch.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/outreach/reply-watch.ts');
 
 function setupWorkspace() {
   const tmp = mkdtempSync(join(tmpdir(), 'career-ops-reply-watch-'));
@@ -109,7 +109,7 @@ test('Status-log append failure does not abort the tracker update', () => {
   rmSync(tmp, { recursive: true, force: true });
 });
 
-test('reply-watch.ts with no candidates prints the count line and exits 0', () => {
+test('packages/cli/src/commands/outreach/reply-watch.ts with no candidates prints the count line and exits 0', () => {
   const { tmp, trackerFile } = setupWorkspace();
   const candFile = join(tmp, 'empty.json');
   writeFileSync(candFile, JSON.stringify([]));
@@ -121,7 +121,7 @@ test('reply-watch.ts with no candidates prints the count line and exits 0', () =
   rmSync(tmp, { recursive: true, force: true });
 });
 
-test('reply-watch.ts skips Noise candidates from status recommendations', () => {
+test('packages/cli/src/commands/outreach/reply-watch.ts skips Noise candidates from status recommendations', () => {
   const { tmp, dataDir, trackerFile } = setupWorkspace();
   const candFile = join(tmp, 'noise.json');
   writeFileSync(candFile, JSON.stringify([{
@@ -142,7 +142,7 @@ test('reply-watch.ts skips Noise candidates from status recommendations', () => 
   rmSync(tmp, { recursive: true, force: true });
 });
 
-test('reply-watch.ts renders and applies one confirmed update per company-wide rejection row', () => {
+test('packages/cli/src/commands/outreach/reply-watch.ts renders and applies one confirmed update per company-wide rejection row', () => {
   const { tmp, dataDir, trackerFile } = setupWorkspace();
   writeFileSync(trackerFile, [
     '# Applications', '',

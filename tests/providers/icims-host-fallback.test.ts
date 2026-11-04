@@ -6,7 +6,7 @@ import { pass, fail, ROOT } from '../helpers.ts';
 
 console.log('\nProvider — icims host fallback');
 
-const icims = (await import(pathToFileURL(join(ROOT, 'providers/icims.ts')).href)).default;
+const icims = (await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/icims.ts')).href)).default;
 
 const PRIMARY = 'https://careers-acmefreight.icims.com';
 const FALLBACK = 'https://acmefreight.icims.com';

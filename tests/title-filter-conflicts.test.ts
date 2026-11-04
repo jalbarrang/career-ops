@@ -2,7 +2,7 @@
 // title as both a positive and a negative can never keep it.
 //
 // buildTitleFilter() requires `hasPositive && !hasNegative`
-// (title-keywords.ts), so the positive entry looks like a target and is
+// (packages/core/src/scanning/title-keywords.ts), so the positive entry looks like a target and is
 // silently a no-op. The shipped example warns about this in prose; these
 // assertions are what tell a reader whether THEIR list has the problem, and
 // they run against the matcher the scanner itself uses rather than a copy.
@@ -16,23 +16,23 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import * as yaml from 'js-yaml';
 import { pass, fail, warn, ROOT } from './helpers.ts';
-import { buildTitleFilter } from '../scan.ts';
-import { compileKeyword, foldAccents } from '../title-keywords.ts';
-import { findTitleFilterConflicts, representativeTitle } from '../lib/title-filter-conflicts.ts';
+import { buildTitleFilter } from '../packages/core/src/scanning/scan.ts';
+import { compileKeyword, foldAccents } from '../packages/core/src/scanning/title-keywords.ts';
+import { findTitleFilterConflicts, representativeTitle } from '../packages/core/src/scanning/title-filter-conflicts.ts';
 
 console.log('\ntitle_filter conflicts — a positive the negatives veto');
 
 // ── the updater ships the module doctor now imports ─────────────────
-// doctor.ts is a SYSTEM_PATHS file, so an upgrade checks out the new doctor
-// over an install whose updater has no entry for lib/title-filter-conflicts.ts
+// packages/cli/src/commands/platform/doctor.ts is a SYSTEM_PATHS file, so an upgrade checks out the new doctor
+// over an install whose updater has no entry for packages/core/src/scanning/title-filter-conflicts.ts
 // -- and the install is left with a doctor that cannot load. Same shape as the
 // check tests/jd-archive-wiring.test.ts makes for check-jd-archive.ts.
-const manifestSrc = readFileSync(join(ROOT, 'lib', 'update-manifest.ts'), 'utf-8');
+const manifestSrc = readFileSync(join(ROOT, 'packages/core/src/platform/update-manifest.ts'), 'utf-8');
 const systemBlock = (manifestSrc.match(/SYSTEM_PATHS\s*=\s*\[([\s\S]*?)\]/) || [, ''])[1];
-if (systemBlock.includes("'lib/title-filter-conflicts.ts'")) {
-  pass('lib/title-filter-conflicts.ts is in SYSTEM_PATHS (shipped + updatable)');
+if (systemBlock.includes("'packages/core/src/scanning/title-filter-conflicts.ts'")) {
+  pass('packages/core/src/scanning/title-filter-conflicts.ts is in SYSTEM_PATHS (shipped + updatable)');
 } else {
-  fail('lib/title-filter-conflicts.ts is NOT in SYSTEM_PATHS — an upgraded install would get a doctor that cannot load');
+  fail('packages/core/src/scanning/title-filter-conflicts.ts is NOT in SYSTEM_PATHS — an upgraded install would get a doctor that cannot load');
 }
 
 // ── the shipped example is coherent ─────────────────────────────────
@@ -206,11 +206,11 @@ if (
 }
 
 // ── doctor --json surfaces the same verdict ─────────────────────────
-// The unit tests above would still all pass if the wiring in doctor.ts were
+// The unit tests above would still all pass if the wiring in packages/cli/src/commands/platform/doctor.ts were
 // deleted, so drive the real CLI and assert the key it emits. spawnSync keeps
 // this honest: it is the doctor a user actually runs, not a re-import.
 function doctorOn(dir, { json = true, env = {} } = {}) {
-  const args = [join(ROOT, 'doctor.ts'), '--target', dir];
+  const args = [join(ROOT, 'packages/cli/src/commands/platform/doctor.ts'), '--target', dir];
   if (json) args.push('--json');
   const res = spawnSync(process.execPath, args, {
     cwd: dir,

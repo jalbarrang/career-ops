@@ -20,7 +20,7 @@ import { copyFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSy
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SCRATCH_PREFIX } from '../lib/scratch-dirs.ts';
+import { SCRATCH_PREFIX } from '../packages/core/src/kernel/scratch-dirs.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -40,7 +40,7 @@ function sandbox({ status = 'Evaluated', url = 'https://boards.greenhouse.io/acm
 }
 
 function setStatus(dir, args, { codeRoot = ROOT, env = {} } = {}) {
-  const r = spawnSync(process.execPath, [join(codeRoot, 'set-status.ts'), ...args], {
+  const r = spawnSync(process.execPath, [join(codeRoot, 'packages/cli/src/commands/tracker/set-status.ts'), ...args], {
     cwd: ROOT,
     encoding: 'utf-8',
     timeout: 30_000,
@@ -57,16 +57,21 @@ function fakeArchiveCodeRoot() {
   // scratch prefix, so that nothing walking the repo meanwhile takes these
   // copies for part of it.
   const codeRoot = mkdtempSync(join(ROOT, `${SCRATCH_PREFIX}set-status-archive-`));
-  for (const sub of ['lib', 'templates']) mkdirSync(join(codeRoot, sub), { recursive: true });
+  mkdirSync(join(codeRoot, 'templates'), { recursive: true });
   for (const file of [
-    'set-status.ts', 'path-resolver.ts', 'tracker-utils.ts', 'pipeline-lock.ts',
-    'tracker-parse.ts', 'lib/local-today.ts', 'role-matcher.ts',
-    'session-activity.ts', 'lib/is-main-module.ts', 'check-jd-archive.ts',
-    'jd-capture.ts', 'lib/cli-flags.ts', 'lib/jd-archive-section.ts', 'templates/states.yml',
-    'tracker-aliases.json', 'lib/dir-lock.ts', 'lib/run-bounded.ts', 'lib/status-hooks.ts',
-    'lib/yaml-document.ts',
-  ]) copyFileSync(join(ROOT, file), join(codeRoot, file));
-  writeFileSync(join(codeRoot, 'archive-posting.ts'), [
+    'packages/cli/src/commands/tracker/set-status.ts', 'packages/core/src/kernel/path-resolver.ts', 'packages/core/src/tracker/tracker-utils.ts', 'packages/core/src/kernel/pipeline-lock.ts',
+    'packages/core/src/tracker/tracker-parse.ts', 'packages/core/src/kernel/local-today.ts', 'packages/core/src/tracker/role-matcher.ts',
+    'packages/core/src/platform/session-activity.ts', 'packages/core/src/kernel/is-main-module.ts', 'packages/core/src/evaluation/check-jd-archive.ts',
+    'packages/core/src/evaluation/jd-capture.ts', 'packages/core/src/kernel/cli-flags.ts', 'packages/core/src/evaluation/jd-archive-section.ts', 'templates/states.yml',
+    'packages/core/src/tracker/tracker-aliases.json', 'packages/core/src/kernel/dir-lock.ts', 'packages/core/src/kernel/run-bounded.ts', 'packages/core/src/tracker/status-hooks.ts',
+    'packages/core/src/kernel/yaml-document.ts',
+    'packages/core/src/kernel/repo-root.ts',
+  ]) {
+    mkdirSync(dirname(join(codeRoot, file)), { recursive: true });
+    copyFileSync(join(ROOT, file), join(codeRoot, file));
+  }
+ mkdirSync(dirname(join(codeRoot, 'packages/cli/src/commands/evaluation/archive-posting.ts')), { recursive: true });
+  writeFileSync(join(codeRoot, 'packages/cli/src/commands/evaluation/archive-posting.ts'), [
     "import { writeFileSync } from 'node:fs';",
     "import { join } from 'node:path';",
     "if (process.env.FAKE_ARCHIVE_PID_FILE) writeFileSync(process.env.FAKE_ARCHIVE_PID_FILE, String(process.pid));",

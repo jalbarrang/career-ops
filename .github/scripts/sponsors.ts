@@ -21,7 +21,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isMainModule } from '../../lib/is-main-module.ts';
+import { isMainModule } from '../../packages/core/src/kernel/is-main-module.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const README = join(ROOT, 'README.md');

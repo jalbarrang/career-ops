@@ -137,7 +137,7 @@ async function main() {
   } else {
     console.log(`\n! career-ops @ ${ref} is cloned in ${display} but NOT ready: dependencies did not install.\n`);
     console.log("Next steps:");
-    console.log(`  1. cd ${target} && bun install   (then bun doctor.ts)`);
+    console.log(`  1. cd ${target} && bun install   (then bun packages/cli/src/commands/platform/doctor.ts)`);
     process.exitCode = 1;
   }
 

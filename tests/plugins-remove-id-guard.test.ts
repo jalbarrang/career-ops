@@ -1,4 +1,4 @@
-// tests/plugins-remove-id-guard.test.ts — `plugins.ts remove` must reject a
+// tests/plugins-remove-id-guard.test.ts — `packages/cli/src/commands/platform/plugins.ts remove` must reject a
 // traversal-shaped id inside the usage gate, before rmSync/lock/config touch
 // anything.
 //
@@ -10,7 +10,7 @@
 // remove never applied it.
 //
 // Every case runs against a DISPOSABLE CHECKOUT: the transitive import closure
-// of plugins.ts copied into a temp dir, with the repo's dependency tree linked
+// of packages/cli/src/commands/platform/plugins.ts copied into a temp dir, with the repo's dependency tree linked
 // in through linkNodeModules() (tests/helpers.ts — junction on Windows, the
 // inherited-tree walk, and a failure reason instead of a silent catch). A guard
 // regression that re-opens
@@ -30,7 +30,7 @@ import { linkNodeModules } from './helpers.ts';
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
 // The relative-file import graph the fixture must carry for `node
-// plugins.ts` to load. Bare specifiers resolve through the junctioned
+// packages/cli/src/commands/platform/plugins.ts` to load. Bare specifiers resolve through the junctioned
 // node_modules; dynamic imports inside never run on the remove path.
 function importClosure(entry) {
   const seen = new Set();
@@ -52,16 +52,16 @@ function importClosure(entry) {
   return [...seen];
 }
 
-// Root data files some closure modules read at load time (tracker-parse.ts
+// Root data files some closure modules read at load time (packages/core/src/tracker/tracker-parse.ts
 // throws without its alias table). Not importable, so the walker can't see them.
-const DATA_FILES = ['tracker-aliases.json'];
+const DATA_FILES = ['packages/core/src/tracker/tracker-aliases.json'];
 
 let checkout = null;
 let dataRoot = null;
 
 before(() => {
   checkout = mkdtempSync(join(tmpdir(), 'plugins-remove-checkout-'));
-  for (const file of importClosure(join(ROOT, 'plugins.ts'))) {
+  for (const file of importClosure(join(ROOT, 'packages/cli/src/commands/platform/plugins.ts'))) {
     const rel = relative(ROOT, file);
     if (rel.startsWith('..')) continue; // never escape the fixture by copy
     const dest = join(checkout, rel);
@@ -69,6 +69,7 @@ before(() => {
     cpSync(file, dest);
   }
   for (const name of DATA_FILES) {
+    mkdirSync(dirname(join(checkout, name)), { recursive: true });
     cpSync(join(ROOT, name), join(checkout, name));
   }
   // destDir is the sandbox root: the helper places <destDir>/node_modules itself.
@@ -84,18 +85,18 @@ after(() => {
 });
 
 function run(...args) {
-  const r = spawnSync(process.execPath, [join(checkout, 'plugins.ts'), ...args], {
+  const r = spawnSync(process.execPath, [join(checkout, 'packages/cli/src/commands/platform/plugins.ts'), ...args], {
     cwd: checkout,
     encoding: 'utf-8',
     timeout: 30_000,
     env: { ...process.env, CAREER_OPS_ROOT: dataRoot },
   });
-  assert.equal(r.error, undefined, `plugins.ts failed to spawn: ${r.error?.message}`);
-  assert.equal(r.signal, null, `plugins.ts was killed by ${r.signal} (timeout?)`);
+  assert.equal(r.error, undefined, `packages/cli/src/commands/platform/plugins.ts failed to spawn: ${r.error?.message}`);
+  assert.equal(r.signal, null, `packages/cli/src/commands/platform/plugins.ts was killed by ${r.signal} (timeout?)`);
   return { ...r, all: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 }
 
-test('the disposable checkout loads plugins.ts end to end', () => {
+test('the disposable checkout loads packages/cli/src/commands/platform/plugins.ts end to end', () => {
   const r = run('remove'); // no id: usage path, but the whole module graph loads first
   assert.equal(r.status, 1, `usage guard exited ${r.status}, want 1\n${r.all}`);
   assert.match(r.all, /Usage:/, `expected the usage line, got:\n${r.all}`);

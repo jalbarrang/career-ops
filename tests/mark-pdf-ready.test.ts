@@ -1,10 +1,10 @@
-// tests/mark-pdf-ready.test.ts — regression coverage for mark-pdf-ready.ts (#2172).
+// tests/mark-pdf-ready.test.ts — regression coverage for packages/cli/src/commands/tracker/mark-pdf-ready.ts (#2172).
 //
-// mark-pdf-ready.ts is the canonical write path for the tracker's PDF column
+// packages/cli/src/commands/tracker/mark-pdf-ready.ts is the canonical write path for the tracker's PDF column
 // (❌→✅), used by the web dashboard's "pdf" mode after the backend confirms a
 // successful render. Same sandboxing pattern as tests/set-status.test.ts /
 // tracker-columns.test.ts: a throwaway tracker via the CAREER_OPS_TRACKER /
-// CAREER_OPS_TRACKER_LOCK env overrides tracker-utils.ts already respects.
+// CAREER_OPS_TRACKER_LOCK env overrides packages/core/src/tracker/tracker-utils.ts already respects.
 //
 // Auto-discovered by test-all.ts (tests/**/*.test.ts, #1440) — imported
 // in-process alongside every other discovered suite, so this file must NEVER
@@ -32,7 +32,7 @@ function readTracker(sandbox) {
   return readFileSync(sandbox.tracker, 'utf-8');
 }
 
-// Run mark-pdf-ready.ts against a sandboxed tracker. Returns { code, stdout, stderr }.
+// Run packages/cli/src/commands/tracker/mark-pdf-ready.ts against a sandboxed tracker. Returns { code, stdout, stderr }.
 function runMarkPdfReady(args, sandbox, extraEnv = {}) {
   const env = {
     ...process.env,
@@ -41,7 +41,7 @@ function runMarkPdfReady(args, sandbox, extraEnv = {}) {
     ...extraEnv,
   };
   try {
-    const stdout = execFileSync(NODE, [join(ROOT, 'mark-pdf-ready.ts'), ...args], {
+    const stdout = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/mark-pdf-ready.ts'), ...args], {
       cwd: ROOT, env, encoding: 'utf-8', timeout: 30000, stdio: ['pipe', 'pipe', 'pipe'],
     });
     return { code: 0, stdout, stderr: '' };

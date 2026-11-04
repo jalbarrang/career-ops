@@ -27,7 +27,7 @@ for (const [cli, command] of [['codex', 'exec'], ['opencode', 'run'], ['claude',
         PATH: `${join(root, 'bin')}:${process.env.PATH}`,
         RANK_ARGS: join(root, 'args.json'),
       };
-      const rank = (args) => execFileSync(process.execPath, [join(ROOT, 'rank-pipeline.ts'), '--cli', cli, ...args], { env });
+      const rank = (args) => execFileSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/pipeline/rank-pipeline.ts'), '--cli', cli, ...args], { env });
       rank(['--model', 'fixture/provider-model']);
       const args = JSON.parse(readFileSync(env.RANK_ARGS, 'utf8'));
       assert.equal(args[0], command);

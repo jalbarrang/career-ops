@@ -162,15 +162,15 @@ function fromLdJson(html) {
  * A company that embeds Greenhouse on its own careers domain
  * (careers.example.com/job?gh_jid=1234567) serves a host page with no JD text
  * in it, and the posting lives on another origin, so no amount of parsing the
- * downloaded document can produce it. browser-extract.ts already knows how to
+ * downloaded document can produce it. packages/cli/src/commands/scanning/browser-extract.ts already knows how to
  * ask the right API for every ATS in JD_TEXT_API_ATS (the same dispatch
- * fetch-jd.ts and the `jd` mode use), so this strategy calls it rather than
+ * packages/cli/src/commands/scanning/fetch-jd.ts and the `jd` mode use), so this strategy calls it rather than
  * carrying a second copy of the per-ATS code. A URL it does not recognise
  * answers null without any network request.
  */
 async function fromKnownApi(url) {
   try {
-    const { fetchJdViaKnownApi } = await import('../browser-extract.ts');
+    const { fetchJdViaKnownApi } = await import('../packages/cli/src/commands/scanning/browser-extract.ts');
     const result = await fetchJdViaKnownApi(url, 20_000, 15_000);
     if (!result?.text) return null;
     const text = result.title ? `${result.title}\n\n${result.text}` : result.text;

@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const SCRIPT = join(ROOT, 'generate-latex.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/cv/generate-latex.ts');
 const VALID_FLAGS = ['--compile-only', '--help', '-h'];
 
 function runLatex(...args) {
@@ -26,8 +26,8 @@ function runLatex(...args) {
     encoding: 'utf-8',
     timeout: 30_000,
   });
-  assert.equal(result.error, undefined, `generate-latex.ts failed to spawn: ${result.error?.message}`);
-  assert.equal(result.signal, null, `generate-latex.ts was killed by ${result.signal} (timeout?)`);
+  assert.equal(result.error, undefined, `packages/cli/src/commands/cv/generate-latex.ts failed to spawn: ${result.error?.message}`);
+  assert.equal(result.signal, null, `packages/cli/src/commands/cv/generate-latex.ts was killed by ${result.signal} (timeout?)`);
   return { ...result, all: `${result.stdout ?? ''}${result.stderr ?? ''}` };
 }
 
@@ -37,7 +37,7 @@ test('generate-latex help prints usage instead of reading a file named --help', 
 
     assert.equal(result.status, 0, describeSpawn(result, `${flag} exited ${result.status}, want 0`));
     assert.match(result.stdout, /Usage:/i, `${flag} printed no usage block`);
-    assert.match(result.stdout, /bun generate-latex\.ts/, `${flag} did not identify the command`);
+    assert.match(result.stdout, /career-ops generate-latex/, `${flag} did not identify the command`);
     assert.doesNotMatch(result.all, /Error reading/i, `${flag} was still treated as an input path`);
     assert.doesNotMatch(result.all, /ENOENT/i, `${flag} was still resolved as a filename`);
   }

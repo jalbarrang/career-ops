@@ -12,14 +12,14 @@
 // MIRROR, not a replacement backend. data/applications.md stays the canonical
 // source of truth (the web reads it); `export` pushes a read-only snapshot of it
 // to the user's own Notion DB. The core never writes to Notion as primary, and
-// modes are not edited — this lives entirely behind `bun plugins.ts run notion`.
+// modes are not edited — this lives entirely behind `bun packages/cli/src/commands/platform/plugins.ts run notion`.
 //
 // Setup: a "Career Ops" parent page in Notion containing an "Applications" DB
 // with Company / Role / Status / Score / URL properties, shared with your
 // internal integration. Enable in config/plugins.yml; keys in .env.
 //
-//   bun plugins.ts run notion export            # mirror tracker → Notion
-//   bun plugins.ts run notion search "platform" # read matching records → pipeline
+//   bun packages/cli/src/commands/platform/plugins.ts run notion export            # mirror tracker → Notion
+//   bun packages/cli/src/commands/platform/plugins.ts run notion search "platform" # read matching records → pipeline
 
 import { createNotionClient, rich, canonicalStatus } from './_notion.ts';
 

@@ -13,13 +13,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { boardScope } from '../scan-ats-full.ts';
+import { boardScope } from '../packages/cli/src/commands/scanning/scan-ats-full.ts';
 import {
   withAbortScope,
   withConnectionScope,
   currentAbortSignal,
-} from '../providers/_connection-scope.ts';
-import { fetchJsonWithRetry, fetchJson, abortableSleep } from '../providers/_http.ts';
+} from '../packages/core/src/scanning/providers/_connection-scope.ts';
+import { fetchJsonWithRetry, fetchJson, abortableSleep } from '../packages/core/src/scanning/providers/_http.ts';
 
 test('the board abort signal rides in the scope; none leaks outside it', async () => {
   assert.equal(currentAbortSignal(), null, 'no signal outside a board');

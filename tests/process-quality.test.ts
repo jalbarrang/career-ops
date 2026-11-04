@@ -1,5 +1,5 @@
 /**
- * tests/process-quality.test.ts — Systematic test suite for process-quality.ts
+ * tests/process-quality.test.ts — Systematic test suite for packages/cli/src/commands/outreach/process-quality.ts
  *
  * Tests every exported function across:
  * - Markdown table parsing (well-formed, malformed, empty, header-only)
@@ -13,7 +13,7 @@
  *      exits — so a direct run returns 0 even when assertions fail.
  */
 
-import { parseActiveInterviews, extractFriction, aggregateProcessQuality, findColumn } from '../process-quality.ts';
+import { parseActiveInterviews, extractFriction, aggregateProcessQuality, findColumn } from '../packages/cli/src/commands/outreach/process-quality.ts';
 import { execFileSync } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -266,7 +266,7 @@ if (rentsync) {
 // ============================================================================
 console.log('\n--- 10. CLI behavior ---');
 
-const scriptPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'process-quality.ts');
+const scriptPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/cli/src/commands/outreach/process-quality.ts');
 
 try {
   execFileSync('node', [scriptPath, '--self-test'], { encoding: 'utf-8', timeout: 10000 });
@@ -337,7 +337,7 @@ eq('--min-threshold sets minThreshold in metadata', thresholdJson.metadata.minTh
 
 // --- #2982: an unusable --min-threshold must not become the threshold -------
 //
-// This file had NO shape check, so unlike detect-reposts.ts it did not even
+// This file had NO shape check, so unlike packages/cli/src/commands/insights/detect-reposts.ts it did not even
 // fall back: a 21-digit value was ACCEPTED and reported as "minThreshold":
 // 1e+21 — the "metadata reports a value that is not the one in effect" failure
 // detect-reposts documents isSafeInteger as existing to prevent.
@@ -372,7 +372,7 @@ ok('--summary produces human-readable output', summaryOut.includes('Process Qual
 
 // ============================================================================
 // 11. Documented example friction patterns (#2651) — regression coverage for
-// the illustrative examples in process-quality.ts's header comment and
+// the illustrative examples in packages/cli/src/commands/outreach/process-quality.ts's header comment and
 // docs/SCRIPTS.md, confirming they parse cleanly through extractFriction.
 // This is not new parsing logic — just a guard against the doc examples
 // silently drifting out of sync with FRICTION_TAG's actual behavior.

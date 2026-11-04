@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { load } from 'js-yaml';
-import { buildLocationFilter, buildPostingAgeFilter } from '../scan.ts';
+import { buildLocationFilter, buildPostingAgeFilter } from '../packages/core/src/scanning/scan.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const agents = readFileSync(join(ROOT, 'AGENTS.md'), 'utf8');

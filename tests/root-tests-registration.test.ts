@@ -145,7 +145,7 @@ if (rootOk) {
     const registeredInHarness = (name) => harnessMatches(registeredNames(harnessSrc), name);
 
     // ── Surface 2: node invocations in the workflows ─────────────────────────
-    // .github/ ships to installs (SYSTEM_PATHS, update-system.ts:432), so this
+    // .github/ ships to installs (SYSTEM_PATHS, packages/cli/src/commands/platform/update-system.ts:432), so this
     // surface exists off CI too. Its absence is reported rather than silently
     // treated as "no invocations": that reading would fail a workflow-run suite
     // for the wrong reason and send the reader looking for a missing
@@ -348,7 +348,7 @@ export function invokesNode(scripts, name) {
  * A registration is the `name:` value of a `scripts` entry:
  *
  *     { name: 'updater-migration-tests.ts', expectExit: 0 },
- *     { name: 'contacts.ts --self-test', expectExit: 0 },
+ *     { name: 'packages/cli/src/commands/outreach/contacts.ts --self-test', expectExit: 0 },
  *
  * so the value may carry flags after the filename. Nothing else counts.
  *

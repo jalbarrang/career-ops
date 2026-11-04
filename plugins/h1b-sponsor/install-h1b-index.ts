@@ -28,7 +28,7 @@ import { createWriteStream, existsSync } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import path from 'node:path';
-import { isMainModule } from '../../lib/is-main-module.ts';
+import { isMainModule } from '../../packages/core/src/kernel/is-main-module.ts';
 import { fetchWithTimeout, readBoundedText } from './lib/api.ts';
 import { indexPath, metaPath } from './lib/index.ts';
 

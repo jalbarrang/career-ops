@@ -7,7 +7,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — atlassian');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/atlassian.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/atlassian.ts')).href);
   const provider = mod.default;
 
   if (provider.id === 'atlassian') pass('atlassian.id is "atlassian"');

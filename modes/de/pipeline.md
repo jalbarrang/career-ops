@@ -6,7 +6,7 @@ Verarbeitet URLs von Stellenanzeigen, die in `data/pipeline.md` gesammelt wurden
 
 1. **Lesen** von `data/pipeline.md` (mit `grep -n -m 20 '^- \[ \] ' data/pipeline.md` suchen und nach jeder Runde erneut suchen, bis nur noch Items kommen, die du in diesem Lauf in Pending gelassen hast, nicht die ganze Datei lesen) → alle Items mit `- [ ]` im Abschnitt "Pendientes" / "Pending" / "Offen" finden
 2. **Für jede offene URL**:
-   a. Die nächste fortlaufende `REPORT_NUM` atomar reservieren, indem `bun reserve-report-num.ts` ausgeführt wird (und den Sentinel mit `bun reserve-report-num.ts --release <num>` freigeben, sobald der Report geschrieben ist)
+   a. Die nächste fortlaufende `REPORT_NUM` atomar reservieren, indem `career-ops reserve-report-num` ausgeführt wird (und den Sentinel mit `career-ops reserve-report-num --release <num>` freigeben, sobald der Report geschrieben ist)
    b. **Stellenanzeige extrahieren** mit Playwright (`browser_navigate` + `browser_snapshot`) → WebFetch → WebSearch
    c. Wenn die URL nicht erreichbar ist → als `- [!]` mit Notiz markieren und weitermachen
    d. **Vollständige Auto-Pipeline ausführen**: A-F-Bewertung → Report .md → PDF (wenn Score >= 3.0) → Tracker
@@ -36,7 +36,7 @@ Verarbeitet URLs von Stellenanzeigen, die in `data/pipeline.md` gesammelt wurden
 ## Intelligente Erkennung der Stellenanzeige aus der URL
 
 1. **Playwright (bevorzugt):** `browser_navigate` + `browser_snapshot`. Funktioniert mit allen SPAs.
-   - **Opt-in — CLI-Extraktor (`scan.extractor: cli` in `config/profile.yml`):** stattdessen `bun browser-extract.ts <url>` (`--mode jd`) ausführen — kompaktes `{ "url", "title", "text" }`, weniger Tokens (je nach Jobportal). Bei Fehler oder wenn es fehlt **still** auf `browser_navigate` + `browser_snapshot` zurückfallen.
+   - **Opt-in — CLI-Extraktor (`scan.extractor: cli` in `config/profile.yml`):** stattdessen `career-ops browser-extract <url>` (`--mode jd`) ausführen — kompaktes `{ "url", "title", "text" }`, weniger Tokens (je nach Jobportal). Bei Fehler oder wenn es fehlt **still** auf `browser_navigate` + `browser_snapshot` zurückfallen.
 2. **WebFetch (Fallback):** Für statische Seiten oder wenn Playwright nicht verfügbar ist.
 3. **WebSearch (letzter Ausweg):** In sekundären Portalen suchen, die die Stellenanzeige indexieren.
 
@@ -49,16 +49,16 @@ Verarbeitet URLs von Stellenanzeigen, die in `data/pipeline.md` gesammelt wurden
 
 ## Automatische Nummerierung
 
-1. Führen Sie `bun reserve-report-num.ts` aus, um die nächste fortlaufende Nummer atomar zu reservieren (die Ausgabe gibt `{###}` zurück).
+1. Führen Sie `career-ops reserve-report-num` aus, um die nächste fortlaufende Nummer atomar zu reservieren (die Ausgabe gibt `{###}` zurück).
 2. Schreiben Sie den Report mit dieser Nummer.
-3. Geben Sie den Sentinel mit `bun reserve-report-num.ts --release {###}` frei, sobald der Report geschrieben ist.
+3. Geben Sie den Sentinel mit `career-ops reserve-report-num --release {###}` frei, sobald der Report geschrieben ist.
 
 ## Synchronisierung der Quellen
 
 Vor dem Verarbeiten irgendeiner URL die Sync prüfen:
 
 ```bash
-bun cv-sync-check.ts
+career-ops cv-sync-check
 ```
 
 Bei Abweichungen den Kandidaten warnen, bevor weitergearbeitet wird.

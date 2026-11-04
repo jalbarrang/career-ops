@@ -1,6 +1,6 @@
 // tests/verify-pipeline-duplicate-report-urls.test.ts: Check 9 (duplicate
 // reports for the same company+role) tells two openings apart by their posting
-// URL (#4588), end to end through the real verify-pipeline.ts process.
+// URL (#4588), end to end through the real packages/cli/src/commands/platform/verify-pipeline.ts process.
 //
 // The fixture is the one test-all.ts builds for its #1425 duplicate/orphan
 // report checks, rebuilt here in a temp dir. Only the tracker and reports dir
@@ -43,7 +43,7 @@ try {
   // every report carries a URL key and no two share one is exempt; a missing
   // or placeholder URL proves nothing, so those groups are still flagged.
   const vpDupFlagged = () => {
-    const o = run(NODE, ['verify-pipeline.ts'], { env: vpEnv, stdio: ['pipe', 'pipe', 'pipe'] });
+    const o = run(NODE, ['packages/cli/src/commands/platform/verify-pipeline.ts'], { env: vpEnv, stdio: ['pipe', 'pipe', 'pipe'] });
     return o === null ? null : /Duplicate reports[^\n]*001-acme[^\n]*003-acme/.test(o);
   };
   // AGENTS.md documents the URL INLINE in the Score line; other writers put it

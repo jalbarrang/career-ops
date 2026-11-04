@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — ultipro (UKG Pro / UltiPro Recruiting)');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/ultipro.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/ultipro.ts')).href);
   const ultipro = mod.default;
   const { parseListPage, assertUltiproUrl, extractLocations, extractCandidateOpportunityDetail } = mod;
 

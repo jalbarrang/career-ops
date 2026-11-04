@@ -14,7 +14,7 @@
 
 import { pass, fail } from './helpers.ts';
 import { join } from 'path';
-import { staleSystemFiles, isReferencedByPreservedFile } from '../update-system.ts';
+import { staleSystemFiles, isReferencedByPreservedFile } from '../packages/cli/src/commands/platform/update-system.ts';
 
 console.log('\n🧪 Testing preserved-file vs. stale-file prune interaction...');
 
@@ -90,9 +90,9 @@ console.log('\n🧪 Testing preserved-file vs. stale-file prune interaction...')
   // Scoping: only html/css/tex preserved files are read for references — a
   // preserved .ts/.md file with the same substring by coincidence must not
   // count, since system scripts/docs are not known to reference fonts by path.
-  const preservedScript = ['build-cv-html.ts'];
+  const preservedScript = ['packages/cli/src/commands/cv/build-cv-html.ts'];
   const readScript = (path) => {
-    if (path.endsWith('build-cv-html.ts')) return "// mentions eb-garamond-400.ttf in a comment, not a real reference";
+    if (path.endsWith('packages/cli/src/commands/cv/build-cv-html.ts')) return "// mentions eb-garamond-400.ttf in a comment, not a real reference";
     throw new Error(`ENOENT: ${path}`);
   };
   if (!isReferencedByPreservedFile('fonts/eb-garamond-400.ttf', preservedScript, readScript)) {

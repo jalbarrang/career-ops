@@ -161,7 +161,7 @@ Na primeira execução ele pergunta tudo isso no chat. Nada para configurar à m
 
 ## O que o career-ops não faz
 
-- **Enviar uma candidatura automaticamente.** Ele redige a resposta de cada campo; você revisa e clica em Enviar. O script nunca faz POST (`prepare-application.ts`).
+- **Enviar uma candidatura automaticamente.** Ele redige a resposta de cada campo; você revisa e clica em Enviar. O script nunca faz POST (`packages/cli/src/commands/evaluation/prepare-application.ts`).
 - **Mandar um e-mail.** Só rascunhos. Não existe nenhum transporte de e-mail em todo este código.
 - **Ligar para casa.** Sem telemetria, sem backend nosso. Seu currículo vai da sua máquina para o provedor de IA que você escolheu, e para nenhum outro lugar. O único registro público é este repositório: `HIRED.md` e suas issues.
 - **Empurrar você a se candidatar abaixo de 4.0/5.** Ele vai dizer para não fazer. Você pode ignorar, e ele vai avisar.
@@ -177,7 +177,7 @@ Ele reformula seu currículo; nunca deve inventá-lo. Uma verificação no códi
 | **Geração de PDF ATS**   | Currículos legíveis por ATS, adaptados a cada descrição a partir da sua própria experiência, com design Space Grotesk + DM Sans          |
 | **Gerador de carta de apresentação** | Cartas baseadas em pesquisa com espelhamento de palavras-chave, quatro perguntas interativas de ângulo (por quê/problemas/abordagem/tom), aprovação do rascunho no chat e PDF A4 pelo mesmo pipeline HTML + Playwright dos currículos. Cria um rascunho automaticamente a cada avaliação; complete e gere sob demanda com `/career-ops cover` |
 | **Além do currículo**    | A pesquisa de empresa ([`deep`](modes/deep.md)) revela a estratégia de IA, os movimentos recentes, a cultura de engenharia e o ângulo que seu perfil deve assumir. A descoberta de contatos ([`contacto`](modes/contacto.md)) identifica o hiring manager, o recrutador ou o colega de equipe que vale a pena contatar e redige uma mensagem de LinkedIn de ≤300 caracteres ajustada a cada tipo de contato. Os rascunhos de e-mail formal de candidatura ([`email`](modes/email.md)) transformam um relatório avaliado ou uma descrição colada em assunto, corpo e checklist de anexos sem enviar, submeter ou clicar em nada. A candidatura coloca você na fila; a pesquisa consegue uma conversa. |
-| **Análise de padrões**   | Padrões de rejeição e taxas de avanço por canal de ATS (`analyze-patterns.ts`), estatísticas de funil de toda a busca (`stats.ts`), detecção de republicações, um possível sinal de vaga fantasma (`detect-reposts.ts`) |
+| **Análise de padrões**   | Padrões de rejeição e taxas de avanço por canal de ATS (`packages/cli/src/commands/insights/analyze-patterns.ts`), estatísticas de funil de toda a busca (`packages/core/src/insights/stats.ts`), detecção de republicações, um possível sinal de vaga fantasma (`packages/cli/src/commands/insights/detect-reposts.ts`) |
 
 <details>
 <summary><b>Todo o resto que ele faz</b></summary>
@@ -194,8 +194,8 @@ Ele reformula seu currículo; nunca deve inventá-lo. Uma verificação no códi
 | **Dashboard TUI**        | Interface no terminal para navegar, filtrar e ordenar seu pipeline                                                                       |
 | **Integridade do pipeline** | Merge automatizado, deduplicação, normalização de status, health checks                                                               |
 | **Suíte de entrevista**  | Planos de preparação por blocos de tempo, sessões de prática com feedback, debriefs pós-entrevista ([`interview/`](modes/interview/README.md)) e um detector de sinais de alerta da empresa ([`interview-redflag`](modes/interview-redflag.md)) |
-| **Fase de oferta**       | Companheiro de leitura do contrato: passagem cláusula a cláusula mais uma lista de perguntas para o advogado ([`offer-prep`](modes/offer-prep.md)), e um analisador da diferença entre salário desejado, anunciado e real (`salary-gap.ts`) |
-| **Follow-ups e respostas** | Calculadora de cadência de follow-up e lembretes pré-programados (`followup-cadence.ts`, `followup-seed.ts`); classificação das respostas do empregador em atualizações do tracker ([`reply-watch`](modes/reply-watch.md)) |
+| **Fase de oferta**       | Companheiro de leitura do contrato: passagem cláusula a cláusula mais uma lista de perguntas para o advogado ([`offer-prep`](modes/offer-prep.md)), e um analisador da diferença entre salário desejado, anunciado e real (`packages/cli/src/commands/insights/salary-gap.ts`) |
+| **Follow-ups e respostas** | Calculadora de cadência de follow-up e lembretes pré-programados (`packages/core/src/outreach/followup-cadence.ts`, `packages/core/src/outreach/followup-seed.ts`); classificação das respostas do empregador em atualizações do tracker ([`reply-watch`](modes/reply-watch.md)) |
 | **Sistema de plugins**   | Integrações opcionais (Gmail, Notion, Apify + um registro da comunidade), desativadas por padrão; veja [docs/PLUGINS.md](docs/PLUGINS.md) |
 
 </details>
@@ -459,9 +459,9 @@ cp .env.example .env
 bun install
 
 # 3. Evaluate a job description
-bun gemini-eval.ts "We are looking for a Senior AI Engineer..."
-bun gemini-eval.ts --file ./jds/my-job.txt
-bun agent-inbox.ts add "..."   # queue a request for the next session
+bun packages/cli/src/commands/evaluation/gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun packages/cli/src/commands/evaluation/gemini-eval.ts --file ./jds/my-job.txt
+bun packages/cli/src/commands/platform/agent-inbox.ts add "..."   # queue a request for the next session
 bun run gemini:eval -- "JD text here"
 ```
 
@@ -482,10 +482,10 @@ O scanner vem com **100+ empresas** prontas para escanear e **35+ consultas de b
 
 **Sites de vagas pesquisados:** 55+ módulos de provedor cobrem APIs de ATS, feeds de sites inteiros, feeds XML/RSS, feeds em markdown e parsers locais. Veja a tabela completa em [Sites de vagas suportados](docs/SUPPORTED_JOB_BOARDS.md).
 
-Por padrão, `bun scan.ts` (ou `bun run scan`) confia no que cada feed de ATS retorna. Algumas empresas deixam vagas antigas na API pública mesmo depois de fechar a posição, então essas entradas expiradas podem vazar para o `pipeline.md`. Passe `--verify` para lançar o Playwright depois da passagem pela API e descartar as vagas expiradas antes de chegarem ao pipeline:
+Por padrão, `bun packages/core/src/scanning/scan.ts` (ou `bun run scan`) confia no que cada feed de ATS retorna. Algumas empresas deixam vagas antigas na API pública mesmo depois de fechar a posição, então essas entradas expiradas podem vazar para o `pipeline.md`. Passe `--verify` para lançar o Playwright depois da passagem pela API e descartar as vagas expiradas antes de chegarem ao pipeline:
 
 ```bash
-bun scan.ts --verify          # zero-token discovery + Playwright liveness check
+bun packages/core/src/scanning/scan.ts --verify          # zero-token discovery + Playwright liveness check
 ```
 
 A verificação é sequencial e roda apenas sobre as vagas novas (após a deduplicação), então o custo fica limitado.
@@ -501,7 +501,7 @@ bun run build:dashboard   # optional: build the standalone binary
 
 Funcionalidades: 10 abas de filtro, 8 modos de ordenação, visão agrupada ou plana, prévias com carregamento sob demanda, mudanças de status inline.
 
-Existe também uma **interface web experimental** (alfa e opcional: nada roda a menos que você inicie): veja [`web/README.md`](web/README.md).
+Existe também uma **interface web experimental** (alfa e opcional: nada roda a menos que você inicie): veja [`apps/web/README.md`](apps/web/README.md).
 
 ## Estrutura do projeto
 
@@ -558,9 +558,9 @@ Uma vez resolvido, todos os arquivos do usuário são resolvidos e escritos em r
 
 - **Sobrescrever o tracker:** você também pode definir `CAREER_OPS_TRACKER` para indicar diretamente o caminho do arquivo tracker de candidaturas.
 - **Escritas:** todas as operações de escrita (como merges) apontam canonicamente para `{DATA_ROOT}/data/applications.md`.
-- **Configuração do scanner:** o `portals.yml` é lido e validado em `{DATA_ROOT}/portals.yml`, então `bun validate-portals.ts` verifica o mesmo arquivo que o `scan.ts` lê.
+- **Configuração do scanner:** o `portals.yml` é lido e validado em `{DATA_ROOT}/portals.yml`, então `bun packages/cli/src/commands/scanning/validate-portals.ts` verifica o mesmo arquivo que o `packages/core/src/scanning/scan.ts` lê.
 - **Documentos gerados:** currículos adaptados e cartas de apresentação são gravados em `{DATA_ROOT}/output/`, e o manifesto de PDFs que os liga a um relatório fica em `{DATA_ROOT}/data/pdf-index.tsv`. Enquanto `CAREER_OPS_TRACKER` não estiver definida, o workspace do tracker que delimita essas escritas é a raiz de dados, não o checkout.
-- **PDFs com o tracker sobrescrito:** o `generate-pdf.ts` resolve `CAREER_OPS_TRACKER` antes de derivar o workspace, então, com a variável definida, o workspace é a pasta que contém esse tracker (ou a pasta acima dela, quando o tracker fica em uma pasta `data/`). O HTML do currículo e todos os PDFs precisam então ficar dentro desse workspace, e o manifesto passa para o `data/pdf-index.tsv` dele. As cartas de apresentação continuam apontando para `{DATA_ROOT}/output/`, então são recusadas quando essa pasta fica fora do workspace do tracker.
+- **PDFs com o tracker sobrescrito:** o `packages/cli/src/commands/cv/generate-pdf.ts` resolve `CAREER_OPS_TRACKER` antes de derivar o workspace, então, com a variável definida, o workspace é a pasta que contém esse tracker (ou a pasta acima dela, quando o tracker fica em uma pasta `data/`). O HTML do currículo e todos os PDFs precisam então ficar dentro desse workspace, e o manifesto passa para o `data/pdf-index.tsv` dele. As cartas de apresentação continuam apontando para `{DATA_ROOT}/output/`, então são recusadas quando essa pasta fica fora do workspace do tracker.
 - **A camada de código não sai do lugar:** `node_modules/`, `providers/`, `modes/` e os próprios scripts sempre são resolvidos em relação ao repositório, nunca à raiz de dados.
 
 O dashboard TUI em Go, os scripts Node.js e os modos do agente de IA respeitam automaticamente essa hierarquia de resolução.
@@ -619,7 +619,7 @@ O dashboard TUI em Go, os scripts Node.js e os modos do agente de IA respeitam a
 O career-ops ([career-ops.org](https://career-ops.org), também conhecido como **careerops**) é uma busca de emprego com IA, open source, que roda localmente na sua CLI de código com IA (Claude Code, Codex, OpenCode e outras) e deixa cada decisão com você. Ele avalia vagas em relação ao seu currículo, gera PDFs adaptados para ATS, encontra a pessoa certa para contatar e acompanha tudo em um só lugar: a decisão final é sempre sua. É a primeira implementação de referência do [Manifesto CareerOps](https://career-ops.org/manifesto).
 
 **O currículo personalizado pode inventar coisas?**
-Não deve, e os prompts dizem isso: reformular, nunca inventar. O `generate-pdf` bloqueia um currículo com números ou fatos que não estão nas suas fontes, a menos que você passe `--skip-fact-check`. O modo `pdf` também executa o `cv-title-check.ts`, que compara cada cargo do currículo adaptado com o cargo que o cv.md dá para o mesmo emprego (pareado por empresa e datas) e pergunta se você quer manter ou reverter qualquer um que seja diferente. Ele só avisa, não bloqueia, porque reformular um cargo às vezes é decisão sua. Nada julga reformulações ainda: a [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (verificação de fidelidade que bloqueia em caso de falha) acompanha isso. Até lá, leia cada currículo antes de enviar. O [aviso legal](LEGAL_DISCLAIMER.md) diz o mesmo com mais palavras.
+Não deve, e os prompts dizem isso: reformular, nunca inventar. O `generate-pdf` bloqueia um currículo com números ou fatos que não estão nas suas fontes, a menos que você passe `--skip-fact-check`. O modo `pdf` também executa o `packages/cli/src/commands/cv/cv-title-check.ts`, que compara cada cargo do currículo adaptado com o cargo que o cv.md dá para o mesmo emprego (pareado por empresa e datas) e pergunta se você quer manter ou reverter qualquer um que seja diferente. Ele só avisa, não bloqueia, porque reformular um cargo às vezes é decisão sua. Nada julga reformulações ainda: a [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (verificação de fidelidade que bloqueia em caso de falha) acompanha isso. Até lá, leia cada currículo antes de enviar. O [aviso legal](LEGAL_DISCLAIMER.md) diz o mesmo com mais palavras.
 
 **Posso rodar o career-ops de graça ou em um modelo local / mais barato?**
 Sim. O career-ops é independente de CLI e roda em modelos gratuitos e locais (modelos gratuitos do OpenRouter, Ollama ou qualquer endpoint compatível com OpenAI), então você não fica preso a uma assinatura paga. Veja [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md) para a configuração completa.

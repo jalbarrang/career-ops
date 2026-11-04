@@ -1,7 +1,7 @@
 // tests/reply-matcher-company-boundary.test.ts — what may count as a
 // company-name signal when matching a reply to an application.
 //
-// `reply-matcher.ts` shipped with no test file at all, and the company check
+// `packages/core/src/outreach/reply-matcher.ts` shipped with no test file at all, and the company check
 // is the load-bearing one: `isCompanyMatch` is worth 2 points, it is the
 // corroboration that lets a PARTIAL role match count (#2671), and paired with a
 // post-application keyword it raises the verdict to `high`. reply-watch then
@@ -29,7 +29,7 @@ console.log('\nreply-matcher.ts — a company signal must name a company');
 
 try {
   const { checkCompanyMatch, matchCandidates } = await import(
-    pathToFileURL(join(ROOT, 'reply-matcher.ts')).href
+    pathToFileURL(join(ROOT, 'packages/core/src/outreach/reply-matcher.ts')).href
   );
 
   const check = (label, actual, expected) => {

@@ -6,13 +6,13 @@
  * a date. Any word in between — including the channel phrasing career-ops'
  * own apply modes write, "Applied via {ATS} {date}" — missed the match
  * entirely and silently degraded to the evaluation-date fallback, which
- * `followup-cadence.ts`'s own header comment calls out as the failure this
+ * `packages/core/src/outreach/followup-cadence.ts`'s own header comment calls out as the failure this
  * lookup exists to prevent.
  *
  * Run: bun test-all.ts --only followup-cadence-applied-date
  */
 import { pass, fail } from './helpers.ts';
-import { parseAppliedDate } from '../followup-cadence.ts';
+import { parseAppliedDate } from '../packages/core/src/outreach/followup-cadence.ts';
 
 console.log('\nfollowup-cadence.ts — parseAppliedDate bounded-gap matching (#4084)');
 

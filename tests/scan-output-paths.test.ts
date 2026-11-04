@@ -1,4 +1,4 @@
-// tests/scan-output-paths.test.ts - scan.ts's two outputs must be
+// tests/scan-output-paths.test.ts - packages/core/src/scanning/scan.ts's two outputs must be
 // env-overridable, the same way its two inputs already are (#2271).
 //
 // `CAREER_OPS_PORTALS` and `CAREER_OPS_PROFILE` already let a second search lane
@@ -10,7 +10,7 @@
 //
 // End-to-end rather than unit, because the defect is in module-level path
 // resolution: importing the module in-process would read this process's env, not
-// a lane's. Each check spawns a real scan.ts over the local-parser fixture
+// a lane's. Each check spawns a real packages/core/src/scanning/scan.ts over the local-parser fixture
 // board, so nothing here touches the network.
 import { pass, fail, ROOT, NODE } from './helpers.ts';
 import { mkdtempSync, writeFileSync, readFileSync, existsSync, rmSync, mkdirSync } from 'fs';
@@ -48,7 +48,7 @@ function makeLane() {
   return { dir, portals };
 }
 
-// Every variable scan.ts resolves a path from. Cleared before each spawn so a
+// Every variable packages/core/src/scanning/scan.ts resolves a path from. Cleared before each spawn so a
 // test's environment is only what that test asked for.
 //
 // This matters more here than in a typical suite, because the audience for
@@ -78,7 +78,7 @@ const runScan = (dir, env) => {
   // The sandbox IS the lane's data root. scan's defaults are anchored to
   // CAREER_OPS_ROOT (no longer to the child's cwd), so "default behavior"
   // here means: root pinned to the fixture, no per-file overrides.
-  return execFileSync(NODE, [join(ROOT, 'scan.ts')], {
+  return execFileSync(NODE, [join(ROOT, 'packages/core/src/scanning/scan.ts')], {
     cwd: dir,
     env: { ...childEnv, CAREER_OPS_ROOT: dir, ...env },
     encoding: 'utf-8',
@@ -214,7 +214,7 @@ function entries(pipelinePath) {
 //    directory and nowhere else.
 //
 //    Goes through the same runScan() the checks above use, deliberately. A case
-//    that spawned scan.ts with its own hand-built environment would keep
+//    that spawned packages/core/src/scanning/scan.ts with its own hand-built environment would keep
 //    passing if the clearing were dropped, which is the whole failure mode: on a
 //    machine with these variables unset, removing it changes nothing observable.
 {
@@ -247,21 +247,21 @@ function entries(pipelinePath) {
 }
 
 
-// 6. Importing scan.ts must not create data/ on its own - the module has three
+// 6. Importing packages/core/src/scanning/scan.ts must not create data/ on its own - the module has three
 //    write-time paths (pipeline, scan-history, scan-runs) and none of them
 //    should fire before a caller actually asks for a write (#3159).
 //
 //    CAREER_OPS_ROOT is pinned to the temp dir, and that pin is the whole test.
-//    scan.ts anchors its paths to getCareerOpsRoot(), NOT to the cwd, so with
+//    packages/core/src/scanning/scan.ts anchors its paths to getCareerOpsRoot(), NOT to the cwd, so with
 //    the variable unset an import-time mkdir lands in the REPO's own data/ --
 //    a directory that already exists on every developer machine and in CI. The
 //    assertion below would look at the empty temp dir, see no data/, and pass
 //    while the regression it guards was live. Setting cwd alone is inert here.
-//    With the root pinned, the only data/ scan.ts can create is this one.
+//    With the root pinned, the only data/ packages/core/src/scanning/scan.ts can create is this one.
 {
   const dir = mkdtempSync(join(tmpdir(), 'scan-outpaths-import-'));
   try {
-    const scanUrl = pathToFileURL(join(ROOT, 'scan.ts')).href;
+    const scanUrl = pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href;
     // The two overrides are cleared so an ambient value in the developer's own
     // shell cannot redirect scan-history/pipeline out of the directory watched.
     const env = { ...process.env, CAREER_OPS_ROOT: dir };
@@ -273,9 +273,9 @@ function entries(pipelinePath) {
       encoding: 'utf-8',
     });
     if (!existsSync(join(dir, 'data'))) {
-      pass('importing scan.ts does not create data/ as a side effect (#3159)');
+      pass('importing packages/core/src/scanning/scan.ts does not create data/ as a side effect (#3159)');
     } else {
-      fail('importing scan.ts created a data/ directory with no write ever requested (#3159)');
+      fail('importing packages/core/src/scanning/scan.ts created a data/ directory with no write ever requested (#3159)');
     }
   } catch (err) {
     fail(`import-only spawn failed: ${err.message}`);

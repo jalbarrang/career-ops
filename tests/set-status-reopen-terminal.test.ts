@@ -18,7 +18,7 @@ function setStatus(from, to) {
       '|---|---|---|---|---|---|---|---|---|',
       `| 7 | 2026-02-01 | Acme | Backend Engineer | 4.4/5 | ${from} | ❌ | | |`, '',
     ].join('\n'));
-    return spawnSync(process.execPath, [join(ROOT, 'set-status.ts'), '7', to], {
+    return spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/tracker/set-status.ts'), '7', to], {
       cwd: ROOT,
       encoding: 'utf-8',
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_TRACKER: join(dir, 'data', 'applications.md') },

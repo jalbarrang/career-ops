@@ -1,7 +1,7 @@
 // #5429: opt out of only the final title rescue, preserving location evidence.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildLocationFilter } from '../scan.ts';
+import { buildLocationFilter } from '../packages/core/src/scanning/scan.ts';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -56,7 +56,7 @@ test('validator accepts omitted/boolean policy and rejects all non-boolean shape
     const file = join(dir, 'portals.yml');
     for (const value of [undefined, true, false, 'false', 'true', 0, 1, null, [], {}]) {
       writeFileSync(file, `title_filter:\n  positive: [Engineer]\nlocation_filter:\n  allow: [Shenzhen]\n${value === undefined ? '' : `  remote_title_fallback: ${JSON.stringify(value)}\n`}tracked_companies:\n  - name: Fixture\n    careers_url: https://job-boards.greenhouse.io/fixture\n`);
-      const result = spawnSync(process.execPath, [fileURLToPath(new URL('../validate-portals.ts', import.meta.url)), '--file', file], { encoding: 'utf8', timeout: 10000 });
+      const result = spawnSync(process.execPath, [fileURLToPath(new URL('../packages/cli/src/commands/scanning/validate-portals.ts', import.meta.url)), '--file', file], { encoding: 'utf8', timeout: 10000 });
       const valid = value === undefined || typeof value === 'boolean';
       assert.equal(result.status, valid ? 0 : 1, result.stdout + result.stderr);
       if (!valid) assert.match(result.stdout, /location_filter.remote_title_fallback.*must be a boolean/);

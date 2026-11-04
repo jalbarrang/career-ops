@@ -15,7 +15,7 @@ import {
   createReexecMarker,
   consumeReexecMarker,
   isSafeManifestPath,
-} from './update-system.ts';
+} from './packages/cli/src/commands/platform/update-system.ts';
 
 let passed = 0;
 let failed = 0;
@@ -37,10 +37,10 @@ function applyFailure(result) {
 
 let source = '';
 try {
-  source = readFileSync('update-system.ts', 'utf-8');
-  pass('update-system.ts is readable');
+  source = readFileSync('packages/cli/src/commands/platform/update-system.ts', 'utf-8');
+  pass('packages/cli/src/commands/platform/update-system.ts is readable');
 } catch (error) {
-  fail(`update-system.ts is readable: ${error.message}`);
+  fail(`packages/cli/src/commands/platform/update-system.ts is readable: ${error.message}`);
   process.exit(1);
 }
 
@@ -52,7 +52,7 @@ try {
 // That repository is scaffolding for this suite alone, so it is removed again
 // on exit. test-all runs every smoke script from the SAME shared copy, and a
 // `.git` left behind makes that copy a checkout of its own for every script
-// after this one: `update-system.ts check` then passes its nested-install
+// after this one: `packages/cli/src/commands/platform/update-system.ts check` then passes its nested-install
 // guard and fetches upstream main into the empty fixture repository - a full
 // clone over the network inside the smoke matrix, killed at the shared 30s
 // budget on any connection slow enough (`exit null, signal SIGTERM`).
@@ -111,21 +111,21 @@ try {
     execFileSync('git', ['init', '-q'], { cwd });
     execFileSync('git', ['config', 'user.email', 'tests@example.invalid'], { cwd });
     execFileSync('git', ['config', 'user.name', 'career-ops tests'], { cwd });
-    execFileSync('git', ['add', 'update-system.ts', 'updater-migration-tests.ts', 'AGENTS.md'], { cwd });
+    execFileSync('git', ['add', 'packages/cli/src/commands/platform/update-system.ts', 'updater-migration-tests.ts', 'AGENTS.md'], { cwd });
     execFileSync('git', ['commit', '-qm', 'test fixture'], { cwd });
   }
 } catch (error) {
   fail(`migration fixture git setup: ${error.message}`);
 }
 
-// The system list moved to lib/update-manifest.ts (#5554); the user and
+// The system list moved to packages/core/src/platform/update-manifest.ts (#5554); the user and
 // bootstrap lists are still in update-system.ts.
 let manifestSource = '';
 try {
-  manifestSource = readFileSync('lib/update-manifest.ts', 'utf-8');
-  pass('lib/update-manifest.ts is readable');
+  manifestSource = readFileSync('packages/core/src/platform/update-manifest.ts', 'utf-8');
+  pass('packages/core/src/platform/update-manifest.ts is readable');
 } catch (error) {
-  fail(`lib/update-manifest.ts is readable: ${error.message}`);
+  fail(`packages/core/src/platform/update-manifest.ts is readable: ${error.message}`);
 }
 
 function extractArray(name, from = source) {
@@ -158,7 +158,7 @@ function runApplyWithEnv(env, args = ['apply']) {
   // invocation must start from the same lock-free state so the assertions
   // below test the child, not test-order residue.
   rmSync('.update-lock', { force: true, recursive: true });
-  return spawnSync(process.execPath, ['update-system.ts', ...args], {
+  return spawnSync(process.execPath, ['packages/cli/src/commands/platform/update-system.ts', ...args], {
     cwd: process.cwd(),
     encoding: 'utf8',
     env: {
@@ -267,7 +267,7 @@ const ALLOWED_MISSING_ENTRIES = new Set([
   // Retired by #3765, which moved these four suites into tests/. They are kept
   // in SYSTEM_PATHS deliberately so `staleSystemFiles` can still prune an
   // upgrading install's leftover copies (see the "Retired paths" block in
-  // update-system.ts); a retired path is only useful to the prune while it is
+  // packages/cli/src/commands/platform/update-system.ts); a retired path is only useful to the prune while it is
   // still listed, and by definition it is no longer on disk here.
   'agent-inbox-tests.ts',
   'followup-seed-tests.ts',
@@ -334,10 +334,10 @@ const requiredBootstrapPaths = [
   '.antigravitycli/skills/',
   '.grok/skills/',
   'providers/',
-  'liveness-browser.ts',
-  'role-matcher.ts',
-  'tracker-utils.ts',
-  'tracker-parse.ts',
+  'packages/core/src/liveness/liveness-browser.ts',
+  'packages/core/src/tracker/role-matcher.ts',
+  'packages/core/src/tracker/tracker-utils.ts',
+  'packages/core/src/tracker/tracker-parse.ts',
   'updater-migration-tests.ts',
 ];
 
@@ -411,7 +411,7 @@ const twoPassManifestChecks = [
   },
   {
     name: 'apply resolves the re-exec checkout closure from the pinned target (#1245, #3052)',
-    pattern: /resolveReexecCheckout\(targetCommit,\s*'update-system\.ts'\)/,
+    pattern: /resolveReexecCheckout\(targetCommit,\s*'[^']*update-system\.ts'\)/,
   },
   {
     name: 'apply checks out the resolved re-exec files literally from the pinned target (#1245, #3052)',
@@ -419,7 +419,7 @@ const twoPassManifestChecks = [
   },
   {
     name: 'apply validates the canonical form of the self-bootstrap import closure',
-    pattern: /const reexecFiles = assertCanonicalManifestPaths\([\s\S]{0,240}?resolveReexecCheckout\(targetCommit,\s*'update-system\.ts'\)[\s\S]{0,240}?'Target updater import closure'/,
+    pattern: /const reexecFiles = assertCanonicalManifestPaths\([\s\S]{0,240}?resolveReexecCheckout\(targetCommit,\s*'[^']*update-system\.ts'\)[\s\S]{0,240}?'Target updater import closure'/,
   },
   {
     name: 'apply gives the self-bootstrap import closure the same user-layer decision as the manifest',
@@ -435,7 +435,7 @@ const twoPassManifestChecks = [
   },
   {
     name: 'apply re-execs through the current Node binary',
-    pattern: /execFileSync\(process\.execPath,\s*\[[\s\S]*?'update-system\.ts',\s*'apply',\s*'--confirm'/,
+    pattern: /execFileSync\(process\.execPath,\s*\[[\s\S]*?'[^']*update-system\.ts',\s*'apply',\s*'--confirm'/,
   },
   {
     name: 'apply carries the original backup branch across re-exec',
@@ -447,7 +447,7 @@ const twoPassManifestChecks = [
   },
   {
     name: 'apply reads the target updater manifest from the pinned target (#3052)',
-    pattern: /git\('show',\s*`\$\{targetCommit\}:update-system\.ts`\)/,
+    pattern: /git\('show',\s*`\$\{targetCommit\}:[^`]*update-system\.ts`\)/,
   },
   {
     name: 'apply reads SYSTEM_PATHS from the pinned target, module first (#5554)',
@@ -727,12 +727,12 @@ if (appearsInOrder(applySource, [pairCall, 'pruneStaleTargetRefs();'])) {
 
 if (appearsInOrder(applySource, [
   pairCall,
-  "git('show', `${targetCommit}:update-system.ts`);",
+  "git('show', `${targetCommit}:packages/cli/src/commands/platform/update-system.ts`);",
   'manifestSystemPathsAt(targetCommit)',
   "remoteSystemPaths = assertCanonicalManifestPaths(remoteSystemPaths, `Target SYSTEM_PATHS (${remoteManifestFile})`);",
   'const validatedManifestPaths = assertCanonicalManifestPaths(',
   "'Merged updater manifest',",
-  "resolveReexecCheckout(targetCommit, 'update-system.ts')",
+  "resolveReexecCheckout(targetCommit, 'packages/cli/src/commands/platform/update-system.ts')",
   "'Target updater import closure',",
   'uncoveredReexecFiles.length > 0',
   'const { refused: refusedReexecFiles } = rejectUserLayerPaths(',
@@ -747,7 +747,7 @@ if (appearsInOrder(applySource, [
 if (appearsInOrder(rollbackSource, [
   'targetRef = targetRefForBackup(latest);',
   "git('show-ref', '--verify', '--quiet', targetRef);",
-  "git('show', `${targetRef}:update-system.ts`);",
+  "git('show', `${targetRef}:packages/cli/src/commands/platform/update-system.ts`);",
   'manifestSystemPathsAt(targetRef)',
   'manifestTreeFiles(safeTargetPaths, targetRef, userPaths,',
 ]) && !/\b(?:git|gitQuiet|gitShowRaw)\([^)]*\bFETCH_HEAD\b[^)]*\)/s.test(rollbackSource)) {
@@ -756,17 +756,17 @@ if (appearsInOrder(rollbackSource, [
   fail('rollback can derive target removals from a mutable or unpaired ref');
 }
 
-// #1706: update-system.ts must be self-loading — no static (top-level) relative
+// #1706: packages/cli/src/commands/platform/update-system.ts must be self-loading — no static (top-level) relative
 // imports. A pre-#1245 client's apply() self-reexec checks out ONLY
-// update-system.ts before re-execing it, so any top-level `import ... from
+// packages/cli/src/commands/platform/update-system.ts before re-execing it, so any top-level `import ... from
 // './...'` (or bare `import './...'`) crashes that re-exec with
 // ERR_MODULE_NOT_FOUND on the old→new jump. Relative modules must be lazily
 // `await import()`ed at their point of use instead.
 const staticRelativeImport = /^\s*(?:import|export)\b[^\n]*?\bfrom\s*['"]\.[^'"]*['"]|^\s*import\s*['"]\.[^'"]*['"]/m;
 if (staticRelativeImport.test(source)) {
-  fail('update-system.ts is self-loading — no static relative imports (#1706)');
+  fail('packages/cli/src/commands/platform/update-system.ts is self-loading — no static relative imports (#1706)');
 } else {
-  pass('update-system.ts is self-loading — no static relative imports (#1706)');
+  pass('packages/cli/src/commands/platform/update-system.ts is self-loading — no static relative imports (#1706)');
 }
 
 for (const userPath of ['cv.md', 'config/profile.yml', 'modes/_profile.md', 'portals.yml', 'data/', 'reports/']) {

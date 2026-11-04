@@ -101,14 +101,14 @@ jobs:
           # Idempotence: re-labeling an issue already on the wall is a no-op.
           if grep -qF "link=\"$E_LINK\"" HIRED.md; then
             echo "entry already on the wall — rebuild only"
-            bun hired-wall-build.ts --rebuild --fetch-avatars
+            bun packages/cli/src/commands/insights/hired-wall-build.ts --rebuild --fetch-avatars
           else
             set -- --add --level "$E_LEVEL" --role "$E_ROLE" --story "$E_STORY" --link "$E_LINK" --fetch-avatars
             [ -n "$E_HANDLE" ] && set -- "$@" --handle "$E_HANDLE"
             [ -n "$E_SECTOR" ] && set -- "$@" --sector "$E_SECTOR"
             [ -n "$E_GEO" ] && set -- "$@" --geo "$E_GEO"
             [ -n "$E_WEEKS" ] && set -- "$@" --weeks "$E_WEEKS"
-            bun hired-wall-build.ts "$@"
+            bun packages/cli/src/commands/insights/hired-wall-build.ts "$@"
           fi
       - name: Commit
         id: commit

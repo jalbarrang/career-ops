@@ -1,5 +1,5 @@
 // tests/verify-pipeline-check15.test.ts — Check 15 (portals.yml coverage) end
-// to end, through the real verify-pipeline.ts process.
+// to end, through the real packages/cli/src/commands/platform/verify-pipeline.ts process.
 //
 // tests/audit-portals.test.ts pins the contract this check leans on:
 // findUnclaimedEntries() skips an enabled entry with no `name`, adding it to no
@@ -51,7 +51,7 @@ try {
   const runVp = (portalsFile) => {
     const env = { ...process.env, CAREER_OPS_TRACKER: tracker, CAREER_OPS_REPORTS: reports, CAREER_OPS_PORTALS: portalsFile };
     try {
-      return execFileSync(NODE, [join(ROOT, 'verify-pipeline.ts')], { cwd: ROOT, env, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 60_000 });
+      return execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/verify-pipeline.ts')], { cwd: ROOT, env, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 60_000 });
     } catch (err) {
       return typeof err.stdout === 'string' ? err.stdout : '';
     }

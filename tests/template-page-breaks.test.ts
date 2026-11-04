@@ -35,7 +35,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { relative, join, dirname } from 'path';
 import { pass, fail, ROOT } from './helpers.ts';
-import { listTemplates } from '../cv-templates.ts';
+import { listTemplates } from '../packages/cli/src/commands/cv/cv-templates.ts';
 
 console.log('\nCV template page-break control — no orphaned project tech line');
 
@@ -79,7 +79,7 @@ function declares(parsed, selector, prop, value) {
  *
  * The assertions below rest on one premise: the markup is not the template's to
  * opt out of, because it comes from the shared templates/sections/projects.html
- * (or, with no partial there, from the built-in builder in build-cv-html.ts,
+ * (or, with no partial there, from the built-in builder in packages/cli/src/commands/cv/build-cv-html.ts,
  * which emits the same classes). A template that never styles .project-tech is
  * still on the hook, because it still renders the div.
  *

@@ -2,7 +2,7 @@
  * tests/jd-archive-wiring.test.ts — JD-archive validator wiring + read-only
  * boundary (#2789).
  *
- * check-jd-archive.ts's own --self-test (invoked via test-all.ts's CLI-check
+ * packages/core/src/evaluation/check-jd-archive.ts's own --self-test (invoked via test-all.ts's CLI-check
  * table) covers the finding logic on synthetic fixtures. This suite pins the
  * wiring: the script ships, updates, is documented, the mode files state the
  * archival step as required (not conditional), and the checker stays strictly
@@ -29,18 +29,19 @@ function readFile(path) {
 console.log('\nJD-archive validator wiring + read-only boundary (#2789)');
 
 try {
-  const jdArchiveSrc = readFile('check-jd-archive.ts');
+  const jdArchiveSrc = readFile('packages/core/src/evaluation/check-jd-archive.ts');
 
-  const manifestSrc = readFile('lib/update-manifest.ts');
+  const manifestSrc = readFile('packages/core/src/platform/update-manifest.ts');
   const jdArchiveSysBlock = (manifestSrc.match(/SYSTEM_PATHS\s*=\s*\[([\s\S]*?)\]/) || [, ''])[1];
-  if (jdArchiveSysBlock.includes("'check-jd-archive.ts'")) {
-    pass('check-jd-archive.ts is in SYSTEM_PATHS (lib/update-manifest.ts: shipped + updatable)');
+  if (jdArchiveSysBlock.includes("'packages/core/src/evaluation/check-jd-archive.ts'")) {
+    pass('packages/core/src/evaluation/check-jd-archive.ts is in SYSTEM_PATHS (packages/core/src/platform/update-manifest.ts: shipped + updatable)');
   } else {
-    fail('check-jd-archive.ts is NOT in SYSTEM_PATHS — updates would never deliver it');
+    fail('packages/core/src/evaluation/check-jd-archive.ts is NOT in SYSTEM_PATHS — updates would never deliver it');
   }
 
   const pkg = JSON.parse(readFile('package.json'));
-  if (pkg.scripts && pkg.scripts['jd-archive'] === 'bun check-jd-archive.ts') {
+  const jdArchiveScript = pkg.scripts?.['jd-archive'] ?? '';
+  if (jdArchiveScript === 'career-ops check-jd-archive' || jdArchiveScript.endsWith('/check-jd-archive.ts')) {
     pass('package.json exposes bun run jd-archive');
   } else {
     fail('package.json missing the jd-archive script entry');
@@ -54,10 +55,10 @@ try {
   }
 
   const agentsDoc = readFile('AGENTS.md');
-  if (agentsDoc.includes('`check-jd-archive.ts`')) {
-    pass('AGENTS.md Main Files table lists check-jd-archive.ts');
+  if (agentsDoc.includes('`packages/core/src/evaluation/check-jd-archive.ts`')) {
+    pass('AGENTS.md Main Files table lists packages/core/src/evaluation/check-jd-archive.ts');
   } else {
-    fail('AGENTS.md Main Files table missing check-jd-archive.ts');
+    fail('AGENTS.md Main Files table missing packages/core/src/evaluation/check-jd-archive.ts');
   }
   if (/REQUIRED.*Job Description \(archived verbatim\)|Job Description \(archived verbatim\).*REQUIRED/.test(agentsDoc)) {
     pass('AGENTS.md states the JD-archive section as required, not conditional');
@@ -79,7 +80,7 @@ try {
 
   // A market's evaluation mode replaces oferta.md when language.modes_dir
   // points at it, so its template must carry the section too, with the heading
-  // in English: check-jd-archive.ts finds it by name. Frozen files are exempt
+  // in English: packages/core/src/evaluation/check-jd-archive.ts finds it by name. Frozen files are exempt
   // until their re-sync (#3669, #3828) brings the section with it.
   const localizedWithoutArchive = discoverEvaluationModes(ROOT)
     .filter(file => !FROZEN_EVALUATION_MODES.has(file))
@@ -102,7 +103,7 @@ try {
     fail('modes/pdf.md does not state JD archival as a required step');
   }
 
-  // Read-only import boundary: the ONLY fs capabilities check-jd-archive.ts
+  // Read-only import boundary: the ONLY fs capabilities packages/core/src/evaluation/check-jd-archive.ts
   // may hold for scanning reports/jds are readFileSync/readdirSync/existsSync.
   // It also imports mkdtempSync/mkdirSync/writeFileSync/rmSync — but ONLY for
   // building its own self-test fixtures in a temp dir, never for reports/ or
@@ -114,9 +115,9 @@ try {
   const fsNames = fsImportMatch ? fsImportMatch[1].split(',').map(s => s.trim()).filter(Boolean) : [];
   const unexpected = fsNames.filter(n => !READ_ONLY_FS.has(n) && !SELF_TEST_ONLY_FS.has(n));
   if (fsNames.length > 0 && unexpected.length === 0) {
-    pass('check-jd-archive.ts fs imports are limited to read-only scanning APIs plus self-test-fixture builders');
+    pass('packages/core/src/evaluation/check-jd-archive.ts fs imports are limited to read-only scanning APIs plus self-test-fixture builders');
   } else {
-    fail(`check-jd-archive.ts fs import boundary violated: ${unexpected.join(', ') || 'no fs import matched'}`);
+    fail(`packages/core/src/evaluation/check-jd-archive.ts fs import boundary violated: ${unexpected.join(', ') || 'no fs import matched'}`);
   }
 
   // The self-test-only write APIs must never be called from checkJdArchive,
@@ -150,9 +151,9 @@ try {
     .split('\n')
     .filter(line => [...SELF_TEST_ONLY_FS].some(fn => line.includes(`${fn}(`)) && !/^\s*import\b/.test(line));
   if (outsideSelfTest.length === 0) {
-    pass('check-jd-archive.ts never calls a write-capable fs API outside its own self-test fixtures');
+    pass('packages/core/src/evaluation/check-jd-archive.ts never calls a write-capable fs API outside its own self-test fixtures');
   } else {
-    fail(`check-jd-archive.ts calls a write-capable fs API outside runSelfTest: ${outsideSelfTest.join(' | ')}`);
+    fail(`packages/core/src/evaluation/check-jd-archive.ts calls a write-capable fs API outside runSelfTest: ${outsideSelfTest.join(' | ')}`);
   }
 
   // The by-name call scan above is blind to a local re-binding — `const write
@@ -207,9 +208,9 @@ try {
   const REBIND_RE = /\b(?:const|let|var)\s+[$_\p{ID_Start}][$_\u200C\u200D\p{ID_Continue}]*\s*=\s*\(*\s*(mkdtempSync|mkdirSync|writeFileSync|rmSync)(?![$_\u200C\u200D\p{ID_Continue}])\s*\)*/gu;
   const rebindings = [...codeOutsideSelfTest.matchAll(REBIND_RE)].map((m) => m[0].trim());
   if (rebindings.length === 0) {
-    pass('check-jd-archive.ts never locally re-binds a write-capable fs API outside its own self-test fixtures');
+    pass('packages/core/src/evaluation/check-jd-archive.ts never locally re-binds a write-capable fs API outside its own self-test fixtures');
   } else {
-    fail(`check-jd-archive.ts re-binds a write-capable fs API outside runSelfTest: ${rebindings.join(' | ')}`);
+    fail(`packages/core/src/evaluation/check-jd-archive.ts re-binds a write-capable fs API outside runSelfTest: ${rebindings.join(' | ')}`);
   }
 
   // REBIND_RE itself, against literal fixtures — the real file has no
@@ -246,14 +247,14 @@ try {
   }
 
   if (!/from\s*['"](?:node:)?fs\/promises['"]/.test(jdArchiveSrc)) {
-    pass('check-jd-archive.ts does not import fs/promises');
+    pass('packages/core/src/evaluation/check-jd-archive.ts does not import fs/promises');
   } else {
-    fail('check-jd-archive.ts imports fs/promises — write-capable API surface');
+    fail('packages/core/src/evaluation/check-jd-archive.ts imports fs/promises — write-capable API surface');
   }
   if (!/\brequire\s*\(/.test(jdArchiveSrc)) {
-    pass('check-jd-archive.ts has no require() escape hatch');
+    pass('packages/core/src/evaluation/check-jd-archive.ts has no require() escape hatch');
   } else {
-    fail('check-jd-archive.ts uses require() — bypasses the import whitelist');
+    fail('packages/core/src/evaluation/check-jd-archive.ts uses require() — bypasses the import whitelist');
   }
 } catch (e) {
   fail(`jd-archive wiring check: ${e.message}`);

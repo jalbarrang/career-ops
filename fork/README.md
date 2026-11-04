@@ -29,7 +29,7 @@ progression looks like.
 
 ## The contract
 
-These files live in the updater's manifest, so `bun update-system.ts apply`
+These files live in the updater's manifest, so `bun packages/cli/src/commands/platform/update-system.ts apply`
 reverts them. **The fork's copies live in `fork/core/` and are installed with:**
 
 ```bash
@@ -51,9 +51,9 @@ Files owned (`fork/base.json` records the hashes):
 
 | File | Why it is forked |
 |---|---|
-| `career-profile.ts` | the importer that WRITES the profile: block classification (company / role / period) and the merge |
-| `lib/career-profile.ts` | `validateProfile` — the gate every write goes through |
-| `lib/profile-cv-selection.ts` | a CV slot binds to a ROLE, so the lookup flattens companies |
+| `packages/cli/src/commands/profile/career-profile.ts` | the importer that WRITES the profile: block classification (company / role / period) and the merge |
+| `packages/core/src/profile/career-profile.ts` | `validateProfile` — the gate every write goes through |
+| `packages/core/src/profile/profile-cv-selection.ts` | a CV slot binds to a ROLE, so the lookup flattens companies |
 | `tests/career-profile.test.ts` | upstream's v1 suite, ported: every upstream scenario is kept, asserted through `roles[]` |
 | `tests/profile-cv-selection.test.ts` | same, plus `tests/fixtures/profile-cv-selection.json` |
 

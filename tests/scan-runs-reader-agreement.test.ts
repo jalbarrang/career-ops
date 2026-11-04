@@ -4,7 +4,7 @@
 // #3511 anchored the scanners' user data to the data root and pinned it well,
 // including that appendScanRunSummary() writes under the data root. This adds
 // the half that check cannot make: it asserts where the WRITER puts the file,
-// never asking stats.ts where it actually looks. Move stats.ts's own constant
+// never asking packages/core/src/insights/stats.ts where it actually looks. Move packages/core/src/insights/stats.ts's own constant
 // and tests/scan-data-paths-under-data-root.test.ts stays green — verified —
 // because from the writer's side nothing has changed.
 //
@@ -49,8 +49,8 @@ function roundTrip() {
   mkdirSync(join(decoyCwd, 'data'), { recursive: true });
   try {
     const script = `
-      const scan  = await import(${url('scan.ts')});
-      const stats = await import(${url('stats.ts')});
+      const scan  = await import(${url('packages/core/src/scanning/scan.ts')});
+      const stats = await import(${url('packages/core/src/insights/stats.ts')});
       scan.appendScanRunSummary(${JSON.stringify(COUNTERS)});   // default path
       const all = stats.computeAllStats();                       // default path
       process.stdout.write(JSON.stringify({ runs: all.runs ?? null }));
@@ -67,17 +67,17 @@ function roundTrip() {
   }
 }
 
-test('a run scan.ts just wrote is visible to stats.ts', () => {
+test('a run packages/core/src/scanning/scan.ts just wrote is visible to packages/core/src/insights/stats.ts', () => {
   const out = roundTrip();
   assert.ok(
     out.runs,
-    'stats.ts found no scan runs at all — the counters appendScanRunSummary() just wrote '
+    'packages/core/src/insights/stats.ts found no scan runs at all — the counters appendScanRunSummary() just wrote '
     + 'are not where computeAllStats() looks. The two constants are resolved in separate '
     + 'files, so either side can drift without the other noticing.',
   );
   assert.equal(
     out.runs.totalRuns ?? out.runs.runs ?? 0,
     1,
-    `stats.ts did not see the appended run: ${JSON.stringify(out.runs)}`,
+    `packages/core/src/insights/stats.ts did not see the appended run: ${JSON.stringify(out.runs)}`,
   );
 });

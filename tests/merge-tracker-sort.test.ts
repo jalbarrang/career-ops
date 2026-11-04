@@ -8,7 +8,7 @@
 // tracker on the next merge with no separate migration step.
 //
 // CLI integration, like tests/merge-tracker.test.ts: importing
-// merge-tracker.ts would run the merge at import time, so these drive the real
+// packages/cli/src/commands/tracker/merge-tracker.ts would run the merge at import time, so these drive the real
 // script through the CAREER_OPS_TRACKER / CAREER_OPS_ADDITIONS overrides.
 import { pass, fail, NODE, ROOT, rmSync, isolatedBatchStatePath } from './helpers.ts';
 import { join } from 'path';
@@ -47,7 +47,7 @@ function runMerge(opts = {}) {
     }
     let output = '';
     try {
-      output = execFileSync(NODE, [join(ROOT, 'merge-tracker.ts'), ...(opts.args ?? [])], {
+      output = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts'), ...(opts.args ?? [])], {
         encoding: 'utf-8',
         timeout: 30000,
         stdio: ['ignore', 'pipe', 'pipe'],

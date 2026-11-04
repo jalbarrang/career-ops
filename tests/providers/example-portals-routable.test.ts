@@ -3,23 +3,23 @@
 //
 // Onboarding Step 3 is "Copy templates/portals.example.yml → portals.yml", so
 // that file is where every user's scanning starts. An entry nothing claims is
-// skipped by scan.ts on every run while still reading as coverage — the
+// skipped by packages/core/src/scanning/scan.ts on every run while still reading as coverage — the
 // failure AGENTS.md calls the highest-value check:
 //
-//   "no provider claims its careers_url (so scan.ts skips it silently on
+//   "no provider claims its careers_url (so packages/core/src/scanning/scan.ts skips it silently on
 //    every run while it reads as coverage)"
 //
-// verify-pipeline.ts check 15 is that audit, but it reads portals.yml — the
+// packages/cli/src/commands/platform/verify-pipeline.ts check 15 is that audit, but it reads portals.yml — the
 // user's gitignored copy — so it can only run after someone has copied the
 // template, on their machine, where no CI signal reaches. The template itself
 // was unchecked.
 //
 // "Unclaimed by a provider" is NOT the same as "not scanned", and conflating
 // them is how the first version of this test overstated its finding by 22
-// entries. findUnclaimedEntries() in audit-portals.ts already draws the
-// distinction scan.ts draws, so it is reused here rather than reimplemented:
+// entries. findUnclaimedEntries() in packages/cli/src/commands/scanning/audit-portals.ts already draws the
+// distinction packages/core/src/scanning/scan.ts draws, so it is reused here rather than reimplemented:
 //
-//   silent          no provider AND no scan_method -> scan.ts skips it
+//   silent          no provider AND no scan_method -> packages/core/src/scanning/scan.ts skips it
 //   handoff         no provider but scan_method set -> handed to the agent
 //                   (WebSearch), which is mechanism 3 in this template's own
 //                   header and entirely intentional
@@ -31,12 +31,12 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import * as yaml from 'js-yaml';
 import { pass, fail, warn, ROOT } from '../helpers.ts';
-import { loadProviders } from '../../providers/_registry.ts';
-import { findUnclaimedEntries } from '../../audit-portals.ts';
+import { loadProviders } from '../../packages/core/src/scanning/providers/_registry.ts';
+import { findUnclaimedEntries } from '../../packages/cli/src/commands/scanning/audit-portals.ts';
 
 console.log('\nProvider — every enabled entry in portals.example.yml is reachable');
 
-// Entries scan.ts would skip outright today. An allowlist that may only
+// Entries packages/core/src/scanning/scan.ts would skip outright today. An allowlist that may only
 // SHRINK, in the shape of KNOWN_WITHOUT_HELP in tests/help-flag-handled.test.ts.
 //
 // Vinted has a branded careers_url, no `api:`, no `provider:` and no
@@ -57,7 +57,7 @@ const realError = console.error;
 console.error = () => {};
 let providers;
 try {
-  providers = await loadProviders(join(ROOT, 'providers'));
+  providers = await loadProviders(join(ROOT, 'packages/core/src/scanning/providers'));
 } finally {
   console.error = realError;
 }
@@ -78,7 +78,7 @@ if (unknownProvider.length === 0) {
   pass('no entry names a provider that does not exist');
 } else {
   fail(
-    'these entries name a provider that is not loaded, so scan.ts cannot run them: '
+    'these entries name a provider that is not loaded, so packages/core/src/scanning/scan.ts cannot run them: '
     + unknownProvider.map((r) => `${r.name} (${r.error})`).join(' | '),
   );
 }
@@ -90,7 +90,7 @@ if (unknownProvider.length === 0) {
     pass(`no NEW silently-skipped entry (${silent.length} known)`);
   } else {
     fail(
-      `these enabled entries have no provider AND no scan_method, so scan.ts skips them on every run `
+      `these enabled entries have no provider AND no scan_method, so packages/core/src/scanning/scan.ts skips them on every run `
       + `while they read as coverage: ${unexpected.join(', ')}. Give each one an \`api:\`, a \`provider:\`, `
       + `or a \`scan_method:\` — see providers/ADDING_A_PROVIDER.md.`,
     );
@@ -115,7 +115,7 @@ if (unknownProvider.length === 0) {
 // and the first version of this test confused the two.
 if (handoff.length > 0) {
   warn(
-    `${handoff.length} enabled entries have no provider but carry a scan_method, so scan.ts hands them `
+    `${handoff.length} enabled entries have no provider but carry a scan_method, so packages/core/src/scanning/scan.ts hands them `
     + `to the agent instead of fetching them (intentional — mechanism 3 in the template header)`,
   );
 }

@@ -1,10 +1,10 @@
-// tests/providers/computrabajo.test.ts: Computrabajo provider (providers/computrabajo.ts).
+// tests/providers/computrabajo.test.ts: Computrabajo provider (packages/core/src/scanning/providers/computrabajo.ts).
 // Offline only. The card fixture reproduces the markup measured on
 // co.computrabajo.com on 2026-10-23 (structure kept, attributes trimmed);
 // company and title values are fictional.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import provider, { parseCards, resolveListUrl } from '../../providers/computrabajo.ts';
+import provider, { parseCards, resolveListUrl } from '../../packages/core/src/scanning/providers/computrabajo.ts';
 
 const BASE = 'https://co.computrabajo.com/trabajo-de-sistemas';
 

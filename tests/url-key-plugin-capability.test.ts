@@ -19,8 +19,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { normalizeUrl, aggregatorPostingId } from '../url-key.ts';
-import { makeHttpCtx } from '../providers/_http.ts';
+import { normalizeUrl, aggregatorPostingId } from '../packages/core/src/kernel/url-key.ts';
+import { makeHttpCtx } from '../packages/core/src/scanning/providers/_http.ts';
 import { buildCtx } from '../plugins/_engine.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -89,7 +89,7 @@ test("R2: '' means no key, so two unusable inputs cannot match", () => {
 test('R3: a plugin can dedupe without importing core files', () => {
   // A plugin's own copy of the module has no repository to be relative to; the
   // capability exists so it never needs one. Assert the source carries no import
-  // of url-key.ts, which is what a copy would require.
+  // of packages/core/src/kernel/url-key.ts, which is what a copy would require.
   const engine = readFileSync(join(ROOT, 'plugins', '_engine.ts'), 'utf8');
   const providerCtx = engine.slice(engine.indexOf('export function buildCtx'), engine.indexOf('export function buildCtx') + 4000);
   assert.ok(

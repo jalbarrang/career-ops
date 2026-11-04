@@ -16,7 +16,7 @@
 // The plugin ships all of these files, so a missing one is a real failure, not
 // a skip.
 import { pass, fail, warn, run, NODE, ROOT } from '../helpers.ts';
-import { checkSyntax } from '../../lib/syntax-check.ts';
+import { checkSyntax } from '../../packages/core/src/kernel/syntax-check.ts';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { existsSync } from 'node:fs';

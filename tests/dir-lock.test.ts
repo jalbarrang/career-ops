@@ -4,7 +4,7 @@
 // Until #5358 the core had four acquire/recover/release bodies — pipeline-lock,
 // tracker-utils, followup-seed, portal-health-lock — sharing the helpers but
 // not the loop, and the loops had drifted. Each test below fails on the copy
-// that had the defect and passes on lib/dir-lock.ts, which every wrapper now
+// that had the defect and passes on packages/core/src/kernel/dir-lock.ts, which every wrapper now
 // calls. They run against the wrappers, not just the primitive, because "the
 // wrapper still routes through the shared loop" is the property that drifts.
 //
@@ -26,11 +26,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   acquireDirLock, tryAcquireDirLockSync, lockRecoveryVerdict, releaseOrWarn, DirLockTimeoutError, RECOVER_LIVE, RECOVER_STALE,
-} from '../lib/dir-lock.ts';
-import { acquirePortalHealthLock, LockTimeoutError as PortalLockTimeoutError } from '../portal-health-lock.ts';
-import { acquirePipelineLock } from '../pipeline-lock.ts';
-import { acquireTrackerLock } from '../tracker-utils.ts';
-import { withFollowupsLock } from '../followup-seed.ts';
+} from '../packages/core/src/kernel/dir-lock.ts';
+import { acquirePortalHealthLock, LockTimeoutError as PortalLockTimeoutError } from '../packages/core/src/kernel/portal-health-lock.ts';
+import { acquirePipelineLock } from '../packages/core/src/kernel/pipeline-lock.ts';
+import { acquireTrackerLock } from '../packages/core/src/tracker/tracker-utils.ts';
+import { withFollowupsLock } from '../packages/core/src/outreach/followup-seed.ts';
 
 // A fault window a few microseconds wide can only be hit by patching
 // writeFileSync/readFileSync BEFORE the lock module is linked. These cases do

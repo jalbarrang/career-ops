@@ -7,7 +7,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — adp-workforcenow (ADP Workforce Now Recruitment)');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/adp-workforcenow.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/adp-workforcenow.ts')).href);
   const adp = mod.default;
   const {
     parseListPage,

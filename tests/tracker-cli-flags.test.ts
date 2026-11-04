@@ -1,13 +1,13 @@
-// tests/tracker-cli-flags.test.ts — tracker.ts validates each subcommand's
+// tests/tracker-cli-flags.test.ts — packages/cli/src/commands/tracker/tracker.ts validates each subcommand's
 // own flags instead of accepting anything with a leading dash (#4602).
 //
-// `bun tracker.ts delete --num 12 --dryrun` (missing the hyphen) reached
+// `career-ops tracker delete --num 12 --dryrun` (missing the hyphen) reached
 // `deleteApp()`'s `args.includes('--dry-run')` check unseen: it evaluated to
 // false, and row 12 was removed from applications.md FOR REAL instead of
 // previewing the removal. Every subcommand's flags were read the same
 // unvalidated way (`args.includes(...)` / a local `flagValue()`), so any
 // mistyped flag silently fell through to that subcommand's default, live
-// behavior. Separately, `bun tracker.ts --help` (no subcommand) fell into
+// behavior. Separately, `career-ops tracker --help` (no subcommand) fell into
 // the "unknown command" branch, which treats any truthy `command` as an
 // error and exited 1 despite printing usage.
 //
@@ -47,11 +47,11 @@ function runTracker(args, sandbox) {
     CAREER_OPS_DATA_DIR: '',
     CAREER_OPS_TRACKER: sandbox.tracker,
     // An inherited CAREER_OPS_TRACKER_DB outranks the path derived from the
-    // tracker (tracker.ts dbPath()), so `sync` would rebuild the developer's
+    // tracker (packages/cli/src/commands/tracker/tracker.ts dbPath()), so `sync` would rebuild the developer's
     // own index from this fixture.
     CAREER_OPS_TRACKER_DB: join(sandbox.dir, 'data', 'applications.db'),
   };
-  const r = spawnSync(NODE, [join(ROOT, 'tracker.ts'), ...args], {
+  const r = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/tracker.ts'), ...args], {
     cwd: ROOT, encoding: 'utf-8', timeout: 30_000, env,
   });
   return { status: r.status, all: `${r.stdout ?? ''}${r.stderr ?? ''}` };
@@ -104,7 +104,7 @@ for (const typo of ['--dry_run', '--dryRun', '-dry-run', '--dry-run=true']) {
   cleanup(sb);
 }
 
-// ── Test 3: web/src/app/api/tracker/delete/route.ts's exact argv (the
+// ── Test 3: apps/web/src/app/api/tracker/delete/route.ts's exact argv (the
 //    web-core-argv-contract shape) must keep working unchanged. ──
 {
   const sb = makeSandbox();
@@ -139,11 +139,11 @@ for (const { args, typo } of OTHER_TYPOS) {
 {
   const sb = makeSandbox();
   const r1 = runTracker(['--help'], sb);
-  if (r1.status === 0 && /Usage:/.test(r1.all)) pass('tracker.ts --help exits 0 and prints usage');
-  else fail(`tracker.ts --help — expected exit 0 with usage, got ${r1.status}: ${r1.all}`);
+  if (r1.status === 0 && /Usage:/.test(r1.all)) pass('packages/cli/src/commands/tracker/tracker.ts --help exits 0 and prints usage');
+  else fail(`packages/cli/src/commands/tracker/tracker.ts --help — expected exit 0 with usage, got ${r1.status}: ${r1.all}`);
   const r2 = runTracker(['-h'], sb);
-  if (r2.status === 0) pass('tracker.ts -h exits 0');
-  else fail(`tracker.ts -h — expected exit 0, got ${r2.status}: ${r2.all}`);
+  if (r2.status === 0) pass('packages/cli/src/commands/tracker/tracker.ts -h exits 0');
+  else fail(`packages/cli/src/commands/tracker/tracker.ts -h — expected exit 0, got ${r2.status}: ${r2.all}`);
   cleanup(sb);
 }
 

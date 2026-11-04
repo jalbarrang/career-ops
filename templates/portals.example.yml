@@ -99,14 +99,14 @@
 # preferred_languages: [en]
 
 # -- Interamt.de searches (optional, German public sector) --
-# Read by scan-interamt.ts (`bun run scan:interamt`), a separate Playwright
+# Read by packages/cli/src/commands/scanning/scan-interamt.ts (`bun run scan:interamt`), a separate Playwright
 # scanner for Interamt.de, a portal for German federal, state, and municipal
 # government job postings. Interamt has no REST API (Apache Wicket, stateful),
 # so it isn't reachable through the tracked_companies providers above;
-# scan-interamt.ts drives a real browser session instead.
+# packages/cli/src/commands/scanning/scan-interamt.ts drives a real browser session instead.
 #
 # Each `was:` entry is a search keyword submitted to Interamt's search form.
-# If this block is absent, scan-interamt.ts falls back to a generic set of
+# If this block is absent, packages/cli/src/commands/scanning/scan-interamt.ts falls back to a generic set of
 # German IT keywords (Informatiker, Softwareentwickler, IT-Spezialist, ...).
 # Results are still filtered by title_filter/location_filter below.
 #
@@ -117,11 +117,11 @@
 #   - was: "Systemadministrator"
 
 # -- Dayforce (Ceridian) Recruiting boards (optional) --
-# Read by scan-dayforce.ts (`bun run scan:dayforce`), a separate Playwright
+# Read by packages/cli/src/commands/scanning/scan-dayforce.ts (`bun run scan:dayforce`), a separate Playwright
 # scanner for Dayforce career sites (jobs.dayforcehcm.com). Dayforce's job
 # search API sits behind Cloudflare + a NextAuth CSRF token, so it isn't
 # reachable through the tracked_companies providers above (bare HTTP gets a
-# hard 403); scan-dayforce.ts drives a real browser session instead.
+# hard 403); packages/cli/src/commands/scanning/scan-dayforce.ts drives a real browser session instead.
 #
 # Each entry is one tenant's board. `board` (jobBoardCode) defaults to
 # CANDIDATEPORTAL and `culture` defaults to en-US if omitted. `jobBoardId` is
@@ -178,11 +178,11 @@
 # `remote_title_fallback` defaults to true (also when omitted). After a nonempty
 # allow list fails to match the structured location or a supported URL hint,
 # an explicit Remote title can still admit the posting. Set false to disable
-# only that last rescue in both scan.ts and scan-ats-full.ts. Unlike strict,
+# only that last rescue in both packages/core/src/scanning/scan.ts and scan-ats-full.ts. Unlike strict,
 # this does not change missing-location handling, tier precedence, URL hints,
 # or an explicitly allowed Remote location. It is not an eligibility check.
 # Opting out can miss remote roles listed under an unrelated hiring office.
-# For configured scan.ts targets, field_filters.location.positive plus
+# For configured packages/core/src/scanning/scan.ts targets, field_filters.location.positive plus
 # filter_on: [title, location] is an existing alternative that gates the
 # structured location only. Reverse scans do not consume those field gates;
 # unlike the shared location filter, that alternative does not use URL hints.
@@ -267,7 +267,7 @@
 #   max: 0
 #   currency: "USD"
 
-# Read-only portal housekeeping: `bun stats.ts --prune --summary`.
+# Read-only portal housekeeping: `bun packages/core/src/insights/stats.ts --prune --summary`.
 # Uses exact-lowercase company names, scan history and recent health evidence.
 # First health observation is a lower bound, not the date config was added.
 # No configuration is removed automatically; review filters/names before pruning.
@@ -289,7 +289,7 @@
 #
 # Need an ABSOLUTE date window instead (e.g. "only postings from the 17th to
 # the 20th") rather than a relative "N days old" cutoff? Use the CLI flags
-# instead of a portals.yml key: `bun scan.ts --posted-after 2026-07-17
+# instead of a portals.yml key: `bun packages/core/src/scanning/scan.ts --posted-after 2026-07-17
 # --posted-before 2026-07-20`. Same "don't penalize missing data" rule.
 
 # -- Trust filter (optional) --
@@ -648,8 +648,8 @@ title_filter:
     - "Head"
     - "Director"
 
-# -- Title filter overrides (optional, scan-ats-full.ts only) --
-# The reverse ATS sweep (scan-ats-full.ts) applies ONE global title_filter
+# -- Title filter overrides (optional, packages/cli/src/commands/scanning/scan-ats-full.ts only) --
+# The reverse ATS sweep (packages/cli/src/commands/scanning/scan-ats-full.ts) applies ONE global title_filter
 # to every company in the public dataset it walks. Some employers legitimately
 # deserve a WIDER title net than everyone else, without loosening the global
 # filter for the rest of the sweep. title_filter_overrides lets specific
@@ -659,7 +659,7 @@ title_filter:
 # `companies` matches the company/tenant slug the scanner already derives
 # from the job-board-aggregator dataset entry (e.g. for a Workday tenant at
 # https://uwaterloo.wd3.myworkdayjobs.com/..., the slug is "uwaterloo" — the
-# same value scan-ats-full.ts logs as the board name on fetch errors).
+# same value packages/cli/src/commands/scanning/scan-ats-full.ts logs as the board name on fetch errors).
 # `positive_extra` keywords are ADDITIVE to (never a replacement for)
 # title_filter.positive above, and the global `negative` list still applies.
 #
@@ -682,7 +682,7 @@ title_filter:
 #       - "Student Services"
 
 # -- Domain filter (reverse sweep only, opt-in) --
-# Read ONLY by `scan-ats-full.ts` (bun run scan:full), the reverse sweep that
+# Read ONLY by `packages/cli/src/commands/scanning/scan-ats-full.ts` (bun run scan:full), the reverse sweep that
 # walks every public ATS board instead of your tracked_companies. Commented out
 # on purpose: absent, the sweep behaves exactly as it always has.
 #
@@ -690,7 +690,7 @@ title_filter:
 # title to answer both "is this the right role" and "is this employer in my
 # industry", and a title cannot answer the second one — "Senior Backend
 # Engineer" is identical at a Solana infrastructure company and at a supermarket
-# chain. scan.ts never has that problem, because tracked_companies settles the
+# chain. packages/core/src/scanning/scan.ts never has that problem, because tracked_companies settles the
 # employer before any title is read.
 #
 # So this gates the BOARD before any title is tested: if no posting anywhere on
@@ -753,7 +753,7 @@ title_filter:
 #   - "crypto"
 #   - "cryptocurrency"
 
-# -- Declared-field whitelists (optional, scan.ts) --
+# -- Declared-field whitelists (optional, packages/core/src/scanning/scan.ts) --
 # title_filter judges a posting by its TITLE. Some boards publish a better
 # discriminator as a field of its own — an occupation code, a department —
 # which no title list can stand in for: one title spans several occupations,
@@ -1129,7 +1129,7 @@ search_queries:
 # scan_method: playwright (default), websearch, local_parser
 # For Greenhouse companies, add api: field for faster structured JSON access.
 #
-# Provider routing (scan.ts):
+# Provider routing (packages/core/src/scanning/scan.ts):
 #   By default each entry is auto-detected from `careers_url` against the
 #   loaded providers in providers/*.ts (local-parser, ashby, greenhouse, lever).
 #   local-parser runs first when parser.command + parser.script are set.
@@ -1147,7 +1147,7 @@ search_queries:
 # parser author (reuse across companies, debug flags, JSON snapshots, etc.).
 #
 # The script must resolve inside the repo root (security boundary in
-# providers/local-parser.ts). Keep a private, non-contributed parser under a
+# packages/core/src/scanning/providers/local-parser.ts). Keep a private, non-contributed parser under a
 # gitignored path — `local/` is ignored by default — so it is never staged;
 # `portals.yml` itself is already gitignored. Use `scripts/parsers/` only for a
 # parser you intend to upstream. See docs/local-parser-cookbook.md.
@@ -1173,7 +1173,7 @@ search_queries:
 #   enabled: true
 
 # ── Provider auto-detection ───────────────────────────────────────
-# scan.ts auto-loads everything in providers/*.ts and tries each
+# packages/core/src/scanning/scan.ts auto-loads everything in providers/*.ts and tries each
 # provider's detect() in order. URL patterns recognized:
 #
 #   greenhouse      (job-)?boards(.eu)?.greenhouse.io/<slug>  (or api: field)
@@ -2030,7 +2030,7 @@ search_queries:
 # unaffected. Combined with title normalization, this suppresses URL-new
 # duplicates caused by requisition URL changes and per-location title splits
 # ("Engineer (Berlin)" vs "Engineer"). It does not classify repost patterns or
-# produce `postingChurn` evidence; detect-reposts.ts and company-history.ts own
+# produce `postingChurn` evidence; packages/cli/src/commands/insights/detect-reposts.ts and packages/cli/src/commands/insights/company-history.ts own
 # that post-tracking layer.
 #
 # company_aliases:
@@ -2043,8 +2043,8 @@ search_queries:
 #
 # Everything in the post-tracking layer assumes "same company + same title = the
 # same opening". On such a board that assumption is false: two identical titles
-# are two different employers' jobs. detect-reposts.ts therefore skips flagged
-# companies entirely, and company-history.ts reports
+# are two different employers' jobs. packages/cli/src/commands/insights/detect-reposts.ts therefore skips flagged
+# companies entirely, and packages/cli/src/commands/insights/company-history.ts reports
 # `postingChurn: aggregator-not-evaluated` for them — deliberately NOT
 # `none-detected`, which would claim a clean result from a check that never ran.
 #
@@ -2905,7 +2905,7 @@ tracked_companies:
   #
   # NOTE on scanning: Most Turkish companies below do NOT expose a
   # public ATS API (Greenhouse / Lever / Ashby) on their careers_url,
-  # so `scan.ts` will filter them out automatically (it requires a
+  # so `packages/core/src/scanning/scan.ts` will filter them out automatically (it requires a
   # detectable ATS). They are listed here as discovery aids — paste
   # the URL of any specific role into `data/pipeline.md` and run
   # `/career-ops pipeline`, which uses Playwright/WebFetch instead.

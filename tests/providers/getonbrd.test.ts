@@ -7,7 +7,7 @@ console.log('\nProvider — getonbrd');
 
 
 try {
-  const getonbrdModule = await import(pathToFileURL(join(ROOT, 'providers/getonbrd.ts')).href);
+  const getonbrdModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/getonbrd.ts')).href);
   const getonbrd = getonbrdModule.default;
 
   if (getonbrd.id === 'getonbrd') pass('getonbrd.id is "getonbrd"');

@@ -1,7 +1,7 @@
-// Regression (#4385): reserve-report-num.ts and merge-tracker.ts disagreed
-// on batch-state "failed" rows. reserve-report-num.ts computed occupancy
+// Regression (#4385): packages/cli/src/commands/tracker/reserve-report-num.ts and packages/cli/src/commands/tracker/merge-tracker.ts disagreed
+// on batch-state "failed" rows. packages/cli/src/commands/tracker/reserve-report-num.ts computed occupancy
 // from report files and tracker rows only, so it re-issued a number that
-// batch-state.tsv marks "failed" -- and merge-tracker.ts's anti-fabrication
+// batch-state.tsv marks "failed" -- and packages/cli/src/commands/tracker/merge-tracker.ts's anti-fabrication
 // guard then refuses to merge a tracker line for that exact number. The two
 // scripts must agree: a number batch-state marks "failed" is not available.
 
@@ -9,7 +9,7 @@ import { strict as assert } from 'assert';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { reserveReportNumbers, releaseReportNumbers } from '../reserve-report-num.ts';
+import { reserveReportNumbers, releaseReportNumbers } from '../packages/cli/src/commands/tracker/reserve-report-num.ts';
 import { pass, fail } from './helpers.ts';
 
 async function reserveIn(dir) {

@@ -1,6 +1,6 @@
 // tests/merge-tracker.test.ts — regression coverage for status validation.
 //
-// `validateStatus` is not exported and importing merge-tracker.ts runs the CLI
+// `validateStatus` is not exported and importing packages/cli/src/commands/tracker/merge-tracker.ts runs the CLI
 // (top-level lock + merge), so this exercises the real merge path as a CLI
 // integration test via the CAREER_OPS_TRACKER / CAREER_OPS_ADDITIONS env
 // overrides the script already supports for test isolation.
@@ -58,7 +58,7 @@ function runMergeDetailed(additions, opts = {}) {
     let exitCode = 0;
     let killedBy = null;
     try {
-      output = execFileSync(NODE, [join(ROOT, 'merge-tracker.ts')], {
+      output = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts')], {
         encoding: 'utf-8',
         timeout: 30000,
         // Capture stderr instead of letting execFileSync echo it: the
@@ -151,7 +151,7 @@ try {
     fail(`downgrade left a stale report link: ${downRow.trim()}`);
   }
 
-  // The fuzzy matcher can mis-pair genuinely different roles (role-matcher.ts
+  // The fuzzy matcher can mis-pair genuinely different roles (packages/core/src/tracker/role-matcher.ts
   // drops "Senior" and short tokens), so a downgrade must stay recoverable.
   if (/Superseded report \[7\] \(was 3\.8\/5\)/.test(downRow)) {
     pass('downgrade records the superseded report number in Notes');
@@ -260,7 +260,7 @@ try {
     fail(`sentinel re-eval of an unscored row was mishandled: ${naOntoNaRow.trim()} | ${naOntoNa.output.trim()}`);
   }
 } catch (e) {
-  fail(`merge-tracker.ts tests crashed: ${e.message}`);
+  fail(`packages/cli/src/commands/tracker/merge-tracker.ts tests crashed: ${e.message}`);
 }
 
 // ── #2392 gap 1: a SECOND update to the same row was silently dropped ───────
@@ -364,7 +364,7 @@ try {
 // ── #2392 gap 2: Notes overwritten on a score upgrade ───────────────────────
 // The update path rebuilt Notes as `Re-eval {date} ({old}→{new}). {new notes}`,
 // throwing the existing cell away. The assertions below are on consequences,
-// not text: followup-cadence.ts must still read the notes-sourced apply date,
+// not text: packages/core/src/outreach/followup-cadence.ts must still read the notes-sourced apply date,
 // and merge-tracker's own sibling-req guard must still find the req number.
 console.log('\nmerge-tracker.ts — Notes preserved across a score upgrade (#2392)');
 try {
@@ -391,7 +391,7 @@ try {
   // Consequence 1: the follow-up clock. followup-cadence prefers the
   // "Applied YYYY-MM-DD" marker in Notes over the Date column, so losing it
   // silently re-dates the application to the evaluation date.
-  const { analyzeFromContent } = await import(pathToFileURL(join(ROOT, 'followup-cadence.ts')).href);
+  const { analyzeFromContent } = await import(pathToFileURL(join(ROOT, 'packages/core/src/outreach/followup-cadence.ts')).href);
   const cadence = analyzeFromContent(upgraded.tracker, '');
   const entry = (cadence.entries || []).find(e => e.num === 1);
   if (entry && entry.appliedDate === '2026-01-15' && entry.appDateSource === 'notes') {
@@ -451,7 +451,7 @@ try {
 // fuzzy-matching title — fell through to "not proven distinct" and merged
 // into the old row, silently overwriting its date/score/report/notes.
 //
-// The fix is direction-sensitive (see merge-tracker.ts comment at the guard):
+// The fix is direction-sensitive (see packages/cli/src/commands/tracker/merge-tracker.ts comment at the guard):
 // only the addition-has/existing-lacks direction is blocked. The reverse
 // direction is exercised separately below and by the pre-existing "downgrade"
 // tests above (SEED row carries "Req R5639", the re-eval TSV's notes don't
@@ -776,7 +776,7 @@ try {
     writeFileSync(join(work, 'output', '1.pdf'), '%PDF-1.4\n');
     
     // Normal run should trigger sync and flip the PDF flag
-    const result = execFileSync(NODE, [join(ROOT, 'merge-tracker.ts')], {
+    const result = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts')], {
       encoding: 'utf-8',
       env: { ...process.env, CAREER_OPS_TRACKER: tracker, CAREER_OPS_ADDITIONS: addsDir, CAREER_OPS_PDF_INDEX: pdfIndex },
     });
@@ -809,7 +809,7 @@ try {
     // Create a pending addition so the merge has something to "dry-run"
     writeFileSync(join(addsDir, '2-globex.tsv'), '2\t2026-01-02\tGlobex\tEng\tEvaluated\t4.0/5\t❌\t[2](reports/2.md)\t\n');
     
-    execFileSync(NODE, [join(ROOT, 'merge-tracker.ts'), '--dry-run'], {
+    execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts'), '--dry-run'], {
       encoding: 'utf-8',
       env: { ...process.env, CAREER_OPS_TRACKER: tracker, CAREER_OPS_ADDITIONS: addsDir, CAREER_OPS_PDF_INDEX: pdfIndex },
     });
@@ -824,7 +824,7 @@ try {
     rmSync(workDry, { recursive: true, force: true });
   }
 
-  // A manifest row outlives its file: generate-pdf.ts evicts a row only on
+  // A manifest row outlives its file: packages/cli/src/commands/cv/generate-pdf.ts evicts a row only on
   // re-generation, so deleting output/*.pdf leaves every row standing (#4777).
   // Each of merge-tracker's three readers of the manifest must treat that row
   // as absent, or the flag it was corrected from comes straight back. Every
@@ -846,7 +846,7 @@ try {
       writeFileSync(pdfIndex, '# report\tpdf\thtml\tformat\tdate\n' + manifest);
       for (const [name, line] of Object.entries(additions)) writeFileSync(join(addsDir, name), line);
       for (const pdf of pdfs) writeFileSync(join(workGone, 'output', pdf), '%PDF-1.4\n');
-      execFileSync(NODE, [join(ROOT, 'merge-tracker.ts'), ...(dryRun ? ['--dry-run'] : [])], {
+      execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts'), ...(dryRun ? ['--dry-run'] : [])], {
         encoding: 'utf-8',
         env: { ...process.env, CAREER_OPS_TRACKER: tracker, CAREER_OPS_ADDITIONS: addsDir, CAREER_OPS_PDF_INDEX: pdfIndex, CAREER_OPS_BATCH_STATE: isolatedBatchStatePath(addsDir) },
       });

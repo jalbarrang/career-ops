@@ -10,17 +10,17 @@
  *   - the company half of the notes column ("Company - Role" when the notes use
  *     that shape, otherwise the whole notes text), or
  *   - the posting URL (so `--company acme` finds boards.greenhouse.io/acme/...).
- *     On a shared ATS host (ats-vendor.ts ATS_HOST_PATTERNS) the vendor's own
+ *     On a shared ATS host (packages/core/src/scanning/ats-vendor.ts ATS_HOST_PATTERNS) the vendor's own
  *     domain is left out, so `--company Lever` does not pick every posting on
  *     jobs.lever.co; the tenant subdomain and the path still count.
- * Comparison uses tracker-utils.ts normalizeCompany (case and punctuation
+ * Comparison uses packages/core/src/tracker/tracker-utils.ts normalizeCompany (case and punctuation
  * folded, any script kept), so "Acme Corp." matches "acme corp" and "AcmeCorp".
  */
 import { readFileSync } from 'node:fs';
-import { isMainModule } from '../lib/is-main-module.ts';
-import { flagValue, validateFlags } from '../lib/cli-flags.ts';
-import { normalizeCompany } from '../tracker-utils.ts';
-import { atsVendorOf, KNOWN_ATS_VENDORS } from '../ats-vendor.ts';
+import { isMainModule } from '../packages/core/src/kernel/is-main-module.ts';
+import { flagValue, validateFlags } from '../packages/core/src/kernel/cli-flags.ts';
+import { normalizeCompany } from '../packages/core/src/tracker/tracker-utils.ts';
+import { atsVendorOf, KNOWN_ATS_VENDORS } from '../packages/core/src/scanning/ats-vendor.ts';
 
 /** Split a comma-separated CLI value into normalised keys, dropping blanks. */
 export function requestedLabels(value) {

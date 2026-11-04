@@ -1,14 +1,14 @@
 // tests/dedup-tracker-req-conflict.test.ts — two different requisition ids in
 // Notes block dedup (#1524).
 //
-// merge-tracker.ts treats two present-and-different req/job ids in the Notes
+// packages/cli/src/commands/tracker/merge-tracker.ts treats two present-and-different req/job ids in the Notes
 // column as proof that two rows are distinct openings (`reqNumDiffers`, #1524),
-// and dedup-tracker.ts already applies the posting-URL half of that rule
+// and packages/cli/src/commands/tracker/dedup-tracker.ts already applies the posting-URL half of that rule
 // (#4562). The req-id half was missing: an employer that posts one title once
 // per city or country gives each copy its own job id, merge-tracker keeps the
 // rows apart on purpose, and dedup-tracker then deleted the lower-scored one.
 //
-// Drives the REAL dedup-tracker.ts CLI against a temp tracker via the
+// Drives the REAL packages/cli/src/commands/tracker/dedup-tracker.ts CLI against a temp tracker via the
 // CAREER_OPS_TRACKER hook, because the deletion is what loses data — asserting
 // on the rows left in the tracker is what proves the guard.
 import { pass, fail, rmSync } from './helpers.ts';
@@ -20,7 +20,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const DEDUP = join(HERE, '..', 'dedup-tracker.ts');
+const DEDUP = join(HERE, '..', 'packages/cli/src/commands/tracker/dedup-tracker.ts');
 const ok = (name, fn) => { try { fn(); pass(name); } catch (e) { fail(`${name} — ${e.message}`); } };
 
 const HEADER = '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |';
@@ -81,7 +81,7 @@ ok('an id on one side only is unknown, not a conflict — the rows still merge',
 
 ok('every Notes spelling the shared extractor supports blocks the merge', () => {
   // One pair per company, so each pair is judged on its own. The spellings are
-  // the ones tracker-parse.ts documents: R_<n>, Req <alnum>, Req #<n>,
+  // the ones packages/core/src/tracker/tracker-parse.ts documents: R_<n>, Req <alnum>, Req #<n>,
   // REQ-<year>-<n>, Job ID <n>, Posting ID <n>.
   withTracker(HEADER, SEP, [
     '| 1 | 2026-09-17 | AlphaCo | Data Analyst | 3.0/5 | Evaluated | ❌ | [1](reports/001-alphaco-2026-09-17.md) | R_1494379 |',

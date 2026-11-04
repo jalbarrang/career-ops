@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { extractWithAI } from '../scan-hn.ts';
+import { extractWithAI } from '../packages/cli/src/commands/scanning/scan-hn.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 test('Hacker News AI Extraction Logic', async (t) => {
@@ -108,7 +108,7 @@ function runScanHn(dir, preload, args, envOverrides = {}) {
   delete env.GEMINI_MODEL;
   return spawnSync(process.execPath, [
     '--require', preload,
-    fileURLToPath(new URL('../scan-hn.ts', import.meta.url)),
+    fileURLToPath(new URL('../packages/cli/src/commands/scanning/scan-hn.ts', import.meta.url)),
     ...args,
   ], { cwd: dir, encoding: 'utf8', timeout: 30000, env });
 }
@@ -150,7 +150,7 @@ test('scan-hn --help prints usage and an unknown flag is refused, neither runs t
     const help = runScanHn(dir, preload, ['--help']);
     assert.equal(help.error, undefined, `scan-hn failed to spawn: ${help.error?.message}`);
     assert.equal(help.status, 0, describeSpawn(help, `expected --help to exit 0, got ${help.status}\n`));
-    assert.match(help.stdout, /Usage:\n\s+bun scan-hn\.ts/);
+    assert.match(help.stdout, /Usage:\n\s+career-ops scan-hn/);
     assert.match(help.stdout, /data\/pipeline\.md/, 'usage should say what the scan writes');
 
     const bogus = runScanHn(dir, preload, ['--dry-run']);
@@ -168,7 +168,7 @@ test('scan-hn --help prints usage and an unknown flag is refused, neither runs t
 // scan ran on the default "Software Engineer" instead of the user's
 // hn_hiring.keywords (#4921). The fixture thread only carries Software Engineer
 // postings, so the valid file is the control: its keywords are read and match
-// nothing. The broken one must stop before the first fetch, as scan.ts does.
+// nothing. The broken one must stop before the first fetch, as packages/core/src/scanning/scan.ts does.
 test('scan-hn refuses a portals.yml that does not parse instead of scanning with the default keyword', () => {
   const dir = mkdtempSync(join(tmpdir(), 'career-ops-scanhn-'));
   try {

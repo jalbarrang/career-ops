@@ -1,5 +1,5 @@
 // tests/providers/startup-jobs.test.ts — provider-contract tests for the
-// Startup Jobs board-wide RSS provider (providers/startup-jobs.ts).
+// Startup Jobs board-wide RSS provider (packages/core/src/scanning/providers/startup-jobs.ts).
 import { pass, fail, ROOT } from '../helpers.ts';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
@@ -7,10 +7,10 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — startup-jobs');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/startup-jobs.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/startup-jobs.ts')).href);
   const startupJobs = mod.default;
   const { parseStartupJobsFeed } = mod;
-  const { buildTitleFilter } = await import(pathToFileURL(join(ROOT, 'scan.ts')).href);
+  const { buildTitleFilter } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
 
   if (startupJobs.id === 'startup-jobs') pass('startup-jobs.id is "startup-jobs"');
   else fail(`startup-jobs.id is ${JSON.stringify(startupJobs.id)}`);
@@ -147,7 +147,7 @@ try {
   // user's own title_filter, not just look right in isolation. An
   // undecoded "R&amp;D Engineer" would fail a positive "r&d" keyword match
   // and the posting would be silently dropped before it ever reaches
-  // pipeline.md — scan.ts's buildTitleFilter lowercases and substring-matches.
+  // pipeline.md — packages/core/src/scanning/scan.ts's buildTitleFilter lowercases and substring-matches.
   const keepsRnD = buildTitleFilter({ positive: ['r&d'], negative: [] });
   if (keepsRnD(entityTitleJobs[0]?.title)) {
     pass('the decoded title survives a positive "r&d" title_filter keyword match');
@@ -215,7 +215,7 @@ try {
     fail(`description-less rows = ${JSON.stringify(descJobs.slice(1))}`);
   }
 
-  // Robustness — envelope validation (providers/ADDING_A_PROVIDER.md
+  // Robustness — envelope validation (packages/core/src/scanning/providers/ADDING_A_PROVIDER.md
   // "Defensive parsing": a malformed envelope is a descriptive throw, never
   // a quiet `[]`, so an upstream break surfaces instead of reading as 0 jobs
   // forever). A genuinely empty <channel> (zero items) is still a valid

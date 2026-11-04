@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { mergeTracker } from '../merge-tracker.ts';
-import { resolveColumns, parseTrackerRow } from '../tracker-parse.ts';
+import { mergeTracker } from '../packages/cli/src/commands/tracker/merge-tracker.ts';
+import { resolveColumns, parseTrackerRow } from '../packages/core/src/tracker/tracker-parse.ts';
 
 const columns = ['#', 'Date', 'Company', 'Role', 'Score', 'Status', 'PDF', 'Report', 'Notes'];
 const values = ['7', '2026-10-12', 'Acme', 'Engineer', '4.0/5', 'Applied', '❌', '—', 'Recruiter promised an interview'];

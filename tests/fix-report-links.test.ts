@@ -8,7 +8,7 @@ import { chmodSync, mkdtempSync, mkdirSync, readFileSync, rmSync, statSync, writ
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { fixReportLinks } from '../fix-report-links.ts';
+import { fixReportLinks } from '../packages/cli/src/commands/tracker/fix-report-links.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const CODE_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -35,7 +35,7 @@ function run(root, args = [], envExtra = { CAREER_OPS_ROOT: root }) {
   const env = { ...process.env };
   for (const k of ['CAREER_OPS_ROOT', 'CAREER_OPS_DATA_DIR', 'CAREER_OPS_TRACKER']) delete env[k];
   Object.assign(env, envExtra);
-  const r = spawnSync(process.execPath, [join(CODE_ROOT, 'fix-report-links.ts'), ...args], { cwd: CODE_ROOT, env, encoding: 'utf-8', timeout: 30_000 });
+  const r = spawnSync(process.execPath, [join(CODE_ROOT, 'packages/cli/src/commands/tracker/fix-report-links.ts'), ...args], { cwd: CODE_ROOT, env, encoding: 'utf-8', timeout: 30_000 });
   assert.equal(r.error, undefined);
   // Spread the real result, so describeSpawn() can still reach stdout, stderr,
   // signal and error. Returning only { status, out } made the failure message
@@ -158,7 +158,7 @@ function runVerify(root) {
   const env = { ...process.env };
   for (const k of ['CAREER_OPS_ROOT', 'CAREER_OPS_DATA_DIR', 'CAREER_OPS_TRACKER']) delete env[k];
   env.CAREER_OPS_ROOT = root;
-  const r = spawnSync(process.execPath, [join(CODE_ROOT, 'verify-pipeline.ts')], { cwd: CODE_ROOT, env, encoding: 'utf-8', timeout: 30_000 });
+  const r = spawnSync(process.execPath, [join(CODE_ROOT, 'packages/cli/src/commands/platform/verify-pipeline.ts')], { cwd: CODE_ROOT, env, encoding: 'utf-8', timeout: 30_000 });
   assert.equal(r.error, undefined);
   // Spread the real result, so describeSpawn() can still reach stdout, stderr,
   // signal and error. Returning only { status, out } made the failure message
@@ -266,7 +266,7 @@ test('unknown flag is rejected; --help prints usage', withRoot((root) => {
   assert.equal(tracker(root), before, 'a mistyped flag must not fall through to a live run');
   const help = run(root, ['--help']);
   assert.equal(help.status, 0, describeSpawn(help));
-  assert.match(help.out, /Usage: bun fix-report-links\.ts/);
+  assert.match(help.out, /Usage: career-ops fix-report-links/);
 }));
 
 test('extra Via/URL columns: the Report column is found by header name', withRoot((root) => {

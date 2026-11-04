@@ -29,10 +29,10 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-import { splitStoryBlocks, isValidStory, parseStories, getField, STORY_FIELDS } from '../lib/story-bank.ts';
-import { parseStories as matchStarParseStories } from '../match-star.ts';
-import { parseStoryBlocks, classifyStoryBank, malformedEntries } from '../story-provenance-check.ts';
-import { analyze } from '../negotiation-roi.ts';
+import { splitStoryBlocks, isValidStory, parseStories, getField, STORY_FIELDS } from '../packages/core/src/interview/story-bank.ts';
+import { parseStories as matchStarParseStories } from '../packages/cli/src/commands/interview/match-star.ts';
+import { parseStoryBlocks, classifyStoryBank, malformedEntries } from '../packages/cli/src/commands/interview/story-provenance-check.ts';
+import { analyze } from '../packages/cli/src/commands/insights/negotiation-roi.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TEMPLATE = readFileSync(join(ROOT, 'templates', 'story-bank.template.md'), 'utf-8');
@@ -344,7 +344,7 @@ test('bun run star names unreadable table rows instead of "no stories"', () => {
     writeFileSync(join(dir, 'interview-prep', 'story-bank.md'), FIXTURES['table rows only']);
     // match-star reads the bank from the data root, not the cwd (#3985), so
     // point the data root at the fixture rather than relying on where it runs.
-    const r = spawnSync(process.execPath, [join(ROOT, 'match-star.ts'), '--list'], {
+    const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/interview/match-star.ts'), '--list'], {
       cwd: dir,
       encoding: 'utf-8',
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_DATA_DIR: '' },

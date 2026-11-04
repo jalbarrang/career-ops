@@ -31,7 +31,7 @@
  */
 
 import { pass, fail } from './helpers.ts';
-import { resolveTargetRef } from '../update-system.ts';
+import { resolveTargetRef } from '../packages/cli/src/commands/platform/update-system.ts';
 
 console.log('\n🧪 Testing updater channel resolution (release tag vs. main)...');
 
@@ -236,7 +236,7 @@ for (const tag of ['career-ops-vpreview-v1.32.0', 'career-ops-v', 'career-ops-v1
 // bootstrap the older release's updater, which predates the release channel
 // and fetches main. newerThanTarget() names the release apply() refuses.
 {
-  const { newerThanTarget } = await import('../update-system.ts');
+  const { newerThanTarget } = await import('../packages/cli/src/commands/platform/update-system.ts');
   const cases = [
     ['1.40.0', 'career-ops-v1.39.0', '1.39.0', 'an install ahead of the release is refused'],
     ['1.39.0', 'career-ops-v1.39.0', '', 'the same release is not refused (re-applying restores its files)'],

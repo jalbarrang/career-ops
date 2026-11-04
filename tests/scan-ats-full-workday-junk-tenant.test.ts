@@ -9,7 +9,7 @@ import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\nscan-ats-full — workday junk-tenant filter');
 
-const { SOURCES } = await import(pathToFileURL(join(ROOT, 'scan-ats-full.ts')).href);
+const { SOURCES } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/scanning/scan-ats-full.ts')).href);
 
 // A junk-shaped tenant (instance-name lookalike) is dropped outright.
 {

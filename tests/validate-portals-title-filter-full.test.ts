@@ -41,11 +41,11 @@ tracked_companies:
     careers_url: "https://jobs.lever.co/acme"
 `, 'utf-8');
 
-  const typoResult = run(NODE, ['validate-portals.ts', '--file', typoPath]);
+  const typoResult = run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', typoPath]);
   if (typoResult === null) pass('validate-portals rejects a misspelled title_filter_full field');
   else fail('validate-portals should reject a misspelled title_filter_full field');
 
-  const emptyResult = run(NODE, ['validate-portals.ts', '--file', emptyPath]);
+  const emptyResult = run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', emptyPath]);
   if (emptyResult !== null && emptyResult.includes('0 errors')) {
     pass('validate-portals accepts an explicitly empty title_filter_full.positive');
   } else {
@@ -73,7 +73,7 @@ tracked_companies:
     careers_url: "https://jobs.lever.co/acme"
 `, 'utf-8');
 
-  const fullOnlyResult = run(NODE, ['validate-portals.ts', '--file', fullOnlyKeyPath]);
+  const fullOnlyResult = run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', fullOnlyKeyPath]);
   if (fullOnlyResult !== null && fullOnlyResult.includes('1 warning')
       && fullOnlyResult.includes('Forward Deplyed') && !/"Forward Deployed" does not match/.test(fullOnlyResult)) {
     pass('validate-portals accepts a by_title_keyword key found only in title_filter_full.positive');

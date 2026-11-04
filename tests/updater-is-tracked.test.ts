@@ -32,7 +32,7 @@
 import { writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { pass, fail, makeUpdaterRepo } from './helpers.ts';
-import { isTracked } from '../update-system.ts';
+import { isTracked } from '../packages/cli/src/commands/platform/update-system.ts';
 
 // Shared with updater-add-paths.test.ts so the git-isolation pins live in one
 // body: dropping one has to redden both suites, not leave this one quietly

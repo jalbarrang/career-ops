@@ -14,7 +14,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nscan-runs.tsv header drift (#3280)');
 try {
-  const { computeRunStats } = await import(pathToFileURL(join(ROOT, 'stats.ts')).href);
+  const { computeRunStats } = await import(pathToFileURL(join(ROOT, 'packages/core/src/insights/stats.ts')).href);
 
   // A file created under an older header, with rows written after a counter was inserted.
   const header = 'timestamp\tstatus\tcompanies\tboards\tfound\tdupes\tnew_added\n';

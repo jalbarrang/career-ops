@@ -21,7 +21,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const DOCTOR = join(ROOT, 'doctor.ts');
+const DOCTOR = join(ROOT, 'packages/cli/src/commands/platform/doctor.ts');
 
 const DEPS = ['co-doctor-fake-alpha', '@co-doctor-fake/scoped', 'co-doctor-fake-esm-only'];
 

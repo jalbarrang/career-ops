@@ -23,7 +23,7 @@ console.log('\nprocess-quality.ts — an undisclosed employer is not a company')
 
 try {
   const { aggregateProcessQuality } = await import(
-    pathToFileURL(join(ROOT, 'process-quality.ts')).href
+    pathToFileURL(join(ROOT, 'packages/cli/src/commands/outreach/process-quality.ts')).href
   );
 
   const rows = [

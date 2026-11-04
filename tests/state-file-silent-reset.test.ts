@@ -1,9 +1,9 @@
 // tests/state-file-silent-reset.test.ts — two user-state files that must never
 // reset themselves quietly.
 //
-// hired-share.ts's data/.hired-share-state.json is, in its own words, "the
+// packages/cli/src/commands/insights/hired-share.ts's data/.hired-share-state.json is, in its own words, "the
 // entire anti-nag memory": which hires the user was asked about, and which they
-// said never to bring up again. intake.ts's data/intake-state.json is the
+// said never to bring up again. packages/cli/src/commands/profile/intake.ts's data/intake-state.json is the
 // ledger of documents whose proposals the user already reviewed. Both loaders
 // used to answer an unreadable file with an empty object, which is
 // indistinguishable from "this is a first run" — and the next write persisted
@@ -76,7 +76,7 @@ const cleanup = [];
   const corrupt = '{\n  "byReport": {\n    "7": {\n      "status": "nev';
   writeFileSync(statePath, corrupt);
 
-  const r = runScript('hired-share.ts', ['--root', dir, '--status'], dir);
+  const r = runScript('packages/cli/src/commands/insights/hired-share.ts', ['--root', dir, '--status'], dir);
   if (r.code !== 0) pass('--status exits nonzero on an unreadable anti-nag memory');
   else fail(`--status exited 0 with a corrupt state file; stdout: ${r.stdout.slice(0, 200)}`);
 
@@ -93,7 +93,7 @@ const cleanup = [];
 
   // The real regression: refusing to read is worthless if the next write
   // replaces the memory with an empty one anyway.
-  const marked = runScript('hired-share.ts', ['--root', dir, '--report', '8', '--mark', 'shared'], dir);
+  const marked = runScript('packages/cli/src/commands/insights/hired-share.ts', ['--root', dir, '--report', '8', '--mark', 'shared'], dir);
   if (marked.code !== 0 && readFileSync(statePath, 'utf8') === corrupt) {
     pass('--mark refuses too, rather than persisting an empty memory over it');
   } else fail('--mark overwrote the corrupt memory with a fresh one — the reset this fixes');
@@ -105,7 +105,7 @@ const cleanup = [];
   cleanup.push(dir);
   const statePath = join(dir, 'data', '.hired-share-state.json');
 
-  const r = runScript('hired-share.ts', ['--root', dir, '--status'], dir);
+  const r = runScript('packages/cli/src/commands/insights/hired-share.ts', ['--root', dir, '--status'], dir);
   if (r.code === 0) pass('an absent state file is a first run, not an error');
   else fail(`--status failed with no state file: ${r.stderr.slice(0, 200)}`);
 
@@ -114,13 +114,13 @@ const cleanup = [];
   if (parsed && parsed.askable?.length === 2) pass('both hires are askable on a first run');
   else fail(`expected 2 askable hires, got: ${r.stdout.slice(0, 200)}`);
 
-  const marked = runScript('hired-share.ts', ['--root', dir, '--report', '7', '--mark', 'never'], dir);
+  const marked = runScript('packages/cli/src/commands/insights/hired-share.ts', ['--root', dir, '--report', '7', '--mark', 'never'], dir);
   if (marked.code === 0 && JSON.parse(readFileSync(statePath, 'utf8')).byReport['7'].status === 'never') {
     pass('--mark never records the answer');
   } else fail(`--mark never did not persist: ${marked.stderr.slice(0, 200)}`);
 
   // Guard: the whole point of the memory. #7 must not come back.
-  const after = runScript('hired-share.ts', ['--root', dir, '--status'], dir);
+  const after = runScript('packages/cli/src/commands/insights/hired-share.ts', ['--root', dir, '--status'], dir);
   const askable = JSON.parse(after.stdout).askable;
   if (!askable.includes('7') && askable.includes('8')) {
     pass('a "never" hire drops out of askable and the untouched one stays');
@@ -144,7 +144,7 @@ const cleanup = [];
     const dir = makeWorkspace('hired-share-shape-');
     cleanup.push(dir);
     writeFileSync(join(dir, 'data', '.hired-share-state.json'), body);
-    const r = runScript('hired-share.ts', ['--root', dir, '--status'], dir);
+    const r = runScript('packages/cli/src/commands/insights/hired-share.ts', ['--root', dir, '--status'], dir);
     if (r.code !== 0 && r.stderr.includes('.hired-share-state.json')) {
       pass(`${label} in the state file is refused, and the message names the file`);
     } else {
@@ -171,7 +171,7 @@ const cleanup = [];
     const statePath = join(dir, 'data', '.hired-share-state.json');
     writeFileSync(statePath, body);
 
-    const r = runScript('hired-share.ts', ['--root', dir, '--status'], dir);
+    const r = runScript('packages/cli/src/commands/insights/hired-share.ts', ['--root', dir, '--status'], dir);
     if (r.code !== 0 && /byReport/.test(r.stderr)) {
       pass(`${label} under "byReport" is refused, and the message names the key`);
     } else {
@@ -180,7 +180,7 @@ const cleanup = [];
     }
 
     // The half that matters: the damaged file must still be on disk afterwards.
-    const marked = runScript('hired-share.ts', ['--root', dir, '--report', '8', '--mark', 'shared'], dir);
+    const marked = runScript('packages/cli/src/commands/insights/hired-share.ts', ['--root', dir, '--report', '8', '--mark', 'shared'], dir);
     if (marked.code !== 0 && readFileSync(statePath, 'utf8') === body) {
       pass(`${label}: --mark refuses too, so the file is not overwritten`);
     } else {
@@ -194,7 +194,7 @@ const cleanup = [];
     const dir = makeWorkspace('hired-share-nobyreport-');
     cleanup.push(dir);
     writeFileSync(join(dir, 'data', '.hired-share-state.json'), '{}');
-    const r = runScript('hired-share.ts', ['--root', dir, '--status'], dir);
+    const r = runScript('packages/cli/src/commands/insights/hired-share.ts', ['--root', dir, '--status'], dir);
     if (r.code === 0 && JSON.parse(r.stdout).askable.length === 2) {
       pass('an absent "byReport" still reads as an empty memory');
     } else {
@@ -210,7 +210,7 @@ const cleanup = [];
   // The documented fallback layout: applications.md at the root, no data/.
   writeFileSync(join(dir, 'applications.md'), TRACKER);
 
-  const r = runScript('hired-share.ts', ['--root', dir, '--report', '7', '--mark', 'never'], dir);
+  const r = runScript('packages/cli/src/commands/insights/hired-share.ts', ['--root', dir, '--report', '7', '--mark', 'never'], dir);
   if (r.code === 0) pass('--mark never works with a root-level tracker and no data/');
   else fail(`--mark never failed where data/ does not exist yet: ${r.stderr.slice(0, 200)}`);
 
@@ -230,7 +230,7 @@ const cleanup = [];
   const corrupt = '{"ingested": {"documents/master-cv.md": {"hash": "abc';
   writeFileSync(statePath, corrupt);
 
-  const r = runScript('intake.ts', ['--summary'], dir);
+  const r = runScript('packages/cli/src/commands/profile/intake.ts', ['--summary'], dir);
   if (r.code !== 0) pass('intake exits nonzero on an unreadable ingest ledger');
   else fail(`intake exited 0 with a corrupt ledger; stdout: ${r.stdout.slice(0, 200)}`);
 
@@ -255,17 +255,17 @@ const cleanup = [];
   mkdirSync(join(dir, 'documents'), { recursive: true });
   writeFileSync(join(dir, 'documents', 'master-cv.md'), '# Master CV\n\nTen years of things.\n');
 
-  const first = runScript('intake.ts', ['--summary'], dir);
+  const first = runScript('packages/cli/src/commands/profile/intake.ts', ['--summary'], dir);
   if (first.code === 0 && /master-cv\.md\s+new\b/.test(first.stdout)) {
     pass('an absent ledger is a first run — the document reads as new');
   } else fail(`first run did not report the document as new: ${first.stdout.slice(0, 300)}${first.stderr.slice(0, 200)}`);
 
-  const committed = runScript('intake.ts', ['--commit', 'master-cv.md'], dir);
+  const committed = runScript('packages/cli/src/commands/profile/intake.ts', ['--commit', 'master-cv.md'], dir);
   if (committed.code === 0) pass('--commit records the reviewed source');
   else fail(`--commit failed: ${committed.stderr.slice(0, 200)}`);
 
   // Guard: the reason the ledger exists at all.
-  const second = runScript('intake.ts', ['--summary'], dir);
+  const second = runScript('packages/cli/src/commands/profile/intake.ts', ['--summary'], dir);
   if (/master-cv\.md\s+ingested\b/.test(second.stdout)) {
     pass('a reviewed document is not proposed again');
   } else fail(`reviewed document came back as unreviewed: ${second.stdout.slice(0, 300)}`);
@@ -288,7 +288,7 @@ const cleanup = [];
     const statePath = join(dir, 'data', 'intake-state.json');
     writeFileSync(statePath, body);
 
-    const r = runScript('intake.ts', ['--summary'], dir);
+    const r = runScript('packages/cli/src/commands/profile/intake.ts', ['--summary'], dir);
     if (r.code !== 0 && /ingested/.test(r.stderr)) {
       pass(`${label} under "ingested" is refused, and the message names the key`);
     } else {
@@ -308,7 +308,7 @@ const cleanup = [];
     mkdirSync(join(dir, 'documents'), { recursive: true });
     writeFileSync(join(dir, 'documents', 'master-cv.md'), '# Master CV\n\nthings\n');
     writeFileSync(join(dir, 'data', 'intake-state.json'), '{}');
-    const r = runScript('intake.ts', ['--summary'], dir);
+    const r = runScript('packages/cli/src/commands/profile/intake.ts', ['--summary'], dir);
     if (r.code === 0 && /master-cv\.md\s+new\b/.test(r.stdout)) {
       pass('an absent "ingested" still reads as an empty ledger');
     } else {
@@ -325,7 +325,7 @@ const cleanup = [];
     mkdirSync(join(dir, 'documents'), { recursive: true });
     writeFileSync(join(dir, 'documents', 'master-cv.md'), '# CV\n\nthings\n');
     writeFileSync(join(dir, 'data', 'intake-state.json'), body);
-    const r = runScript('intake.ts', ['--summary'], dir);
+    const r = runScript('packages/cli/src/commands/profile/intake.ts', ['--summary'], dir);
     if (r.code !== 0 && r.stderr.includes('intake-state.json')) {
       pass(`${label} in the ledger is refused, and the message names the ledger`);
     } else {

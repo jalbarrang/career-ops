@@ -38,7 +38,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listTemplates } from '../cv-templates.ts';
+import { listTemplates } from '../packages/cli/src/commands/cv/cv-templates.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -136,7 +136,7 @@ for (const t of TEMPLATES) {
 
 // Behavioural, and the half a source assertion cannot reach without a browser:
 // run the real builder and look at the markup it emits. The builder owns the
-// contact row outright — build-cv-html.ts replaces the whole block via
+// contact row outright — packages/cli/src/commands/cv/build-cv-html.ts replaces the whole block via
 // CONTACT_ROW_RE — so a template's own markup is only a structural reference and
 // this is the output that actually reaches Chromium.
 test('the builder emits contact items with no separator elements', () => {
@@ -163,7 +163,7 @@ test('the builder emits contact items with no separator elements', () => {
       certifications: [],
       skills: [{ category: 'Sample Skills', items: ['Tool A'] }],
     }));
-    execFileSync(process.execPath, ['build-cv-html.ts', payload, html,
+    execFileSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', payload, html,
       join(ROOT, 'templates', 'cv-template.html')], { cwd: ROOT, stdio: 'pipe' });
 
     const row = readFileSync(html, 'utf-8').match(/<div class="contact-row">([\s\S]*?)<\/div>/);

@@ -8,14 +8,14 @@
 // modes/_profile.md, reports/, batch/tracker-additions/) follow the data root.
 // Two entry points got that wrong, in opposite directions:
 //
-//   openrouter-runner.ts   read the system modes from the DATA root, found
+//   packages/cli/src/commands/evaluation/openrouter-runner.ts   read the system modes from the DATA root, found
 //                           none, and evaluated on a prompt with no shared
 //                           rules and no evaluation mode.
 //   batch/batch-runner.sh   built every path from the CHECKOUT, so workers were
 //                           scored against the checkout's template profile and
 //                           their reports and tracker lines were looked for in
-//                           directories reserve-report-num.ts and
-//                           merge-tracker.ts never read.
+//                           directories packages/cli/src/commands/tracker/reserve-report-num.ts and
+//                           packages/cli/src/commands/tracker/merge-tracker.ts never read.
 //
 // Every data root here holds user-layer files ONLY. The existing
 // openrouter-runner data-root test planted modes/apply.md inside its data root,
@@ -35,7 +35,7 @@ import {
   chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { delimiter, join } from 'node:path';
+import {dirname, delimiter, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { getBash, rmSync, ROOT, toBashPath } from './helpers.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
@@ -86,7 +86,7 @@ function splitEnv(extra = {}) {
   };
 }
 
-// ── openrouter-runner.ts ───────────────────────────────────────────────────
+// ── packages/cli/src/commands/evaluation/openrouter-runner.ts ───────────────────────────────────────────────────
 
 // Preloaded with --import. Records the request the runner would have sent to
 // OpenRouter and answers it; any other request fails, so the test cannot reach
@@ -108,7 +108,7 @@ function sentSystemPrompt(base, dataRoot, args) {
   const capture = join(base, `request-${args[0]}.json`);
   const cwd = join(base, 'decoy-cwd');
   mkdirSync(cwd, { recursive: true });
-  const r = spawnSync(process.execPath, ['--import', pathToFileURL(stub).href, join(ROOT, 'openrouter-runner.ts'), ...args], {
+  const r = spawnSync(process.execPath, ['--import', pathToFileURL(stub).href, join(ROOT, 'packages/cli/src/commands/evaluation/openrouter-runner.ts'), ...args], {
     cwd, encoding: 'utf8', timeout: 60_000, stdio: ['ignore', 'pipe', 'pipe'],
     // A pinned model skips the free-model listing, the runner's other request.
     env: splitEnv({
@@ -217,15 +217,26 @@ function makeCheckout(base, { realTools }) {
   chmodSync(join(dir, 'batch', 'batch-runner.sh'), 0o755);
   writeFileSync(join(dir, 'batch', 'batch-prompt.md'), 'Fixture worker prompt.\n\nReport: reports/{{REPORT_NUM}}-{company-slug}-{{DATE}}.md\nTracker: batch/tracker-additions/{{ID}}.tsv\n');
   writeFileSync(join(dir, 'batch', 'batch-input.tsv'), 'id\turl\tsource\tnotes\n1\thttps://example.com/one\tfixture\t-\n');
-  copyFileSync(join(ROOT, 'path-resolver.ts'), join(dir, 'path-resolver.ts'));
+  mkdirSync(dirname(join(dir, 'packages/core/src/kernel/path-resolver.ts')), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/core/src/kernel/path-resolver.ts'), join(dir, 'packages/core/src/kernel/path-resolver.ts'));
+  mkdirSync(dirname(join(dir, 'packages/core/src/kernel/repo-root.ts')), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/core/src/kernel/repo-root.ts'), join(dir, 'packages/core/src/kernel/repo-root.ts'));
 
   if (realTools) {
-    for (const name of ['reserve-report-num.ts', 'merge-tracker.ts']) writeFileSync(join(dir, name), realScriptShim(name));
+    for (const name of ['packages/cli/src/commands/tracker/reserve-report-num.ts', 'packages/cli/src/commands/tracker/merge-tracker.ts']) {
+      mkdirSync(dirname(join(dir, name)), { recursive: true });
+      writeFileSync(join(dir, name), realScriptShim(name));
+    }
   } else {
-    writeFileSync(join(dir, 'reserve-report-num.ts'), "if (!process.argv.includes('--release')) console.log('001');\n");
-    writeFileSync(join(dir, 'merge-tracker.ts'), '// No merge in this fixture.\n');
+    mkdirSync(dirname(join(dir, 'packages/cli/src/commands/tracker/reserve-report-num.ts')), { recursive: true });
+    writeFileSync(join(dir, 'packages/cli/src/commands/tracker/reserve-report-num.ts'), "if (!process.argv.includes('--release')) console.log('001');\n");
+    mkdirSync(dirname(join(dir, 'packages/cli/src/commands/tracker/merge-tracker.ts')), { recursive: true });
+    writeFileSync(join(dir, 'packages/cli/src/commands/tracker/merge-tracker.ts'), '// No merge in this fixture.\n');
   }
-  for (const name of ['reconcile-pipeline.ts', 'verify-pipeline.ts']) writeFileSync(join(dir, name), '// Not under test here.\n');
+  for (const name of ['packages/cli/src/commands/pipeline/reconcile-pipeline.ts', 'packages/cli/src/commands/platform/verify-pipeline.ts']) {
+    mkdirSync(dirname(join(dir, name)), { recursive: true });
+    writeFileSync(join(dir, name), '// Not under test here.\n');
+  }
 
   writeFileSync(join(dir, 'config', 'profile.yml'), 'candidate:\n  full_name: Checkout Decoy\nspend_tier: premium\n');
   writeFileSync(join(dir, 'modes', '_profile.md'), '# CHECKOUT-DECOY-PROFILE\n');
@@ -299,10 +310,10 @@ test('batch-runner: personalization, spend_tier, reports and tracker additions f
     assert.deepEqual(listDir(join(dataRoot, 'reports')).filter((f) => f.includes('RESERVED')), [],
       'the report-number reservation was not released');
 
-    // 4. The tracker line was read from the directory merge-tracker.ts merges,
+    // 4. The tracker line was read from the directory packages/cli/src/commands/tracker/merge-tracker.ts merges,
     //    by the real merge, into the data root's tracker.
     assert.deepEqual(listDir(join(checkout.dir, 'batch', 'tracker-additions')), [],
-      'a tracker addition was left in the checkout, where merge-tracker.ts never looks');
+      'a tracker addition was left in the checkout, where packages/cli/src/commands/tracker/merge-tracker.ts never looks');
     const tracker = readFileSync(join(dataRoot, 'data', 'applications.md'), 'utf8');
     const merged = tracker.split('\n').find((line) => /^\|\s*4\s*\|/.test(line)) ?? '';
     assert.ok(/Acme/.test(merged) && /4\.5\/5/.test(merged),
@@ -317,7 +328,7 @@ test('batch-runner: a .career-ops-data marker with a relative path is honored li
   try {
     makeDataRoot(base, 'marked-root');
     const checkout = makeCheckout(base, { realTools: false });
-    // Relative to the checkout, the way path-resolver.ts resolves it.
+    // Relative to the checkout, the way packages/core/src/kernel/path-resolver.ts resolves it.
     writeFileSync(join(checkout.dir, '.career-ops-data'), '../marked-root\n');
 
     const r = runBatch(checkout, { WORKER_WRITES: 'no' });

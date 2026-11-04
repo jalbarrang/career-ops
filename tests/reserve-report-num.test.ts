@@ -1,6 +1,6 @@
 // Regression: a dated file in reports/ must not be read as a report number.
 //
-// `scan-ats-full.ts --md-out reports/` writes `reports/YYYY-MM-DD.md`. The old
+// `packages/cli/src/commands/scanning/scan-ats-full.ts --md-out reports/` writes `reports/YYYY-MM-DD.md`. The old
 // occupancy scan matched `/^(\d+)-/`, so `2026-08-12.md` was read as report
 // #2026 and the next reservation jumped to 2027 — silently, and permanently.
 
@@ -9,7 +9,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync, existsSync 
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { spawnSync } from 'child_process';
-import { reserveReportNumbers, releaseReportNumbers } from '../reserve-report-num.ts';
+import { reserveReportNumbers, releaseReportNumbers } from '../packages/cli/src/commands/tracker/reserve-report-num.ts';
 import { pass, fail, NODE, ROOT } from './helpers.ts';
 
 // Reserve one slot in a scratch root and report which number it got. Released
@@ -80,7 +80,7 @@ for (const c of cases) {
 for (const flag of ['--help', '-h']) {
   const dir = mkdtempSync(join(tmpdir(), 'rrn-help-'));
   try {
-    const result = spawnSync(NODE, [join(ROOT, 'reserve-report-num.ts'), flag], {
+    const result = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/reserve-report-num.ts'), flag], {
       cwd: dir,
       encoding: 'utf-8',
       timeout: 15000,
@@ -88,7 +88,7 @@ for (const flag of ['--help', '-h']) {
     const sentinels = existsSync(join(dir, 'reports'))
       ? readdirSync(join(dir, 'reports')).filter((f) => /-RESERVED\.md$/.test(f))
       : [];
-    if (result.status === 0 && /Usage: bun reserve-report-num\.ts/.test(result.stdout) && sentinels.length === 0) {
+    if (result.status === 0 && /Usage: career-ops reserve-report-num/.test(result.stdout) && sentinels.length === 0) {
       pass(`${flag} prints usage and reserves nothing`);
     } else {
       fail(`${flag}: exit=${result.status}, sentinels=${sentinels.length}, stdout=${JSON.stringify(result.stdout.slice(0, 120))}`);

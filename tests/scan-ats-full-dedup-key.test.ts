@@ -11,9 +11,9 @@ import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\nscan-ats-full — dedupTokenFor (#3439)');
 
-const mod = await import(pathToFileURL(join(ROOT, 'scan-ats-full.ts')).href);
+const mod = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/scanning/scan-ats-full.ts')).href);
 const { dedupTokenFor, SOURCES, providerForSource } = mod;
-const workdayModule = await import(pathToFileURL(join(ROOT, 'providers/workday.ts')).href);
+const workdayModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/workday.ts')).href);
 
 const workdaySiteA = { url: 'https://acme.wd5.myworkdayjobs.com/External/job/Remote/Staff-Engineer_JR00123' };
 const workdaySiteB = { url: 'https://acme.wd5.myworkdayjobs.com/Careers/job/Remote/Staff-Engineer_JR00123' };
@@ -22,7 +22,7 @@ const workdayOtherTenant = { url: 'https://other.wd5.myworkdayjobs.com/External/
 // The bug, reproduced directly: URL normalization alone treats the two sites
 // as different postings.
 {
-  const { normalizeUrlForDedup } = await import(pathToFileURL(join(ROOT, 'scan.ts')).href);
+  const { normalizeUrlForDedup } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
   if (normalizeUrlForDedup(workdaySiteA.url) !== normalizeUrlForDedup(workdaySiteB.url)) {
     pass('reproduces the bug: normalizeUrlForDedup alone does NOT collapse the two sites');
   } else {
@@ -55,8 +55,8 @@ const workdayOtherTenant = { url: 'https://other.wd5.myworkdayjobs.com/External/
 // A provider with no dedupKey (e.g. greenhouse) falls back to URL normalization,
 // unchanged from before #3439.
 {
-  const greenhouseModule = await import(pathToFileURL(join(ROOT, 'providers/greenhouse.ts')).href);
-  const { normalizeUrlForDedup } = await import(pathToFileURL(join(ROOT, 'scan.ts')).href);
+  const greenhouseModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/greenhouse.ts')).href);
+  const { normalizeUrlForDedup } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
   const job = { url: 'https://boards.greenhouse.io/acme/jobs/12345?gh_src=abc' };
   const token = dedupTokenFor(job, greenhouseModule.default);
   if (token === normalizeUrlForDedup(job.url)) {
@@ -69,7 +69,7 @@ const workdayOtherTenant = { url: 'https://other.wd5.myworkdayjobs.com/External/
 // No provider at all (e.g. a seed-pass job whose SOURCES lookup misses) — must
 // not throw, must fall back to URL normalization.
 {
-  const { normalizeUrlForDedup } = await import(pathToFileURL(join(ROOT, 'scan.ts')).href);
+  const { normalizeUrlForDedup } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
   const job = { url: 'https://jobs.lever.co/acme/abc-123?lever-source=Indeed' };
   let token;
   try {
@@ -90,7 +90,7 @@ const workdayOtherTenant = { url: 'https://other.wd5.myworkdayjobs.com/External/
 if (SOURCES.workday.provider === workdayModule.default) {
   pass('SOURCES.workday.provider is the same module workdayDedupKey lives on');
 } else {
-  fail('SOURCES.workday.provider does not match providers/workday.ts\'s default export');
+  fail('SOURCES.workday.provider does not match packages/core/src/scanning/providers/workday.ts\'s default export');
 }
 
 // A historical (already-recorded) Workday offer must dedupe against a FRESH
@@ -101,11 +101,11 @@ if (SOURCES.workday.provider === workdayModule.default) {
 // scan-history.tsv records the URL it was first seen on and
 // normalizeUrlForDedup never equates two different sites' URLs.
 {
-  const { collectSeenUrls } = await import(pathToFileURL(join(ROOT, 'scan.ts')).href);
+  const { collectSeenUrls } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
 
   // A legacy scan-history.tsv row: this requisition was recorded under
   // site A ("External") on a previous run, tagged with the portal/source
-  // scan-ats-full.ts actually writes (offer.source, "{ats}-full").
+  // packages/cli/src/commands/scanning/scan-ats-full.ts actually writes (offer.source, "{ats}-full").
   const scanHistoryText = [
     'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\tlocation',
     `${workdaySiteA.url}\t2020-01-01\tworkday-full\tStaff Engineer\tAcme\tadded\tRemote`,
@@ -132,7 +132,7 @@ if (SOURCES.workday.provider === workdayModule.default) {
   if (providerForSource('workday-full') === workdayModule.default) {
     pass('providerForSource resolves the "-full" suffix to the registered provider');
   } else {
-    fail('providerForSource did not resolve "workday-full" to providers/workday.ts');
+    fail('providerForSource did not resolve "workday-full" to packages/core/src/scanning/providers/workday.ts');
   }
   if (providerForSource('some-seed-id-seed') === undefined) {
     pass('providerForSource returns undefined for a seed-pass source, not a throw');

@@ -2,7 +2,7 @@
 // of mode documentation, not parsers for user reports or other Markdown files.
 import { closeSync, constants, fstatSync, openSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
-import { isNestedCheckout } from '../lib/source-files.ts';
+import { isNestedCheckout } from '../packages/core/src/kernel/source-files.ts';
 
 // Shared inventory for the harness and regression suite. Remove a re-synced
 // locale from FROZEN_EVALUATION_MODES here; keep it in KNOWN_EVALUATION_MODES.

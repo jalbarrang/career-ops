@@ -3,7 +3,7 @@
 // "I could not tell" distinct from "it is current".
 //
 // The gap this was written for: nothing ever re-read a pin after it was
-// written. plugins-registry/<id>.json pins the SHA plugin-install.ts clones,
+// written. plugins-registry/<id>.json pins the SHA packages/cli/src/commands/platform/plugin-install.ts clones,
 // and the registry-validate CI only fires on `pull_request` touching
 // plugins-registry/**. A plugin cutting a release changes nothing in this repo,
 // so no PR runs, so the pin is only ever validated at the one moment it is
@@ -23,7 +23,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { checkRegistryFreshness, fetchLatestRelease } from '../validate-plugin-registry.ts';
+import { checkRegistryFreshness, fetchLatestRelease } from '../packages/cli/src/commands/platform/validate-plugin-registry.ts';
 
 const SHA_A = 'a'.repeat(40);
 const SHA_B = 'b'.repeat(40);

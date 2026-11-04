@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const SCRIPT = join(ROOT, 'followup-cadence.ts');
+const SCRIPT = join(ROOT, 'packages/core/src/outreach/followup-cadence.ts');
 
 function runWithTracker(trackerContent) {
   const dir = mkdtempSync(join(tmpdir(), 'cadence-empty-'));

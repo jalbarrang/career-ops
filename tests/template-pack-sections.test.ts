@@ -1,7 +1,7 @@
 // tests/template-pack-sections.test.ts — a template pack can declare the
 // sections it owns, and a declared section never falls back silently (#3852).
 //
-// build-cv-html.ts walks seven section names and renders each from the
+// packages/cli/src/commands/cv/build-cv-html.ts walks seven section names and renders each from the
 // pack's sections/<name>.html when one exists, otherwise from its built-in
 // builder. Before the manifest key pinned here, that fallback was the only
 // contract: a pack that shipped three partials got the other four from the
@@ -10,7 +10,7 @@
 //
 // `sections: all` (or a list) in the <!-- career-ops-template --> block turns
 // ownership into a checkable claim. A declared section must exist at resolve
-// (cv-templates.ts) and parse at render (build-cv-html.ts); a pack that
+// (packages/cli/src/commands/cv/cv-templates.ts) and parse at render (packages/cli/src/commands/cv/build-cv-html.ts); a pack that
 // declares nothing keeps the old behaviour, which is what keeps every pack
 // written before the key on its existing contract.
 //
@@ -23,7 +23,7 @@ import { join } from 'path';
 import { pass, fail, run, NODE, ROOT, lastRunFailure } from './helpers.ts';
 import {
   PARTIAL_SECTIONS, parseMeta, declaredSections, checkDeclaredSections, listTemplates, resolveTemplate,
-} from '../cv-templates.ts';
+} from '../packages/cli/src/commands/cv/cv-templates.ts';
 
 console.log('\nCV template packs — declared sections and completeness (#3852)');
 
@@ -84,7 +84,7 @@ const PAYLOAD = {
 };
 
 /**
- * Run build-cv-html.ts against a template path. Returns { html } on a zero
+ * Run packages/cli/src/commands/cv/build-cv-html.ts against a template path. Returns { html } on a zero
  * exit or { stderr, status } on a non-zero one, so each check can assert the
  * outcome it expects instead of treating a crash as a suite abort.
  */
@@ -92,7 +92,7 @@ function build(dir, template, payload = PAYLOAD) {
   const input = join(dir, 'payload.json');
   const output = join(dir, 'out.html');
   writeFileSync(input, JSON.stringify(payload));
-  if (run(NODE, [join(ROOT, 'build-cv-html.ts'), input, output, template]) === null) {
+  if (run(NODE, [join(ROOT, 'packages/cli/src/commands/cv/build-cv-html.ts'), input, output, template]) === null) {
     const f = lastRunFailure();
     return { status: f?.status ?? null, stderr: f?.stderr || '' };
   }
@@ -238,7 +238,7 @@ function build(dir, template, payload = PAYLOAD) {
 
 // ── Rendering: a declared section must parse, and never falls back ──────────
 //
-// build-cv-html.ts accepts a template path directly, so the render is a
+// packages/cli/src/commands/cv/build-cv-html.ts accepts a template path directly, so the render is a
 // second gate rather than a redundant one: a caller can bypass resolveTemplate
 // entirely, and parse errors are only detectable here anyway.
 

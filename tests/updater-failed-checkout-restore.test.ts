@@ -21,7 +21,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { pass, fail, makeUpdaterRepo, captureConsoleErrors, rmSync, ROOT } from './helpers.ts';
-import { restoreAfterFailedUpdate, restoreBootstrapBackups, backupSystemFiles } from '../update-system.ts';
+import { restoreAfterFailedUpdate, restoreBootstrapBackups, backupSystemFiles } from '../packages/cli/src/commands/platform/update-system.ts';
 
 function write(dir, rel, text) {
   mkdirSync(join(dir, rel, '..'), { recursive: true });
@@ -119,7 +119,7 @@ console.log('\n🧪 Testing that a failed update restores what it had checked ou
     const { result, errors } = await captureConsoleErrors(() =>
       restoreAfterFailedUpdate(['sys/a.md'], new Set(), { what: 'system path(s)', git: failing, root: ctx.root }));
     const text = errors.join('\n');
-    if (result === false && /Could not restore the system path\(s\) \(unable to unlink old/.test(text) && /bun update-system\.ts rollback/.test(text)) {
+    if (result === false && /Could not restore the system path\(s\) \(unable to unlink old/.test(text) && /career-ops update-system rollback/.test(text)) {
       pass('a failed restore returns false and names `rollback`');
     } else {
       fail(`result ${result}, messages ${JSON.stringify(errors)}`);
@@ -139,14 +139,14 @@ console.log('\n🧪 Testing that a failed update restores what it had checked ou
 
 // ── 5. both failure paths in apply() restore before rethrowing ──
 {
-  const source = readFileSync(join(ROOT, 'update-system.ts'), 'utf-8');
+  const source = readFileSync(join(ROOT, 'packages/cli/src/commands/platform/update-system.ts'), 'utf-8');
   const start = source.indexOf('async function apply() {');
   const end = source.indexOf('\nfunction rollback(', start);
   const body = start === -1 || end === -1 ? '' : source.slice(start, end)
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .split('\n').filter((line) => !/^\s*\/\//.test(line)).join('\n');
   if (!body) {
-    fail('could not locate apply() in update-system.ts — update this test');
+    fail('could not locate apply() in packages/cli/src/commands/platform/update-system.ts — update this test');
   } else {
     // The parent: the list must outlive the try for its catch to see it, and be
     // filled from reexecFiles right before the checkout that needs undoing.
@@ -209,9 +209,9 @@ console.log('\n🧪 Testing that a failed update restores what it had checked ou
 {
   const failing = () => { throw new Error('EBUSY: resource busy or locked'); };
   const { result, errors } = await captureConsoleErrors(() =>
-    restoreBootstrapBackups([{ file: 'update-system.ts', backup: 'update-system.ts.bak' }], { root: ROOT, copyFile: failing }));
-  if (JSON.stringify(result) === '["update-system.ts"]'
-      && errors.some((line) => /^Could not put back your local version of update-system\.ts \(EBUSY: resource busy or locked\); it is in update-system\.ts\.bak\.$/.test(String(line)))) {
+    restoreBootstrapBackups([{ file: 'packages/cli/src/commands/platform/update-system.ts', backup: 'update-system.ts.bak' }], { root: ROOT, copyFile: failing }));
+  if (JSON.stringify(result) === '["packages/cli/src/commands/platform/update-system.ts"]'
+      && errors.some((line) => /^Could not put back your local version of (?:[^\s]*\/)?update-system\.ts \(EBUSY: resource busy or locked\); it is in (?:[^\s]*\/)?update-system\.ts\.bak\.$/.test(String(line)))) {
     pass('a failed put-back is returned and points at the .bak');
   } else {
     fail(`failed put-back: ${JSON.stringify(result)}, messages ${JSON.stringify(errors)}`);
@@ -322,7 +322,7 @@ console.log('\n🧪 Testing that a failed update restores what it had checked ou
     const text = errors.join('\n');
     if (result === false && read(dir, 'sys/a.md') === 'a v1\n'
         && /Could not restore the system path\(s\) \(could not remove 1 file\(s\) the update added: sys\/dir\/new\.md\)/.test(text)
-        && /bun update-system\.ts rollback/.test(text) && !/^Restored /m.test(text)) {
+        && /career-ops update-system rollback/.test(text) && !/^Restored /m.test(text)) {
       pass('a stranded addition fails the restore after the other paths are back, and names the file and `rollback`');
     } else {
       fail(`result ${result}, sys/a.md ${JSON.stringify(read(dir, 'sys/a.md'))}, messages ${JSON.stringify(errors)}`);
@@ -349,7 +349,7 @@ console.log('\n🧪 Testing that a failed update restores what it had checked ou
     const text = errors.join('\n');
     if (result === false && read(dir, 'sys/a.md') === 'a v1\n'
         && /Could not restore the system path\(s\) \(could not list what the update added under sys\/dir\/\)/.test(text)
-        && /bun update-system\.ts rollback/.test(text) && !/^Restored /m.test(text)) {
+        && /career-ops update-system rollback/.test(text) && !/^Restored /m.test(text)) {
       pass('an unreadable additions list fails the restore after the other paths are back, and names `rollback`');
     } else {
       fail(`result ${result}, sys/a.md ${JSON.stringify(read(dir, 'sys/a.md'))}, messages ${JSON.stringify(errors)}`);

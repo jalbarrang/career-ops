@@ -14,7 +14,7 @@
 // a bare U+00B7 would cut Catalan `col·laboració` and the vowel-length marks
 // Unicode's NamesList records across much of Amerindian orthography in half.
 import assert from 'node:assert/strict';
-import { analyzeCoverage, extractKeywords } from '../keyword-match.ts';
+import { analyzeCoverage, extractKeywords } from '../packages/cli/src/commands/evaluation/keyword-match.ts';
 import { pass, fail } from './helpers.ts';
 
 console.log('\nkeyword-match: keyword list shapes');

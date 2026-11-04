@@ -6,9 +6,9 @@ import { fileURLToPath } from 'node:url';
 import { load } from 'js-yaml';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const hasWeb = existsSync(join(ROOT, 'web', 'src'));
-const { computeTrackerStats } = await import('../stats.ts');
-const { computeProgressMetrics } = hasWeb ? await import('../web/src/lib/analytics-metrics.ts') : {};
+const hasWeb = existsSync(join(ROOT, 'apps/web', 'src'));
+const { computeTrackerStats } = await import('../packages/core/src/insights/stats.ts');
+const { computeProgressMetrics } = hasWeb ? await import('../apps/web/src/lib/analytics-metrics.ts') : {};
 
 const states = load(readFileSync(new URL('../templates/states.yml', import.meta.url), 'utf8')).states;
 const expected = {
@@ -30,7 +30,7 @@ for (const state of states) {
   });
 }
 
-test('Analytics and stats.ts count the same active applications', { skip: !hasWeb }, () => {
+test('Analytics and packages/core/src/insights/stats.ts count the same active applications', { skip: !hasWeb }, () => {
   const labels = states.map(state => state.label);
   const tracker = [
     '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |',

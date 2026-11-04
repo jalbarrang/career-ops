@@ -5,7 +5,7 @@
 // The reader used to skip line 0 unconditionally, so on such a file the oldest
 // row was read as a header and dropped, and that URL was never pinned.
 import { pass, fail } from './helpers.ts';
-import { collectSeenUrls } from '../scan.ts';
+import { collectSeenUrls } from '../packages/core/src/scanning/scan.ts';
 
 console.log('\nscan.ts — collectSeenUrls keeps the first row of a headerless scan-history.tsv');
 

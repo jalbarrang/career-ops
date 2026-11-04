@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { pass, fail } from './helpers.ts';
-import { formatApplicationAnswersSection, parseApplicationAnswersSection, upsertApplicationAnswersSection } from '../application-answers.ts';
+import { formatApplicationAnswersSection, parseApplicationAnswersSection, upsertApplicationAnswersSection } from '../packages/cli/src/commands/evaluation/application-answers.ts';
 
 function check(label, run) {
   try { run(); pass(label); } catch (error) { fail(`${label}: ${error.message}`); process.exitCode = 1; }

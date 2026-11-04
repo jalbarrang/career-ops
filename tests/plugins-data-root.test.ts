@@ -1,19 +1,19 @@
 // tests/plugins-data-root.test.ts — Bugs 2 & 3 regression:
-//   Bug 2: plugins.ts must derive APPLICATIONS_PATH and PIPELINE_PATH from
+//   Bug 2: packages/cli/src/commands/platform/plugins.ts must derive APPLICATIONS_PATH and PIPELINE_PATH from
 //     the data root (CAREER_OPS_ROOT), not from the code directory.
 //   Bug 3: buildSnapshot() must parse pipeline.md checklist entries, not a table.
 //
-// Imports the REAL plugins.ts with CAREER_OPS_ROOT set before the dynamic
+// Imports the REAL packages/cli/src/commands/platform/plugins.ts with CAREER_OPS_ROOT set before the dynamic
 // import so the module-level constants are evaluated against the temp root.
 // Uses _testPaths and _testBuildSnapshot — the minimal named exports added to
-// plugins.ts to make its internal constants and snapshot function inspectable
+// packages/cli/src/commands/platform/plugins.ts to make its internal constants and snapshot function inspectable
 // without duplicating path-resolution logic in the test.
 import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { pass, fail, ROOT } from './helpers.ts';
-import { canonicalizeTrackerPath } from '../path-resolver.ts';
+import { canonicalizeTrackerPath } from '../packages/core/src/kernel/path-resolver.ts';
 
 console.log('\nplugins — data-root path resolution and buildSnapshot pipeline parser');
 
@@ -27,7 +27,7 @@ try {
   process.env.CAREER_OPS_ROOT = dir;
 
   // Write a real pipeline.md with checklist entries so buildSnapshot() reads
-  // real content. scan.ts (imported transitively by plugins.ts) also calls
+  // real content. packages/core/src/scanning/scan.ts (imported transitively by packages/cli/src/commands/platform/plugins.ts) also calls
   // mkdirSync on data/, but runs after this and is idempotent.
   mkdirSync(join(dir, 'data'), { recursive: true });
   writeFileSync(
@@ -43,7 +43,7 @@ try {
   // earlier test in the same test-all.ts process already imported it (or a
   // module that transitively imports it) without that env var set.
   const { _testPaths, _testBuildSnapshot } = await import(
-    pathToFileURL(join(ROOT, 'plugins.ts')).href + '?root=' + Date.now()
+    pathToFileURL(join(ROOT, 'packages/cli/src/commands/platform/plugins.ts')).href + '?root=' + Date.now()
   );
 
   // --- Bug 2: APPLICATIONS_PATH and PIPELINE_PATH must be rooted in DATA_ROOT ---

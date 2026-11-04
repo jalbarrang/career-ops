@@ -11,8 +11,8 @@
  *   - parseCompensation (Ashby): interval normalization, malformed data, ordering
  */
 
-import { parseCompensation } from '../providers/ashby.ts';
-import { buildSalaryFilter } from '../scan.ts';
+import { parseCompensation } from '../packages/core/src/scanning/providers/ashby.ts';
+import { buildSalaryFilter } from '../packages/core/src/scanning/scan.ts';
 import { pass, fail } from './helpers.ts';
 
 console.log('\nsalary filter + Ashby compensation parsing');
@@ -277,7 +277,7 @@ section('parseCompensation — zero values');
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// PART 2: buildSalaryFilter (scan.ts)
+// PART 2: buildSalaryFilter (packages/core/src/scanning/scan.ts)
 // ══════════════════════════════════════════════════════════════════════
 
 section('buildSalaryFilter — disabled / no-op cases');

@@ -1,5 +1,5 @@
 /**
- * tests/invite-match.test.ts — regression tests for invite-match.ts's ambiguous-
+ * tests/invite-match.test.ts — regression tests for packages/core/src/interview/invite-match.ts's ambiguous-
  * match ranking, which is the part most likely to silently regress: a wrong
  * top candidate is worse than no candidate at all. Also covers the #2098
  * rejection-classification and --apply-to-Rejected additions.
@@ -15,12 +15,12 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { tmpdir } from 'os';
 import { execFileSync } from 'child_process';
-import { matchInvite, normalizeCompanyName, companySimilarity, extractCompany, extractDate, extractReqId, extractPlatform, isAIInterviewerPlatform, classifyEmail, analyzeInvite, applyRejectionStatus, selectApplyTarget } from '../invite-match.ts';
+import { matchInvite, normalizeCompanyName, companySimilarity, extractCompany, extractDate, extractReqId, extractPlatform, isAIInterviewerPlatform, classifyEmail, analyzeInvite, applyRejectionStatus, selectApplyTarget } from '../packages/core/src/interview/invite-match.ts';
 import { pass, fail } from './helpers.ts';
 
 console.log('\ninvite-match.ts — interview invite matching');
 
-const SCRIPT_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', 'invite-match.ts');
+const SCRIPT_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/core/src/interview/invite-match.ts');
 
 
 function eq(label, actual, expected) {
@@ -335,7 +335,7 @@ eq('exact-company/weak-phrase fixture does not classify as rejection at all (ben
 // classification gate above --apply's candidate-selection step; this
 // confirms selectApplyTarget is never even reached in that case since the
 // CLI's classification check runs first (see the --apply block in
-// invite-match.ts).
+// packages/core/src/interview/invite-match.ts).
 
 // --- maintainer finding, PR #2100 review comment 2026-08-07: realistic
 // non-rejection emails must never classify as `rejection`. This is the exact
@@ -439,7 +439,7 @@ function runCli(args = []) {
 // 1. --help prints usage, documents both --help and -h, and exits 0
 const helpResult = runCli(['--help']);
 eq('CLI: --help exits with code 0', helpResult.status, 0);
-eq('CLI: --help stdout contains Usage block', helpResult.stdout.includes('Usage:\n  bun invite-match.ts'), true);
+eq('CLI: --help stdout contains Usage block', helpResult.stdout.includes('Usage:\n  career-ops invite-match'), true);
 eq('CLI: --help stdout documents --help', helpResult.stdout.includes('--help'), true);
 eq('CLI: --help stdout documents -h', helpResult.stdout.includes('-h'), true);
 
@@ -465,7 +465,7 @@ const mistypedResult = runCli(['--sumary']);
 eq('CLI: mistyped flag (--sumary) exits non-zero (code 1)', mistypedResult.status, 1);
 eq('CLI: mistyped flag stderr names the mistyped flag', mistypedResult.stderr.includes('--sumary'), true);
 
-// --- Cases ported from invite-match.ts runSelfTest() (#5182) ---
+// --- Cases ported from packages/core/src/interview/invite-match.ts runSelfTest() (#5182) ---
 
 // normalizeCompanyName: corporate suffixes, branding, whitespace, and Unicode script preservation
 eq('strips "Corp." suffix', normalizeCompanyName('Acme Corp.'), 'acme');

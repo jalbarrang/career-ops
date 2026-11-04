@@ -1,7 +1,7 @@
 import { pass, fail } from './helpers.ts';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { compressSharedContext, buildBudgetedPrompt } from '../lib/context-budget.ts';
+import { compressSharedContext, buildBudgetedPrompt } from '../packages/core/src/kernel/context-budget.ts';
 
 const shared = readFileSync(new URL('../modes/_shared.md', import.meta.url), 'utf8');
 const truth = shared.match(/^## Sources of Truth[^\n]*\n[\s\S]*?(?=^## |$(?![\s\S]))/m)?.[0];

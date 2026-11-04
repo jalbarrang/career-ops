@@ -3,7 +3,7 @@
 // Rippling's board API is a same-origin, paginated
 // `ats.rippling.com/api/v2/board/<slug>/jobs?page=&pageSize=` envelope
 // (`{ items, page, pageSize, totalItems, totalPages }`) — see the header
-// comment in providers/rippling.ts for the full shape.
+// comment in packages/core/src/scanning/providers/rippling.ts for the full shape.
 import { pass, fail, ROOT, captureConsoleErrors } from '../helpers.ts';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
@@ -11,7 +11,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — rippling');
 
 try {
-  const ripplingModule = await import(pathToFileURL(join(ROOT, 'providers/rippling.ts')).href);
+  const ripplingModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/rippling.ts')).href);
   const rippling = ripplingModule.default;
   const { parseRipplingPage } = ripplingModule;
 

@@ -7,7 +7,7 @@ console.log('\nProvider — jobstreet');
 
 
 try {
-  const jobstreetModule = await import(pathToFileURL(join(ROOT, 'providers/jobstreet.ts')).href);
+  const jobstreetModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/jobstreet.ts')).href);
   const jobstreet = jobstreetModule.default;
   const { parseJobstreetItem } = jobstreetModule;
 

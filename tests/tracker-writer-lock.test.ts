@@ -21,7 +21,7 @@ import {
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { acquireTrackerLock, openTrackerTransaction } from '../tracker-utils.ts';
+import { acquireTrackerLock, openTrackerTransaction } from '../packages/core/src/tracker/tracker-utils.ts';
 import { waitForContentionMarker } from './helpers/tracker-contention-marker.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -157,7 +157,7 @@ async function runWhileLocked({
       env: {
         ...childEnv,
         // Test-only: acquireTrackerLock writes this marker once it has found
-        // the lock held and created the recover guard (tracker-utils.ts).
+        // the lock held and created the recover guard (packages/core/src/tracker/tracker-utils.ts).
         ...(markerPath ? {
           NODE_ENV: 'test',
           CAREER_OPS_TRACKER_TEST_LOCK_WAIT_MARKER: markerPath,
@@ -234,7 +234,7 @@ async function runWhileLocked({
         // does not: a fresh Node process needs tens of milliseconds just to
         // boot, so the row is already on disk before a buggy writer reads, and
         // the buggy writer then reads the post-mutation file and passes. That
-        // was verified, not assumed — hoisting set-status.ts's readFileSync
+        // was verified, not assumed — hoisting packages/cli/src/commands/tracker/set-status.ts's readFileSync
         // above its acquireTrackerLockForCli call left this suite fully green
         // until a wait was added.
         //
@@ -343,11 +343,11 @@ function writerCase({
           + 'so this case did not spend 3s learning the same thing (see that case for the cause)'));
         assert.ok(marker,
           say('the writer left no contention marker, so the fixture mutation was not ordered after its read — '
-          + 'the CAREER_OPS_TRACKER_TEST_LOCK_WAIT_MARKER hook in tracker-utils.ts is gone, renamed, or no '
+          + 'the CAREER_OPS_TRACKER_TEST_LOCK_WAIT_MARKER hook in packages/core/src/tracker/tracker-utils.ts is gone, renamed, or no '
           + 'longer reached on contention'));
         assert.equal(marker.lockDir, lockDir, say('the marker names a different lock'));
         assert.equal(marker.guardCreated, true, say('the marker does not record the recover guard being created'));
-        // A writer that delegates its write to set-status.ts (reply-watch,
+        // A writer that delegates its write to packages/cli/src/commands/tracker/set-status.ts (reply-watch,
         // #5536) contends in that child, so the marker is the child's. Only
         // such a case accepts a marker whose parent is the writer.
         assert.equal(options.delegatesWrite ? marker.ppid : marker.pid, runPid,
@@ -378,7 +378,7 @@ function writerCase({
 
 writerCase({
   name: 'normalize-statuses',
-  script: 'normalize-statuses.ts',
+  script: 'packages/cli/src/commands/tracker/normalize-statuses.ts',
   content: trackerTable([
     '| 1 | 2026-01-01 | Acme | Engineer | 4.0/5 | Aplicado | ❌ | [1](reports/001-acme.md) | seed |',
   ]),
@@ -389,7 +389,7 @@ writerCase({
 
 writerCase({
   name: 'dedup-tracker',
-  script: 'dedup-tracker.ts',
+  script: 'packages/cli/src/commands/tracker/dedup-tracker.ts',
   content: trackerTable([
     '| 1 | 2026-01-01 | Acme | Engineer | 4.0/5 | Evaluated | ❌ | [1](reports/001-acme.md) | first |',
     '| 2 | 2026-01-02 | Acme | Engineer | 3.0/5 | Evaluated | ❌ | [2](reports/002-acme.md) | duplicate |',
@@ -401,7 +401,7 @@ writerCase({
 
 writerCase({
   name: 'tracker-delete',
-  script: 'tracker.ts',
+  script: 'packages/cli/src/commands/tracker/tracker.ts',
   args: ['delete', '--num', '1'],
   content: trackerTable([
     '| 1 | 2026-01-01 | Acme | Engineer | 4.0/5 | Evaluated | ❌ | [1](reports/001-acme.md) | seed |',
@@ -412,7 +412,7 @@ writerCase({
 
 writerCase({
   name: 'tracker-export',
-  script: 'tracker.ts',
+  script: 'packages/cli/src/commands/tracker/tracker.ts',
   args: ['export', '--out', '{tracker}'],
   content: trackerTable([
     '| 1 | 2026-01-01 | Acme | Engineer | 4.0/5 | Evaluated | ❌ | [1](reports/001-acme.md) | seed |',
@@ -424,7 +424,7 @@ writerCase({
   completion: 'exports the fresh locked snapshot without losing concurrent rows',
 });
 
-// set-status.ts is the writer CLAUDE.md names as canonical — the one every
+// packages/cli/src/commands/tracker/set-status.ts is the writer CLAUDE.md names as canonical — the one every
 // mode calls to move a row — so it is the single most important entry in this
 // matrix, and it was the one missing. set-status-tests.ts already covers the
 // lock TIMEOUT (exit 4) and a non-retryable lock error, but both prove only
@@ -436,7 +436,7 @@ writerCase({
 // the shape is inviting. This test is what makes that refactor fail.
 writerCase({
   name: 'set-status',
-  script: 'set-status.ts',
+  script: 'packages/cli/src/commands/tracker/set-status.ts',
   args: ['--row', '1', 'Applied', '--note', 'sent CV'],
   content: trackerTable([
     '| 1 | 2026-01-01 | Acme | Engineer | 4.0/5 | Evaluated | ❌ | [1](reports/001-acme.md) | seed |',
@@ -446,14 +446,14 @@ writerCase({
   verifyOutput: stdout => stdout.includes('set Evaluated → Applied'),
 });
 
-// mark-pdf-ready.ts is the canonical writer for the PDF column and shares
-// set-status.ts's locked read-modify-write path (acquireTrackerLockForCli in
-// tracker-utils.ts). It rewrites one cell of one line and keeps the rest of
+// packages/cli/src/commands/tracker/mark-pdf-ready.ts is the canonical writer for the PDF column and shares
+// packages/cli/src/commands/tracker/set-status.ts's locked read-modify-write path (acquireTrackerLockForCli in
+// packages/core/src/tracker/tracker-utils.ts). It rewrites one cell of one line and keeps the rest of
 // the file, so a pre-lock read costs the same concurrent rows here as anywhere
 // else in this matrix.
 writerCase({
   name: 'mark-pdf-ready',
-  script: 'mark-pdf-ready.ts',
+  script: 'packages/cli/src/commands/tracker/mark-pdf-ready.ts',
   args: ['1'],
   content: trackerTable([
     '| 1 | 2026-01-01 | Acme | Engineer | 4.0/5 | Evaluated | ❌ | [1](reports/001-acme.md) | seed |',
@@ -464,7 +464,7 @@ writerCase({
 
 writerCase({
   name: 'reply-watch',
-  script: 'reply-watch.ts',
+  script: 'packages/cli/src/commands/outreach/reply-watch.ts',
   delegatesWrite: true,
   stdin: 'y\n',
   content: trackerTable([
@@ -476,7 +476,7 @@ writerCase({
 
 writerCase({
   name: 'reply-watch-identical',
-  script: 'reply-watch.ts',
+  script: 'packages/cli/src/commands/outreach/reply-watch.ts',
   delegatesWrite: true,
   stdin: 'y\n',
   candidates: [
@@ -505,7 +505,7 @@ writerCase({
 
 writerCase({
   name: 'reply-watch-stale-status',
-  script: 'reply-watch.ts',
+  script: 'packages/cli/src/commands/outreach/reply-watch.ts',
   delegatesWrite: true,
   stdin: 'y\n',
   content: trackerTable([
@@ -520,12 +520,12 @@ writerCase({
   beforeMutationOutput: 'Apply recommended status updates',
 });
 
-// --- followup-seed.ts: a separate lock namespace, deliberately -------------
+// --- packages/core/src/outreach/followup-seed.ts: a separate lock namespace, deliberately -------------
 //
-// followup-seed.ts is absent from the matrix above because it is not a
+// packages/core/src/outreach/followup-seed.ts is absent from the matrix above because it is not a
 // tracker writer. It READS applications.md to find the row and its apply date,
 // then writes only data/follow-ups.md, under its own lock keyed by the
-// FOLLOW-UPS path and prefixed `career-ops-followups-` (followup-seed.ts's
+// FOLLOW-UPS path and prefixed `career-ops-followups-` (packages/core/src/outreach/followup-seed.ts's
 // FOLLOWUPS_LOCK_PREFIX and resolveLockDir) rather than the shared
 // `career-ops-merge-tracker-` lock every writer above contends on.
 //
@@ -534,7 +534,7 @@ writerCase({
 //     lock says nothing about follow-ups.md, so a seeder holding it would
 //     still race a second seeder; the follow-ups lock is what actually
 //     serializes the read-check-append on follow-ups.md, and
-//     followup-seed.ts is the only writer of that file in the repo (every
+//     packages/core/src/outreach/followup-seed.ts is the only writer of that file in the repo (every
 //     other consumer — followup-cadence, reply-watch, stats, company-history —
 //     only reads it).
 //   - The stale-snapshot invariant this suite exists for cannot apply. It bites
@@ -583,7 +583,7 @@ test('followup-seed: seeds follow-ups under its own lock while the tracker lock 
     let stderr = '';
     let result;
     try {
-      const child = startNode([join(ROOT, 'followup-seed.ts'), '1', '--json'], {
+      const child = startNode([join(ROOT, 'packages/core/src/outreach/followup-seed.ts'), '1', '--json'], {
         cwd: ROOT,
         env: {
           ...process.env,
@@ -761,7 +761,7 @@ test('reply-watch surfaces conflicting replies without applying an arbitrary las
 
     let stdout = '';
     let stderr = '';
-    const child = startNode([join(ROOT, 'reply-watch.ts'), candidatesPath], {
+    const child = startNode([join(ROOT, 'packages/cli/src/commands/outreach/reply-watch.ts'), candidatesPath], {
       cwd: ROOT,
       env: {
         ...process.env,

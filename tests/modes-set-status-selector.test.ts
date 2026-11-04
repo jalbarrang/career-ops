@@ -1,9 +1,9 @@
-// A bare number given to set-status.ts is a tracker row id. Mode files hand
+// A bare number given to packages/cli/src/commands/tracker/set-status.ts is a tracker row id. Mode files hand
 // the agent a report id, and the two counters diverge as soon as one row has
-// no report, so `set-status.ts <report#> Applied` exits 3 and the agent has
+// no report, so `packages/cli/src/commands/tracker/set-status.ts <report#> Applied` exits 3 and the agent has
 // to retry. Every mode names the selector instead.
 //
-// outcome.ts reads a bare number the same way, with no report-link guard, so
+// packages/cli/src/commands/tracker/outcome.ts reads a bare number the same way, with no report-link guard, so
 // a report id there records the outcome on another application. AGENTS.md and
 // docs/SCRIPTS.md document both commands, so they are held to the same rule.
 //
@@ -14,11 +14,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listTree } from '../lib/walk-tree.ts';
+import { listTree } from '../packages/core/src/kernel/walk-tree.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
-const CALL = /bun (?:set-status|outcome)\.ts ([^\s`]+)/g;
+const CALL = /career-ops (?:set-status|outcome) ([^\s`]+)/g;
 
 function bareReportPlaceholders(src) {
   return [...src.matchAll(CALL)].map((m) => m[1]).filter((arg) => arg.startsWith('<report#'));
@@ -43,9 +43,9 @@ test('the scan sees the apply-mode calls it guards', () => {
 });
 
 test('a bare report placeholder is reported', () => {
-  assert.deepEqual(bareReportPlaceholders('`bun set-status.ts <report#> Applied`'), ['<report#>']);
-  assert.deepEqual(bareReportPlaceholders('`bun set-status.ts --report <report#> Applied`'), []);
-  assert.deepEqual(bareReportPlaceholders('`bun set-status.ts <report#\\|company> <State>`'), ['<report#\\|company>']);
-  assert.deepEqual(bareReportPlaceholders('`bun outcome.ts <report#|company> hired`'), ['<report#|company>']);
-  assert.deepEqual(bareReportPlaceholders('`bun outcome.ts <tracker#|company> hired`'), []);
+  assert.deepEqual(bareReportPlaceholders('`career-ops set-status <report#> Applied`'), ['<report#>']);
+  assert.deepEqual(bareReportPlaceholders('`career-ops set-status --report <report#> Applied`'), []);
+  assert.deepEqual(bareReportPlaceholders('`career-ops set-status <report#\\|company> <State>`'), ['<report#\\|company>']);
+  assert.deepEqual(bareReportPlaceholders('`career-ops outcome <report#|company> hired`'), ['<report#|company>']);
+  assert.deepEqual(bareReportPlaceholders('`career-ops outcome <tracker#|company> hired`'), []);
 });

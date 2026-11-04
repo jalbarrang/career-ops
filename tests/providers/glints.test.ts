@@ -7,7 +7,7 @@ console.log('\nProvider — glints');
 
 
 try {
-  const glintsModule = await import(pathToFileURL(join(ROOT, 'providers/glints.ts')).href);
+  const glintsModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/glints.ts')).href);
   const glints = glintsModule.default;
   const { parseGlintsItem } = glintsModule;
 

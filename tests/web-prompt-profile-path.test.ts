@@ -12,9 +12,9 @@ import { pathToFileURL } from 'url';
 
 console.log('\nweb prompts — profile path under CAREER_OPS_PROFILE');
 
-const lib = join(ROOT, 'web', 'src', 'lib');
-if (!existsSync(join(ROOT, 'web'))) {
-  pass('web prompt profile path skipped: no web/ in this checkout');
+const lib = join(ROOT, 'apps/web', 'src', 'lib');
+if (!existsSync(join(ROOT, 'apps/web'))) {
+  pass('web prompt profile path skipped: no apps/web/ in this checkout');
 } else {
   const load = (rel) => import(pathToFileURL(join(lib, rel)).href);
   const { profileRef, profileNote, DEFAULT_PROFILE_REF } = await load('core/profile-path.ts');

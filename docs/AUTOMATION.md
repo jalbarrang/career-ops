@@ -9,7 +9,7 @@ sweep** that drafts (never sends) chase-up emails for aging applications.
 
 Three independent pieces, smallest first. You can use any of them on their own.
 
-- **[1. Schedule the scan](#1-schedule-the-scan)** — run `bun scan.ts` on cron /
+- **[1. Schedule the scan](#1-schedule-the-scan)** — run `career-ops scan` on cron /
   launchd / Windows Task Scheduler. Zero tokens: the scanner only reads public
   job-board APIs and appends URLs to `data/pipeline.md`.
 - **[2. Triage the queue](#2-triage-the-queue)** — a Read/Write-only prompt that
@@ -37,7 +37,7 @@ Three independent pieces, smallest first. You can use any of them on their own.
 
 ## 1. Schedule the scan
 
-`bun scan.ts` is safe to run unattended — it's idempotent (already-seen URLs are
+`career-ops scan` is safe to run unattended — it's idempotent (already-seen URLs are
 deduped) and costs nothing. Pick your platform.
 
 Replace `/path/to/career-ops` with your checkout path, and make sure `bun` is on
@@ -47,11 +47,11 @@ an absolute path to `bun` if in doubt, e.g. `which bun`; the example below assum
 
 Two ways to schedule, both local and token-free:
 
-- **A. A fixed scan** of `scan.ts` on one cadence, with the OS scheduler.
+- **A. A fixed scan** of `packages/core/src/scanning/scan.ts` on one cadence, with the OS scheduler.
 - **B. The Scheduled scans page** in the web UI, which saves several cadences and
   needs one 15-minute queue worker installed in the OS scheduler.
 
-### A. Fixed scan with `scan.ts`
+### A. Fixed scan with `packages/core/src/scanning/scan.ts`
 
 #### Linux — cron
 
@@ -61,14 +61,14 @@ day-of-month field resets at each month boundary, so the gap across month-end ca
 be 1–3 days rather than a strict rolling 72 hours:
 
 ```cron
-0 9 */3 * * cd /path/to/career-ops && /usr/local/bin/bun scan.ts >> data/scan.log 2>&1
+0 9 */3 * * cd /path/to/career-ops && /usr/local/bin/career-ops scan >> data/scan.log 2>&1
 ```
 
 For a simpler, exactly-even cadence, run it **daily** and let the scanner's dedup
 absorb the days you don't need — `0 9 * * *` — or on weekdays only, at 8am:
 
 ```cron
-0 8 * * 1-5 cd /path/to/career-ops && /usr/local/bin/bun scan.ts >> data/scan.log 2>&1
+0 8 * * 1-5 cd /path/to/career-ops && /usr/local/bin/career-ops scan >> data/scan.log 2>&1
 ```
 
 macOS also runs cron, but launchd below survives sleep better.
@@ -87,7 +87,7 @@ Save as `~/Library/LaunchAgents/io.career-ops.scan.plist`, then
   <key>ProgramArguments</key>
   <array>
     <string>/usr/local/bin/bun</string>
-    <string>scan.ts</string>
+    <string>packages/core/src/scanning/scan.ts</string>
   </array>
   <key>WorkingDirectory</key> <string>/path/to/career-ops</string>
   <key>StartCalendarInterval</key>
@@ -116,7 +116,7 @@ replace the `StartCalendarInterval` block with an interval in seconds:
 #### Windows — Task Scheduler
 
 ```powershell
-$action  = New-ScheduledTaskAction -Execute "bun.exe" -Argument "scan.ts" -WorkingDirectory "C:\path\to\career-ops"
+$action  = New-ScheduledTaskAction -Execute "bun.exe" -Argument "packages/core/src/scanning/scan.ts" -WorkingDirectory "C:\path\to\career-ops"
 $trigger = New-ScheduledTaskTrigger -Daily -At 9am
 Register-ScheduledTask -TaskName "career-ops scan" -Action $action -Trigger $trigger -Description "Recurring career-ops job scan"
 ```
@@ -147,8 +147,8 @@ The agent needs a logged-in GUI session.
 #### Windows — Task Scheduler
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File web/scripts/install-scan-schedule.ps1
-web/scripts/uninstall-scan-schedule.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File apps/web/scripts/install-scan-schedule.ps1
+apps/web/scripts/uninstall-scan-schedule.ps1
 ```
 
 The task runs in the current user's interactive session, so you must be logged in.
@@ -234,13 +234,13 @@ so this piece runs `claude -p` (or your CLI's headless equivalent, see
 1. Resolves its own repo root (`REPO="$(cd "$(dirname "${0}")/.." && pwd)"`)
    so the script works from any checkout path without edits.
 2. Runs `claude -p` with a prompt that drives `modes/followup.md`:
-   read the cadence (`bun followup-cadence.ts`), draft a follow-up for
+   read the cadence (`career-ops followup-cadence`), draft a follow-up for
    every overdue/urgent entry, and **write the drafts to a dated file**
    (`output/followup-drafts-{date}.md`) instead of trying to act on them.
 3. Logs start/end to `data/followup-sweep.log` (gitignored).
 4. Exits before starting Claude when follow-ups are turned off: with
    `follow_ups.enabled: false` in `config/profile.yml` the sweep calls
-   `loadFollowupsEnabled` from `followup-cadence.ts`, writes a skip line to
+   `loadFollowupsEnabled` from `packages/core/src/outreach/followup-cadence.ts`, writes a skip line to
    `data/followup-sweep.log`, and exits 0. Unload the launchd job too if you
    turned follow-ups off for good.
 5. Fires a native notification (`osascript display notification` on macOS)
@@ -316,7 +316,7 @@ If you also run a scan-and-score agent (custom, or one you've built per
 `AGENTS.md` → Skill Modes), it's worth adding a floor score below which a
 match auto-merges into `data/applications.md`. A workable heuristic: after
 you've accumulated some real outcomes, run
-`bun analyze-patterns.ts | jq .scoreThreshold` — it reports the lowest
+`career-ops analyze-patterns | jq .scoreThreshold` — it reports the lowest
 score among your historical positive outcomes. Add a rule to your own
 `modes/_custom.md` (never `modes/_shared.md` — see the Data Contract) like:
 
@@ -335,5 +335,5 @@ silently discarding the evaluation itself.
 - **Complements batch-eval savings.** This is the *scheduling + first-glance* layer
   that comes *before* evaluation. Optimizations to the evaluation stage itself are
   separate and stack on top.
-- **Nothing new to install.** `bun scan.ts` already ships; the triage is a prompt,
+- **Nothing new to install.** `career-ops scan` already ships; the triage is a prompt,
   not a dependency.

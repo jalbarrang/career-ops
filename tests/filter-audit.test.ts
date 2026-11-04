@@ -1,4 +1,4 @@
-// tests/filter-audit.test.ts — filter-audit.ts replays title_filter.positive
+// tests/filter-audit.test.ts — packages/cli/src/commands/scanning/filter-audit.ts replays title_filter.positive
 // over scan-history.tsv and ranks keywords by the offers only they catch.
 //
 // Network-free: audit(), readHistory() and readScoresByUrl() are pure, and the
@@ -10,9 +10,9 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { audit, readHistory, readScoresByUrl } from '../filter-audit.ts';
+import { audit, readHistory, readScoresByUrl } from '../packages/cli/src/commands/scanning/filter-audit.ts';
 
-const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), '..', 'filter-audit.ts');
+const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/cli/src/commands/scanning/filter-audit.ts');
 const HEADER = 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus';
 
 const TF = { positive: ['Inference', 'Machine Learning', 'Performance', 'Quantization'] };

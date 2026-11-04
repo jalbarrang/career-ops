@@ -62,11 +62,11 @@ for (const { file, score: scoreLine, decision: decisionLine, lede, apply: applyW
   });
 }
 
-const headerMod = join(ROOT, 'web', 'src', 'lib', 'report-header.ts');
-if (!existsSync(join(ROOT, 'web', 'src'))) {
-  warn('web/ not present in this checkout — skipping localized decision parser checks');
+const headerMod = join(ROOT, 'apps/web', 'src', 'lib', 'report-header.ts');
+if (!existsSync(join(ROOT, 'apps/web', 'src'))) {
+  warn('apps/web/ not present in this checkout — skipping localized decision parser checks');
 } else if (!existsSync(headerMod)) {
-  fail('web/ exists but web/src/lib/report-header.ts is missing — the decision parser cannot be checked (moved?)');
+  fail('apps/web/ exists but apps/web/src/lib/report-header.ts is missing — the decision parser cannot be checked (moved?)');
 } else {
   const { readReport } = await import(pathToFileURL(headerMod).href);
 

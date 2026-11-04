@@ -20,8 +20,8 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { execFileSync } from 'child_process';
 import { pass, fail, NODE, ROOT, isolatedBatchStatePath } from './helpers.ts';
-import { looksLikeScoreCell } from '../tracker-parse.ts';
-import { normalizedTrackerScore } from '../lib/tracker-addition.ts';
+import { looksLikeScoreCell } from '../packages/core/src/tracker/tracker-parse.ts';
+import { normalizedTrackerScore } from '../packages/core/src/tracker/tracker-addition.ts';
 
 console.log('\nopenrouter-runner.ts — tracker-addition TSV merges (headed and headerless)');
 
@@ -64,7 +64,7 @@ if (SCORE_COL > 0 && STATUS_COL > 0) {
   fail(`fixture header lost its Score/Status labels (score=${SCORE_COL}, status=${STATUS_COL}) — the column assertions below would be vacuous`);
 }
 
-// The exact shape openrouter-runner writes (openrouter-runner.ts `tsvLine`):
+// The exact shape openrouter-runner writes (packages/cli/src/commands/evaluation/openrouter-runner.ts `tsvLine`):
 // num, date, company, "(see report)", status, score, pdf, report-link, notes.
 const num = 35, today = '2026-08-09', slug = 'acme-corp';
 const company = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -81,7 +81,7 @@ try {
 
   let output = '';
   try {
-    output = execFileSync(NODE, [join(ROOT, 'merge-tracker.ts')], {
+    output = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts')], {
       encoding: 'utf-8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, CAREER_OPS_TRACKER: tracker, CAREER_OPS_ADDITIONS: addsDir, CAREER_OPS_BATCH_STATE: isolatedBatchStatePath(addsDir) },
     });
@@ -108,7 +108,7 @@ try {
     writeFileSync(join(a2, `or-0${num}-${slug}.tsv`), `num\tdate\tcompany\trole\tstatus\tscore\tpdf\treport\tnotes\n${dataLine}`);
     let out2 = '';
     try {
-      out2 = execFileSync(NODE, [join(ROOT, 'merge-tracker.ts')], {
+      out2 = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts')], {
         encoding: 'utf-8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'],
         env: { ...process.env, CAREER_OPS_TRACKER: t2, CAREER_OPS_ADDITIONS: a2, CAREER_OPS_BATCH_STATE: isolatedBatchStatePath(a2) },
       });
@@ -141,14 +141,14 @@ try {
   // Guard: the source must WRITE the header, from the shared constant. The old
   // guard searched for the literal `num\tdate\tcompany\trole\tstatus` in the
   // source and would now pass vacuously either way, since the labels live in
-  // tracker-parse.ts's TSV_ADDITION_HEADER rather than in a string here.
-  const src = readFileSync(join(ROOT, 'openrouter-runner.ts'), 'utf-8');
-  const importsHeader = /import\s*\{[^}]*\bTSV_ADDITION_HEADER\b[^}]*\}\s*from\s*'\.\/tracker-parse\.ts'/.test(src);
+  // packages/core/src/tracker/tracker-parse.ts's TSV_ADDITION_HEADER rather than in a string here.
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/evaluation/openrouter-runner.ts'), 'utf-8');
+  const importsHeader = /import\s*\{[^}]*\bTSV_ADDITION_HEADER\b[^}]*\}\s*from\s*'[^']*tracker-parse\.ts'/.test(src);
   const writesHeader = /writeFile\(\s*tsvFile\s*,\s*`\$\{TSV_ADDITION_HEADER\}/.test(src);
   if (importsHeader && writesHeader) {
-    pass('openrouter-runner.ts writes the shared header row above the data line');
+    pass('packages/cli/src/commands/evaluation/openrouter-runner.ts writes the shared header row above the data line');
   } else {
-    fail(`openrouter-runner.ts must write TSV_ADDITION_HEADER above the data row (imports=${importsHeader}, writes=${writesHeader})`);
+    fail(`packages/cli/src/commands/evaluation/openrouter-runner.ts must write TSV_ADDITION_HEADER above the data row (imports=${importsHeader}, writes=${writesHeader})`);
   }
 
   // ── Score cell (#3796) ───────────────────────────────────────────────────
@@ -157,7 +157,7 @@ try {
   // built its cell inline instead: a numeric prefix that DISCARDED the
   // denominator, formatted as `X.X/5`, or the empty string when nothing parsed.
   // Both ends were wrong. `Score: 8/10` became `8.0/5`, which satisfies
-  // SCORE_CELL_RE and so merged as a genuine score into stats.ts's averages;
+  // SCORE_CELL_RE and so merged as a genuine score into packages/core/src/insights/stats.ts's averages;
   // an unparseable score became a blank required cell, which merge-tracker
   // refuses outright, skipping the whole evaluation.
   //
@@ -166,7 +166,7 @@ try {
   // would pass no matter what the file actually does.
   const scoreRe = src.match(/result\.match\((\/\(\?:score\|puntuaci\[o[^\]]*\]n\)[^\n]*?)\/i\)/);
   if (!scoreRe) {
-    fail('could not lift the score-extraction regex out of openrouter-runner.ts — this guard is no longer testing the real pattern');
+    fail('could not lift the score-extraction regex out of packages/cli/src/commands/evaluation/openrouter-runner.ts — this guard is no longer testing the real pattern');
   } else {
     const extract = new RegExp(`${scoreRe[1].slice(1)}`, 'i');
     // Report-shaped inputs: what the model actually writes into the markdown.
@@ -227,9 +227,9 @@ try {
   const passesRawCapture = /normalizedTrackerScore\(\s*scoreMatch\s*\?\s*scoreMatch\[1\]\s*:\s*''\s*\)/.test(src);
   const inlineFormat = /toFixed\(1\)\}\/5`\s*:\s*''/.test(src);
   if (usesHelper && passesRawCapture && !inlineFormat) {
-    pass('openrouter-runner.ts passes the unmodified capture to normalizedTrackerScore, with no blank-string fallback');
+    pass('packages/cli/src/commands/evaluation/openrouter-runner.ts passes the unmodified capture to normalizedTrackerScore, with no blank-string fallback');
   } else {
-    fail(`openrouter-runner.ts must hand the shared helper its raw capture (usesHelper=${usesHelper}, passesRawCapture=${passesRawCapture}, inlineFormat still present=${inlineFormat})`);
+    fail(`packages/cli/src/commands/evaluation/openrouter-runner.ts must hand the shared helper its raw capture (usesHelper=${usesHelper}, passesRawCapture=${passesRawCapture}, inlineFormat still present=${inlineFormat})`);
   }
 } finally {
   try { rmSync(work, { recursive: true, force: true }); } catch { /* best effort */ }

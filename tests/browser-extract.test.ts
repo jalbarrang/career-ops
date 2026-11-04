@@ -1,5 +1,5 @@
 // tests/browser-extract.test.ts — unit coverage for the pure logic in
-// browser-extract.ts (config resolution + result normalizers). The Playwright
+// packages/cli/src/commands/scanning/browser-extract.ts (config resolution + result normalizers). The Playwright
 // navigation path is exercised live, not here.
 import { pass, fail, rmSync, ROOT } from './helpers.ts';
 import { join } from 'path';
@@ -10,8 +10,8 @@ import { tmpdir } from 'os';
 console.log('\nbrowser-extract.ts (config + normalizers)');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'browser-extract.ts')).href);
-  const { resolveAtsApi, JD_TEXT_API_ATS } = await import(pathToFileURL(join(ROOT, 'liveness-api.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/scanning/browser-extract.ts')).href);
+  const { resolveAtsApi, JD_TEXT_API_ATS } = await import(pathToFileURL(join(ROOT, 'packages/core/src/liveness/liveness-api.ts')).href);
   const {
     resolveExtractorMode, compactText, normalizeJd, normalizeListing, parseArgs,
     workdayCxsUrl, jdHtmlToText, normalizeWorkdayJob,
@@ -516,7 +516,7 @@ try {
   }
 
   // resolveAtsApi carries a per-ATS timeout for the APIs that need one (Ashby:
-  // 20 s, liveness-api.ts:113). Both real callers pass an explicit 15 s, so
+  // 20 s, packages/core/src/liveness/liveness-api.ts:113). Both real callers pass an explicit 15 s, so
   // without this the dispatch silently shortens Ashby to a budget liveness
   // itself would not accept. Asserted by capturing the abort timer rather than
   // by waiting: fetch is stubbed to fail fast, so nothing here touches the
@@ -628,7 +628,7 @@ try {
   }
 
   // The same posting end to end through fetchJdViaKnownApi, the call
-  // fetch-jd.ts makes. fetch is stubbed, so nothing here touches the network.
+  // packages/cli/src/commands/scanning/fetch-jd.ts makes. fetch is stubbed, so nothing here touches the network.
   /** @type {string[]} */
   const spacedCalls = [];
   let spacedJd = null;

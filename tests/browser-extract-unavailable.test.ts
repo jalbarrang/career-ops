@@ -12,7 +12,7 @@ console.log('\nbrowser-extract.ts (unavailable posting vs unrendered page)');
 
 let browser;
 try {
-  const { jdFailure, normalizeJd, readDom } = await import(pathToFileURL(join(ROOT, 'browser-extract.ts')).href);
+  const { jdFailure, normalizeJd, readDom } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/scanning/browser-extract.ts')).href);
 
   const longJd = 'Responsibilities include analysing product data. '.repeat(10);
 

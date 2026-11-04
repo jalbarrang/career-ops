@@ -14,7 +14,7 @@ const {
   emitLiveOffer,
   filterBlacklistedOffers,
   keepAndMaybeEmit,
-} = await import(pathToFileURL(join(ROOT, 'scan-ats-full.ts')).href);
+} = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/scanning/scan-ats-full.ts')).href);
 
 const job = {
   company: 'Acme',
@@ -142,7 +142,7 @@ function captureStderr(fn) {
 }
 
 {
-  const src = readFileSync(join(ROOT, 'scan-ats-full.ts'), 'utf8');
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/scanning/scan-ats-full.ts'), 'utf8');
   const seedCall = src.includes('keepAndMaybeEmit(job, sourceName, offers, opts.blacklist, opts)');
   const sweepCall = src.includes('keepAndMaybeEmit(job, `${sourceName}-full`, newOffers, blacklist, opts)');
   if (typeof keepAndMaybeEmit === 'function' && seedCall && sweepCall) {

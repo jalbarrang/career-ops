@@ -1,5 +1,5 @@
 // tests/scan-history-doc-parity.test.ts — modes/scan.md must document the
-// scan-history.tsv layout scan.ts actually writes.
+// scan-history.tsv layout packages/core/src/scanning/scan.ts actually writes.
 //
 // modes/scan.md documents the scan-history.tsv column layout an agent-driven
 // scan has to reproduce by hand. It drifted once already: the doc said "nine
@@ -13,7 +13,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { pass, fail, ROOT } from './helpers.ts';
-import { SCAN_HISTORY_COLUMNS } from '../lib/scan-history-columns.ts';
+import { SCAN_HISTORY_COLUMNS } from '../packages/core/src/scanning/scan-history-columns.ts';
 
 const scanMode = readFileSync(join(ROOT, 'modes/scan.md'), 'utf-8');
 

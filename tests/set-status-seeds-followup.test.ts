@@ -1,14 +1,14 @@
 // tests/set-status-seeds-followup.test.ts — the transition into Applied is
 // where the first follow-up gets scheduled (#1430), for every caller (#3459).
 //
-// set-status.ts used to only ANNOUNCE that: it emitted
+// packages/cli/src/commands/tracker/set-status.ts used to only ANNOUNCE that: it emitted
 // `followupSeedCandidate: true` and nothing consumed the flag. The only callers
-// of followup-seed.ts were modes/apply.md and modes/followup.md — agent
+// of packages/core/src/outreach/followup-seed.ts were modes/apply.md and modes/followup.md — agent
 // instructions — so recording an application from the web UI or from this CLI
 // wrote the tracker and the transition ledger correctly and scheduled nothing,
 // silently.
 //
-// Seeding in set-status.ts is what makes that one fix rather than three: #2901
+// Seeding in packages/cli/src/commands/tracker/set-status.ts is what makes that one fix rather than three: #2901
 // converged /api/status onto this script, so the web path inherits it, and so
 // does every future caller that delegates here instead of editing the table.
 //
@@ -40,7 +40,7 @@ function sandbox(status = 'Evaluated', notes = 'notes') {
 }
 
 function setStatus(dir, args) {
-  const r = spawnSync(process.execPath, [join(ROOT, 'set-status.ts'), ...args], {
+  const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/tracker/set-status.ts'), ...args], {
     cwd: ROOT,
     encoding: 'utf-8',
     timeout: 30_000,

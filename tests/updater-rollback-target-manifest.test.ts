@@ -28,11 +28,11 @@ import {
   manifestTreeFiles,
   pruneStaleTargetRefs,
   targetRefForBackup,
-} from '../update-system.ts';
+} from '../packages/cli/src/commands/platform/update-system.ts';
 import { fail, makeUpdaterRepo, pass, rmSync } from './helpers.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const updaterSource = readFileSync(join(ROOT, 'update-system.ts'), 'utf8');
+const updaterSource = readFileSync(join(ROOT, 'packages/cli/src/commands/platform/update-system.ts'), 'utf8');
 const protectedUserPaths = [
   'cv.md',
   'data/',
@@ -303,9 +303,9 @@ const manifestBody = (paths) => `[\n${paths.map((path) => `  ${JSON.stringify(pa
  * Write a commit's updater and SYSTEM_PATHS in the given layout.
  *
  * 'module' is the layout since #5554: the real updater beside a
- * lib/update-manifest.ts that lists `paths` and, like the real one, itself.
+ * packages/core/src/platform/update-manifest.ts that lists `paths` and, like the real one, itself.
  * 'legacy' is the layout before it: no module, and the list as the first
- * SYSTEM_PATHS literal in update-system.ts, which is what an older updater's
+ * SYSTEM_PATHS literal in packages/cli/src/commands/platform/update-system.ts, which is what an older updater's
  * manifest looks like to extractArrayFromSource.
  */
 function putManifest(dir, paths, layout = 'module') {
@@ -314,12 +314,12 @@ function putManifest(dir, paths, layout = 'module') {
     if (!declaration.test(updaterSource)) {
       throw new Error('fixture could not locate the SYSTEM_PATHS declaration');
     }
-    put(dir, 'update-system.ts', updaterSource.replace(declaration, `$1${manifestBody(paths)}`));
+    put(dir, 'packages/cli/src/commands/platform/update-system.ts', updaterSource.replace(declaration, `$1${manifestBody(paths)}`));
     rmSync(join(dir, ...MANIFEST_MODULE.split('/')), { force: true });
     return;
   }
   const listed = paths.includes(MANIFEST_MODULE) ? paths : [...paths, MANIFEST_MODULE];
-  put(dir, 'update-system.ts', updaterSource);
+  put(dir, 'packages/cli/src/commands/platform/update-system.ts', updaterSource);
   put(dir, MANIFEST_MODULE, `export const SYSTEM_PATHS = ${manifestBody(listed)}\nObject.freeze(SYSTEM_PATHS);\n`);
 }
 
@@ -339,7 +339,7 @@ function rollbackChildEnv() {
 }
 
 function runRollback(dir, timeout = 30_000) {
-  return spawnSync(process.execPath, ['update-system.ts', 'rollback'], {
+  return spawnSync(process.execPath, ['packages/cli/src/commands/platform/update-system.ts', 'rollback'], {
     cwd: dir,
     encoding: 'utf8',
     timeout,
@@ -359,7 +359,7 @@ function seedRollbackRepo(prefix, { paired, fetchTarget, targetChangesPreExistin
     ? 'backup-pre-update-1.2.3-20260907T120000Z'
     : 'backup-pre-update-1.2.3-20260907T130000Z';
   const commonManifest = [
-    'update-system.ts',
+    'packages/cli/src/commands/platform/update-system.ts',
     'system/root.txt',
     'system/nested/',
     'writing-samples/README.md',
@@ -575,13 +575,13 @@ function readMaybe(path) {
   const { dir, g } = fixture;
   const backup = 'backup-pre-update-1.2.3-20260907T140000Z';
   const backupManifest = [
-    'update-system.ts',
+    'packages/cli/src/commands/platform/update-system.ts',
     'shape-dir/',
     'shape-leaf',
     'CaseExisting.ts',
   ];
   const targetManifest = [
-    'update-system.ts',
+    'packages/cli/src/commands/platform/update-system.ts',
     'shape-dir',
     'shape-leaf/new.txt',
     'caseexisting.ts',
@@ -651,13 +651,13 @@ function readMaybe(path) {
   const { dir, g } = fixture;
   const backup = 'backup-pre-update-1.2.3-20260907T150000Z';
   try {
-    putManifest(dir, ['update-system.ts', 'deep-shape/']);
+    putManifest(dir, ['packages/cli/src/commands/platform/update-system.ts', 'deep-shape/']);
     put(dir, 'deep-shape/nested/deeper/backup.txt', 'backup deep child\n');
     g('add', '-A');
     g('commit', '-qm', 'backup deep shape state');
     g('branch', backup, g('rev-parse', 'HEAD'));
 
-    putManifest(dir, ['update-system.ts', 'deep-shape']);
+    putManifest(dir, ['packages/cli/src/commands/platform/update-system.ts', 'deep-shape']);
     rmSync(join(dir, 'deep-shape'), { recursive: true, force: true });
     put(dir, 'deep-shape', 'target file\n');
     g('add', '-A');
@@ -1137,9 +1137,9 @@ function readMaybe(path) {
 
 // ── 19. Real CLI: a backup from before #5554 rolls back from the module layout ──
 //    The first update to the module layout leaves a backup whose manifest is
-//    in its update-system.ts and a target whose manifest is in
+//    in its packages/cli/src/commands/platform/update-system.ts and a target whose manifest is in
 //    lib/update-manifest.ts. Each must be read from its own file: the backup
-//    from update-system.ts (no "backup manifest is unavailable" fallback),
+//    from packages/cli/src/commands/platform/update-system.ts (no "backup manifest is unavailable" fallback),
 //    the target from the module, which lists itself, so the module is a
 //    target-only file and goes away with the rest of the update.
 {
@@ -1171,13 +1171,13 @@ function readMaybe(path) {
     );
     check(
       !output.includes('backup manifest is unavailable') && !output.includes('paired target is missing or unavailable'),
-      "both manifests were read: the backup's from update-system.ts, the target's from the module",
+      "both manifests were read: the backup's from packages/cli/src/commands/platform/update-system.ts, the target's from the module",
       `rollback fell back on a manifest: ${JSON.stringify(output)}`,
     );
     check(
       readMaybe(join(dir, 'system/root.txt')) === 'backup root\n'
         && readMaybe(join(dir, 'system/nested/keep.txt')) === 'backup nested\n'
-        && readMaybe(join(dir, 'update-system.ts')) === g('show', `${backupCommit}:update-system.ts`) + '\n',
+        && readMaybe(join(dir, 'packages/cli/src/commands/platform/update-system.ts')) === g('show', `${backupCommit}:packages/cli/src/commands/platform/update-system.ts`) + '\n',
       "rollback restores the backup's system files, its legacy updater included",
       'rollback did not restore the legacy backup state',
     );
@@ -1209,7 +1209,7 @@ function readMaybe(path) {
     const output = outputOf(result);
     check(
       result.status !== 0 && output.includes(`git checkout HEAD -- ${MANIFEST_MODULE}`),
-      'rollback without lib/update-manifest.ts fails closed and names the restore command',
+      'rollback without packages/core/src/platform/update-manifest.ts fails closed and names the restore command',
       `rollback without the local manifest: status ${result.status}, output ${JSON.stringify(output)}`,
     );
     check(
@@ -1225,7 +1225,7 @@ function readMaybe(path) {
 // ── 20b. Real CLI: on a HEAD from before #5554 the hint restores the updater ──
 //    A failed first upgrade can leave the new updater on disk over a HEAD that
 //    has no lib/update-manifest.ts. Checking that file out of HEAD would fail,
-//    so the hint names update-system.ts, whose HEAD copy holds the full list.
+//    so the hint names packages/cli/src/commands/platform/update-system.ts, whose HEAD copy holds the full list.
 {
   const fixture = seedRollbackRepo('co-rollback-pre-split-head-', {
     paired: true,
@@ -1233,15 +1233,15 @@ function readMaybe(path) {
   });
   const { dir, g } = fixture;
   try {
-    putManifest(dir, ['update-system.ts', 'system/root.txt'], 'legacy');
+    putManifest(dir, ['packages/cli/src/commands/platform/update-system.ts', 'system/root.txt'], 'legacy');
     g('add', '-A');
     g('commit', '-qm', 'pre-split HEAD');
-    put(dir, 'update-system.ts', updaterSource);
+    put(dir, 'packages/cli/src/commands/platform/update-system.ts', updaterSource);
     const result = runRollback(dir);
     const output = outputOf(result);
     check(
       result.status !== 0
-        && output.includes('git checkout HEAD -- update-system.ts')
+        && output.includes('git checkout HEAD -- packages/cli/src/commands/platform/update-system.ts')
         && !output.includes(`git checkout HEAD -- ${MANIFEST_MODULE}`),
       'on a pre-split HEAD, rollback names the updater to restore, not the missing module',
       `pre-split HEAD rollback hint: status ${result.status}, output ${JSON.stringify(output)}`,

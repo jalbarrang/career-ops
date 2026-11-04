@@ -1,10 +1,10 @@
-// tests/normalize-tabs.test.ts — normalize-statuses.ts must normalize a
+// tests/normalize-tabs.test.ts — packages/cli/src/commands/tracker/normalize-statuses.ts must normalize a
 // legacy tab-delimited tracker row in place, keeping its layout.
 //
 // The row loop called parseTrackerRow without { allowTabs: true } and rebuilt
 // with line.split('|'), so a tab-layout tracker was silently skipped: its
-// non-canonical statuses were never normalized. set-status.ts and
-// mark-pdf-ready.ts already opted into the tab-aware parser; this pins the
+// non-canonical statuses were never normalized. packages/cli/src/commands/tracker/set-status.ts and
+// packages/cli/src/commands/tracker/mark-pdf-ready.ts already opted into the tab-aware parser; this pins the
 // same for normalize, and pins that a tab row stays tab-delimited on the way
 // out (a pipe-only writer must not migrate the layout as a side effect).
 import { test } from 'node:test';
@@ -29,7 +29,7 @@ test('a tab-layout tracker normalizes in place and keeps its layout', () => {
     const pipeRow = '| 3 | 2026-01-05 | PipeCo | Engineer | 4/5 | applied | ❌ | — | seed |';
     writeFileSync(apps, HEADER + tabRow + '\n' + pipeRow + '\n');
 
-    const r = spawnSync(process.execPath, [join(ROOT, 'normalize-statuses.ts')], {
+    const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/tracker/normalize-statuses.ts')], {
       cwd: ROOT,
       encoding: 'utf-8',
       timeout: 60_000,

@@ -10,7 +10,7 @@
 // indent) without coupling the test to GitHub's issue-form or workflow schemas.
 //
 // Parsed with yaml.load — the same call every non-.github/ consumer uses
-// (scan.ts: `const parseYaml = yaml.load`), so a multi-document file that would
+// (packages/core/src/scanning/scan.ts: `const parseYaml = yaml.load`), so a multi-document file that would
 // throw in the runtime ("expected a single document") fails here too. .github/
 // YAML is read by GitHub's own issue-form / workflow parsers, not by this repo's
 // code, so it is parsed with loadAll instead — a multi-document stream there is

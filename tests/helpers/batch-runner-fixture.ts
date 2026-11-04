@@ -6,7 +6,7 @@
 // gives every suite its own time budget.
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, chmodSync } from 'node:fs';
-import { join, delimiter } from 'node:path';
+import { join, delimiter, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { getBash, rmSync } from '../helpers.ts';
 
@@ -33,7 +33,9 @@ export function runBatch({ offers, args = [], src = SRC, rateLimitFirst = true }
     chmodSync(join(batchDir, 'batch-runner.sh'), 0o755);
     writeFileSync(join(batchDir, 'batch-prompt.md'), 'Fixture prompt for {{URL}}\n');
     writeFileSync(join(batchDir, 'batch-input.tsv'), ['id\turl\tsource\tnotes', ...Array.from({ length: offers }, (_, i) => `${i + 1}\thttps://example.com/${i + 1}\tfixture\t-`)].join('\n') + '\n');
-    writeFileSync(join(dir, 'reserve-report-num.ts'), [
+    const reserveScript = join(dir, 'packages/cli/src/commands/tracker/reserve-report-num.ts');
+    mkdirSync(dirname(reserveScript), { recursive: true });
+    writeFileSync(reserveScript, [
       "import { readFileSync, writeFileSync, existsSync } from 'node:fs';",
       "if (!process.argv.includes('--release')) {",
       "  const n = (existsSync('counter.txt') ? parseInt(readFileSync('counter.txt', 'utf8'), 10) : 0) + 1;",
@@ -41,7 +43,17 @@ export function runBatch({ offers, args = [], src = SRC, rateLimitFirst = true }
       "  console.log(String(n).padStart(3, '0'));",
       "}",
     ].join('\n') + '\n');
-    for (const script of ['merge-tracker', 'reconcile-pipeline', 'verify-pipeline']) writeFileSync(join(dir, `${script}.ts`), '');
+    // The runner calls each helper through its new package path.
+    const helperScripts = [
+      'packages/cli/src/commands/tracker/merge-tracker.ts',
+      'packages/cli/src/commands/pipeline/reconcile-pipeline.ts',
+      'packages/cli/src/commands/platform/verify-pipeline.ts',
+    ];
+    for (const rel of helperScripts) {
+      const target = join(dir, rel);
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, '');
+    }
     writeFileSync(join(binDir, 'curl'), '#!/usr/bin/env bash\nexit 1\n');
     writeFileSync(join(binDir, 'claude'), [
       '#!/usr/bin/env bash',

@@ -25,7 +25,7 @@ try {
   ];
   for (const item of cases) {
     writeFileSync(followups, item.content);
-    const result = spawnSync(NODE, [join(ROOT, 'followup-seed.ts'), ...item.args, '--json'], {
+    const result = spawnSync(NODE, [join(ROOT, 'packages/core/src/outreach/followup-seed.ts'), ...item.args, '--json'], {
       encoding: 'utf8', timeout: 10000,
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_DATA_DIR: dir,
         CAREER_OPS_TRACKER: tracker, CAREER_OPS_FOLLOWUPS: followups, CAREER_OPS_PROFILE: profile },

@@ -1,4 +1,4 @@
-// #5198: followup-seed.ts had two failWith call sites, and only the post-parse
+// #5198: packages/core/src/outreach/followup-seed.ts had two failWith call sites, and only the post-parse
 // one read the parsed `opts.json`; the parse-failure site already read the raw
 // argv. The two disagree whenever `--json` is consumed as another flag's value:
 // `--date --json` leaves opts.json false even though the caller plainly asked
@@ -13,12 +13,12 @@ import { mkdtempSync } from 'fs';
 import { pass, fail, ROOT, rmSync } from './helpers.ts';
 
 const NODE = process.execPath;
-const SCRIPT = join(ROOT, 'followup-seed.ts');
+const SCRIPT = join(ROOT, 'packages/core/src/outreach/followup-seed.ts');
 
 // A throwaway sandbox: the invalid-date error is raised before any tracker is
 // opened, and pointing every path at a temp dir keeps the real workspace out of
 // the way. CAREER_OPS_ROOT and CAREER_OPS_PROFILE are pinned for the same
-// reason tests/helpers.ts blanks CAREER_OPS_TRACKER: followup-seed.ts resolves
+// reason tests/helpers.ts blanks CAREER_OPS_TRACKER: packages/core/src/outreach/followup-seed.ts resolves
 // the data root at module load (getCareerOpsRoot, line 88), so a developer whose
 // shell already exports one would have this child read their real data root and
 // profile. Pinning ROOT also outranks CAREER_OPS_DATA_DIR, the other alias that

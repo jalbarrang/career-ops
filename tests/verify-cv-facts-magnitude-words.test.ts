@@ -1,7 +1,7 @@
 // tests/verify-cv-facts-magnitude-words.test.ts — a magnitude written out as a
 // word has to count as part of the number.
 //
-// verify-cv-facts.ts reads a number together with the magnitude that follows it,
+// packages/cli/src/commands/cv/verify-cv-facts.ts reads a number together with the magnitude that follows it,
 // so "50k users" cannot be produced as evidence for a CV that says "50 users"
 // (#2612). The spelled-out spelling fell through to the modifier window instead,
 // where the magnitude was consumed as an ordinary word and dropped on the floor:
@@ -31,7 +31,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { metricClaims, auditClaims } from '../verify-cv-facts.ts';
+import { metricClaims, auditClaims } from '../packages/cli/src/commands/cv/verify-cv-facts.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -95,7 +95,7 @@ function run({ source, generated }, args = []) {
   try {
     const r = spawnSync(
       process.execPath,
-      [join(ROOT, 'verify-cv-facts.ts'), join(dataRoot, 'generated.md'), ...args],
+      [join(ROOT, 'packages/cli/src/commands/cv/verify-cv-facts.ts'), join(dataRoot, 'generated.md'), ...args],
       {
         cwd: dataRoot,
         encoding: 'utf-8',

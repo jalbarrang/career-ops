@@ -1,17 +1,17 @@
-// tests/profile-keywords-parity.test.ts — web/src/lib/profile-keywords.ts
-// must agree with providers/_profile-keywords.ts on `target_roles`.
+// tests/profile-keywords-parity.test.ts — apps/web/src/lib/profile-keywords.ts
+// must agree with packages/core/src/scanning/providers/_profile-keywords.ts on `target_roles`.
 //
 // The web app cannot import the core helper at build time: Turbopack's root is
-// pinned to web/ and refuses modules outside it (see web/next.config.ts, and
-// web/src/lib/tracker-table.ts's header for the same constraint). So the web
+// pinned to apps/web/ and refuses modules outside it (see apps/web/next.config.ts, and
+// apps/web/src/lib/tracker-table.ts's header for the same constraint). So the web
 // carries a mirror — and a mirror is exactly the thing that drifts. It already
 // did: the inline version this replaced read `primary` as a string when it is a
 // list, and spread `archetypes` raw when its entries are objects, so the
 // Explorer's profile.yml fallback silently returned [] for every profile the
 // app itself writes.
 //
-// This guard lives in the ROOT suite, not web/tests/, for two reasons:
-//   1. web-ci.yml runs `bun install --frozen-lockfile` inside web/ only. Importing the core module
+// This guard lives in the ROOT suite, not apps/web/tests/, for two reasons:
+//   1. web-ci.yml runs `bun install --frozen-lockfile` inside apps/web/ only. Importing the core module
 //      resolves js-yaml from the repo root's node_modules, which does not exist
 //      there — the assertion cannot run on that side of the boundary at all.
 //   2. .github/workflows/test.yml runs test-all.ts on every PR and is a
@@ -27,22 +27,22 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import * as yaml from 'js-yaml';
-import { profileTargetKeywords as core } from '../providers/_profile-keywords.ts';
+import { profileTargetKeywords as core } from '../packages/core/src/scanning/providers/_profile-keywords.ts';
 
 console.log('\nprofile-keywords — web mirror vs core helper');
 
-// web/ is NOT in update-system.ts's SYSTEM_PATHS but tests/ is, so this file
-// ships to installs whose checkout has no web/ at all — and a static import
+// apps/web/ is NOT in packages/cli/src/commands/platform/update-system.ts's SYSTEM_PATHS but tests/ is, so this file
+// ships to installs whose checkout has no apps/web/ at all — and a static import
 // cannot be skipped, so it turns a core-only install into a permanent failure
 // (#1675 / #1677). Three branches, as in test-all.ts's #2666 mirror-parity
-// freeze: an absent web/ is a real absence, but a mirror missing under a
-// present web/ is a move, and a skip is how a parity freeze quietly stops
+// freeze: an absent apps/web/ is a real absence, but a mirror missing under a
+// present apps/web/ is a move, and a skip is how a parity freeze quietly stops
 // guarding.
-const WEB_MIRROR = join(ROOT, 'web', 'src', 'lib', 'profile-keywords.ts');
-if (!existsSync(join(ROOT, 'web', 'src'))) {
-  warn('web/ not present in this checkout — skipping the profile-keywords parity check');
+const WEB_MIRROR = join(ROOT, 'apps/web', 'src', 'lib', 'profile-keywords.ts');
+if (!existsSync(join(ROOT, 'apps/web', 'src'))) {
+  warn('apps/web/ not present in this checkout — skipping the profile-keywords parity check');
 } else if (!existsSync(WEB_MIRROR)) {
-  fail('web/ exists but web/src/lib/profile-keywords.ts is missing — the parity check cannot verify (moved?)');
+  fail('apps/web/ exists but apps/web/src/lib/profile-keywords.ts is missing — the parity check cannot verify (moved?)');
 } else {
   const { profileTargetKeywords: web } = await import(pathToFileURL(WEB_MIRROR).href);
 

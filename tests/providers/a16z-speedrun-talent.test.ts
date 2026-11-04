@@ -1,13 +1,13 @@
 // tests/providers/a16z-speedrun-talent.test.ts
 import { pass, fail, ROOT } from '../helpers.ts';
-import { fetchJsonWithRetry } from '../../providers/_http.ts';
+import { fetchJsonWithRetry } from '../../packages/core/src/scanning/providers/_http.ts';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 
 console.log('\nProvider — a16z-speedrun-talent');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/a16z-speedrun-talent.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/a16z-speedrun-talent.ts')).href);
   const provider = mod.default;
   const { normalizeSpeedrunJob } = mod;
 

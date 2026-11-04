@@ -1,6 +1,6 @@
 // tests/providers/ats-ssrf-hardening.test.ts — moved verbatim from test-all.ts (#1440).
 // _http.ts used to default to redirect:'follow' (it now defaults to
-// redirect:'error', see providers/_http.ts), so a server-side redirect from
+// redirect:'error', see packages/core/src/scanning/providers/_http.ts), so a server-side redirect from
 // any of these ATS APIs to an internal address was an SSRF vector. Every other
 // GET provider passes redirect:'error' explicitly; these two were missing it.
 // (workday's redirect:'error' coverage lives in its own "Provider — workday"
@@ -12,8 +12,8 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — SSRF redirect hardening (lever / ashby)');
 
 try {
-  const lever = (await import(pathToFileURL(join(ROOT, 'providers/lever.ts')).href)).default;
-  const ashby = (await import(pathToFileURL(join(ROOT, 'providers/ashby.ts')).href)).default;
+  const lever = (await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/lever.ts')).href)).default;
+  const ashby = (await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/ashby.ts')).href)).default;
 
   // Each instance must hit its own host with redirect:'error' — a wrong host
   // silently returns another tenant's (or no) postings instead of erroring.

@@ -10,13 +10,13 @@
 import { pass, fail, NODE, ROOT } from './helpers.ts';
 import { execFileSync } from 'child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'fs';
-import { sectionState, SECTIONS } from '../lib/personalization.ts';
+import { sectionState, SECTIONS } from '../packages/core/src/profile/personalization.ts';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
 console.log('\ndoctor.ts — unfilled personalization templates');
 
-const DOCTOR = join(ROOT, 'doctor.ts');
+const DOCTOR = join(ROOT, 'packages/cli/src/commands/platform/doctor.ts');
 const dirs = [];
 
 function runDoctor(cwd, args = []) {

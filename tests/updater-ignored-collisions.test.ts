@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { pass, fail, hermeticGitRunner, rmSync } from './helpers.ts';
-import { locallyModifiedSystemFiles, backupSystemFiles } from '../update-system.ts';
+import { locallyModifiedSystemFiles, backupSystemFiles } from '../packages/cli/src/commands/platform/update-system.ts';
 
 // Exercise all Git ignore sources; global ignores are scoped to the fixture.
 for (const ignoreSource of ['gitignore', 'info-exclude', 'global-exclude']) {

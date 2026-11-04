@@ -4,7 +4,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — taleo');
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/taleo.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/taleo.ts')).href);
   const provider = mod.default;
   if (provider.id === 'taleo') pass('taleo.id is "taleo"'); else fail('wrong provider id');
   const url = 'https://example.taleo.net/careersection/demo/jobsearch.ftl?lang=en';

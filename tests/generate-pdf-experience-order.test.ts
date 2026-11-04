@@ -12,8 +12,8 @@
 
 import { existsSync, readFileSync } from 'fs';
 import { dirname, join, relative } from 'path';
-import { validateCvExperienceOrder } from '../cv-experience-order.ts';
-import { listTemplates } from '../cv-templates.ts';
+import { validateCvExperienceOrder } from '../packages/core/src/cv/cv-experience-order.ts';
+import { listTemplates } from '../packages/cli/src/commands/cv/cv-templates.ts';
 import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\n📄 generate-pdf: experience ordering guard');
@@ -273,7 +273,7 @@ function fromPartial(path, periods) {
   return `<html><body><h2>Work Experience</h2>${jobs.join('\n')}</body></html>`;
 }
 
-// The sections/experience.html beside each CV template, where build-cv-html.ts
+// The sections/experience.html beside each CV template, where packages/cli/src/commands/cv/build-cv-html.ts
 // looks for it.
 let partials = [];
 try {

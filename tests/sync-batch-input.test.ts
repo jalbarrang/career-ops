@@ -1,6 +1,6 @@
 // tests/sync-batch-input.test.ts — pipeline.md "Pending" -> batch-input.tsv (#3391).
 //
-// Covers the parser contract this script mirrors from reconcile-pipeline.ts
+// Covers the parser contract this script mirrors from packages/cli/src/commands/pipeline/reconcile-pipeline.ts
 // (localized section headers, variable-width rows, labeled segments), the
 // dedupe against already-queued/processed URLs, and the batch row format.
 //
@@ -15,11 +15,11 @@ import { mkdtempSync, rmSync, realpathSync, existsSync, writeFileSync } from 'fs
 console.log('\nsync-batch-input — pipeline "Pending" -> batch-input.tsv');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'sync-batch-input.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/pipeline/sync-batch-input.ts')).href);
   const { parsePending, urlsFromTsv, maxTsvId, planBatchRows, buildNotes, lineUrl, lineCompany, extractLabels, isSafePublicHttpUrl } = mod;
   const check = (label, cond) => (cond ? pass(label) : fail(label));
 
-  // ── section-header matching (lib/pipeline-sections.ts, shared with reconcile-pipeline) ──
+  // ── section-header matching (packages/core/src/pipeline/pipeline-sections.ts, shared with reconcile-pipeline) ──
   const pendingUnder = (heading) => parsePending(`${heading}\n- [ ] https://example.com/h | Acme | Role\n`).length === 1;
   check('English header is recognised', pendingUnder('## Pending'));
   check('Spanish header is recognised', pendingUnder('## Pendientes'));
@@ -151,7 +151,7 @@ try {
   // ── argValue() CLI validation ──
   function runCli(args, extraEnv = {}) {
     try {
-      const stdout = execSync(`node "${join(ROOT, 'sync-batch-input.ts')}" ${args}`, {
+      const stdout = execSync(`node "${join(ROOT, 'packages/cli/src/commands/pipeline/sync-batch-input.ts')}" ${args}`, {
         cwd: ROOT,
         encoding: 'utf-8',
         timeout: 15000,
@@ -194,7 +194,7 @@ try {
   // When CAREER_OPS_ROOT points outside the checkout, --input and --state
   // fall back to CHECKOUT_ROOT (the script's own directory), so the synced
   // batch files stay where batch-runner.sh reads them.  --pipeline still
-  // resolves against CAREER_OPS, which is what scan.ts writes to.
+  // resolves against CAREER_OPS, which is what packages/core/src/scanning/scan.ts writes to.
   const extDataRootTmp = realpathSync(mkdtempSync(join(SANDBOX_DATA_ROOT, 'ext-data-root-')));
   try {
     const extPipeline = join(extDataRootTmp, 'pipeline.md');

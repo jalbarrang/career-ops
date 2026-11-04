@@ -18,7 +18,7 @@ Node.js (`tests/helpers.ts`).
 - `run-discovered-child.ts` — not a suite. `test-all.ts` starts it once per
   discovered suite when suites run in parallel (see "Parallel runs" below).
 - `providers/{name}.test.ts` — one file per scanner provider (see
-  [providers/ADDING_A_PROVIDER.md](../providers/ADDING_A_PROVIDER.md) for the
+  [packages/core/src/scanning/providers/ADDING_A_PROVIDER.md](../providers/ADDING_A_PROVIDER.md) for the
   test pattern), plus shared cross-provider tests such as
   `ats-ssrf-hardening.test.ts`.
   Underscore-prefixed files (e.g. `_html-entities.test.ts`) test shared
@@ -107,8 +107,8 @@ running after 600 others in one:
   finds, section 2 copies the tree, and several suites walk it. Put fixtures
   under `tmpdir()`. One that has to sit inside the checkout (a script that
   must resolve `node_modules`, a directory git must not know) goes in the
-  repository root under `SCRATCH_PREFIX` from `lib/scratch-dirs.ts`: the
-  shared walker (`lib/walk-tree.ts`) skips that prefix and `.gitignore`
+  repository root under `SCRATCH_PREFIX` from `packages/core/src/kernel/scratch-dirs.ts`: the
+  shared walker (`packages/core/src/kernel/walk-tree.ts`) skips that prefix and `.gitignore`
   covers it. `scratch-dirs.test.ts` fails a `mkdtempSync(join(ROOT, …))`
   that does not carry it. A file the real scripts read, such as the
   `.career-ops-data` marker, is never a fixture: see "The suite's data root"

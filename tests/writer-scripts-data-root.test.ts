@@ -5,12 +5,12 @@
 // Those covered readers. These two write, and each had its own spelling of the
 // bug:
 //
-//   set-status.ts    `const CAREER_OPS = dirname(fileURLToPath(...))` then
+//   packages/cli/src/commands/tracker/set-status.ts    `const CAREER_OPS = dirname(fileURLToPath(...))` then
 //                     `resolveTrackerPath(CAREER_OPS)` — the exact constant the
 //                     sibling suite's header calls out, still present in a writer.
 //                     Failed with "No tracker found at <CHECKOUT>/applications.md".
 //
-//   generate-pdf.ts  disagreed with ITSELF: line 49 derived the tracker from
+//   packages/cli/src/commands/cv/generate-pdf.ts  disagreed with ITSELF: line 49 derived the tracker from
 //                     getCareerOpsRoot(), while refreshRootCache() derived the
 //                     containment boundary from __dirname. Every path under the
 //                     real data root then read as an escape and the PDF was
@@ -35,7 +35,7 @@ import { describeSpawn } from './helpers/describe-spawn.ts';
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
 function fixture() {
-  // realpathSync because generate-pdf.ts compares a canonical workspace root
+  // realpathSync because packages/cli/src/commands/cv/generate-pdf.ts compares a canonical workspace root
   // against the paths it is handed. On macOS the temp dir is reached through a
   // symlink (/tmp -> /private/tmp), so a lexical fixture path would be reported
   // as outside its own workspace and the test would fail for a reason that has
@@ -82,7 +82,7 @@ const cleanup = (f) => {
 test('set-status finds the tracker under the configured data root', () => {
   const f = fixture();
   try {
-    const r = run('set-status.ts', ['1', 'Interview', '--note', 'data-root check'], f);
+    const r = run('packages/cli/src/commands/tracker/set-status.ts', ['1', 'Interview', '--note', 'data-root check'], f);
     assert.doesNotMatch(r.all, /No tracker found/i,
       `it looked in the checkout, not the data root:\n${r.all.slice(0, 400)}`);
   } finally { cleanup(f); }
@@ -91,7 +91,7 @@ test('set-status finds the tracker under the configured data root', () => {
 test('set-status writes the new status into the data-root tracker', () => {
   const f = fixture();
   try {
-    run('set-status.ts', ['1', 'Interview', '--note', 'data-root check'], f);
+    run('packages/cli/src/commands/tracker/set-status.ts', ['1', 'Interview', '--note', 'data-root check'], f);
     const tracker = readFileSync(join(f.dataRoot, 'data', 'applications.md'), 'utf-8');
     assert.match(tracker, /\|\s*Interview\s*\|/,
       `the status never reached the data-root tracker:\n${tracker}`);
@@ -102,7 +102,7 @@ test('set-status writes the new status into the data-root tracker', () => {
 test('set-status does not create a tracker in the checkout or the cwd', () => {
   const f = fixture();
   try {
-    run('set-status.ts', ['1', 'Interview'], f);
+    run('packages/cli/src/commands/tracker/set-status.ts', ['1', 'Interview'], f);
     assert.ok(!existsSync(join(f.decoyCwd, 'applications.md')), 'wrote a tracker into the cwd');
     assert.ok(!existsSync(join(f.decoyCwd, 'data', 'applications.md')), 'wrote data/ into the cwd');
   } finally { cleanup(f); }
@@ -111,16 +111,16 @@ test('set-status does not create a tracker in the checkout or the cwd', () => {
 test('generate-pdf does not treat the data root as outside its workspace', () => {
   const f = fixture();
   try {
-    const r = run('generate-pdf.ts', [join(f.dataRoot, 'output', 'cv.html'), join(f.dataRoot, 'output', 'cv.pdf')], f);
+    const r = run('packages/cli/src/commands/cv/generate-pdf.ts', [join(f.dataRoot, 'output', 'cv.html'), join(f.dataRoot, 'output', 'cv.pdf')], f);
     assert.doesNotMatch(r.all, /Refusing to write the PDF outside the tracker workspace/i,
       `the containment boundary came from the code directory, not the data root:\n${r.all.slice(0, 500)}`);
     assert.doesNotMatch(r.all, /escapes the tracker workspace/i,
       `a path inside the data root was reported as an escape:\n${r.all.slice(0, 500)}`);
 
     // Positive proof that the containment checks actually RAN and passed, not
-    // merely that their message is absent: generate-pdf.ts prints this line
+    // merely that their message is absent: packages/cli/src/commands/cv/generate-pdf.ts prints this line
     // only after assertInsideWorkspace() has cleared the input and the output
-    // (generate-pdf.ts:1325-1335). Without it a child that died earlier would
+    // (packages/cli/src/commands/cv/generate-pdf.ts:1325-1335). Without it a child that died earlier would
     // satisfy both doesNotMatch assertions vacuously. (CodeRabbit, PR #4486.)
     assert.match(r.all, /\u{1F4C4} Input:/u,
       `validation never got far enough to report its input, so the assertions above prove `
@@ -151,27 +151,27 @@ test('generate-pdf does not treat the data root as outside its workspace', () =>
 // specifiers. Small enough to copy; kept explicit so a new import that is not
 // copied fails loudly here instead of silently resolving to the checkout.
 const CLOSURE = {
-  'set-status.ts': [
-    'set-status.ts', 'path-resolver.ts', 'tracker-utils.ts', 'pipeline-lock.ts', 'lib/dir-lock.ts',
-    'lib/yaml-document.ts', 'tracker-parse.ts', 'lib/local-today.ts', 'role-matcher.ts', 'templates/states.yml',
-    // lib/status-hooks.ts (#5536): the hooks around a status change, and
-    // session-activity.ts (#4532), the advisory in-progress claim it takes
+  'packages/cli/src/commands/tracker/set-status.ts': [
+    'packages/cli/src/commands/tracker/set-status.ts', 'packages/core/src/kernel/path-resolver.ts', 'packages/core/src/tracker/tracker-utils.ts', 'packages/core/src/kernel/pipeline-lock.ts', 'packages/core/src/kernel/dir-lock.ts',
+    'packages/core/src/kernel/yaml-document.ts', 'packages/core/src/tracker/tracker-parse.ts', 'packages/core/src/kernel/local-today.ts', 'packages/core/src/tracker/role-matcher.ts', 'templates/states.yml',
+    // packages/core/src/tracker/status-hooks.ts (#5536): the hooks around a status change, and
+    // packages/core/src/platform/session-activity.ts (#4532), the advisory in-progress claim it takes
     // before the write.
-    'lib/status-hooks.ts', 'session-activity.ts',
-    // check-jd-archive.ts / jd-capture.ts: the transition into Interview
+    'packages/core/src/tracker/status-hooks.ts', 'packages/core/src/platform/session-activity.ts',
+    // packages/core/src/evaluation/check-jd-archive.ts / packages/core/src/evaluation/jd-capture.ts: the transition into Interview
     // triggers a JD-archive check via these two (#4523), which in turn need
     // their own lib/ helpers.
-    'check-jd-archive.ts', 'jd-capture.ts', 'lib/cli-flags.ts', 'lib/is-main-module.ts',
-    'lib/jd-archive-section.ts',
+    'packages/core/src/evaluation/check-jd-archive.ts', 'packages/core/src/evaluation/jd-capture.ts', 'packages/core/src/kernel/cli-flags.ts', 'packages/core/src/kernel/is-main-module.ts',
+    'packages/core/src/evaluation/jd-archive-section.ts',
     // Runtime assets, not imports: an import scan does not see these and each
     // one only announces itself by crashing the child.
-    'tracker-aliases.json',
+    'packages/core/src/tracker/tracker-aliases.json',
   ],
-  'generate-pdf.ts': [
-    'generate-pdf.ts', 'path-resolver.ts', 'tracker-utils.ts', 'pipeline-lock.ts', 'lib/dir-lock.ts',
-    'tracker-parse.ts', 'theme-style.ts', 'lib/page-format.ts', 'lib/is-main-module.ts', 'lib/yaml-document.ts',
-    'cv-sections-core.ts', 'cv-experience-order.ts',
-    'tracker-aliases.json',
+  'packages/cli/src/commands/cv/generate-pdf.ts': [
+    'packages/cli/src/commands/cv/generate-pdf.ts', 'packages/core/src/kernel/path-resolver.ts', 'packages/core/src/tracker/tracker-utils.ts', 'packages/core/src/kernel/pipeline-lock.ts', 'packages/core/src/kernel/dir-lock.ts',
+    'packages/core/src/tracker/tracker-parse.ts', 'packages/cli/src/commands/cv/theme-style.ts', 'packages/core/src/cv/page-format.ts', 'packages/core/src/kernel/is-main-module.ts', 'packages/core/src/kernel/yaml-document.ts',
+    'packages/core/src/cv/cv-sections-core.ts', 'packages/core/src/cv/cv-experience-order.ts',
+    'packages/core/src/tracker/tracker-aliases.json',
   ],
 };
 
@@ -179,12 +179,20 @@ function markerFixture(script) {
   const dir = realpathSync(mkdtempSync(join(tmpdir(), 'career-ops-marker-')));
   const codeRoot = join(dir, 'code');
   const dataRoot = join(dir, 'data');
-  for (const sub of ['lib', 'templates']) mkdirSync(join(codeRoot, sub), { recursive: true });
+  mkdirSync(join(codeRoot, 'templates'), { recursive: true });
   mkdirSync(join(dataRoot, 'data'), { recursive: true });
   mkdirSync(join(dataRoot, 'output'), { recursive: true });
 
-  for (const file of CLOSURE[script]) copyFileSync(join(ROOT, file), join(codeRoot, file));
-  // generate-pdf.ts imports playwright at module scope and tracker-utils.ts
+  for (const file of CLOSURE[script]) {
+    mkdirSync(dirname(join(codeRoot, file)), { recursive: true });
+    copyFileSync(join(ROOT, file), join(codeRoot, file));
+  }
+  // Every script in the closure resolves the checkout through repo-root.ts.
+  for (const file of ['packages/core/src/kernel/repo-root.ts']) {
+    mkdirSync(dirname(join(codeRoot, file)), { recursive: true });
+    copyFileSync(join(ROOT, file), join(codeRoot, file));
+  }
+  // packages/cli/src/commands/cv/generate-pdf.ts imports playwright at module scope and packages/core/src/tracker/tracker-utils.ts
   // imports js-yaml, so without this the child dies before it can print anything
   // and the assertions say nothing. linkNodeModules() rather than a raw
   // symlinkSync: it uses a junction on Windows, where a 'dir' link needs a
@@ -230,12 +238,12 @@ function runFromCodeRoot(f, script, args) {
 const markerCleanup = (f) => rmSync(f.dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 
 test('set-status honours a .career-ops-data marker, not just CAREER_OPS_ROOT', (t) => {
-  const f = markerFixture('set-status.ts');
-  // set-status reaches js-yaml through tracker-utils.ts, so with no linked tree
+  const f = markerFixture('packages/cli/src/commands/tracker/set-status.ts');
+  // set-status reaches js-yaml through packages/core/src/tracker/tracker-utils.ts, so with no linked tree
   // the child dies at module load and every assertion below passes vacuously.
   if (f.depsReason) { markerCleanup(f); return t.skip(f.depsReason); }
   try {
-    const r = runFromCodeRoot(f, 'set-status.ts', ['1', 'Interview', '--note', 'marker check']);
+    const r = runFromCodeRoot(f, 'packages/cli/src/commands/tracker/set-status.ts', ['1', 'Interview', '--note', 'marker check']);
     // Positive first. Every assertion below is an ABSENCE, and a child that
     // died at module load satisfies all of them while proving nothing -- the
     // same vacuity CodeRabbit caught in the generate-pdf case on #4486.
@@ -248,11 +256,11 @@ test('set-status honours a .career-ops-data marker, not just CAREER_OPS_ROOT', (
 });
 
 test('generate-pdf honours a .career-ops-data marker for its workspace boundary', (t) => {
-  const f = markerFixture('generate-pdf.ts');
+  const f = markerFixture('packages/cli/src/commands/cv/generate-pdf.ts');
   // generate-pdf imports playwright at module scope, same vacuity.
   if (f.depsReason) { markerCleanup(f); return t.skip(f.depsReason); }
   try {
-    const r = runFromCodeRoot(f, 'generate-pdf.ts',
+    const r = runFromCodeRoot(f, 'packages/cli/src/commands/cv/generate-pdf.ts',
       [join(f.dataRoot, 'output', 'cv.html'), join(f.dataRoot, 'output', 'cv.pdf')]);
     assert.doesNotMatch(r.all, /escapes the tracker workspace/i,
       `a path inside the marked data root was reported as an escape:\n${r.all.slice(0, 500)}`);
@@ -266,9 +274,9 @@ test('generate-pdf honours a .career-ops-data marker for its workspace boundary'
 // CAREER_OPS_* variable stays the same. An env-only key kept serving the first
 // data root to every later call in the same process.
 test('generate-pdf follows a .career-ops-data marker that changes mid-process', (t) => {
-  const f = markerFixture('generate-pdf.ts');
+  const f = markerFixture('packages/cli/src/commands/cv/generate-pdf.ts');
   // Same vacuity as the two above, one step further in: the probe imports
-  // generate-pdf.ts from the copied code root, so playwright at module scope
+  // packages/cli/src/commands/cv/generate-pdf.ts from the copied code root, so playwright at module scope
   // kills it before it prints RESULT and the assertion reports a missing line
   // rather than the absent dependency tree.
   if (f.depsReason) { markerCleanup(f); return t.skip(f.depsReason); }
@@ -280,7 +288,7 @@ test('generate-pdf follows a .career-ops-data marker that changes mid-process', 
       import { join } from 'node:path';
       import { pathToFileURL } from 'node:url';
       const [codeRoot, first, moved] = process.argv.slice(1);
-      const { isWorkspaceOutputPath } = await import(pathToFileURL(join(codeRoot, 'generate-pdf.ts')).href);
+      const { isWorkspaceOutputPath } = await import(pathToFileURL(join(codeRoot, 'packages/cli/src/commands/cv/generate-pdf.ts')).href);
       const before = isWorkspaceOutputPath(join(first, 'output', 'cv.pdf'));
       writeFileSync(join(codeRoot, '.career-ops-data'), moved + '\\n');
       const after = isWorkspaceOutputPath(join(moved, 'output', 'cv.pdf'));

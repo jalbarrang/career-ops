@@ -54,9 +54,9 @@ system/user data-contract layers live in [../ARCHITECTURE.md](../ARCHITECTURE.md
 5. **Score**: One global score (1-5), a holistic judgment across 5 dimensions
    with no arithmetic formula; blocks A-H are not averaged (`modes/_shared.md` → Scoring System)
 6. **Report**: Save as `reports/{num}-{company}-{date}.md`
-7. **PDF**: Generate ATS-optimized CV (`generate-pdf.ts`)
+7. **PDF**: Generate ATS-optimized CV (`packages/cli/src/commands/cv/generate-pdf.ts`)
 8. **Track**: New entries via TSV in `batch/tracker-additions/` merged by
-   `merge-tracker.ts`; status updates to existing rows via `set-status.ts`
+   `packages/cli/src/commands/tracker/merge-tracker.ts`; status updates to existing rows via `packages/cli/src/commands/tracker/set-status.ts`
 
 ## Batch Processing
 
@@ -100,12 +100,12 @@ Scripts maintain data consistency:
 
 | Script | Purpose |
 |--------|---------|
-| `merge-tracker.ts` | Merges batch TSV additions into applications.md |
-| `verify-pipeline.ts` | Health check: statuses, duplicates, links |
-| `dedup-tracker.ts` | Removes duplicate entries by company+role |
-| `normalize-statuses.ts` | Maps status aliases to canonical values |
-| `fix-report-links.ts` | Rewrites Report cells that link to a missing file to `—` (previewable, backed up) |
-| `cv-sync-check.ts` | Validates setup consistency |
+| `packages/cli/src/commands/tracker/merge-tracker.ts` | Merges batch TSV additions into applications.md |
+| `packages/cli/src/commands/platform/verify-pipeline.ts` | Health check: statuses, duplicates, links |
+| `packages/cli/src/commands/tracker/dedup-tracker.ts` | Removes duplicate entries by company+role |
+| `packages/cli/src/commands/tracker/normalize-statuses.ts` | Maps status aliases to canonical values |
+| `packages/cli/src/commands/tracker/fix-report-links.ts` | Rewrites Report cells that link to a missing file to `—` (previewable, backed up) |
+| `packages/cli/src/commands/cv/cv-sync-check.ts` | Validates setup consistency |
 
 ## Dashboard TUI
 

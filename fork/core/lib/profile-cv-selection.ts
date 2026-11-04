@@ -7,11 +7,11 @@
  * selection file a user already wrote stays readable.
  */
 import { createHash } from 'node:crypto';
-import { experienceRoles, validateProfile } from './career-profile.ts';
+import { experienceRoles, validateProfile } from '../../../packages/cli/src/commands/profile/career-profile.ts';
 import { validatePayload } from './cv-payload-schema.ts';
 
 // ---------------------------------------------------------------------------
-// Profile shapes this module reads (schema v2 — validation lives in career-profile.ts)
+// Profile shapes this module reads (schema v2 — validation lives in packages/cli/src/commands/profile/career-profile.ts)
 // ---------------------------------------------------------------------------
 
 type ReviewStatus = 'needs_review' | 'verified';

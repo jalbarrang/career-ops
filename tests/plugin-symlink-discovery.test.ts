@@ -5,7 +5,7 @@
 // checkout, and linking that checkout in is the natural way to do it.
 // readdirSync does not follow links, so a symlinked entry reports
 // isDirectory() === false and a bare isDirectory() filter drops it with no
-// warning at all: the plugin never appears in `plugins.ts list` even though
+// warning at all: the plugin never appears in `packages/cli/src/commands/platform/plugins.ts list` even though
 // config/plugins.yml enables it.
 //
 // Discovery is only the first gate. An enabled plugin still has to survive

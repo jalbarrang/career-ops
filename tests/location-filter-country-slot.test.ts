@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildLocationFilter } from '../scan.ts';
+import { buildLocationFilter } from '../packages/core/src/scanning/scan.ts';
 
 const filter = buildLocationFilter({
   always_allow: ['united states'],

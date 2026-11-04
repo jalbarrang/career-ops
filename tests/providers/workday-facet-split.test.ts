@@ -7,8 +7,8 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — workday facet-split');
 
 // Expected jobs.workdayTruncated values, spelled out locally rather than
-// imported from providers/workday.ts: these strings are the module's public
-// contract with scan-ats-full.ts, and a test importing the same constant the
+// imported from packages/core/src/scanning/providers/workday.ts: these strings are the module's public
+// contract with packages/cli/src/commands/scanning/scan-ats-full.ts, and a test importing the same constant the
 // source uses can no longer catch that constant's value drifting by accident.
 const TRANSIENT = 'transient';
 const STRUCTURAL = 'structural';
@@ -111,7 +111,7 @@ const DSG_NESTED_FACETS = [
 ];
 
 try {
-  const workdayModule = await import(pathToFileURL(join(ROOT, 'providers/workday.ts')).href);
+  const workdayModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/workday.ts')).href);
   const workday = workdayModule.default;
   const { trueTotalFromFacets, chooseSplitFacet } = workdayModule;
 
@@ -246,7 +246,7 @@ try {
 // ── workday.fetch() integration ─────────────────────────────────────
 
 try {
-  const workdayModule = await import(pathToFileURL(join(ROOT, 'providers/workday.ts')).href);
+  const workdayModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/workday.ts')).href);
   const workday = workdayModule.default;
 
   const ENTRY = { name: 'Acme', careers_url: 'https://acme.wd1.myworkdayjobs.com/acme' };

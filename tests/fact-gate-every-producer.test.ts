@@ -1,18 +1,18 @@
 // tests/fact-gate-every-producer.test.ts — every path that produces a CV runs
 // the fact gate (#5348).
 //
-// pdf mode ran verify-cv-facts.ts and generate-pdf.ts gated again in code,
+// pdf mode ran packages/cli/src/commands/cv/verify-cv-facts.ts and packages/cli/src/commands/cv/generate-pdf.ts gated again in code,
 // while the latex, latex-tex and text modes, which hand the user an equally
-// sendable CV, ran nothing: generate-latex.ts had no gate and text mode had no
+// sendable CV, ran nothing: packages/cli/src/commands/cv/generate-latex.ts had no gate and text mode had no
 // gate step. This suite enumerates the producers instead of naming them, so a
 // mode or a renderer added later without the gate fails here.
 //
 // Two enumerations:
 //   - modes: every mode file with a step that builds or writes a CV must also
 //     invoke the gate, directly or through a renderer that runs it;
-//   - scripts: every script that renders a PDF must import verify-cv-facts.ts,
+//   - scripts: every script that renders a PDF must import packages/cli/src/commands/cv/verify-cv-facts.ts,
 //     unless it renders something that is not a candidate-facing document.
-// Then generate-latex.ts, the renderer that had no gate, is run for real.
+// Then packages/cli/src/commands/cv/generate-latex.ts, the renderer that had no gate, is run for real.
 //
 // Run:  bun test tests/fact-gate-every-producer.test.ts
 
@@ -23,18 +23,19 @@ import { mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listTree } from '../lib/walk-tree.ts';
+import { listTree } from '../packages/core/src/kernel/walk-tree.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
 // A step that builds or writes a CV. `--preview` and `--test` produce nothing
-// to send.
-const PRODUCER_RE = /bun (?:build-cv-html|build-cv-latex|patch-latex-content)\.ts (?!--preview|--test)|Write to `output\/cv-/;
+// to send. Both spellings count: the CLI entrypoint (`career-ops x`) and the
+// script path older docs/implantations still name.
+const PRODUCER_RE = /(?:\bcareer-ops (?:build-cv-html|build-cv-latex|patch-latex-content)(?![\w-])(?! --(?:preview|test))|\bbun \S*?(?:build-cv-html|build-cv-latex|patch-latex-content)\.ts(?! --(?:preview|test)))|Write to `output\/cv-/;
 // The gate itself, or a renderer that runs it before writing its output.
-const GATE_RE = /bun (?:verify-cv-facts|generate-pdf|generate-latex)\.ts/;
+const GATE_RE = /(?:\bcareer-ops (?:verify-cv-facts|generate-pdf|generate-latex)(?![\w-])|\bbun \S*?(?:verify-cv-facts|generate-pdf|generate-latex)\.ts)/;
 // Renderers that run the gate in code. Asserted below, so this list cannot
 // claim a renderer gates when it does not.
-const GATED_RENDERERS = ['generate-pdf.ts', 'generate-latex.ts', 'generate-cover-letter.ts'];
+const GATED_RENDERERS = ['packages/cli/src/commands/cv/generate-pdf.ts', 'packages/cli/src/commands/cv/generate-latex.ts', 'packages/cli/src/commands/cv/generate-cover-letter.ts'];
 
 // Forward slashes on every platform: relative() gives `modes\pdf.md` on Windows.
 const repoPath = (path) => relative(ROOT, path).split(sep).join('/');
@@ -53,29 +54,35 @@ test('every mode that builds or writes a CV runs the fact gate', () => {
 // Scripts that render a PDF of something that is not a candidate-facing
 // document, each with the reason.
 const NOT_CANDIDATE_DOCUMENTS = new Map([
-  ['archive-posting.ts', 'archives a job posting the candidate is reading, not a document they send'],
-  ['img-to-pdf.ts', 'converts images the user supplies, and writes no text of its own'],
-  ['install-latex-engine.ts', 'installs tectonic; it renders nothing'],
+  ['packages/cli/src/commands/evaluation/archive-posting.ts', 'archives a job posting the candidate is reading, not a document they send'],
+  ['packages/cli/src/commands/cv/img-to-pdf.ts', 'converts images the user supplies, and writes no text of its own'],
+  ['packages/cli/src/commands/cv/install-latex-engine.ts', 'installs tectonic; it renders nothing'],
+  ['packages/core/src/cv/latex-escape.ts', 'escapes LaTeX source; it renders nothing'],
   ['test-all.ts', 'the test runner'],
 ]);
 const RENDERS_PDF_RE = /\.pdf\(|\bpdflatex\b|\btectonic\b|renderHtmlToPdf/;
-const IMPORTS_GATE_RE = /from\s+['"]\.\/verify-cv-facts\.ts['"]|import\(\s*['"]\.\/verify-cv-facts\.ts['"]\s*\)/;
+const IMPORTS_GATE_RE = /from\s+['"][^'"]*verify-cv-facts\.ts['"]|import\(\s*['"][^'"]*verify-cv-facts\.ts['"]\s*\)/;
+
+/** Every tracked TypeScript file under packages/ (the engine's script tree). */
+function engineScripts() {
+  return listTree(join(ROOT, 'packages'), { match: /\.ts$/ }).map((abs) => repoPath(abs));
+}
 
 test('every script that renders a candidate-facing PDF imports the fact gate', () => {
-  const renderers = readdirSync(ROOT)
-    .filter(name => name.endsWith('.ts') && !NOT_CANDIDATE_DOCUMENTS.has(name))
+  const renderers = engineScripts()
+    .filter(name => !NOT_CANDIDATE_DOCUMENTS.has(name))
     .filter(name => RENDERS_PDF_RE.test(readFileSync(join(ROOT, name), 'utf-8')));
   assert.deepEqual([...renderers].sort(), [...GATED_RENDERERS].sort(),
     'a script renders a PDF without being listed as gated or as not a candidate document');
   for (const name of renderers) {
-    assert.match(readFileSync(join(ROOT, name), 'utf-8'), IMPORTS_GATE_RE, `${name} renders a PDF and never imports verify-cv-facts.ts`);
+    assert.match(readFileSync(join(ROOT, name), 'utf-8'), IMPORTS_GATE_RE, `${name} renders a PDF and never imports packages/cli/src/commands/cv/verify-cv-facts.ts`);
   }
   for (const name of NOT_CANDIDATE_DOCUMENTS.keys()) {
     assert.ok(existsSync(join(ROOT, name)), `${name} is exempted but no longer exists; drop it from the list`);
   }
 });
 
-// ── generate-latex.ts, run for real ──────────────────────
+// ── packages/cli/src/commands/cv/generate-latex.ts, run for real ──────────────────────
 
 const CV = `# Jane Doe
 
@@ -112,7 +119,7 @@ function envWithoutPath() {
 }
 
 function runLatex(root, ...args) {
-  const result = spawnSync(process.execPath, [join(ROOT, 'generate-latex.ts'), ...args], {
+  const result = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/cv/generate-latex.ts'), ...args], {
     cwd: root,
     encoding: 'utf-8',
     timeout: 30_000,

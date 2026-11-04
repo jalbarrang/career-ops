@@ -1,5 +1,5 @@
 // tests/providers/cryptocurrencyjobs.test.ts — provider-contract tests for the
-// CryptocurrencyJobs Web3 board RSS provider (providers/cryptocurrencyjobs.ts).
+// CryptocurrencyJobs Web3 board RSS provider (packages/core/src/scanning/providers/cryptocurrencyjobs.ts).
 import { pass, fail, ROOT } from '../helpers.ts';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
@@ -7,8 +7,8 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — cryptocurrencyjobs');
 
 try {
-  const ccj = (await import(pathToFileURL(join(ROOT, 'providers/cryptocurrencyjobs.ts')).href)).default;
-  const { parseCryptocurrencyJobsRss, splitTitle } = await import(pathToFileURL(join(ROOT, 'providers/cryptocurrencyjobs.ts')).href);
+  const ccj = (await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/cryptocurrencyjobs.ts')).href)).default;
+  const { parseCryptocurrencyJobsRss, splitTitle } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/cryptocurrencyjobs.ts')).href);
 
   if (ccj.id === 'cryptocurrencyjobs') pass('cryptocurrencyjobs.id is "cryptocurrencyjobs"');
   else fail(`cryptocurrencyjobs.id is ${JSON.stringify(ccj.id)}`);
@@ -79,7 +79,7 @@ try {
   if (capturedOpts && capturedOpts.redirect === 'error') pass('cryptocurrencyjobs.fetch() passes redirect:"error" (SSRF hardening)');
   else fail(`cryptocurrencyjobs.fetch() should pass redirect:"error", got ${JSON.stringify(capturedOpts)}`);
 
-  // A failed feed fetch must THROW, not return []: scan.ts catches per-target
+  // A failed feed fetch must THROW, not return []: packages/core/src/scanning/scan.ts catches per-target
   // throws and records a failure, while [] reads as "live but empty" — so a
   // dead board never trips portal-health escalation (meituan/tencent contract).
   let threw = null;

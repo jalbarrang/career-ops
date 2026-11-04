@@ -38,7 +38,7 @@ const port = server.address().port;
 const done = new Promise((resolve) => {
   execFile(
     NODE,
-    [join(ROOT, 'ollama-eval.ts'), '--url', `http://127.0.0.1:${port}`, '--no-save', 'Some job description text.'],
+    [join(ROOT, 'packages/cli/src/commands/evaluation/ollama-eval.ts'), '--url', `http://127.0.0.1:${port}`, '--no-save', 'Some job description text.'],
     // num_ctx follows OLLAMA_NUM_CTX since #3920. Pin it so this assertion tests the
     // request plumbing rather than whatever the developer's .env happens to set.
     { timeout: 30000, env: { ...process.env, OLLAMA_NUM_CTX: '32768' } },

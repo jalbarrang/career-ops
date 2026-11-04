@@ -11,7 +11,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { auditClaims, metricClaims, verifyFacts } from '../verify-cv-facts.ts';
+import { auditClaims, metricClaims, verifyFacts } from '../packages/cli/src/commands/cv/verify-cv-facts.ts';
 
 const SOURCE = 'Led a team of 4 engineers. Reduced latency by 15%. Managed a $300K budget. Grew throughput 3x.';
 

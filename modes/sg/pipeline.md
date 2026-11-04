@@ -11,7 +11,7 @@ evaluation via `modes/sg/offer.md` → report + tracker → move to Processed �
 summary table. The notes below are Singapore-specific.
 
 - **Optional — CLI extractor (`scan.extractor: cli` in `config/profile.yml`):**
-  run `bun browser-extract.ts <url>` (`--mode jd`) instead — compact
+  run `career-ops browser-extract <url>` (`--mode jd`) instead — compact
   `{ "url", "title", "text" }`, fewer tokens (portal-dependent). **Fall back
   silently** to Playwright / WebFetch on error or absence.
 

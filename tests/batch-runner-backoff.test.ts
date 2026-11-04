@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import {dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { getBash, rmSync } from './helpers.ts';
 
@@ -155,9 +155,15 @@ test('full runner resumes persisted retries and schedules paused rows only with 
   writeFileSync(join(dir, 'batch/batch-input.tsv'), 'id\turl\tsource\tnotes\n1\thttps://example.com/job\ttest\tfixture\n');
   // Isolate report allocation and post-run integrations; use the real runner's
   // argument parsing, scheduling, state reads/writes, process_offer and backoff.
-  writeFileSync(join(dir, 'reserve-report-num.ts'), 'if (!process.argv.includes("--release")) console.log("001");\n');
-  for (const script of ['merge-tracker', 'reconcile-pipeline', 'verify-pipeline']) {
-    writeFileSync(join(dir, `${script}.ts`), '// No external integrations in this fixture.\n');
+  mkdirSync(dirname(join(dir, 'packages/cli/src/commands/tracker/reserve-report-num.ts')), { recursive: true });
+  writeFileSync(join(dir, 'packages/cli/src/commands/tracker/reserve-report-num.ts'), 'if (!process.argv.includes("--release")) console.log("001");\n');
+  for (const script of [
+    'packages/cli/src/commands/tracker/merge-tracker.ts',
+    'packages/cli/src/commands/pipeline/reconcile-pipeline.ts',
+    'packages/cli/src/commands/platform/verify-pipeline.ts',
+  ]) {
+    mkdirSync(dirname(join(dir, script)), { recursive: true });
+    writeFileSync(join(dir, script), '// No external integrations in this fixture.\n');
   }
   const stateFile = join(dir, 'batch/batch-state.tsv');
   for (const [status, resume, scheduled] of [

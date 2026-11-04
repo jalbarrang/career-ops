@@ -1,5 +1,5 @@
 // tests/playwright-mcp-detection.test.ts — CLI-aware Playwright MCP detection
-// coverage in `doctor.ts`. CLI resolution precedence lives in
+// coverage in `packages/cli/src/commands/platform/doctor.ts`. CLI resolution precedence lives in
 // tests/doctor-cli-resolution.test.ts; this file owns the resolution × MCP
 // coupling. See plan/opencode-json-ignore.md for context.
 // Each scenario uses a fresh --target dir so no MCP config leaks across cases.
@@ -11,7 +11,7 @@ import { join } from 'path';
 
 console.log('\ndoctor.ts — CLI-aware Playwright MCP detection');
 
-const DOCTOR = join(ROOT, 'doctor.ts');
+const DOCTOR = join(ROOT, 'packages/cli/src/commands/platform/doctor.ts');
 
 // Claude Code can supply an MCP server from an installed plugin, which lives
 // under the user's config dir rather than the project root (#2752). Every
@@ -100,7 +100,7 @@ function expectWarn(state, msg) {
 const PLAYWRIGHT_RE = /playwright mcp/i;
 
 try {
-  // Split checkout: MCP config lives beside doctor.ts, while --target points
+  // Split checkout: MCP config lives beside packages/cli/src/commands/platform/doctor.ts, while --target points
   // at the user-data root. The CLI never reads a decoy config in that data root.
   {
     const dataRoot = mkdtempSync(join(tmpdir(), 'co-mcp-split-data-'));

@@ -8,11 +8,12 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { linkNodeModules } from './helpers.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const DOCTOR = join(ROOT, 'doctor.ts');
+const DOCTOR = join(ROOT, 'packages/cli/src/commands/platform/doctor.ts');
 const PLAYWRIGHT_STUB = join(ROOT, 'tests', 'fixtures', 'playwright-stub.ts');
 
 function checkout({ withSetup }) {
   const dir = mkdtempSync(join(tmpdir(), 'doctor-setup-'));
+  mkdirSync(dirname(join(dir, 'package.json')), { recursive: true });
   copyFileSync(join(ROOT, 'package.json'), join(dir, 'package.json'));
   assert.equal(linkNodeModules(dir), null);
   mkdirSync(join(dir, 'modes'));

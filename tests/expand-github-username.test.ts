@@ -2,7 +2,7 @@
 // profile link and reduces it to a bare username before calling the GitHub API.
 //
 // config/profile.example.yml ships `github: "github.com/janesmith"`, and
-// generate-cover-letter.ts renders that value as a link. modes/expand.md used
+// packages/cli/src/commands/cv/generate-cover-letter.ts renders that value as a link. modes/expand.md used
 // to splice the field straight into `https://api.github.com/users/<username>/repos`,
 // so every profile copied from the example asked for
 // `/users/github.com/janesmith/repos` and got a 404.

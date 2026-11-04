@@ -7,9 +7,9 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { pass, fail, rmSync, ROOT, NODE } from './helpers.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
-import { loadValidatedProfile, validateProfile } from '../lib/career-profile.ts';
-import { prepareCvSelection, verifyCvSelection, selectionDigest, SelectionError } from '../lib/profile-cv-selection.ts';
-import { validatePayload } from '../lib/cv-payload-schema.ts';
+import { loadValidatedProfile, validateProfile } from '../packages/core/src/profile/career-profile.ts';
+import { prepareCvSelection, verifyCvSelection, selectionDigest, SelectionError } from '../packages/core/src/profile/profile-cv-selection.ts';
+import { validatePayload } from '../packages/core/src/cv/cv-payload-schema.ts';
 
 const fixture = JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/profile-cv-selection.json'), 'utf8'));
 function input() {
@@ -211,27 +211,27 @@ try {
   });
 
   check('real prepare/verify CLIs run offline outside the checkout', () => {
-    const prepared = JSON.parse(cli('career-profile.ts', ['prepare-cv', ...args]).stdout);
+    const prepared = JSON.parse(cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', ...args]).stdout);
     assert.deepEqual(prepared, prepareCvSelection(original));
     save('prepared.json', prepared);
-    cli('career-profile.ts', ['verify-cv', ...args, '--prepared', 'prepared.json']);
+    cli('packages/cli/src/commands/profile/career-profile.ts', ['verify-cv', ...args, '--prepared', 'prepared.json']);
     save('alternate-profile.yml', original.profile);
-    cli('career-profile.ts', ['prepare-cv', ...args, '--profile', 'alternate-profile.yml']);
-    cli('career-profile.ts', ['prepare-cv', ...args], 0, { CAREER_OPS_ROOT: '', CAREER_OPS_DATA_DIR: root });
-    assert.equal(cli('career-profile.ts', ['validate']).status, 0);
+    cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', ...args, '--profile', 'alternate-profile.yml']);
+    cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', ...args], 0, { CAREER_OPS_ROOT: '', CAREER_OPS_DATA_DIR: root });
+    assert.equal(cli('packages/cli/src/commands/profile/career-profile.ts', ['validate']).status, 0);
   });
 
   check('CLI errors include fact/entry context and slot zero, omitting unavailable fields', () => {
     const selection = structuredClone(original.selection);
     selection.bindings[0].fact_ids = ['fact-unreviewed'];
     save('invalid-selection.json', selection);
-    const factError = cli('career-profile.ts', ['prepare-cv', '--payload', 'base.json', '--selection', 'invalid-selection.json'], 1);
+    const factError = cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', '--payload', 'base.json', '--selection', 'invalid-selection.json'], 1);
     assert.equal(factError.stdout, '');
     assert.equal(factError.stderr, '[fact-not-verified] Selected fact needs review. (profile_entry_id="exp-acme-recent", fact_id="fact-unreviewed", experience_index=0)\n');
 
     delete selection.bindings[0].target;
     save('invalid-selection.json', selection);
-    const targetError = cli('career-profile.ts', ['prepare-cv', '--payload', 'base.json', '--selection', 'invalid-selection.json'], 1);
+    const targetError = cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', '--payload', 'base.json', '--selection', 'invalid-selection.json'], 1);
     assert.equal(targetError.stderr, '[invalid-target] Experience index is outside the base payload. (profile_entry_id="exp-acme-recent")\n');
   });
 
@@ -239,19 +239,19 @@ try {
     const prepared = prepareCvSelection(original);
     prepared.payload.experience[0].bullets[0] = 'Edited after preparation';
     save('prepared.json', prepared);
-    assert.match(cli('career-profile.ts', ['verify-cv', ...args, '--prepared', 'prepared.json'], 1).stderr, /prepared-payload-mismatch/);
-    cli('career-profile.ts', ['prepare-cv', ...args, '--profile', 'absent.yml'], 1);
+    assert.match(cli('packages/cli/src/commands/profile/career-profile.ts', ['verify-cv', ...args, '--prepared', 'prepared.json'], 1).stderr, /prepared-payload-mismatch/);
+    cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', ...args, '--profile', 'absent.yml'], 1);
     save('invalid.yml', { schema_version: 3 });
-    cli('career-profile.ts', ['prepare-cv', ...args, '--profile', 'invalid.yml'], 1);
+    cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', ...args, '--profile', 'invalid.yml'], 1);
     for (const bad of [['--payload'], ['--payload='], ['--bogus'], [...args, '--payload', 'base.json'], [...args, 'extra.json'], ['--payload', 'base.json']]) {
-      cli('career-profile.ts', ['prepare-cv', ...bad], 1);
+      cli('packages/cli/src/commands/profile/career-profile.ts', ['prepare-cv', ...bad], 1);
     }
   });
 
   check('prepared text renders literally through the existing HTML builder', () => {
     const prepared = prepareCvSelection(original);
     save('render.json', prepared.payload);
-    cli('build-cv-html.ts', [join(root, 'render.json'), join(root, 'output/cv.html')]);
+    cli('packages/cli/src/commands/cv/build-cv-html.ts', [join(root, 'render.json'), join(root, 'output/cv.html')]);
     const html = readFileSync(join(root, 'output/cv.html'), 'utf8');
     assert.ok(html.includes('维护 A&amp;B &lt;组件&gt; 的告警规则。'));
     assert.ok(html.indexOf('维护 A&amp;B') < html.indexOf('Managed 20 people.'));
@@ -264,8 +264,8 @@ try {
     const prepared = prepareCvSelection(inflated);
     assert.equal(verifyCvSelection(inflated, prepared), true);
     save('inflated.json', prepared.payload);
-    cli('build-cv-html.ts', [join(root, 'inflated.json'), join(root, 'output/inflated.html')]);
-    const result = cli('generate-pdf.ts', [join(root, 'output/inflated.html'), join(root, 'output/inflated.pdf')], 1);
+    cli('packages/cli/src/commands/cv/build-cv-html.ts', [join(root, 'inflated.json'), join(root, 'output/inflated.html')]);
+    const result = cli('packages/cli/src/commands/cv/generate-pdf.ts', [join(root, 'output/inflated.html'), join(root, 'output/inflated.pdf')], 1);
     assert.match(result.stderr, /Fact check failed[\s\S]*999 people/);
     assert.equal(existsSync(join(root, 'output/inflated.pdf')), false);
   });

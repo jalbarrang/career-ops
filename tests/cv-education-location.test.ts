@@ -4,14 +4,14 @@
 // HTML one did not, so a payload with education[].location was dropped and the
 // #3523 key validator warned "unrecognised key location" on every render.
 //
-// End-to-end through the real builder because build-cv-html.ts exports nothing.
+// End-to-end through the real builder because packages/cli/src/commands/cv/build-cv-html.ts exports nothing.
 // Covers both render paths: the shipped section partial (templates/sections/) and
 // the built-in builder (a template copy with no sections/ dir beside it).
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, cpSync } from 'fs';
-import { join } from 'path';
+import {dirname, join } from 'path';
 import { tmpdir } from 'os';
 import { pass, fail, run, NODE, ROOT, lastRunFailure } from './helpers.ts';
-import { ENTRY_FIELD_SPECS } from '../lib/cv-payload-schema.ts';
+import { ENTRY_FIELD_SPECS } from '../packages/core/src/cv/cv-payload-schema.ts';
 
 console.log('\nbuild-cv-html.ts — education entry location renders (HTML)');
 
@@ -37,16 +37,16 @@ function build(label, payload, templateArg) {
   const input = join(dir, `${label}.json`);
   const output = join(dir, `${label}.html`);
   writeFileSync(input, JSON.stringify(payload));
-  const args = [join(ROOT, 'build-cv-html.ts'), input, output];
+  const args = [join(ROOT, 'packages/cli/src/commands/cv/build-cv-html.ts'), input, output];
   if (templateArg) args.push(templateArg);
   const stdout = run(NODE, args);
   if (stdout === null) {
     const f = lastRunFailure();
-    fail(`${label}: build-cv-html.ts crashed (exit ${f?.status}) - ${(f?.stderr || '').trim().split('\n').pop()}`);
+    fail(`${label}: packages/cli/src/commands/cv/build-cv-html.ts crashed (exit ${f?.status}) - ${(f?.stderr || '').trim().split('\n').pop()}`);
     return null;
   }
   if (!existsSync(output)) {
-    fail(`${label}: build-cv-html.ts exited 0 but wrote no output file`);
+    fail(`${label}: packages/cli/src/commands/cv/build-cv-html.ts exited 0 but wrote no output file`);
     return null;
   }
   return { html: readFileSync(output, 'utf-8'), stdout };
@@ -58,6 +58,7 @@ function templateWithoutPartials() {
   const noPartialDir = join(dir, 'no-partials');
   mkdirSync(noPartialDir, { recursive: true });
   const dest = join(noPartialDir, 'cv-template.html');
+  mkdirSync(dirname(dest), { recursive: true });
   cpSync(join(ROOT, 'templates', 'cv-template.html'), dest, { recursive: false });
   return dest;
 }

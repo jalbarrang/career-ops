@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { pass, fail, results } from '../helpers.ts';
-import comeet, { parseComeetResponse } from '../../providers/comeet.ts';
+import comeet, { parseComeetResponse } from '../../packages/core/src/scanning/providers/comeet.ts';
 
 const hosted = 'https://www.comeet.com/jobs/fixture/engineer/AB.123';
 

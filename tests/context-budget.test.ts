@@ -1,5 +1,5 @@
 /**
- * tests/context-budget.test.ts — Unit tests for lib/context-budget.ts
+ * tests/context-budget.test.ts — Unit tests for packages/core/src/kernel/context-budget.ts
  *
  * Tests:
  *   1. estimateTokens — basic estimation, edge cases
@@ -12,7 +12,7 @@
  */
 
 import { pass, fail, ROOT } from './helpers.ts';
-import { estimateTokens, compressSharedContext, buildBudgetedPrompt, SECTION_PRIORITY } from '../lib/context-budget.ts';
+import { estimateTokens, compressSharedContext, buildBudgetedPrompt, SECTION_PRIORITY } from '../packages/core/src/kernel/context-budget.ts';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
@@ -206,7 +206,7 @@ const nullPrompt = buildBudgetedPrompt(null);
 eq('null opts object → empty prompt', nullPrompt.contextBody, '');
 eq('null opts object → empty report', nullPrompt.budgetReport.totalTokens, 0);
 
-// Without profile files (openai-eval.ts style)
+// Without profile files (packages/cli/src/commands/evaluation/openai-eval.ts style)
 const noProfile = buildBudgetedPrompt({
   sharedContent: SHARED_STUB,
   ofertaContent: 'Evaluate job offers.',
@@ -216,7 +216,7 @@ const noProfile = buildBudgetedPrompt({
 ok('no profile: does not crash', typeof noProfile.contextBody === 'string');
 ok('no profile: report is valid', typeof noProfile.budgetReport === 'object');
 
-// With profile files (gemini-eval.ts style)
+// With profile files (packages/cli/src/commands/evaluation/gemini-eval.ts style)
 const withProfile = buildBudgetedPrompt({
   sharedContent: SHARED_STUB,
   ofertaContent: 'Evaluate job offers.',
@@ -302,7 +302,7 @@ if (!existsSync(sharedPath)) {
     console.log('  These sections are classified as never-compress, but the');
     console.log('  corresponding headings were not found. A _shared.md heading');
     console.log('  may have been renamed — update SECTION_PRIORITY in');
-    console.log('  lib/context-budget.ts to match, or restore the heading.');
+    console.log('  packages/core/src/kernel/context-budget.ts to match, or restore the heading.');
     console.log(`\n  Headings found in _shared.md: ${[...fileHeadings].sort().join(', ')}`);
   }
 
@@ -325,7 +325,7 @@ if (!existsSync(sharedPath)) {
     for (const h of unclassified) {
       console.log(`      - "${h}" → falls through to DEFAULT_PRIORITY (P2, compressible)`);
     }
-    console.log('  Add each heading to SECTION_PRIORITY in lib/context-budget.ts with');
+    console.log('  Add each heading to SECTION_PRIORITY in packages/core/src/kernel/context-budget.ts with');
     console.log('  the correct priority (0 = never compress, 1 = compress when tight,');
     console.log('  2 = prefer to compress).');
   }

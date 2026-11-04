@@ -1,11 +1,11 @@
 // tests/dedup-tracker-corporate-form.test.ts
 //
-// #4421 defect 4: dedup-tracker.ts grouped candidates on a plain
+// #4421 defect 4: packages/cli/src/commands/tracker/dedup-tracker.ts grouped candidates on a plain
 // normalizeCompany() key, which keeps a trailing legal-entity suffix, so
 // "Acme Widgets, APC" and "Acme Widgets" landed in two different groups and
 // were never role-compared — a duplicate re-scan stayed in the tracker forever.
 //
-// The fix reuses merge-tracker.ts's corporate-form rule (token PREFIX plus a
+// The fix reuses packages/cli/src/commands/tracker/merge-tracker.ts's corporate-form rule (token PREFIX plus a
 // corporate-form tail), NOT a stripped key. That distinction is load-bearing:
 // stripping suffixes would map "Acme Solutions" and "Acme Technologies" to the
 // same "acme" and delete a real row, so the discrimination cases below are as
@@ -14,7 +14,7 @@ import { pass, fail, run, formatRunFailure, NODE, ROOT } from './helpers.ts';
 import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { companiesMatchIgnoringCorporateForm } from '../tracker-utils.ts';
+import { companiesMatchIgnoringCorporateForm } from '../packages/core/src/tracker/tracker-utils.ts';
 
 console.log('\ndedup-tracker.ts — corporate-form suffix twins (#4421 defect 4)');
 
@@ -55,14 +55,14 @@ function runDedup(rows) {
   const dir = mkdtempSync(join(tmpdir(), 'dedup-corp-'));
   const tracker = join(dir, 'applications.md');
   writeFileSync(tracker, ['# Applications Tracker', '', HEADER, SEP, ...rows, ''].join('\n'));
-  const out = run(NODE, ['dedup-tracker.ts'], {
+  const out = run(NODE, ['packages/cli/src/commands/tracker/dedup-tracker.ts'], {
     env: { ...process.env, CAREER_OPS_TRACKER: tracker },
   });
   // A crashed child leaves the fixture on disk untouched, so reading the tracker
   // without this guard turns a crash into a vacuous pass: the distinct-company
   // fixtures would read back their own untouched input and report success.
   if (out === null) {
-    throw new Error(`dedup-tracker.ts run failed: ${formatRunFailure()}`);
+    throw new Error(`packages/cli/src/commands/tracker/dedup-tracker.ts run failed: ${formatRunFailure()}`);
   }
   return { out, md: readFileSync(tracker, 'utf-8') };
 }

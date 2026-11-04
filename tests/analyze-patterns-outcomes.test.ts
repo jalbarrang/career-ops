@@ -18,7 +18,7 @@ import { pathToFileURL } from 'url';
 console.log('\nanalyze-patterns — outcome classification & conversion denominators');
 
 const { classifyOutcome, newOutcomeCounts, withOutcomeRates, OUTCOME_BUCKETS, bestDecidedSegment, worstDecidedSegment, scoreThresholdFrom } =
-  await import(pathToFileURL(join(ROOT, 'analyze-patterns.ts')).href);
+  await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/insights/analyze-patterns.ts')).href);
 
 // --- classifyOutcome ---------------------------------------------------------
 
@@ -198,7 +198,7 @@ let result = null;
 let summary = '';
 let gated = null;
 try {
-  const run = (...flags) => execFileSync(NODE, [join(ROOT, 'analyze-patterns.ts'), ...flags], {
+  const run = (...flags) => execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/insights/analyze-patterns.ts'), ...flags], {
     encoding: 'utf-8',
     timeout: 60000,
     env: { ...process.env, CAREER_OPS_ROOT: work },
@@ -208,7 +208,7 @@ try {
   // Below the floor the script prints its JSON and exits 1.
   try { run('--min-threshold', '12'); } catch (e) { gated = JSON.parse(e.stdout || 'null'); }
 } catch (e) {
-  fail(`analyze-patterns.ts did not run over the fixture tracker: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
+  fail(`packages/cli/src/commands/insights/analyze-patterns.ts did not run over the fixture tracker: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
 } finally {
   rmSync(work, { recursive: true, force: true });
 }

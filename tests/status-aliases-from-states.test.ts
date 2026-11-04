@@ -2,7 +2,7 @@
 // tracker-sync-check resolve statuses through templates/states.yml.
 //
 // Both carried a hand-copied alias table whose comment said it mirrored
-// verify-pipeline.ts, which has derived its own from states.yml for a long
+// packages/cli/src/commands/platform/verify-pipeline.ts, which has derived its own from states.yml for a long
 // time. The copies had drifted from states.yml (no Turkish alias in either) and
 // from each other (tracker-sync-check lacked the hired aliases analyze-patterns
 // had). A localized interview, offer or hire row was counted as "pending" by the
@@ -19,7 +19,7 @@ import { pathToFileURL } from 'node:url';
 const ok = (name, fn) => { try { fn(); pass(name); } catch (e) { fail(`${name} — ${e.message}`); } };
 const load = (file) => import(pathToFileURL(join(ROOT, file)).href);
 
-const { loadCanonicalStates, resolveCanonicalStateId } = await load('tracker-utils.ts');
+const { loadCanonicalStates, resolveCanonicalStateId } = await load('packages/core/src/tracker/tracker-utils.ts');
 const states = loadCanonicalStates(join(ROOT, 'templates', 'states.yml'));
 // Every spelling states.yml accepts for a state: its id, label and aliases.
 const spellings = (s) => [s.id, s.label, ...s.aliases];
@@ -37,7 +37,7 @@ ok('resolveCanonicalStateId maps every states.yml spelling to its id', () => {
 });
 
 ok('neither script carries its own alias table', () => {
-  for (const file of ['analyze-patterns.ts', 'tracker-sync-check.ts']) {
+  for (const file of ['packages/cli/src/commands/insights/analyze-patterns.ts', 'packages/cli/src/commands/tracker/tracker-sync-check.ts']) {
     const src = readFileSync(join(ROOT, file), 'utf-8');
     assert.match(src, /resolveCanonicalStateId\(/, `${file} resolves through states.yml`);
     assert.match(src, /loadCanonicalStates\(/, `${file} loads states.yml`);
@@ -52,7 +52,7 @@ ok('neither script carries its own alias table', () => {
   }
 });
 
-const { classifyOutcome } = await load('analyze-patterns.ts');
+const { classifyOutcome } = await load('packages/cli/src/commands/insights/analyze-patterns.ts');
 ok('analyze-patterns buckets every states.yml spelling like its canonical label', () => {
   for (const s of states) {
     for (const text of spellings(s)) {
@@ -65,7 +65,7 @@ ok('analyze-patterns buckets every states.yml spelling like its canonical label'
   assert.equal(classifyOutcome('başvuruldu 2026-06-01'), 'awaiting');
 });
 
-const sync = await load('tracker-sync-check.ts');
+const sync = await load('packages/cli/src/commands/tracker/tracker-sync-check.ts');
 ok('tracker-sync-check normalizes every states.yml spelling to its id', () => {
   for (const s of states) {
     for (const text of spellings(s)) {

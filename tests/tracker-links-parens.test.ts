@@ -7,7 +7,7 @@ import { pass, fail, ROOT } from './helpers.ts';
 console.log('\ntracker-links — parentheses in report filenames');
 
 const { normalizeReportLink } = await import(
-  pathToFileURL(join(ROOT, 'tracker-links.ts')).href
+  pathToFileURL(join(ROOT, 'packages/core/src/tracker/tracker-links.ts')).href
 );
 
 const trackerDir = join(ROOT, 'data');

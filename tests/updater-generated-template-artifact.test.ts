@@ -27,7 +27,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { pass, fail } from './helpers.ts';
-import { gitIn, isGeneratedTemplateArtifact, staleSystemFiles, locallyModifiedSystemFiles } from '../update-system.ts';
+import { gitIn, isGeneratedTemplateArtifact, staleSystemFiles, locallyModifiedSystemFiles } from '../packages/cli/src/commands/platform/update-system.ts';
 
 console.log('\n🧪 Testing generated-template-artifact carve-out (#3636)...');
 

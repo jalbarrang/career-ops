@@ -24,7 +24,7 @@ const ad = (over = {}) => ({
 const response = (hits) => ({ total: { value: hits.length }, positions: hits.length, hits });
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/platsbanken.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/platsbanken.ts')).href);
   const platsbanken = mod.default;
   const { parsePlatsbankenConfig, buildSearchUrl, postingUrl, parsePlatsbankenResponse, rawHitCount } = mod;
 

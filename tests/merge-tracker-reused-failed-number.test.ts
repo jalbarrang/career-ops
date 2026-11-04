@@ -45,7 +45,7 @@ function merge(stateRows) {
     writeFileSync(join(adds, '404-acme.tsv'), ADDITION);
     writeFileSync(state, [STATE_HEADER, ...stateRows, ''].join('\n'));
     // The skip is a console.warn, so it lands on stderr even when the run exits 0.
-    const r = spawnSync(NODE, [join(ROOT, 'merge-tracker.ts')], {
+    const r = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts')], {
       encoding: 'utf-8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, CAREER_OPS_TRACKER: tracker, CAREER_OPS_ADDITIONS: adds, CAREER_OPS_BATCH_STATE: state },
     });

@@ -159,7 +159,7 @@ Bir ilan yapıştır. O akşama değip değmeyeceğini söyler.
 
 ## career-ops'un yapmadıkları
 
-- **Başvuruyu otomatik göndermek.** Her alan için cevabı taslak olarak hazırlar; sen kontrol eder ve Gönder'e tıklarsın. Betik asla POST yapmaz (`prepare-application.ts`).
+- **Başvuruyu otomatik göndermek.** Her alan için cevabı taslak olarak hazırlar; sen kontrol eder ve Gönder'e tıklarsın. Betik asla POST yapmaz (`packages/cli/src/commands/evaluation/prepare-application.ts`).
 - **E-posta göndermek.** Yalnızca taslak. Bu kod tabanının hiçbir yerinde posta gönderimi yok.
 - **Eve rapor vermek.** Telemetri yok, bize ait bir arka uç yok. CV'n senin makinenden seçtiğin yapay zekâ sağlayıcısına gider, başka hiçbir yere gitmez. Tek kamuya açık kayıt bu depo: `HIRED.md` ve issue'ları.
 - **Seni 4,0/5 altına başvurmaya itmek.** Başvurma der. Yok sayabilirsin, o da bunu söyler.
@@ -175,7 +175,7 @@ CV'ni yeniden ifade eder; asla uydurmamalıdır. Koddaki bir denetim, CV'nde de 
 | **ATS PDF Üretimi**      | Space Grotesk + DM Sans tasarımıyla, kendi deneyiminden yola çıkarak her iş tanımına uyarlanmış, ATS'nin okuyabildiği CV'ler                                                                |
 | **Ön Yazı Üretici**      | Araştırmaya dayalı ön yazılar: anahtar kelime yansıtma, dört etkileşimli açı sorusu (neden/sorunlar/yaklaşım/ton), sohbette taslak onayı ve CV'lerle aynı HTML + Playwright hattı üzerinden A4 PDF. Her değerlendirmede otomatik taslak yazar; istediğinde `/career-ops cover` ile tamamla ve üret |
 | **CV'nin Ötesi**         | Şirket araştırması ([`deep`](modes/deep.md)) yapay zekâ stratejisini, son hamleleri, mühendislik kültürünü ve profilinin alması gereken açıyı ortaya çıkarır. Kişi keşfi ([`contacto`](modes/contacto.md)) ulaşmaya değer işe alım yöneticisini, işe alım uzmanını veya ekip arkadaşını belirler ve her kişi tipine göre ayarlanmış ≤300 karakterlik bir LinkedIn mesajı taslağı yazar. Resmî başvuru e-postası taslakları ([`email`](modes/email.md)) değerlendirilmiş bir raporu veya yapıştırılan iş tanımını hiçbir şey göndermeden, iletmeden veya tıklamadan konu satırına, gövdeye ve ek listesine dönüştürür. Başvuru seni kuyruğa sokar; araştırma sana bir sohbet kazandırır. |
-| **Örüntü Analizi**       | Ret örüntüleri ve ATS kanalı başına ilerleme oranları (`analyze-patterns.ts`), tüm arayışın huni istatistikleri (`stats.ts`), hayalet ilana işaret edebilecek yeniden yayınların tespiti (`detect-reposts.ts`) |
+| **Örüntü Analizi**       | Ret örüntüleri ve ATS kanalı başına ilerleme oranları (`packages/cli/src/commands/insights/analyze-patterns.ts`), tüm arayışın huni istatistikleri (`packages/core/src/insights/stats.ts`), hayalet ilana işaret edebilecek yeniden yayınların tespiti (`packages/cli/src/commands/insights/detect-reposts.ts`) |
 
 <details>
 <summary><b>Yaptığı diğer her şey</b></summary>
@@ -192,8 +192,8 @@ CV'ni yeniden ifade eder; asla uydurmamalıdır. Koddaki bir denetim, CV'nde de 
 | **Dashboard TUI**        | Hattını gezmek, filtrelemek ve sıralamak için terminal arayüzü                                                                           |
 | **Hat Bütünlüğü**        | Otomatik birleştirme, tekilleştirme, durum normalleştirme, sağlık kontrolleri                                                            |
 | **Mülakat Paketi**       | Zaman bloklu hazırlık planları, geri bildirimli pratik oturumları, mülakat sonrası değerlendirmeler ([`interview/`](modes/interview/README.md)) ve şirket kırmızı bayrak dedektörü ([`interview-redflag`](modes/interview-redflag.md)) |
-| **Teklif Aşaması**       | Sözleşme okuma yoldaşı: madde madde geçiş artı avukata soru listesi ([`offer-prep`](modes/offer-prep.md)) ve istenen/ilan edilen/gerçek maaş farkı analizörü (`salary-gap.ts`) |
-| **Takip ve Yanıtlar**    | Takip ritmi hesaplayıcı ve önceden ekilmiş hatırlatıcılar (`followup-cadence.ts`, `followup-seed.ts`); işveren yanıtlarının takipçi güncellemelerine sınıflandırılması ([`reply-watch`](modes/reply-watch.md)) |
+| **Teklif Aşaması**       | Sözleşme okuma yoldaşı: madde madde geçiş artı avukata soru listesi ([`offer-prep`](modes/offer-prep.md)) ve istenen/ilan edilen/gerçek maaş farkı analizörü (`packages/cli/src/commands/insights/salary-gap.ts`) |
+| **Takip ve Yanıtlar**    | Takip ritmi hesaplayıcı ve önceden ekilmiş hatırlatıcılar (`packages/core/src/outreach/followup-cadence.ts`, `packages/core/src/outreach/followup-seed.ts`); işveren yanıtlarının takipçi güncellemelerine sınıflandırılması ([`reply-watch`](modes/reply-watch.md)) |
 | **Eklenti Sistemi**      | İsteğe bağlı entegrasyonlar (Gmail, Notion, Apify + topluluk kaydı), varsayılan olarak kapalı; bkz. [docs/PLUGINS.md](docs/PLUGINS.md)   |
 
 </details>
@@ -457,9 +457,9 @@ cp .env.example .env
 bun install
 
 # 3. Evaluate a job description
-bun gemini-eval.ts "We are looking for a Senior AI Engineer..."
-bun gemini-eval.ts --file ./jds/my-job.txt
-bun agent-inbox.ts add "..."   # queue a request for the next session
+bun packages/cli/src/commands/evaluation/gemini-eval.ts "We are looking for a Senior AI Engineer..."
+bun packages/cli/src/commands/evaluation/gemini-eval.ts --file ./jds/my-job.txt
+bun packages/cli/src/commands/platform/agent-inbox.ts add "..."   # queue a request for the next session
 bun run gemini:eval -- "JD text here"
 ```
 
@@ -480,10 +480,10 @@ Tarayıcı, taramaya hazır **100+ şirket** ve başlıca iş panolarında **35+
 
 **Aranan iş panoları:** 55+ sağlayıcı modülü ATS API'lerini, pano genelindeki akışları, XML/RSS akışlarını, markdown akışlarını ve yerel ayrıştırıcıları kapsar. Tam tablo için bkz. [Desteklenen iş panoları](docs/SUPPORTED_JOB_BOARDS.md).
 
-Varsayılan olarak `bun scan.ts` (nam-ı diğer `bun run scan`) her ATS akışının döndürdüğüne güvenir. Bazı şirketler pozisyon kapandıktan sonra bile herkese açık API'lerinde eski ilanları bırakır; bu süresi dolmuş kayıtlar `pipeline.md` içine sızabilir. API geçişinden sonra Playwright'ı başlatıp süresi dolmuş ilanları hatta girmeden elemek için `--verify` ver:
+Varsayılan olarak `bun packages/core/src/scanning/scan.ts` (nam-ı diğer `bun run scan`) her ATS akışının döndürdüğüne güvenir. Bazı şirketler pozisyon kapandıktan sonra bile herkese açık API'lerinde eski ilanları bırakır; bu süresi dolmuş kayıtlar `pipeline.md` içine sızabilir. API geçişinden sonra Playwright'ı başlatıp süresi dolmuş ilanları hatta girmeden elemek için `--verify` ver:
 
 ```bash
-bun scan.ts --verify          # zero-token discovery + Playwright liveness check
+bun packages/core/src/scanning/scan.ts --verify          # zero-token discovery + Playwright liveness check
 ```
 
 Doğrulama sıralıdır ve yalnızca yeni ilanlar üzerinde çalışır (tekilleştirmeden sonra), bu yüzden maliyet sınırlı kalır.
@@ -499,7 +499,7 @@ bun run build:dashboard   # optional: build the standalone binary
 
 Özellikler: 10 filtre sekmesi, 8 sıralama modu, gruplu/düz görünüm, tembel yüklenen önizlemeler, satır içi durum değişiklikleri.
 
-Ayrıca **deneysel bir web arayüzü** de var (alfa ve isteğe bağlı: sen başlatmadıkça hiçbir şey çalışmaz): bkz. [`web/README.md`](web/README.md).
+Ayrıca **deneysel bir web arayüzü** de var (alfa ve isteğe bağlı: sen başlatmadıkça hiçbir şey çalışmaz): bkz. [`apps/web/README.md`](apps/web/README.md).
 
 ## Proje Yapısı
 
@@ -556,9 +556,9 @@ Kişisel verilerini koddan ayırmak için (dal değiştirmeyi, güncelleme çekm
 
 - **Takipçiyi Geçersiz Kılma:** Başvuru takipçisi dosya yolunu doğrudan geçersiz kılmak için `CAREER_OPS_TRACKER` da ayarlayabilirsin.
 - **Yazmalar:** Tüm yazma işlemleri (birleştirmeler gibi) kanonik olarak `{DATA_ROOT}/data/applications.md` hedefine gider.
-- **Tarayıcı yapılandırması:** `portals.yml`, `{DATA_ROOT}/portals.yml` konumunda okunur ve doğrulanır; böylece `bun validate-portals.ts`, `scan.ts` betiğinin okuduğu dosyanın aynısını denetler.
+- **Tarayıcı yapılandırması:** `portals.yml`, `{DATA_ROOT}/portals.yml` konumunda okunur ve doğrulanır; böylece `bun packages/cli/src/commands/scanning/validate-portals.ts`, `packages/core/src/scanning/scan.ts` betiğinin okuduğu dosyanın aynısını denetler.
 - **Üretilen belgeler:** Uyarlanmış CV'ler ve ön yazılar `{DATA_ROOT}/output/` altına yazılır; bunları bir rapora bağlayan PDF manifest dosyası `{DATA_ROOT}/data/pdf-index.tsv` konumundadır. `CAREER_OPS_TRACKER` ayarlanmadığı sürece, bu yazmaları sınırlayan takipçi çalışma alanı depo kopyası değil, veri köküdür.
-- **Takipçi geçersiz kılındığında PDF'ler:** `generate-pdf.ts`, çalışma alanını belirlemeden önce `CAREER_OPS_TRACKER` değerini çözümler; bu yüzden geçersiz kılma ayarlıyken çalışma alanı o takipçiyi içeren klasördür (takipçi bir `data/` klasöründeyse onun bir üstündeki klasör). Bu durumda CV'nin HTML'i ve tüm PDF'ler bu çalışma alanının içinde olmalıdır; manifest dosyası da çalışma alanının `data/pdf-index.tsv` dosyasına taşınır. Ön yazılar yine `{DATA_ROOT}/output/` hedefini kullanır; bu yüzden o klasör takipçinin çalışma alanının dışında kalırsa reddedilir.
+- **Takipçi geçersiz kılındığında PDF'ler:** `packages/cli/src/commands/cv/generate-pdf.ts`, çalışma alanını belirlemeden önce `CAREER_OPS_TRACKER` değerini çözümler; bu yüzden geçersiz kılma ayarlıyken çalışma alanı o takipçiyi içeren klasördür (takipçi bir `data/` klasöründeyse onun bir üstündeki klasör). Bu durumda CV'nin HTML'i ve tüm PDF'ler bu çalışma alanının içinde olmalıdır; manifest dosyası da çalışma alanının `data/pdf-index.tsv` dosyasına taşınır. Ön yazılar yine `{DATA_ROOT}/output/` hedefini kullanır; bu yüzden o klasör takipçinin çalışma alanının dışında kalırsa reddedilir.
 - **Kod katmanı yerinde kalır:** `node_modules/`, `providers/`, `modes/` ve betiklerin kendisi her zaman depoya göre çözümlenir, asla veri köküne göre değil.
 
 Go dashboard TUI, Node.js betikleri ve yapay zekâ ajan modlarının tümü bu çözümleme hiyerarşisine otomatik olarak uyar.
@@ -617,7 +617,7 @@ Go dashboard TUI, Node.js betikleri ve yapay zekâ ajan modlarının tümü bu �
 career-ops ([career-ops.org](https://career-ops.org), **careerops** olarak da bilinir), yapay zekâ kodlama CLI'ında (Claude Code, Codex, OpenCode ve diğerleri) yerel olarak çalışan ve her kararı sana bırakan açık kaynaklı bir yapay zekâ iş arama aracıdır. İş ilanlarını CV'ne göre değerlendirir, ATS'ye uyarlanmış PDF'ler üretir, iletişime geçilecek doğru kişiyi bulur ve her şeyi tek yerde takip eder: son söz her zaman sende. [CareerOps Manifestosu](https://career-ops.org/manifesto)'nun ilk referans uygulamasıdır.
 
 **Uyarlanmış CV bir şeyler uydurabilir mi?**
-Uydurmamalı, prompt'lar da böyle diyor: yeniden ifade et, asla uydurma. `--skip-fact-check` vermediğin sürece `generate-pdf`, kaynaklarında bulunmayan sayı veya bilgi içeren bir CV'yi engeller. `pdf` modu ayrıca `cv-title-check.ts`'i çalıştırır: uyarlanmış CV'deki her iş unvanını, cv.md'nin aynı iş için verdiği unvanla (şirket ve tarihlere göre eşleştirerek) karşılaştırır ve farklı olan her unvanı korumak mı yoksa geri almak mı istediğini sana sorar. Bir unvanı farklı ifade etmek bazen senin kararın olduğu için yalnızca uyarır, engellemez. İfade değişikliklerini henüz hiçbir şey değerlendirmiyor: bunu [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (uyuşmazlıkta engelleyen sadakat denetimi) takip ediyor. O zamana kadar, göndermeden önce her CV'yi oku. [Yasal uyarı](LEGAL_DISCLAIMER.md) aynı şeyi daha uzun söylüyor.
+Uydurmamalı, prompt'lar da böyle diyor: yeniden ifade et, asla uydurma. `--skip-fact-check` vermediğin sürece `generate-pdf`, kaynaklarında bulunmayan sayı veya bilgi içeren bir CV'yi engeller. `pdf` modu ayrıca `packages/cli/src/commands/cv/cv-title-check.ts`'i çalıştırır: uyarlanmış CV'deki her iş unvanını, cv.md'nin aynı iş için verdiği unvanla (şirket ve tarihlere göre eşleştirerek) karşılaştırır ve farklı olan her unvanı korumak mı yoksa geri almak mı istediğini sana sorar. Bir unvanı farklı ifade etmek bazen senin kararın olduğu için yalnızca uyarır, engellemez. İfade değişikliklerini henüz hiçbir şey değerlendirmiyor: bunu [#1411](https://github.com/career-ops-hq/career-ops/issues/1411) (uyuşmazlıkta engelleyen sadakat denetimi) takip ediyor. O zamana kadar, göndermeden önce her CV'yi oku. [Yasal uyarı](LEGAL_DISCLAIMER.md) aynı şeyi daha uzun söylüyor.
 
 **career-ops'u ücretsiz veya daha ucuz / yerel bir modelde çalıştırabilir miyim?**
 Evet. career-ops CLI'dan bağımsızdır ve ücretsiz ve yerel modellerde çalışır (OpenRouter ücretsiz modelleri, Ollama veya herhangi bir OpenAI uyumlu uç nokta), bu yüzden ücretli bir aboneliğe bağlı değilsin. Tam kurulum için bkz. [docs/RUNNING_ON_A_BUDGET.md](docs/RUNNING_ON_A_BUDGET.md).

@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — nofluffjobs');
 
 try {
-  const nofluffjobsModule = await import(pathToFileURL(join(ROOT, 'providers/nofluffjobs.ts')).href);
+  const nofluffjobsModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/nofluffjobs.ts')).href);
   const nfj = nofluffjobsModule.default;
   const { parseNoFluffJobsResponse } = nofluffjobsModule;
 

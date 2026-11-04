@@ -335,7 +335,7 @@ console.log('\njd-rescue.ts — JD recovery from structured page data');
 }
 
 {
-  // The ATS lookup is reused from browser-extract.ts; an unknown host must cost nothing.
+  // The ATS lookup is reused from packages/cli/src/commands/scanning/browser-extract.ts; an unknown host must cost nothing.
   const r = rescue('<html><body><div>Loading</div></body></html>', { url: 'https://jobs.example.com/co/abc123' });
   if (!r.ok && r.method === 'none') pass('an unrecognised host falls through the ATS lookup without a rescue');
   else fail(`unknown host not handled: ${JSON.stringify(r)}`);

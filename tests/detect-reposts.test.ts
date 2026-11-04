@@ -1,5 +1,5 @@
 /**
- * tests/detect-reposts.test.ts — Systematic test suite for detect-reposts.ts
+ * tests/detect-reposts.test.ts — Systematic test suite for packages/cli/src/commands/insights/detect-reposts.ts
  *
  * Tests every exported and internal function across:
  * - Input validation (malformed, missing, boundary values)
@@ -20,14 +20,14 @@
  *      exits — so a direct run returns 0 even when assertions fail.
  */
 
-import { detectReposts, parseScanHistory, companyKey, titleIdentityKey } from '../detect-reposts.ts';
+import { detectReposts, parseScanHistory, companyKey, titleIdentityKey } from '../packages/cli/src/commands/insights/detect-reposts.ts';
 import { readFileSync, writeFileSync, unlinkSync, existsSync, mkdtempSync, rmSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { tmpdir } from 'os';
 import { execFileSync } from 'child_process';
 import { pass, fail } from './helpers.ts';
-import { parseDate } from '../lib/parse-date.ts';
+import { parseDate } from '../packages/core/src/kernel/parse-date.ts';
 
 console.log('\ndetect-reposts.ts — repost detection');
 
@@ -515,7 +515,7 @@ eq('same URL seen twice + 1 different URL -> 1 cluster', mixedResult.length, 1);
 eq('deduped to 2 appearances (not 3)', mixedResult[0]?.repostCount, 2);
 
 // Same URL with trailing slash vs without — treated as different URLs
-// (this is correct: URL normalization is scan.ts's job, not ours)
+// (this is correct: URL normalization is packages/core/src/scanning/scan.ts's job, not ours)
 eq('URL with/without trailing slash treated as different', detectReposts([
   row({ url: 'https://x.com/1', date: d('2026-01-01'), dateStr: '2026-01-01' }),
   row({ url: 'https://x.com/1/', date: d('2026-02-01'), dateStr: '2026-02-01' }),
@@ -853,7 +853,7 @@ eq('SW: distinct roles not grouped', detectReposts([
 console.log('\n--- 10.6 grouping equivalence (#2383) ---');
 
 // A second, independently written implementation of the whole detector. The
-// clusters coming out of detect-reposts.ts must be byte-identical to what this
+// clusters coming out of packages/cli/src/commands/insights/detect-reposts.ts must be byte-identical to what this
 // one produces, including their order and the order of appearances inside them.
 //
 // Its history: it began as the pre-#2383 file copied verbatim, guarding a pure
@@ -866,7 +866,7 @@ console.log('\n--- 10.6 grouping equivalence (#2383) ---');
 // written in the straightforward nested-loop style rather than mirroring the
 // real file's structure, so a shared bug has to be reasoned into both.
 //
-// If detect-reposts.ts ever changes what it computes (window rules, span
+// If packages/cli/src/commands/insights/detect-reposts.ts ever changes what it computes (window rules, span
 // rules, cluster shape, dedup policy, title identity) rather than how fast it
 // computes it, this copy must be updated in the same commit. A silent
 // divergence failing here is the intended behaviour, not a nuisance.
@@ -1161,7 +1161,7 @@ ok('500 rows across 50 companies completes without throwing', true);
 // ============================================================================
 console.log('\n--- 12. CLI behavior ---');
 
-const scriptPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'detect-reposts.ts');
+const scriptPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/cli/src/commands/insights/detect-reposts.ts');
 
 // Test --self-test exit code
 try {

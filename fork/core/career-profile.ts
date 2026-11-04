@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * career-profile.ts — Master Career Profile importer (FORK: schema v2).
+ * packages/cli/src/commands/profile/career-profile.ts — Master Career Profile importer (FORK: schema v2).
  *
  * FORK-OWNED. Upstream writes schema v1, where every non-bullet line in a CV
  * block becomes its own entry: `Series Entertainment`, `Senior Full Stack
@@ -29,28 +29,28 @@ import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync 
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'path';
 import { createInterface } from 'readline';
 import * as yaml from 'js-yaml';
-import { loadYaml } from './lib/yaml-document.ts';
-import { getCareerOpsRoot } from './path-resolver.ts';
-import { withPipelineLock } from './pipeline-lock.ts';
-import { validateProfile, loadValidatedProfile, SCHEMA_VERSION } from './lib/career-profile.ts';
-import { prepareCvSelection, verifyCvSelection } from './lib/profile-cv-selection.ts';
-import { flagValue, validateFlags } from './lib/cli-flags.ts';
+import { loadYaml } from '../../packages/core/src/kernel/yaml-document.ts';
+import { getCareerOpsRoot } from '../../packages/core/src/kernel/path-resolver.ts';
+import { withPipelineLock } from '../../packages/core/src/kernel/pipeline-lock.ts';
+import { validateProfile, loadValidatedProfile, SCHEMA_VERSION } from '../../packages/core/src/profile/career-profile.ts';
+import { prepareCvSelection, verifyCvSelection } from '../../packages/core/src/profile/profile-cv-selection.ts';
+import { flagValue, validateFlags } from '../../packages/core/src/kernel/cli-flags.ts';
 
 const root = getCareerOpsRoot();
 const profilePath = join(root, 'data', 'career-profile.yml');
 const HELP = `Master Career Profile (fork schema v2: company -> roles)
 
-  bun career-profile.ts import [cv.md] [--review]
+  bun packages/cli/src/commands/profile/career-profile.ts import [cv.md] [--review]
     Preview candidates by default. --review asks you to approve, edit, or skip
     each item; only approved items are saved to data/career-profile.yml.
 
-  bun career-profile.ts validate [profile.yml]
+  bun packages/cli/src/commands/profile/career-profile.ts validate [profile.yml]
     Check the profile structure and source evidence.
 
-  bun career-profile.ts prepare-cv --payload base.json --selection selection.json
+  bun packages/cli/src/commands/profile/career-profile.ts prepare-cv --payload base.json --selection selection.json
     Print {payload, mapping} as JSON. Uses data/career-profile.yml by default.
 
-  bun career-profile.ts verify-cv --payload base.json --selection selection.json --prepared prepared.json
+  bun packages/cli/src/commands/profile/career-profile.ts verify-cv --payload base.json --selection selection.json --prepared prepared.json
     Recheck against the current profile and original inputs. Both commands
     accept --profile profile.yml; all paths resolve from the Data Root.
     Neither command renders a CV or replaces the existing CV fact gates.

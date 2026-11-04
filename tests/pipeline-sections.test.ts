@@ -7,8 +7,8 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { appendToPipeline } from '../scan.ts';
-import { parsePending } from '../sync-batch-input.ts';
+import { appendToPipeline } from '../packages/core/src/scanning/scan.ts';
+import { parsePending } from '../packages/cli/src/commands/pipeline/sync-batch-input.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const DONE = 'https://jobs.example.com/done';
@@ -28,7 +28,7 @@ function reconcile(t, pipelineText) {
   const state = join(root, 'batch', 'batch-state.tsv');
   writeFileSync(state, `id\turl\tstatus\tstarted_at\tcompleted_at\treport_num\tscore\terror\tretries\n1\t${DONE}\tcompleted\t2026-10-01\t2026-10-01\t7\t4.1\t-\t0\n`);
   writeFileSync(join(root, 'reports', '007-acme-2026-10-01.md'), '**Score:** 4.1/5\n**PDF:** not generated\n');
-  const result = spawnSync(process.execPath, [join(ROOT, 'reconcile-pipeline.ts'), '--pipeline', pipeline, '--state', state], {
+  const result = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/pipeline/reconcile-pipeline.ts'), '--pipeline', pipeline, '--state', state], {
     cwd: root,
     env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_DATA_DIR: root, CAREER_OPS_TRACKER: '' },
     encoding: 'utf8',

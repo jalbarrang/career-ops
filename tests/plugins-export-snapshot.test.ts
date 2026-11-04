@@ -8,7 +8,7 @@
 // in "pushed 0 record(s)". The snapshot now resolves the tracker with
 // resolveTrackerPath() and maps columns through tracker-parse.ts.
 //
-// plugins.ts resolves its paths at import time, so each case gets its own
+// packages/cli/src/commands/platform/plugins.ts resolves its paths at import time, so each case gets its own
 // process: a cache-busting query string works on Node but not on Bun, which
 // resolves every `?query` spelling of a file URL to one module — the later
 // cases then read the first case's tracker path.
@@ -18,7 +18,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { pass, fail, ROOT } from './helpers.ts';
-import { canonicalizeTrackerPath } from '../path-resolver.ts';
+import { canonicalizeTrackerPath } from '../packages/core/src/kernel/path-resolver.ts';
 
 console.log('\nplugins — export snapshot reads the resolved tracker through tracker-parse');
 
@@ -47,7 +47,7 @@ function snapshotWith(env) {
   const childEnv = { ...process.env };
   for (const k of ENV_KEYS) delete childEnv[k];
   Object.assign(childEnv, env);
-  const runner = pathToFileURL(join(ROOT, 'plugins.ts')).href;
+  const runner = pathToFileURL(join(ROOT, 'packages/cli/src/commands/platform/plugins.ts')).href;
   const r = spawnSync(process.execPath, ['--input-type=module', '-e', `
     const mod = await import(${JSON.stringify(runner)});
     const snap = mod._testBuildSnapshot();

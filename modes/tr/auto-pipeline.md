@@ -82,6 +82,6 @@ Eğer final puanı >= 4.5 ise, başvuru formu için yanıt taslakları oluşturu
 
 ## Adım 5 — Takipçiyi Güncelle
 
-Takipçiyi güncellemek için doğrudan `data/applications.md` dosyasına yazmayın. Değişiklikleri bir TSV satırı olarak `batch/tracker-additions/` içine ekleyin ve `bun merge-tracker.ts` komutunu kullanarak takipçiyi güncelleyin.
+Takipçiyi güncellemek için doğrudan `data/applications.md` dosyasına yazmayın. Değişiklikleri bir TSV satırı olarak `batch/tracker-additions/` içine ekleyin ve `career-ops merge-tracker` komutunu kullanarak takipçiyi güncelleyin.
 
 **JD ve kapılar çözüldükten sonra bir yapay ürün (artifact) oluşturma adımı başarısız olursa**, bağımsız sonraki adımlarla devam edin ve başarısız olan adımı takipçide beklemede (pending) olarak işaretleyin. Ancak ulaşılamayan bir JD veya çözülememiş geçerlilik (liveness)/onay kapısı, değerlendirmeden ve tüm yapay ürün/takipçi yazımlarından önce süreci durdurur; girdisi eksik olan bağımlı adımları çalıştırmayın.

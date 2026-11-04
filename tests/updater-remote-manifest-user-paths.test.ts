@@ -23,7 +23,7 @@
  */
 
 import { pass, fail, ROOT } from './helpers.ts';
-import { rejectUserLayerPaths, manifestProbes } from '../update-system.ts';
+import { rejectUserLayerPaths, manifestProbes } from '../packages/cli/src/commands/platform/update-system.ts';
 
 // A stand-in for effectiveUserPaths() covering both declaration forms: a
 // trailing `/` is a directory, anything else is an exact file path.
@@ -159,7 +159,7 @@ console.log('\n🧪 Testing rejectUserLayerPaths (fetched manifest vs local user
 
 {
   // Given: an ordinary manifest with nothing touching the user layer
-  const remote = ['modes/pdf/', 'modes/de/interview/', 'scan.ts', 'AGENTS.md'];
+  const remote = ['modes/pdf/', 'modes/de/interview/', 'packages/core/src/scanning/scan.ts', 'AGENTS.md'];
 
   // When: the manifest is split
   const { kept, refused } = rejectUserLayerPaths(remote, USER_PATHS, probes);
@@ -289,7 +289,7 @@ console.log('\n🧪 Testing rejectUserLayerPaths (fetched manifest vs local user
 
 {
   // Given: the ordinary canonical spellings the real manifest actually ships
-  const remote = ['modes/pdf/', 'scan.ts', 'lib/context-budget.ts', 'docs/FAQ.md'];
+  const remote = ['modes/pdf/', 'packages/core/src/scanning/scan.ts', 'packages/core/src/kernel/context-budget.ts', 'docs/FAQ.md', 'packages/core/src/kernel/repo-root.ts',];
 
   // When: the manifest is split
   const { kept, refused } = rejectUserLayerPaths(remote, USER_PATHS, probes);
@@ -393,7 +393,7 @@ console.log('\n🧪 Testing manifestProbes (git output -> the rule\'s three ques
   const probes = manifestProbes({ trackedOutput: '', upstreamOutput: '', root: ROOT });
 
   // When/Then: it reports on the real filesystem under that root
-  if (probes.exists('update-system.ts') && !probes.exists('no-such-file-xyz.md')) {
+  if (probes.exists('packages/cli/src/commands/platform/update-system.ts') && !probes.exists('no-such-file-xyz.md')) {
     pass('exists() resolves against the root it was given');
   } else {
     fail('exists() does not resolve against the given root');

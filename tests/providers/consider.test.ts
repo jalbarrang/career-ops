@@ -11,7 +11,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — consider');
 
 try {
-  const consider = (await import(pathToFileURL(join(ROOT, 'providers/consider.ts')).href)).default;
+  const consider = (await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/consider.ts')).href)).default;
 
   if (consider.id === 'consider') pass('consider.id is "consider"');
   else fail(`consider.id is ${JSON.stringify(consider.id)}`);
@@ -307,8 +307,8 @@ try {
   // network layer is the only thing stubbed here — _http.ts calls the global
   // fetch from inside the context, so the stub can read the store.
   {
-    const { makeHttpCtx } = await import(pathToFileURL(join(ROOT, 'providers/_http.ts')).href);
-    const { providerFetchContext } = await import(pathToFileURL(join(ROOT, 'providers/_ip-guard.ts')).href);
+    const { makeHttpCtx } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_http.ts')).href);
+    const { providerFetchContext } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_ip-guard.ts')).href);
     const realFetch = globalThis.fetch;
     const guardedHosts = {};
     globalThis.fetch = async (url) => {

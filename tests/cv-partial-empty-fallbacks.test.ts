@@ -9,11 +9,11 @@
 // next to rows with three, and the columns drifted.
 //
 // End-to-end through the real builder and the shipped partials on purpose.
-// build-cv-html.ts exports nothing, and the bug lived in the seam between the
+// packages/cli/src/commands/cv/build-cv-html.ts exports nothing, and the bug lived in the seam between the
 // partial's block names and the builder's lookup — a unit test of either half
 // alone would have passed.
-import { mkdtempSync, writeFileSync, readFileSync, rmSync, cpSync, existsSync } from 'fs';
-import { join } from 'path';
+import {mkdirSync, mkdtempSync, writeFileSync, readFileSync, rmSync, cpSync, existsSync } from 'fs';
+import {dirname, join } from 'path';
 import { tmpdir } from 'os';
 import { pass, fail, run, NODE, ROOT, lastRunFailure } from './helpers.ts';
 
@@ -71,17 +71,17 @@ function build(label, templateArg) {
   const output = join(dir, `${label}.html`);
   writeFileSync(input, JSON.stringify(PAYLOAD));
 
-  const args = [join(ROOT, 'build-cv-html.ts'), input, output];
+  const args = [join(ROOT, 'packages/cli/src/commands/cv/build-cv-html.ts'), input, output];
   if (templateArg) args.push(templateArg);
 
   if (run(NODE, args) === null) {
     const f = lastRunFailure();
-    fail(`${label}: build-cv-html.ts crashed (exit ${f?.status}) - ${(f?.stderr || '').trim().split('\n').pop()}`);
+    fail(`${label}: packages/cli/src/commands/cv/build-cv-html.ts crashed (exit ${f?.status}) - ${(f?.stderr || '').trim().split('\n').pop()}`);
     return null;
   }
   // A zero exit with no file would otherwise surface as a bare ENOENT.
   if (!existsSync(output)) {
-    fail(`${label}: build-cv-html.ts exited 0 but wrote no output file`);
+    fail(`${label}: packages/cli/src/commands/cv/build-cv-html.ts exited 0 but wrote no output file`);
     return null;
   }
   return readFileSync(output, 'utf-8');
@@ -120,6 +120,7 @@ function checkRows(label, html) {
 // rewritten, so the spelling is the single variable.
 function blockSuffixedTemplate() {
   const packDir = join(dir, 'pack');
+  mkdirSync(dirname(packDir), { recursive: true });
   cpSync(join(ROOT, 'templates'), packDir, { recursive: true });
 
   for (const [section, prefix] of [['certifications', 'cert'], ['awards', 'award']]) {

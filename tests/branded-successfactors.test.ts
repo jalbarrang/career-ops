@@ -1,6 +1,6 @@
 import assert from 'assert/strict';
-import { detectBrandedSuccessFactors, classifyUnknownHostSeeds, makeHeadProbe } from '../branded-successfactors.ts';
-import { runHistorySeedScan, parseArgs } from '../scan-ats-full.ts';
+import { detectBrandedSuccessFactors, classifyUnknownHostSeeds, makeHeadProbe } from '../packages/core/src/scanning/branded-successfactors.ts';
+import { runHistorySeedScan, parseArgs } from '../packages/cli/src/commands/scanning/scan-ats-full.ts';
 import { pass, fail } from './helpers.ts';
 
 console.log('\nBranded SuccessFactors detection (#5739)');
@@ -77,9 +77,9 @@ try {
   assert.equal(headerOut[0].vendor, 'successfactors', 'a header-only marker is seen by the default probe');
   pass('default probe captures response headers alongside the capped body');
 
-  assert.equal(parseArgs(['node', 'scan-ats-full.ts', '--history-seeds', '--probe-unknown-hosts']).probeUnknownHosts, true);
-  assert.equal(parseArgs(['node', 'scan-ats-full.ts', '--history-seeds']).probeUnknownHosts, false);
-  assert.equal(parseArgs(['node', 'scan-ats-full.ts', '--probe-unknown-hosts']).probeUnknownHosts, false, 'probing needs --history-seeds');
+  assert.equal(parseArgs(['node', 'packages/cli/src/commands/scanning/scan-ats-full.ts', '--history-seeds', '--probe-unknown-hosts']).probeUnknownHosts, true);
+  assert.equal(parseArgs(['node', 'packages/cli/src/commands/scanning/scan-ats-full.ts', '--history-seeds']).probeUnknownHosts, false);
+  assert.equal(parseArgs(['node', 'packages/cli/src/commands/scanning/scan-ats-full.ts', '--probe-unknown-hosts']).probeUnknownHosts, false, 'probing needs --history-seeds');
 
   const fetched = [];
   const provider = {

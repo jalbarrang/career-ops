@@ -1,29 +1,29 @@
 // tests/web-import-guard.test.ts — a module under tests/ that loads code from
-// web/ checks that web/ exists before it does.
+// apps/web/ checks that apps/web/ exists before it does.
 //
-// update-system.ts ships tests/ but never web/ (#3269), so everything here
-// also runs on installs with no web/. CI cannot see the difference: it runs on
-// a full checkout, where every import from web/ resolves. So each unguarded
+// packages/cli/src/commands/platform/update-system.ts ships tests/ but never apps/web/ (#3269), so everything here
+// also runs on installs with no apps/web/. CI cannot see the difference: it runs on
+// a full checkout, where every import from apps/web/ resolves. So each unguarded
 // import was found on a user's install, one suite at a time: tracker-columns
 // (#1675), profile-keywords-parity (#3166), title-fit. This asserts the
 // property for every module under tests/ instead.
 //
 // It reads source, because no run on a full checkout can show what a checkout
-// without web/ would do. It covers module loads, the shape all three took; a
-// suite that READS a web/ file (#4165) is not checked here.
+// without apps/web/ would do. It covers module loads, the shape all three took; a
+// suite that READS a apps/web/ file (#4165) is not checked here.
 import { pass, fail, ROOT, walkFiles } from './helpers.ts';
 import { readFileSync } from 'fs';
 import { join, relative, sep } from 'path';
 
-console.log('\nweb/ import guard — modules under tests/ check web/ exists before loading from it');
+console.log('\nweb/ import guard — modules under tests/ check apps/web/ exists before loading from it');
 
-// A path into web/: join() or resolve() with a 'web' segment, or a string that
-// starts at web/ or ../web/.
-const WEB_PATH = /\b(?:join|resolve)\s*\([^)]*['"]web['"]|['"`](?:\.\.\/)*web\//;
+// A path into apps/web/: join() or resolve() with a 'web' segment, or a string that
+// starts at apps/web/ or ../web/.
+const WEB_PATH = /\b(?:join|resolve)\s*\([^)]*['"]apps\/web['"]|['"`](?:\.\.\/)*apps\/web\//;
 
 // An import statement links before the module's first line runs, so no check
 // can skip it.
-const STATIC_IMPORT = /^[ \t]*(?:import|export|\})[^'"\n]*['"](?:\.\.\/)+web\//m;
+const STATIC_IMPORT = /^[ \t]*(?:import|export|\})[^'"\n]*['"](?:\.\.\/)+apps\/web\//m;
 
 /** Argument text of the call whose `(` is at `open`. */
 function argAt(code, open) {
@@ -36,8 +36,8 @@ function argAt(code, open) {
 }
 
 /**
- * Does `src` load a module from web/, and is every such load preceded by an
- * existence check on a web/ path whose answer is used?
+ * Does `src` load a module from apps/web/, and is every such load preceded by an
+ * existence check on a apps/web/ path whose answer is used?
  *
  * Source order, not control flow: a check anywhere above the import counts.
  *
@@ -48,10 +48,10 @@ function inspectWebImports(src) {
   // Whole-line comments go, so prose quoting an import is not read as one.
   const code = src.split('\n').filter((line) => !/^\s*(?:\/\/|\/\*|\*)/.test(line)).join('\n');
   if (STATIC_IMPORT.test(code)) {
-    return { loads: true, problem: 'static import from web/, which no check can skip: load it with import() instead' };
+    return { loads: true, problem: 'static import from apps/web/, which no check can skip: load it with import() instead' };
   }
 
-  // Names bound to a web/ path, followed through `const b = join(a, ...)`.
+  // Names bound to a apps/web/ path, followed through `const b = join(a, ...)`.
   const names = new Set();
   const isWeb = (expr) => WEB_PATH.test(expr) || [...names].some((n) => new RegExp(`\\b${n}\\b`).test(expr));
   const bindings = [...code.matchAll(/\b(?:const|let|var)\s+(\w+)\s*=\s*([^;\n]+)/g)]
@@ -71,48 +71,48 @@ function inspectWebImports(src) {
   const unchecked = loads.find((l) => !checks.some((c) => c.at < l.at));
   return {
     loads: loads.length > 0,
-    problem: unchecked ? `import(${unchecked.arg.trim()}) with no existence check on web/ before it` : null,
+    problem: unchecked ? `import(${unchecked.arg.trim()}) with no existence check on apps/web/ before it` : null,
   };
 }
 
 // The detector's limits must fail here rather than pass silently against the
 // tree. The first three are the shapes that reached users.
 const SHAPES = [
-  // [shape, loads from web/, flagged, source]
+  // [shape, loads from apps/web/, flagged, source]
   ['title-fit before this fix', true, true,
-    "try { const m = await import(pathToFileURL(join(ROOT, 'web', 'src', 'lib', 'title-fit.ts')).href); } catch (e) { fail(e.message); }"],
+    "try { const m = await import(pathToFileURL(join(ROOT, 'apps/web', 'src', 'lib', 'title-fit.ts')).href); } catch (e) { fail(e.message); }"],
   ['a static import, as before #3166', true, true,
-    "import { profileTargetKeywords as web } from '../web/src/lib/profile-keywords.ts';"],
+    "import { profileTargetKeywords as web } from '../apps/web/src/lib/profile-keywords.ts';"],
   ['a relative import(), as before #1677', true, true,
-    "const { loadHeaderAliases } = await import('../web/src/lib/tracker-table.ts');"],
+    "const { loadHeaderAliases } = await import('../apps/web/src/lib/tracker-table.ts');"],
   ['the house shape, through a chain of names', true, false, [
-    "const WEB = join(ROOT, 'web');",
+    "const WEB = join(ROOT, 'apps/web');",
     "const MOD = join(WEB, 'src', 'lib', 'x.ts');",
     "if (!existsSync(join(WEB, 'src'))) warn('skip');",
     "else if (!existsSync(MOD)) fail('moved?');",
     'else await import(pathToFileURL(MOD).href);',
   ].join('\n')],
   ["page-format's node:test skip", true, false, [
-    "const webOwner = join(ROOT, 'web', 'src', 'lib', 'page-formats.ts');",
-    "if (!existsSync(webOwner)) return t.skip('no web/');",
+    "const webOwner = join(ROOT, 'apps/web', 'src', 'lib', 'page-formats.ts');",
+    "if (!existsSync(webOwner)) return t.skip('no apps/web/');",
     'const web = await import(pathToFileURL(webOwner).href);',
   ].join('\n')],
   ['a check after the import', true, true, [
-    "const m = await import(pathToFileURL(join(ROOT, 'web', 'x.ts')).href);",
-    "if (!existsSync(join(ROOT, 'web'))) warn('skip');",
+    "const m = await import(pathToFileURL(join(ROOT, 'apps/web', 'x.ts')).href);",
+    "if (!existsSync(join(ROOT, 'apps/web'))) warn('skip');",
   ].join('\n')],
   ['a check on another path', true, true,
-    "if (existsSync(join(ROOT, 'cv.md'))) await import(pathToFileURL(join(ROOT, 'web', 'x.ts')).href);"],
+    "if (existsSync(join(ROOT, 'cv.md'))) await import(pathToFileURL(join(ROOT, 'apps/web', 'x.ts')).href);"],
   ['a check whose answer is dropped', true, true, [
-    "existsSync(join(ROOT, 'web'));",
-    "await import(pathToFileURL(join(ROOT, 'web', 'x.ts')).href);",
+    "existsSync(join(ROOT, 'apps/web'));",
+    "await import(pathToFileURL(join(ROOT, 'apps/web', 'x.ts')).href);",
   ].join('\n')],
   ['an import quoted in a comment', false, false, [
-    "// await import(pathToFileURL(join(ROOT, 'web', 'x.ts')).href) crashed here once",
+    "// await import(pathToFileURL(join(ROOT, 'apps/web', 'x.ts')).href) crashed here once",
     'const ok = true;',
   ].join('\n')],
   ['a core module', false, false,
-    "const { scan } = await import(pathToFileURL(join(ROOT, 'scan.ts')).href);"],
+    "const { scan } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);"],
 ];
 const misread = SHAPES.filter(([, loads, flagged, src]) => {
   const got = inspectWebImports(src);
@@ -121,7 +121,7 @@ const misread = SHAPES.filter(([, loads, flagged, src]) => {
 if (misread.length === 0) pass(`the detector reads all ${SHAPES.length} fixture shapes correctly`);
 else fail(`the detector misreads: ${misread.join('; ')}`);
 
-// Every module, not only suites: a helper that imports from web/ takes down
+// Every module, not only suites: a helper that imports from apps/web/ takes down
 // every suite that imports it.
 const SELF = 'tests/web-import-guard.test.ts';
 const loaders = [];
@@ -135,13 +135,13 @@ for (const file of walkFiles(join(ROOT, 'tests'), /\.ts$/)) {
 }
 if (loaders.length === 0) {
   // None found means the detector stopped matching, which must not read as
-  // "all guarded". If the imports from web/ really are gone, so is the need
+  // "all guarded". If the imports from apps/web/ really are gone, so is the need
   // for this file.
-  fail('found no module under tests/ that loads from web/ — the detector stopped matching');
+  fail('found no module under tests/ that loads from apps/web/ — the detector stopped matching');
 } else if (problems.length === 0) {
-  pass(`all ${loaders.length} modules under tests/ that load from web/ check it exists first (${loaders.join(', ')})`);
+  pass(`all ${loaders.length} modules under tests/ that load from apps/web/ check it exists first (${loaders.join(', ')})`);
 } else {
   for (const p of problems) {
-    fail(`${p} — a checkout without web/ crashes here (#3269); guard it with existsSync(join(ROOT, 'web', 'src')) as tests/profile-keywords-parity.test.ts does`);
+    fail(`${p} — a checkout without apps/web/ crashes here (#3269); guard it with existsSync(join(ROOT, 'apps/web', 'src')) as tests/profile-keywords-parity.test.ts does`);
   }
 }

@@ -7,8 +7,8 @@ import { tmpdir } from 'node:os';
 import { ROOT, NODE } from './helpers.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
-const REPLY_WATCH = join(ROOT, 'reply-watch.ts');
-const CONTACT_EXTRACT = join(ROOT, 'contact-extract.ts');
+const REPLY_WATCH = join(ROOT, 'packages/cli/src/commands/outreach/reply-watch.ts');
+const CONTACT_EXTRACT = join(ROOT, 'packages/cli/src/commands/outreach/contact-extract.ts');
 
 const HEADER = '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |\n|---|---|---|---|---|---|---|---|---|';
 const TRACKER_ROW = '| 42 | 2026-06-01 | Acme Corp | Backend Engineer | 4.0/5 | Applied | ❌ | - | |';

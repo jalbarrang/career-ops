@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — solidjobs');
 
 try {
-  const sj = (await import(pathToFileURL(join(ROOT, 'providers/solidjobs.ts')).href)).default;
+  const sj = (await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/solidjobs.ts')).href)).default;
 
   if (sj.id === 'solidjobs') pass('solidjobs.id is "solidjobs"');
   else fail(`solidjobs.id is ${JSON.stringify(sj.id)}`);

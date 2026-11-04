@@ -5,11 +5,11 @@
 // (a sidebar sign-in nudge next to a full JD) is still archived normally,
 // since the marker check is gated on the page being short overall.
 //
-// check-jd-archive.ts's detectNonContentMarker() already recognizes these
+// packages/core/src/evaluation/check-jd-archive.ts's detectNonContentMarker() already recognizes these
 // shapes, but only at AUDIT time — well after a bad capture is already sitting
 // in jds/. This exercises the REAL archiveUrl() (no mocking of the detection
 // logic itself), driven through a fake Playwright browser/context/page rather
-// than a real one: archive-posting.ts has no dedicated test suite of its own
+// than a real one: packages/cli/src/commands/evaluation/archive-posting.ts has no dedicated test suite of its own
 // anywhere in this repo, precisely because it does real network navigation
 // through a real headless browser, and a unit test that launched Chromium
 // against a live URL would be flaky, slow, and network-dependent for no
@@ -30,7 +30,7 @@ import { join } from 'node:path';
 const tmp = mkdtempSync(join(tmpdir(), 'career-ops-archive-nc-'));
 process.env.CAREER_OPS_ROOT = tmp;
 
-const { archiveUrl } = await import('../archive-posting.ts');
+const { archiveUrl } = await import('../packages/cli/src/commands/evaluation/archive-posting.ts');
 
 function makeFakeBrowser({ bodyText, title = 'Backend Engineer | Acme', h1 = 'Backend Engineer', httpStatus = 200, evaluateRejects = false }) {
   let pdfCalled = false;

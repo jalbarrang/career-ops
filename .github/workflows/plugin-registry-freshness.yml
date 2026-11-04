@@ -51,4 +51,4 @@ jobs:
       - name: Check registry pins against latest releases
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: bun validate-plugin-registry.ts --check-stale
+        run: bun packages/cli/src/commands/platform/validate-plugin-registry.ts --check-stale

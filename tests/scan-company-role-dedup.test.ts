@@ -13,14 +13,14 @@
 // The unit checks exercise `loadSeenCompanyRoles` (the filesystem wrapper)
 // rather than the pure collector, because the defect was in which sources get
 // wired in, not in how any one source is parsed. The last check is end-to-end —
-// two real `scan.ts` runs over a fixture board — because the defect is in the
+// two real `packages/core/src/scanning/scan.ts` runs over a fixture board — because the defect is in the
 // wiring between the loader and main(), which no unit test observes.
 import { pass, fail, ROOT, NODE } from './helpers.ts';
 import { mkdtempSync, writeFileSync, readFileSync, existsSync, rmSync, mkdirSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { execFileSync } from 'child_process';
-import { loadSeenCompanyRoles, companyRoleDedupKey } from '../scan.ts';
+import { loadSeenCompanyRoles, companyRoleDedupKey } from '../packages/core/src/scanning/scan.ts';
 
 console.log('\nscan.ts — company+role dedupe survives between runs');
 
@@ -116,7 +116,7 @@ const KEY = companyRoleDedupKey('Anduril', 'Strategic Finance');
     // modes/pipeline.md → workflow step 2f and the "Processed" example.
     ['- [x] #143 | https://jobs.example.com/posting/2 | Acme Corp | AI PM | 4.2/5 | PDF ✅',
       ['Acme Corp', 'AI PM'], 'processed entry led by a report number'],
-    // reconcile-pipeline.ts → the line it writes when moving an entry to Processed.
+    // packages/cli/src/commands/pipeline/reconcile-pipeline.ts → the line it writes when moving an entry to Processed.
     ['- [x] [144](reports/144-acme-2026-01-01.md) | https://jobs.example.com/posting/3 | Acme Corp | Solutions Architect | 3.1/5 | PDF ❌',
       ['Acme Corp', 'Solutions Architect'], 'processed entry led by a report link'],
     // modes/pipeline.md → pre-screen gate. One cell follows the URL, and it is a
@@ -252,7 +252,7 @@ const KEY = companyRoleDedupKey('Anduril', 'Strategic Finance');
 // passes against a build where main() simply never passes the extra sources —
 // the defect lived in the wiring, so it has to be observed through the CLI.
 //
-// scan.ts resolves data/ relative to process.cwd(), so the child runs with cwd
+// packages/core/src/scanning/scan.ts resolves data/ relative to process.cwd(), so the child runs with cwd
 // pinned to a sandbox. The fixture board is reached through local-parser, which
 // requires an in-repo script (realpath-guarded) and runs it with cwd at the repo
 // root — hence the repo-relative `script:` against an absolute portals path.
@@ -280,7 +280,7 @@ tracked_companies:
       script: tests/fixtures/three-city-board.ts
 `);
 
-    const scan = () => execFileSync(NODE, [join(ROOT, 'scan.ts')], {
+    const scan = () => execFileSync(NODE, [join(ROOT, 'packages/core/src/scanning/scan.ts')], {
       cwd: dir,
       // The sandbox is the lane's data root: scan's output defaults are
       // anchored to CAREER_OPS_ROOT, not to the child's cwd.

@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT } from './helpers.ts';
-import { CLI_CANDIDATES, buildPrompt, resolveRankTimeoutMs } from '../rank-pipeline.ts';
+import { CLI_CANDIDATES, buildPrompt, resolveRankTimeoutMs } from '../packages/cli/src/commands/pipeline/rank-pipeline.ts';
 
 const POSIX = { skip: process.platform === 'win32' && 'POSIX executable fixture' };
 const ROWS = Array.from({ length: 12 }, (_, i) => `- [ ] https://example.test/${i} | Example | Engineer ${i}`);
@@ -31,7 +31,7 @@ function sandbox(t, cliBody, bin = 'grok') {
 }
 
 function rank(root, args = [], extra = {}, bin = 'grok') {
-  const result = spawnSync(process.execPath, [join(ROOT, 'rank-pipeline.ts'), '--cli', bin, ...args], {
+  const result = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/pipeline/rank-pipeline.ts'), '--cli', bin, ...args], {
     cwd: root,
     encoding: 'utf8',
     timeout: 60_000,

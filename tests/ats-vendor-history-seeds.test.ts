@@ -2,32 +2,32 @@ import assert from 'assert/strict';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { atsVendorOf } from '../ats-vendor.ts';
-import { knownAtsVendorOf } from '../analyze-patterns.ts';
+import { atsVendorOf } from '../packages/core/src/scanning/ats-vendor.ts';
+import { knownAtsVendorOf } from '../packages/cli/src/commands/insights/analyze-patterns.ts';
 import {
   atsBoardUrlOf,
   loadHistoryAtsSeeds,
   parseScanHistoryAtsSeeds,
   parseTrackerAtsSeeds,
-} from '../history-ats-seeds.ts';
-import { parseArgs, runHistorySeedScan } from '../scan-ats-full.ts';
+} from '../packages/core/src/scanning/history-ats-seeds.ts';
+import { parseArgs, runHistorySeedScan } from '../packages/cli/src/commands/scanning/scan-ats-full.ts';
 import { pass, fail } from './helpers.ts';
 
 console.log('\nATS vendor + user-history reverse-scan seeds (#3697)');
 
 try {
-  assert.equal(parseArgs(['node', 'scan-ats-full.ts']).historySeeds, false);
+  assert.equal(parseArgs(['node', 'packages/cli/src/commands/scanning/scan-ats-full.ts']).historySeeds, false);
   assert.throws(
-    () => parseArgs(['node', 'scan-ats-full.ts', '--ats', 'successfactors']),
+    () => parseArgs(['node', 'packages/cli/src/commands/scanning/scan-ats-full.ts', '--ats', 'successfactors']),
     /--ats successfactors has no public directory source.*--history-seeds/,
   );
   assert.throws(
-    () => parseArgs(['node', 'scan-ats-full.ts', '--ats', 'greenhouse,successfactors']),
+    () => parseArgs(['node', 'packages/cli/src/commands/scanning/scan-ats-full.ts', '--ats', 'greenhouse,successfactors']),
     /--ats successfactors has no public directory source.*--history-seeds/,
   );
-  assert.equal(parseArgs(['node', 'scan-ats-full.ts', '--history-seeds']).historySeeds, true);
+  assert.equal(parseArgs(['node', 'packages/cli/src/commands/scanning/scan-ats-full.ts', '--history-seeds']).historySeeds, true);
   assert.equal(
-    parseArgs(['node', 'scan-ats-full.ts', '--history-seeds', '--ats', 'successfactors']).historySeeds,
+    parseArgs(['node', 'packages/cli/src/commands/scanning/scan-ats-full.ts', '--history-seeds', '--ats', 'successfactors']).historySeeds,
     true,
   );
   pass('application-history board discovery is disabled by default and requires --history-seeds');

@@ -7,8 +7,8 @@
 // process — batch-runner.sh --parallel N starts N workers and each one runs
 // generate-pdf.ts. Two renders that read the same manifest each wrote back
 // "the old rows plus my own", so whichever wrote last erased the other's row,
-// silently: the PDF existed, its manifest row did not, and find.ts, the
-// dashboard and outcome.ts could no longer locate it.
+// silently: the PDF existed, its manifest row did not, and packages/cli/src/commands/pipeline/find.ts, the
+// dashboard and packages/cli/src/commands/tracker/outcome.ts could no longer locate it.
 //
 // The children are released together at a shared start time and the manifest is
 // seeded with enough rows that a read-modify-write takes long enough to overlap
@@ -26,7 +26,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const GENERATE_PDF_URL = pathToFileURL(join(ROOT, 'generate-pdf.ts')).href;
+const GENERATE_PDF_URL = pathToFileURL(join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts')).href;
 
 const WORKERS = 8;
 const SEED_ROWS = 20_000;
@@ -65,7 +65,7 @@ test('parallel renders each keep their manifest row', async () => {
     const manifest = join(sandbox, 'data', 'pdf-index.tsv');
     mkdirSync(join(sandbox, 'data'), { recursive: true });
     mkdirSync(join(sandbox, 'output'), { recursive: true });
-    const seed = ['# report\tpdf\thtml\tformat\tdate\tkind - written by generate-pdf.ts, do not edit'];
+    const seed = ['# report\tpdf\thtml\tformat\tdate\tkind - written by packages/cli/src/commands/cv/generate-pdf.ts, do not edit'];
     for (let i = 0; i < SEED_ROWS; i += 1) {
       seed.push(`${100000 + i}\toutput/cv-seed-${i}.pdf\t\tletter\t2026-01-01\tcv`);
     }

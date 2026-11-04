@@ -3,15 +3,15 @@
 //
 // #3715 fixed the analysis scripts, which only read. These two write:
 //
-//   set-status.ts:103    const CAREER_OPS = dirname(fileURLToPath(import.meta.url));
-//   set-status.ts:263    const APPS_FILE  = resolveTrackerPath(CAREER_OPS);
-//   mark-pdf-ready.ts:45 / :105   the same pair
+//   packages/cli/src/commands/tracker/set-status.ts:103    const CAREER_OPS = dirname(fileURLToPath(import.meta.url));
+//   packages/cli/src/commands/tracker/set-status.ts:263    const APPS_FILE  = resolveTrackerPath(CAREER_OPS);
+//   packages/cli/src/commands/tracker/mark-pdf-ready.ts:45 / :105   the same pair
 //
 // The constant reads as the project root and holds the CODE root, so
 // getCareerOpsRoot() — the only thing that honours CAREER_OPS_ROOT,
 // CAREER_OPS_DATA_DIR and the .career-ops-data marker — was never consulted.
 //
-// set-status.ts is the one that matters: AGENTS.md calls it "the canonical
+// packages/cli/src/commands/tracker/set-status.ts is the one that matters: AGENTS.md calls it "the canonical
 // (locked, validated, atomic) write path", the tracker Pipeline Integrity rules
 // say status changes go through it and NOT through hand edits, and #2901
 // converged the web layer's /api/status onto it. So on any configured data root
@@ -33,8 +33,9 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { listTree } from '../packages/core/src/kernel/walk-tree.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -63,7 +64,7 @@ function run(script, args, f) {
   const r = spawnSync(process.execPath, [join(ROOT, script), ...args], {
     cwd: f.decoyCwd, encoding: 'utf-8', timeout: 60_000,
     // CAREER_OPS_TRACKER is cleared too, and that is not belt-and-braces.
-    // path-resolver.ts ranks it ABOVE the resolved root, so on a machine where
+    // packages/core/src/kernel/path-resolver.ts ranks it ABOVE the resolved root, so on a machine where
     // a developer has it exported these spawns ignore f.dataRoot entirely and
     // operate on whatever tracker it names — and these are the WRITERS. Left
     // inherited, running this file rewrites that tracker's row 1 from Applied
@@ -88,7 +89,7 @@ const trackerText = (f) => readFileSync(join(f.dataRoot, 'data', 'applications.m
 test('set-status writes to the configured tracker, not the checkout', () => {
   const f = fixture();
   try {
-    const r = run('set-status.ts', ['1', 'Interview', '--json'], f);
+    const r = run('packages/cli/src/commands/tracker/set-status.ts', ['1', 'Interview', '--json'], f);
     assert.doesNotMatch(r.all, /No tracker found/i, `it looked in the checkout:\n${r.all.slice(0, 400)}`);
     assert.match(trackerText(f), /Interview/, `the configured tracker was not updated:\n${r.all.slice(0, 400)}`);
   } finally { cleanup(f); }
@@ -99,7 +100,7 @@ test('and the status-log lands beside that tracker', () => {
   // tracker but logs elsewhere would split the record in two.
   const f = fixture();
   try {
-    run('set-status.ts', ['1', 'Interview'], f);
+    run('packages/cli/src/commands/tracker/set-status.ts', ['1', 'Interview'], f);
     assert.ok(
       existsSync(join(f.dataRoot, 'data', 'status-log.tsv')),
       `no ledger beside the tracker; data/ holds: ${readdirSync(join(f.dataRoot, 'data')).join(', ')}`,
@@ -110,18 +111,18 @@ test('and the status-log lands beside that tracker', () => {
 test('nothing is written into the directory it was launched from', () => {
   const f = fixture();
   try {
-    run('set-status.ts', ['1', 'Interview'], f);
+    run('packages/cli/src/commands/tracker/set-status.ts', ['1', 'Interview'], f);
     assert.deepEqual(readdirSync(f.decoyCwd), [], 'set-status wrote into the cwd');
   } finally { cleanup(f); }
 });
 
-test('outcome.ts finds the configured tracker too', () => {
-  // It shells out to set-status.ts, so both halves have to resolve: the parent
+test('packages/cli/src/commands/tracker/outcome.ts finds the configured tracker too', () => {
+  // It shells out to packages/cli/src/commands/tracker/set-status.ts, so both halves have to resolve: the parent
   // to locate the tracker, and the child to write it. The child inherits
   // CAREER_OPS_ROOT through the environment.
   const f = fixture();
   try {
-    const r = run('outcome.ts', ['1', 'rejected'], f);
+    const r = run('packages/cli/src/commands/tracker/outcome.ts', ['1', 'rejected'], f);
     assert.doesNotMatch(r.all, /Tracker not found|No tracker found/i, `it looked in the checkout:\n${r.all.slice(0, 400)}`);
     assert.match(trackerText(f), /Rejected/, `the outcome did not reach the configured tracker:\n${r.all.slice(0, 400)}`);
   } finally { cleanup(f); }
@@ -130,7 +131,7 @@ test('outcome.ts finds the configured tracker too', () => {
 test('mark-pdf-ready resolves the same tracker', () => {
   const f = fixture();
   try {
-    const r = run('mark-pdf-ready.ts', ['1'], f);
+    const r = run('packages/cli/src/commands/tracker/mark-pdf-ready.ts', ['1'], f);
     assert.doesNotMatch(r.all, /No tracker found|not found at/i, `it looked in the checkout:\n${r.all.slice(0, 400)}`);
   } finally { cleanup(f); }
 });
@@ -141,7 +142,7 @@ test('templates/states.yml still resolves from the CODE root', () => {
   // status validation — the check this script exists to perform.
   const f = fixture();
   try {
-    const r = run('set-status.ts', ['1', 'NotACanonicalState', '--json'], f);
+    const r = run('packages/cli/src/commands/tracker/set-status.ts', ['1', 'NotACanonicalState', '--json'], f);
     assert.doesNotMatch(r.all, /states\.yml/i, `states.yml was reported missing:\n${r.all.slice(0, 400)}`);
     // It must still REJECT the bogus state, which it can only do by having read
     // the template.
@@ -153,12 +154,13 @@ test('no tracker writer resolves the tracker from its own directory', () => {
   // Structural, and scoped to the WRITERS because a wrong path there loses data
   // rather than just reporting nothing. Same spirit as #3511's check 6.
   const offenders = [];
-  for (const file of readdirSync(ROOT).filter((f) => f.endsWith('.ts'))) {
-    const src = readFileSync(join(ROOT, file), 'utf-8');
-    // Every call, and any identifier: reply-watch.ts passed `__dirname`
+  for (const abs of listTree(join(ROOT, 'packages'), { match: /\.ts$/ })) {
+    const file = relative(ROOT, abs).split('\\').join('/');
+    const src = readFileSync(abs, 'utf-8');
+    // Every call, and any identifier: packages/cli/src/commands/outreach/reply-watch.ts passed `__dirname`
     // straight in and slipped past an uppercase-only, first-match pattern.
     for (const [, arg] of src.matchAll(/resolveTrackerPath\(\s*([A-Za-z_]\w*|process\.cwd\(\))\s*\)/g)) {
-      // process.cwd() is the other wrong root: hired-share.ts defaulted to it.
+      // process.cwd() is the other wrong root: packages/cli/src/commands/insights/hired-share.ts defaulted to it.
       if (arg === 'process.cwd()') {
         offenders.push(`${file}: resolveTrackerPath(process.cwd())`);
         continue;

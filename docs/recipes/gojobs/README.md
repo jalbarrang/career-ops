@@ -56,7 +56,7 @@ tracked_companies:
     enabled: true
 ```
 
-Run `bun scan.ts` as usual. The local-parser provider starts the copied script
+Run `career-ops scan` as usual. The local-parser provider starts the copied script
 from the career-ops checkout, and the parser resolves capture paths through
 `CAREER_OPS_ROOT`, `CAREER_OPS_DATA_DIR`, or `.career-ops-data` using the same
 precedence as the rest of career-ops. Normal scan filters, deduplication, and

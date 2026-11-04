@@ -1,11 +1,11 @@
-// tests/precheck-duplicate.test.ts — precheck-duplicate.ts ranks possible
+// tests/precheck-duplicate.test.ts — packages/cli/src/commands/tracker/precheck-duplicate.ts ranks possible
 // duplicate tracker rows and never writes. Synthetic fixtures only.
 import { pass, fail, ROOT, NODE, rmSync } from './helpers.ts';
 import { execFileSync } from 'child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { findDuplicateCandidates, companyRelation } from '../precheck-duplicate.ts';
+import { findDuplicateCandidates, companyRelation } from '../packages/cli/src/commands/tracker/precheck-duplicate.ts';
 
 console.log('\nprecheck-duplicate — read-only pre-apply duplicate check');
 
@@ -32,7 +32,7 @@ try {
   const tracker = join(root, 'data', 'applications.md');
   writeFileSync(tracker, FIXTURE);
 
-  const run = (args, env = {}) => execFileSync(NODE, [join(ROOT, 'precheck-duplicate.ts'), ...args], {
+  const run = (args, env = {}) => execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/precheck-duplicate.ts'), ...args], {
     encoding: 'utf-8', timeout: 30000,
     env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_DATA_DIR: '', CAREER_OPS_TRACKER: '', ...env },
   });

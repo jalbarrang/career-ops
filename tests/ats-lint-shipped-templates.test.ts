@@ -14,7 +14,7 @@
 // discovers (flat files and template packs, both kinds), plus resume-template.
 // html, which predates the `cv-template.<name>.html` convention and so is
 // invisible to discovery while still being a shipped template reachable via
-// `generate-pdf.ts --template`.
+// `packages/cli/src/commands/cv/generate-pdf.ts --template`.
 //
 // Section partials are in scope too. `templates/sections/*.html` are fragments
 // composed INTO these templates, and a rendered CV carries whatever they hold.
@@ -38,7 +38,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync } from 'node:fs';
 import { join, dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { atsLint, listTemplates } from '../cv-templates.ts';
+import { atsLint, listTemplates } from '../packages/cli/src/commands/cv/cv-templates.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -48,7 +48,7 @@ const templates = [
   { path: join(ROOT, 'templates', 'resume-template.html'), kind: 'cv' },
 ].filter((t) => existsSync(t.path));
 
-// Derived the way build-cv-html.ts resolves them, from a sections/ directory
+// Derived the way packages/cli/src/commands/cv/build-cv-html.ts resolves them, from a sections/ directory
 // co-located with each template, so a pack that ships its own is swept the day
 // it lands and nobody has to remember this file.
 const partials = [...new Set(templates.map((t) => join(dirname(t.path), 'sections')))]

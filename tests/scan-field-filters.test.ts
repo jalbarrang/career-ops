@@ -9,9 +9,9 @@ import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\nscan — declared-field whitelists (filter_on / field_filters)');
 
-const scan = await import(pathToFileURL(join(ROOT, 'scan.ts')).href);
+const scan = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
 const { normalizeFilterOn, buildTitleFilter } = scan;
-const titleKeywords = await import(pathToFileURL(join(ROOT, 'title-keywords.ts')).href);
+const titleKeywords = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/title-keywords.ts')).href);
 
 // ── normalizeFilterOn ──────────────────────────────────────────────
 // The default is the whole backward-compatibility guarantee: every existing
@@ -61,7 +61,7 @@ const titleKeywords = await import(pathToFileURL(join(ROOT, 'title-keywords.ts')
       && buildTitleFilter === titleKeywords.buildTitleFilter) {
     pass('field blocks compile with the same buildTitleFilter as title_filter');
   } else {
-    fail('scan.ts re-exports a different compiler than title-keywords.ts');
+    fail('packages/core/src/scanning/scan.ts re-exports a different compiler than packages/core/src/scanning/title-keywords.ts');
   }
 
   const f = buildTitleFilter({ positive: ['stem:22'], negative: ['22222'] });

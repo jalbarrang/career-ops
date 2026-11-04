@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
-const SCRIPT = join(dirname(dirname(fileURLToPath(import.meta.url))), 'reconcile-pipeline.ts');
+const SCRIPT = join(dirname(dirname(fileURLToPath(import.meta.url))), 'packages/cli/src/commands/pipeline/reconcile-pipeline.ts');
 const URL = 'https://jobs.example.test/4521';
 
 function fixture(t, { report, stateScore = '-', stateStatus = 'completed', language = 'en' }) {

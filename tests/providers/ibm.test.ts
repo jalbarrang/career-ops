@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — ibm');
 
 try {
-  const ibmModule = await import(pathToFileURL(join(ROOT, 'providers/ibm.ts')).href);
+  const ibmModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/ibm.ts')).href);
   const ibm = ibmModule.default;
   const { parseIbmResponse, buildPostFilter } = ibmModule;
 

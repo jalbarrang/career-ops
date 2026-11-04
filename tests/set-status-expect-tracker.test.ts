@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { ROOT, rmSync } from './helpers.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
-const SCRIPT = join(ROOT, 'set-status.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/tracker/set-status.ts');
 const TRACKER = [
   '# Applications',
   '',

@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pass, fail, ROOT, NODE, rmSync } from './helpers.ts';
-import { computeAllStats } from '../stats.ts';
+import { computeAllStats } from '../packages/core/src/insights/stats.ts';
 
 const header = '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |\n|---|---|---|---|---|---|---|---|---|\n';
 const trackerContent = status => header + `| 1 | 2026-06-01 | Acme | Backend Engineer | 4/5 | ${status} | - | - | |\n`;
@@ -42,10 +42,10 @@ function cli(f, script, args = []) {
 }
 
 check('stats CLI recovers the selected tracker history written by canonical set-status', 'Applied', f => {
-  cli(f, 'set-status.ts', ['--row', '1', 'Interview', '--on', '2026-06-02', '--json']);
-  cli(f, 'set-status.ts', ['--row', '1', 'Rejected', '--on', '2026-06-03', '--json']);
+  cli(f, 'packages/cli/src/commands/tracker/set-status.ts', ['--row', '1', 'Interview', '--on', '2026-06-02', '--json']);
+  cli(f, 'packages/cli/src/commands/tracker/set-status.ts', ['--row', '1', 'Rejected', '--on', '2026-06-03', '--json']);
   assert.match(readFileSync(join(f.trackerDir, 'status-log.tsv'), 'utf8'), /Applied\tInterview/);
-  const stats = cli(f, 'stats.ts');
+  const stats = cli(f, 'packages/core/src/insights/stats.ts');
   assert.equal(stats.metadata.sources.statusLog, true);
   assert.equal(stats.funnel.basis, 'ledger');
   assert.equal(stats.funnel.everInterview, 1);
@@ -54,7 +54,7 @@ check('stats CLI recovers the selected tracker history written by canonical set-
 
 check('a foreign default tracker ledger cannot invent selected tracker stages', 'Discarded', f => {
   writeFileSync(join(f.dataRoot, 'data', 'status-log.tsv'), '1\t2026-06-02\tApplied\tOffer\tset-status\t\n');
-  const stats = cli(f, 'stats.ts');
+  const stats = cli(f, 'packages/core/src/insights/stats.ts');
   assert.equal(stats.metadata.sources.statusLog, false);
   assert.equal(stats.funnel.basis, undefined);
   assert.equal(stats.funnel.everOffer, 0);

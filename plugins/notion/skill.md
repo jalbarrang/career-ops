@@ -12,10 +12,10 @@ truth — Notion is an additive mirror.
 
 ## Commands
 
-- `bun plugins.ts run notion export` — push each tracker row (company / role /
+- `bun packages/cli/src/commands/platform/plugins.ts run notion export` — push each tracker row (company / role /
   status / score) to the "Applications" database under your Career Ops page.
   Add `--dry-run` to preview without writing.
-- `bun plugins.ts run notion search "<query>"` — return Notion records that
+- `bun packages/cli/src/commands/platform/plugins.ts run notion search "<query>"` — return Notion records that
   carry a job URL, matching the query, and append them to the pipeline.
 
 ## Setup

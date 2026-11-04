@@ -1,10 +1,10 @@
 // tests/dead-boards-later-page-failure.test.ts — a failure on a later page of a
 // board that had just answered is not a miss.
 //
-// scan-ats-full.ts retires a board after three 404s in a row and skips it for
-// 30 days (dead-boards.ts, #2840). The iCIMS provider walks a board page by
+// packages/cli/src/commands/scanning/scan-ats-full.ts retires a board after three 404s in a row and skips it for
+// 30 days (packages/core/src/scanning/dead-boards.ts, #2840). The iCIMS provider walks a board page by
 // page and already draws the line itself: only a FIRST-page 404 means "no board
-// here" (providers/icims.ts, and tests/providers/icims-host-fallback.test.ts
+// here" (packages/core/src/scanning/providers/icims.ts, and tests/providers/icims-host-fallback.test.ts
 // pins that a later-page 404 does not switch hosts). The sweep did not draw it.
 // It passed `err?.status` to recordBoardResult(), so a 404 on page 2 of a board
 // that had answered page 1 with postings counted exactly like a missing board.
@@ -13,7 +13,7 @@
 // the sweep hands the error to recordBoardFailure(), which reads the mark.
 //
 // The provider and the cache below are the real ones; only the HTTP layer is a
-// stub. The last section reads scan-ats-full.ts's source, because the two
+// stub. The last section reads packages/cli/src/commands/scanning/scan-ats-full.ts's source, because the two
 // catch blocks that feed the cache are only reachable through a whole sweep.
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -23,8 +23,8 @@ import { pass, fail, ROOT } from './helpers.ts';
 console.log('\nDead-board memory — a later-page failure is not a miss');
 
 const load = (file) => import(pathToFileURL(join(ROOT, file)).href);
-const { boardKey, recordBoardFailure, recordBoardResult, shouldSkipDeadBoard, DEAD_BOARD_MISSES } = await load('dead-boards.ts');
-const icims = (await load('providers/icims.ts')).default;
+const { boardKey, recordBoardFailure, recordBoardResult, shouldSkipDeadBoard, DEAD_BOARD_MISSES } = await load('packages/core/src/scanning/dead-boards.ts');
+const icims = (await load('packages/core/src/scanning/providers/icims.ts')).default;
 
 const ORIGIN = 'https://careers-acmefreight.icims.com';
 const entry = { name: 'acmefreight', careers_url: `${ORIGIN}/jobs/search?ss=1&in_iframe=1` };
@@ -127,12 +127,12 @@ try {
   pass('a failure with no status at all creates no record');
 
   // ── the sweep hands over the error, not a status picked off it ──
-  const sweep = readFileSync(join(ROOT, 'scan-ats-full.ts'), 'utf-8');
+  const sweep = readFileSync(join(ROOT, 'packages/cli/src/commands/scanning/scan-ats-full.ts'), 'utf-8');
   // [^;\n]* rather than [^)]*: one of the two calls has boardKey(entry) inside.
   const byStatus = [...sweep.matchAll(/recordBoardResult\([^;\n]*\berr\??\.status[^;\n]*\)/g)].map((m) => m[0]);
   const byError = [...sweep.matchAll(/recordBoardFailure\(\s*deadBoards\s*,[^;\n]*\berr\s*\)/g)].length;
-  if (byStatus.length === 0 && byError === 2) pass('both catch blocks in scan-ats-full.ts record the failure through recordBoardFailure()');
-  else fail(`scan-ats-full.ts: ${byError} recordBoardFailure(…, err) call(s), expected 2; still passing a status: ${JSON.stringify(byStatus)}`);
+  if (byStatus.length === 0 && byError === 2) pass('both catch blocks in packages/cli/src/commands/scanning/scan-ats-full.ts record the failure through recordBoardFailure()');
+  else fail(`packages/cli/src/commands/scanning/scan-ats-full.ts: ${byError} recordBoardFailure(…, err) call(s), expected 2; still passing a status: ${JSON.stringify(byStatus)}`);
 } catch (err) {
   fail(`later-page failure tests could not run: ${err.message}`);
 }

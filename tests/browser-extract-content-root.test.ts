@@ -14,7 +14,7 @@ const JD = 'Example Corp is hiring a Platform Engineer to build and run the inte
 
 let browser;
 try {
-  const { readDom } = await import(pathToFileURL(join(ROOT, 'browser-extract.ts')).href);
+  const { readDom } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/scanning/browser-extract.ts')).href);
   const { chromium } = await import('playwright');
   try {
     browser = await chromium.launch({ headless: true });

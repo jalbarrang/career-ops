@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 
-const script = fileURLToPath(new URL("../company-history.ts", import.meta.url));
+const script = fileURLToPath(new URL("../packages/cli/src/commands/insights/company-history.ts", import.meta.url));
 const header = "| # | Date | Company | Role | Score | Status | PDF | Report | Notes |\n|---|------|---------|------|-------|--------|-----|--------|-------|\n";
 
 function check(label, run) {

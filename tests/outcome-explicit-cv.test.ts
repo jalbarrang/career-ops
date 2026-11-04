@@ -18,7 +18,7 @@ function check(label, fn) {
   writeFileSync(tracker, initial);
   writeFileSync(join(root, 'cv.md'), '# Fictional master CV\n');
   const env = { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_TRACKER: tracker, CAREER_OPS_TRACKER_LOCK_TIMEOUT_MS: '100', CAREER_OPS_TRACKER_LOCK_RETRY_MS: '10' };
-  const run = (args, preload) => spawnSync(process.execPath, [...(preload ? ['--import', pathToFileURL(preload).href] : []), join(ROOT, 'outcome.ts'), '1', 'hired', '--json', ...args], { cwd, env, encoding: 'utf8', timeout: 15000 });
+  const run = (args, preload) => spawnSync(process.execPath, [...(preload ? ['--import', pathToFileURL(preload).href] : []), join(ROOT, 'packages/cli/src/commands/tracker/outcome.ts'), '1', 'hired', '--json', ...args], { cwd, env, encoding: 'utf8', timeout: 15000 });
   try { fn({ root, tracker, cwd, run }); pass(label); }
   catch (e) { fail(`${label}: ${e.message}`); process.exitCode = 1; }
   finally { rmSync(dir, { recursive: true, force: true, maxRetries: 10 }); }

@@ -16,7 +16,7 @@
 //
 // CONTRACT_SLOTS below is the list from the pack authoring docs, transcribed. It
 // is deliberately a literal rather than something derived from the renderer: a
-// list read out of generate-cover-letter.ts would agree with itself no matter
+// list read out of packages/cli/src/commands/cv/generate-cover-letter.ts would agree with itself no matter
 // what the contract says, which is exactly the check that was missing.
 //
 // The last test does read the renderer, and that is a different thing. It never
@@ -32,7 +32,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { buildHtml } from '../generate-cover-letter.ts';
+import { buildHtml } from '../packages/cli/src/commands/cv/generate-cover-letter.ts';
 
 /** The 15 cover-letter slots the pack authoring contract declares. */
 const CONTRACT_SLOTS = [
@@ -196,14 +196,14 @@ test('core fills no cover slot the contract list omits', () => {
   // Reading the shipped template would be the wrong comparison here. It omits
   // RECIPIENT_BLOCK on purpose, which is a legitimate choice for one template
   // and not contract drift, so it would fail for a reason that is not a defect.
-  const core = readFileSync(new URL('../generate-cover-letter.ts', import.meta.url), 'utf-8');
+  const core = readFileSync(new URL('../packages/cli/src/commands/cv/generate-cover-letter.ts', import.meta.url), 'utf-8');
   const filled = [...new Set([...core.matchAll(/"\{\{([A-Z_]+)\}\}"\s*:/g)].map((m) => m[1]))];
 
   // Guard against a vacuous pass. A renamed replacements table or a changed
   // quote style would make `filled` empty, and an empty set is covered by every
   // list, so the assertion below would pass while measuring nothing.
   assert.ok(filled.length >= CONTRACT_SLOTS.length,
-    `read only ${filled.length} replacement keys out of generate-cover-letter.ts; the extraction is stale, not the contract`);
+    `read only ${filled.length} replacement keys out of packages/cli/src/commands/cv/generate-cover-letter.ts; the extraction is stale, not the contract`);
 
   const undeclared = filled.filter((slot) => !CONTRACT_SLOTS.includes(slot));
   assert.deepEqual(undeclared, [],

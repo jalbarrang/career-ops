@@ -15,7 +15,7 @@
 // cannot launch. Its pages come from routes and its DNS is a stub, so nothing
 // leaves the machine.
 import { pass, fail, warn } from './helpers.ts';
-import { checkUrlLiveness, installLivenessRouteGuard, newLivenessPage, setHostResolver } from '../liveness-browser.ts';
+import { checkUrlLiveness, installLivenessRouteGuard, newLivenessPage, setHostResolver } from '../packages/core/src/liveness/liveness-browser.ts';
 
 console.log('\nliveness-browser — after a failed navigation');
 

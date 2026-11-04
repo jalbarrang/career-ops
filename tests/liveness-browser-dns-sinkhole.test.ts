@@ -14,7 +14,7 @@
 // subresource from the main document. The resolver is injected, so nothing
 // leaves the machine.
 import { pass, fail } from './helpers.ts';
-import { checkUrlLiveness, setHostResolver, validateUrlSecurity } from '../liveness-browser.ts';
+import { checkUrlLiveness, setHostResolver, validateUrlSecurity } from '../packages/core/src/liveness/liveness-browser.ts';
 
 console.log('\nliveness-browser — DNS filter answers');
 
@@ -99,7 +99,7 @@ try {
     fail(`filtered main document: ${JSON.stringify(board)}, aborts=${boardPage.aborts} (want uncertain/dns_sinkhole, aborts 1)`);
   }
 
-  // archive-posting.ts shares validateUrlSecurity and only aborts on a throw,
+  // packages/cli/src/commands/evaluation/archive-posting.ts shares validateUrlSecurity and only aborts on a throw,
   // so the refusal itself must not change.
   for (const [host, tagged] of [['analytics.example', true], ['loopback-too.example', false]]) {
     let error = null;

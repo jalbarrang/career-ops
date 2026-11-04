@@ -19,7 +19,7 @@ try {
     resolveConfiguredEid,
     extractEidFromBoard,
     parseJobviteXml,
-  } = await import(pathToFileURL(join(ROOT, 'providers/jobvite.ts')).href);
+  } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/jobvite.ts')).href);
 
   const eq = (label, actual, expected) => {
     if (actual === expected) pass(label);

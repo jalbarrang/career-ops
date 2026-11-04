@@ -1,5 +1,5 @@
 // tests/providers/echojobs.test.ts — provider-contract tests for the EchoJobs
-// board-wide JSON aggregator (providers/echojobs.ts).
+// board-wide JSON aggregator (packages/core/src/scanning/providers/echojobs.ts).
 import { pass, fail, ROOT } from '../helpers.ts';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
@@ -7,7 +7,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — echojobs');
 
 try {
-  const echojobsModule = await import(pathToFileURL(join(ROOT, 'providers/echojobs.ts')).href);
+  const echojobsModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/echojobs.ts')).href);
   const echojobs = echojobsModule.default;
   const { normalizeEchojobsJob } = echojobsModule;
 

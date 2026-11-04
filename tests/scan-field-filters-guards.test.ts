@@ -29,7 +29,7 @@ function scanWith(portalsBody, { blacklist = null } = {}) {
     let stderr = '';
     let exitCode = 0;
     try {
-      stdout = execFileSync(NODE, [join(ROOT, 'scan.ts')], {
+      stdout = execFileSync(NODE, [join(ROOT, 'packages/core/src/scanning/scan.ts')], {
         cwd: dir,
         env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_PORTALS: portals },
         encoding: 'utf-8',

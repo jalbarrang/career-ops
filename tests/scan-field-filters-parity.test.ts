@@ -1,7 +1,7 @@
-// tests/scan-field-filters-parity.test.ts — #3438. scan.ts and
-// validate-portals.ts must agree on field_filters / filter_on.
+// tests/scan-field-filters-parity.test.ts — #3438. packages/core/src/scanning/scan.ts and
+// packages/cli/src/commands/scanning/validate-portals.ts must agree on field_filters / filter_on.
 //
-// scan.ts does not run validatePortalsConfig, so it enforces these rules at
+// packages/core/src/scanning/scan.ts does not run validatePortalsConfig, so it enforces these rules at
 // startup on its own. Two copies of one rule set drift: a check that lives only
 // in the validator protects nobody who skips it, and one that lives only in the
 // scan is missing exactly when the user asks the validator. Each config below
@@ -13,7 +13,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { execFileSync } from 'child_process';
 
-console.log('\nfield_filters / filter_on — scan.ts and validate-portals agree');
+console.log('\nfield_filters / filter_on — packages/core/src/scanning/scan.ts and validate-portals agree');
 
 function exec(args, opts) {
   try {
@@ -38,11 +38,11 @@ function judge(portalsBody) {
     writeFileSync(join(dir, 'data', 'pipeline.md'), '# Pipeline\n\n');
     const portals = join(dir, 'portals.yml');
     writeFileSync(portals, portalsBody);
-    const scan = exec([join(ROOT, 'scan.ts'), '--dry-run'], {
+    const scan = exec([join(ROOT, 'packages/core/src/scanning/scan.ts'), '--dry-run'], {
       cwd: dir,
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_PORTALS: portals },
     });
-    const validator = exec(['validate-portals.ts', '--file', portals], { cwd: ROOT });
+    const validator = exec(['packages/cli/src/commands/scanning/validate-portals.ts', '--file', portals], { cwd: ROOT });
     return { scan, validator };
   } finally {
     rmSync(dir, { recursive: true, force: true });

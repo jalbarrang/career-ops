@@ -11,7 +11,7 @@
 
 import { readFileSync } from 'fs';
 import { relative } from 'path';
-import { trackedFiles } from '../lib/source-files.ts';
+import { trackedFiles } from '../packages/core/src/kernel/source-files.ts';
 import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\nmojibake-canary — double-encoded UTF-8 detection in templates/ and modes/');
@@ -188,7 +188,7 @@ if (allLatinExtendedPassed) {
 console.log('  Repo-wide scan: templates/ and modes/');
 
 // Scoped to the two trees this canary owns, enumerated through
-// lib/source-files.ts's tracked-file list rather than a private readdir walk
+// packages/core/src/kernel/source-files.ts's tracked-file list rather than a private readdir walk
 // (#3890). The walk this replaces had no skip-list at all, so it read whatever
 // a given checkout happened to have dropped under templates/ or modes/ — and
 // it would have thrown ENOENT on a path git listed but the working tree did not

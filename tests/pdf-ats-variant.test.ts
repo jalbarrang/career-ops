@@ -1,8 +1,8 @@
 // tests/pdf-ats-variant.test.ts — `pdf --ats` dual emit (#3853).
 //
 // Step 21a of modes/pdf.md composes three mechanisms that each have their own
-// suite: the fold (ats-payload.ts), the `ats` template (cv-templates.ts), and
-// the fact gate (verify-cv-facts.ts). What none of those suites can see is the
+// suite: the fold (packages/cli/src/commands/cv/ats-payload.ts), the `ats` template (packages/cli/src/commands/cv/cv-templates.ts), and
+// the fact gate (packages/cli/src/commands/cv/verify-cv-facts.ts). What none of those suites can see is the
 // composition as the mode file spells it out. So this suite pulls the `node …`
 // commands out of Step 21a itself and runs them in order. A renamed flag, a
 // dropped fold, or a reordered step fails here rather than in a user's run.
@@ -17,6 +17,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { COMMANDS } from '../packages/core/src/kernel/command-catalog.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const PDF_MODE = readFileSync(join(ROOT, 'modes', 'pdf.md'), 'utf-8').replace(/\r\n/g, '\n');
@@ -25,9 +26,18 @@ const AGENTS = readFileSync(join(ROOT, 'AGENTS.md'), 'utf-8').replace(/\r\n/g, '
 // Step 21a runs from its own number up to Step 22.
 const STEP_21A = PDF_MODE.match(/^21a\. [\s\S]*?(?=^22\. )/m)?.[0] ?? '';
 
-/** Backticked `bun …` commands in Step 21a, in document order. */
+/** Backticked `career-ops …` (or legacy `bun …`) commands in Step 21a, in document order. */
 function documentedCommands() {
-  return [...STEP_21A.matchAll(/`(bun [^`]+)`/g)].map((m) => m[1]);
+  return [...STEP_21A.matchAll(/`((?:career-ops|bun) [^`]+)`/g)].map((m) => m[1]);
+}
+
+/** Script a documented command runs: the catalog for `career-ops x`, the path itself for `bun x.ts`. */
+function scriptFor(command: string): string {
+  const [head, first, ...rest] = command.split(/\s+/);
+  if (head === 'bun') return first;
+  const script = COMMANDS[first]?.script;
+  assert.ok(script, `documented command names no known command: ${command}`);
+  return join(ROOT, 'packages/cli/src/bin', script);
 }
 
 const CV_MD = `# Jane Smith
@@ -87,16 +97,18 @@ function runDocumentedStep(payload, report = '', dirPrefix = 'pdf-ats-variant-')
   let atsTemplate;
   const steps = [];
   for (const raw of documentedCommands()) {
-    if (raw.startsWith('bun generate-pdf.ts')) continue;
+    if (raw.startsWith('career-ops generate-pdf')) continue;
     const tokens = raw.split(/\s+/);
     const redirectAt = tokens.indexOf('>');
     const redirect = redirectAt === -1 ? undefined : fillArg(tokens[redirectAt + 1], atsTemplate);
     const cmdTokens = redirectAt === -1 ? tokens : tokens.slice(0, redirectAt);
-    const args = cmdTokens.slice(1).map((t) => fillArg(t, atsTemplate));
-    const r = spawnSync(process.execPath, args, { cwd: ROOT, env, encoding: 'utf-8', timeout: 60_000 });
+    const leading = cmdTokens[0] === 'bun' ? 2 : 2;
+    const args = cmdTokens.slice(leading).map((t) => fillArg(t, atsTemplate));
+    const script = scriptFor(cmdTokens.join(' '));
+    const r = spawnSync(process.execPath, [script, ...args], { cwd: ROOT, env, encoding: 'utf-8', timeout: 60_000 });
     assert.equal(r.error, undefined, `${raw} failed to spawn: ${r.error?.message}`);
     if (redirect) writeFileSync(redirect, r.stdout);
-    if (args[0] === 'cv-templates.ts') atsTemplate = r.stdout.trim();
+    if (script.split('/').at(-1) === 'cv-templates.ts') atsTemplate = r.stdout.trim();
     steps.push({ raw, status: r.status, stdout: r.stdout, stderr: r.stderr });
   }
   return { dir, styledJson, steps, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
@@ -110,8 +122,8 @@ test('pdf --ats is documented as an opt-in pass and routed from AGENTS.md', () =
 });
 
 test('Step 21a folds before it renders, renders the ats template, then gates', () => {
-  const cmds = documentedCommands().map((c) => c.split(/\s+/)[1]);
-  const order = ['ats-payload.ts', 'cv-templates.ts', 'build-cv-html.ts', 'verify-cv-facts.ts'];
+  const cmds = documentedCommands().map((c) => c.split(/\s+/)[1].replace(/\.ts$/, '').split('/').at(-1));
+  const order = ['ats-payload', 'cv-templates', 'build-cv-html', 'verify-cv-facts'];
   const positions = order.map((s) => cmds.indexOf(s));
   assert.ok(positions.every((p) => p >= 0), `Step 21a must run ${order.join(', ')}; found ${cmds.join(', ')}`);
   assert.deepEqual([...positions].sort((a, b) => a - b), positions, `out of order: ${cmds.join(', ')}`);
@@ -119,7 +131,7 @@ test('Step 21a folds before it renders, renders the ats template, then gates', (
 });
 
 test('the optional ATS PDF is rendered without --report', () => {
-  const pdfCmd = documentedCommands().find((c) => c.startsWith('bun generate-pdf.ts'));
+  const pdfCmd = documentedCommands().find((c) => c.startsWith('career-ops generate-pdf'));
   assert.ok(pdfCmd, 'Step 21a documents how to render the ATS variant to PDF');
   assert.doesNotMatch(pdfCmd, /--report/, '--report would key the ATS PDF onto the styled CV\'s pdf-index row');
 });
@@ -161,7 +173,7 @@ test('the ATS gate catches a claim the styled HTML fix never carried back to the
   drifted.experience[0].bullets.push('Grew revenue by 300% in one quarter');
   const { steps, cleanup } = runDocumentedStep(drifted);
   try {
-    const gate = steps.find((s) => s.raw.startsWith('bun verify-cv-facts.ts'));
+    const gate = steps.find((s) => s.raw.startsWith('career-ops verify-cv-facts'));
     assert.notEqual(gate.status, 0, 'the fact gate must fail the ATS variant on an unsourced metric');
   } finally {
     cleanup();

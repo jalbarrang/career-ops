@@ -1,5 +1,5 @@
 // tests/providers/_country.test.ts — direct coverage for the shared ISO
-// country-code lookup (providers/_country.ts). Names come from CLDR via
+// country-code lookup (packages/core/src/scanning/providers/_country.ts). Names come from CLDR via
 // Node's ICU and can shift between versions, so assertions compare against
 // countryName() of the matching alpha-2 code rather than pinning spellings.
 import { pass, fail, ROOT } from '../helpers.ts';
@@ -8,7 +8,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — _country ISO lookup');
 
-const { countryName, countryNameFromIso } = await import(pathToFileURL(join(ROOT, 'providers/_country.ts')).href);
+const { countryName, countryNameFromIso } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_country.ts')).href);
 
 if (countryName('GB') && countryName('gb') === countryName('GB')) pass('countryName() resolves alpha-2 case-insensitively');
 else fail(`countryName('GB') = ${JSON.stringify(countryName('GB'))}`);

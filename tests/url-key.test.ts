@@ -1,6 +1,6 @@
 // tests/url-key.test.ts — normalizeUrl, the deterministic posting-URL key.
 //
-// url-key.ts is a root script and gets its own suite, per ARCHITECTURE.md's
+// packages/core/src/kernel/url-key.ts is a root script and gets its own suite, per ARCHITECTURE.md's
 // `{module}.test.ts` rule. These cases previously lived inside
 // merge-tracker-url-dedup.test.ts, which meant the only way to run url-key's
 // unit tests was to run a suite named for a different script.
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 // Pin the shipped domain list, then take a FRESH module instance.
 //
 // test-all.ts imports every discovered suite into one process, and
-// tests/providers/mokahr.test.ts imports url-key.ts before this file runs. A
+// tests/providers/mokahr.test.ts imports packages/core/src/kernel/url-key.ts before this file runs. A
 // plain `import` here would therefore reuse that evaluation, which captured
 // CAREER_OPS_AGGREGATOR_DOMAINS as it stood then and cached the domain set on
 // its first lookup. An operator with that variable set to their own list would
@@ -26,7 +26,7 @@ const inheritedDomainsPath = process.env.CAREER_OPS_AGGREGATOR_DOMAINS;
 process.env.CAREER_OPS_AGGREGATOR_DOMAINS =
   fileURLToPath(new URL('../data-static/aggregator-domains.txt', import.meta.url));
 const { normalizeUrl, isAggregatorUrl, aggregatorPostingId, postingLanguageKey, postingUrlRelation } =
-  await import('../url-key.ts?shipped-aggregator-list');
+  await import('../packages/core/src/kernel/url-key.ts?shipped-aggregator-list');
 // Put the environment back: the suites after this one share the process.
 if (inheritedDomainsPath === undefined) delete process.env.CAREER_OPS_AGGREGATOR_DOMAINS;
 else process.env.CAREER_OPS_AGGREGATOR_DOMAINS = inheritedDomainsPath;
@@ -166,7 +166,7 @@ ok('the shared aggregator list feeds isAggregatorUrl', () => {
   ]) assert.equal(isAggregatorUrl(u), true, `${u} must come from the shared list`);
 });
 
-// Coverage floor. Before this change url-key.ts owned a 13-domain literal; now
+// Coverage floor. Before this change packages/core/src/kernel/url-key.ts owned a 13-domain literal; now
 // 7 of those live in data-static/aggregator-domains.txt, which is maintained on
 // its own schedule and for its own purpose. Dropping one there would silently
 // narrow THIS module with nothing failing, so the pre-existing 13 are pinned
@@ -199,7 +199,7 @@ ok('the supplement survives: boards the shared list deliberately omits', () => {
 // ───────────────────────── aggregatorPostingId (unit) ─────────────────────────
 console.log('\naggregatorPostingId()');
 ok('LinkedIn: bare id, title slug and currentJobId are one posting id', () => {
-  // The three shapes liveness-api.ts already resolves to a single posting.
+  // The three shapes packages/core/src/liveness/liveness-api.ts already resolves to a single posting.
   assert.deepEqual(aggregatorPostingId('https://www.linkedin.com/jobs/view/4001'),
     { domain: 'linkedin.com', id: '4001' });
   assert.deepEqual(aggregatorPostingId('https://uk.linkedin.com/jobs/view/director-of-marketing-at-acme-4001/'),

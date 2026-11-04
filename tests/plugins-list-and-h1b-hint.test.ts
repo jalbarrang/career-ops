@@ -1,5 +1,5 @@
-// `plugins.ts available` names who publishes each community plugin, and
-// `plugins.ts run h1b-sponsor` says why it finds nothing instead of printing a
+// `packages/cli/src/commands/platform/plugins.ts available` names who publishes each community plugin, and
+// `packages/cli/src/commands/platform/plugins.ts run h1b-sponsor` says why it finds nothing instead of printing a
 // bare "0 found, 0 new".
 import { pass, fail, ROOT, NODE, rmSync } from './helpers.ts';
 import { spawnSync } from 'node:child_process';
@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url';
 
 console.log('\nplugins: community authors and the h1b-sponsor hint');
 
-const { registryAuthor } = await import(pathToFileURL(join(ROOT, 'plugins.ts')).href);
+const { registryAuthor } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/platform/plugins.ts')).href);
 const { loadRegistry } = await import(pathToFileURL(join(ROOT, 'plugins', '_registry.ts')).href);
 
 function check(ok, msg, detail = '') {
@@ -20,7 +20,7 @@ function check(ok, msg, detail = '') {
 
 // CAREER_OPS_ROOT stays the scratch root tests/helpers.ts pins.
 function plugins(args) {
-  return spawnSync(NODE, [join(ROOT, 'plugins.ts'), ...args], { cwd: ROOT, env: process.env, encoding: 'utf8' });
+  return spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/plugins.ts'), ...args], { cwd: ROOT, env: process.env, encoding: 'utf8' });
 }
 
 {
@@ -49,7 +49,7 @@ function plugins(args) {
   check(missing.length === 0, 'available names the publisher of every registry entry', `missing: ${missing.join(', ')}`);
 }
 
-// The hook is called directly: a real `plugins.ts run` pins plugins.lock in
+// The hook is called directly: a real `packages/cli/src/commands/platform/plugins.ts run` pins plugins.lock in
 // the code root, which a suite must not write.
 const { default: h1b } = await import(pathToFileURL(join(ROOT, 'plugins', 'h1b-sponsor', 'index.ts')).href);
 

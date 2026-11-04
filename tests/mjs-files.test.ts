@@ -27,7 +27,7 @@ import { existsSync, lstatSync, mkdtempSync, mkdirSync, readFileSync, rmSync, sy
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { collectSourceFiles, isNestedCheckout, trackedFiles, SKIP_DIRS } from '../lib/source-files.ts';
+import { collectSourceFiles, isNestedCheckout, trackedFiles, SKIP_DIRS } from '../packages/core/src/kernel/source-files.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -132,16 +132,16 @@ test('the syntax gate reaches past the repository root', () => {
   assert.ok(files.length > rootOnly.length * 2,
     `gate must cover far more than the root: ${files.length} total vs ${rootOnly.length} at root`);
   assert.ok(files.some((f) => f.startsWith('tests/')), 'tests/ must be inside the gate');
-  assert.ok(files.some((f) => f.startsWith('providers/')), 'providers/ must be inside the gate');
-  assert.ok(files.some((f) => f.startsWith('lib/')), 'lib/ must be inside the gate');
+  assert.ok(files.some((f) => f.startsWith('packages/core/src/scanning/providers/')), 'packages/core/src/scanning/providers/ must be inside the gate');
+  assert.ok(files.some((f) => f.startsWith('packages/core/src/kernel/')), 'packages/core/src/kernel/ must be inside the gate');
 
-  // web/ is the one opt-in subproject in this list (#2360): tests/, providers/
+  // apps/web/ is the one opt-in subproject in this list (#2360): tests/, providers/
   // and lib/ ship with every install, but a checkout that never took the web UI
-  // has no web/ on disk. Assert it's inside the gate when it exists; when it
+  // has no apps/web/ on disk. Assert it's inside the gate when it exists; when it
   // doesn't, the invariant is vacuously true — the same conditional the adjacent
-  // 'web/ test discovery contract' check already uses instead of hardcoding it.
-  if (existsSync(join(ROOT, 'web'))) {
-    assert.ok(files.some((f) => f.startsWith('web/')), 'web/ must be inside the gate when present');
+  // 'apps/web/ test discovery contract' check already uses instead of hardcoding it.
+  if (existsSync(join(ROOT, 'apps/web'))) {
+    assert.ok(files.some((f) => f.startsWith('apps/web/')), 'apps/web/ must be inside the gate when present');
   }
 });
 
@@ -196,8 +196,8 @@ test('the walk root is exempt, so running from inside a worktree still checks it
   }
 });
 
-// Through the RE-EXPORT on purpose: `lib/walk-tree.ts` owns the predicate now,
-// but intake.ts and older callers import it from here, and this is the test
+// Through the RE-EXPORT on purpose: `packages/core/src/kernel/walk-tree.ts` owns the predicate now,
+// but packages/cli/src/commands/profile/intake.ts and older callers import it from here, and this is the test
 // that notices if the re-export is dropped.
 test('isNestedCheckout detects the marker, of either type, and nothing else', () => {
   const dir = mkdtempSync(join(tmpdir(), 'co-source-files-'));
@@ -506,7 +506,7 @@ test('trackedFiles returns an unmerged path once, not once per index stage', () 
 });
 
 test('trackedFiles throws rather than reporting an empty, passing scan', () => {
-  // Same stance as collectSourceFiles above and validate-system-paths-coverage.ts:
+  // Same stance as collectSourceFiles above and packages/cli/src/commands/platform/validate-system-paths-coverage.ts:
   // a guard that could not look must never read as a guard that passed. The
   // realistic way to get here is running from a temp copy inside the repo,
   // where `ls-files` reports nothing at all — which is how the SYSTEM_PATHS
@@ -534,7 +534,7 @@ test('trackedFiles enumerates this repository, and reaches past its root', () =>
 
   assert.ok(rel.length > rootOnly.length * 2,
     `the guards must cover far more than the root: ${rel.length} total vs ${rootOnly.length} at root`);
-  assert.ok(rel.includes('lib/source-files.ts'), 'the module under test must be inside its own enumeration');
+  assert.ok(rel.includes('packages/core/src/kernel/source-files.ts'), 'the module under test must be inside its own enumeration');
   assert.ok(rel.some((f) => f.startsWith('tests/')), 'tests/ must be enumerated');
   assert.ok(!rel.some((f) => f.startsWith('node_modules/')), 'vendored code is never tracked, so never enumerated');
 });
@@ -559,8 +559,8 @@ test('every repo-scanning guard enumerates through the shared definition', () =>
     const src = readFileSync(join(ROOT, caller), 'utf-8');
     assert.match(
       src,
-      /import\s*\{[^}]*\btrackedFiles\b[^}]*\}\s*from\s*'\.{1,2}\/lib\/source-files\.ts'/,
-      `${caller} must enumerate through lib/source-files.ts, not its own walk (#3890)`,
+      /import\s*\{[^}]*\btrackedFiles\b[^}]*\}\s*from\s*'\.{1,2}\/[^']*source-files\.ts'/,
+      `${caller} must enumerate through packages/core/src/kernel/source-files.ts, not its own walk (#3890)`,
     );
     assert.match(src, /trackedFiles\(/, `${caller} must actually call trackedFiles (#3890)`);
 
@@ -649,7 +649,7 @@ test('a checkout parked among the fixture states is not an allowlisted state', (
 
     const listed = execFileSync(
       process.execPath,
-      ['-e', "import('./seed-fixture.ts').then((m) => console.log(JSON.stringify(m.listStates())))"],
+      ['-e', "import('./packages/cli/src/commands/platform/seed-fixture.ts').then((m) => console.log(JSON.stringify(m.listStates())))"],
       { cwd: ROOT, encoding: 'utf-8', timeout: 60000 },
     );
     const states = JSON.parse(listed);
@@ -667,11 +667,11 @@ test('a checkout parked among the fixture states is not an allowlisted state', (
 test('both syntax checkers derive their file list from the shared collector', () => {
   for (const caller of ['test-all.ts', 'scripts/check-syntax.ts']) {
     const src = readFileSync(join(ROOT, caller), 'utf-8');
-    assert.match(src, /collectSourceFiles\(/, `${caller} must use lib/source-files.ts`);
+    assert.match(src, /collectSourceFiles\(/, `${caller} must use packages/core/src/kernel/source-files.ts`);
   }
 
   // Scoped to section 1 rather than the whole file: test-all.ts legitimately
-  // walks other subtrees for other reasons (plugins/, web/), and a
+  // walks other subtrees for other reasons (plugins/, apps/web/), and a
   // whole-file ban would fail on those. What must not come back is a walk
   // feeding THIS gate — that is the drift, and re-reading a directory here is
   // the only way to reintroduce it.

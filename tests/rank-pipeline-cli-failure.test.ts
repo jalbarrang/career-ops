@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT } from './helpers.ts';
-import { describeCliFailure } from '../rank-pipeline.ts';
+import { describeCliFailure } from '../packages/cli/src/commands/pipeline/rank-pipeline.ts';
 
 test('a CLI that fails every batch exits 1 with a one-line reason and no prompt echo', t => {
   const root = mkdtempSync(join(tmpdir(), 'rank-fail-'));
@@ -26,7 +26,7 @@ test('a CLI that fails every batch exits 1 with a one-line reason and no prompt 
   writeFileSync(stub, '#!/bin/sh\necho "SyntaxError: unexpected token < in JSON" >&2\nexit 1\n');
   chmodSync(stub, 0o755);
   writeFileSync(join(stubDir, 'claude.cmd'), '@echo SyntaxError: unexpected token 1>&2\r\n@exit /b 1\r\n');
-  const result = spawnSync(process.execPath, [join(ROOT, 'rank-pipeline.ts'), '--cli', 'claude'], {
+  const result = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/pipeline/rank-pipeline.ts'), '--cli', 'claude'], {
     env: {
       ...process.env,
       CAREER_OPS_ROOT: root,

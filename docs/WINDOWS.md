@@ -10,7 +10,7 @@ If something is failing and the error mentions `node: command not found`, an emp
 - [ ] Git for Windows installed (it provides Git Bash, which `batch/` needs)
 - [ ] Cloned on v1.26.0 or later, or renormalized once (see §3)
 - [ ] `bunx playwright install chromium` if you want PDF generation
-- [ ] `bun doctor.ts --json` reports `"onboardingNeeded": false`
+- [ ] `career-ops doctor --json` reports `"onboardingNeeded": false`
 
 ## 1. `bash` on your PATH is probably not Git Bash
 
@@ -97,7 +97,7 @@ Windows-specific failures in the suite are almost always one of the three proble
 
 ## 5. PDF generation needs a browser
 
-`generate-pdf.ts` drives Playwright. Install the browser once:
+`packages/cli/src/commands/cv/generate-pdf.ts` drives Playwright. Install the browser once:
 
 ```powershell
 bunx playwright install chromium

@@ -1,8 +1,8 @@
-// `bun run ui` on a checkout where web/ has no dependencies installed must say
+// `bun run ui` on a checkout where apps/web/ has no dependencies installed must say
 // so before printing a URL, and a server that dies on startup must not be
 // blamed on the port.
 //
-// The launcher finds web/ next to its own directory, so each test copies it and
+// The launcher finds apps/web/ next to its own directory, so each test copies it and
 // the modules it imports into a throwaway tree.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,10 +16,10 @@ import { fileURLToPath } from 'node:url';
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const COPIED = [
   'scripts/ui-server.ts',
-  'path-resolver.ts',
-  'web/src/lib/bind-host.ts',
-  'web/src/lib/origin-guard.ts',
-];
+  'packages/core/src/kernel/path-resolver.ts',
+  'apps/web/src/lib/bind-host.ts',
+  'apps/web/src/lib/origin-guard.ts',
+'packages/core/src/kernel/repo-root.ts',];
 
 function launcherTree() {
   const dir = mkdtempSync(join(tmpdir(), 'co-ui-server-'));
@@ -27,7 +27,8 @@ function launcherTree() {
     mkdirSync(dirname(join(dir, rel)), { recursive: true });
     cpSync(join(ROOT, rel), join(dir, rel));
   }
-  writeFileSync(join(dir, 'web', 'package.json'), JSON.stringify({ name: 'web', dependencies: { vite: '^7.0.0' } }));
+  mkdirSync(dirname(join(dir, 'apps/web/package.json')), { recursive: true });
+  writeFileSync(join(dir, 'apps/web/package.json'), JSON.stringify({ name: 'web', dependencies: { vite: '^7.0.0' } }));
   return dir;
 }
 
@@ -56,7 +57,7 @@ test('missing web dependencies are named, with the install command, before any U
     const run = await launch(dir);
     assert.equal(run.status, 1);
     assert.match(run.stderr, /Web UI dependencies are not installed/);
-    assert.match(run.stderr, /bun install --cwd web/);
+    assert.match(run.stderr, /bun install --cwd apps\/web/);
     assert.doesNotMatch(run.stdout, /Web UI:/);
     assert.doesNotMatch(run.stderr, /Port may be occupied/);
   } finally {
@@ -68,10 +69,11 @@ test('a server that exits during startup is not blamed on the port', async () =>
   const dir = launcherTree();
   try {
     // SvelteKit needs vite; the launcher's dependency probe resolves it.
-    const viteDir = join(dir, 'web', 'node_modules', 'vite');
+    const viteDir = join(dir, 'apps/web', 'node_modules', 'vite');
     mkdirSync(viteDir, { recursive: true });
     writeFileSync(join(viteDir, 'package.json'), JSON.stringify({ name: 'vite', version: '7.0.0' }));
-    writeFileSync(join(dir, 'web', 'server.ts'), 'process.exitCode = 3;\n');
+    mkdirSync(dirname(join(dir, 'apps/web/server.ts')), { recursive: true });
+    writeFileSync(join(dir, 'apps/web/server.ts'), 'process.exitCode = 3;\n');
     const run = await launch(dir);
     assert.equal(run.status, 3);
     assert.doesNotMatch(run.stderr, /Port may be occupied/);

@@ -1,5 +1,5 @@
 // tests/tracker-writers-seeded-roundtrip.test.ts — seeded invariants for the
-// tracker writers (merge-tracker.ts, set-status.ts).
+// tracker writers (packages/cli/src/commands/tracker/merge-tracker.ts, packages/cli/src/commands/tracker/set-status.ts).
 //
 // Every other tracker suite pins one hand-picked example: the row that once
 // went missing, the URL spelling that once forked a row. Those stay the
@@ -35,10 +35,10 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { mergeTracker } from '../merge-tracker.ts';
-import { resolveColumns, parseTrackerRow } from '../tracker-parse.ts';
-import { normalizeUrl } from '../url-key.ts';
-import { cell } from '../tracker-utils.ts';
+import { mergeTracker } from '../packages/cli/src/commands/tracker/merge-tracker.ts';
+import { resolveColumns, parseTrackerRow } from '../packages/core/src/tracker/tracker-parse.ts';
+import { normalizeUrl } from '../packages/core/src/kernel/url-key.ts';
+import { cell } from '../packages/core/src/tracker/tracker-utils.ts';
 
 console.log('\ntracker writers — seeded round-trip invariants');
 
@@ -265,7 +265,7 @@ function check(cond, label, failures) {
 
 function runSetStatus(sandbox, args) {
   try {
-    const stdout = execFileSync(NODE, [join(ROOT, 'set-status.ts'), ...args], {
+    const stdout = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/set-status.ts'), ...args], {
       cwd: ROOT, encoding: 'utf-8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'],
       // set-status also resolves its data root and claims a session-activity
       // sentinel; point both into the sandbox so the real checkout is untouched.

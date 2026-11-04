@@ -16,7 +16,7 @@ changes. Two gates must both be satisfied:
 
 1. **Enable** the plugin in `config/plugins.yml` (copy `config/plugins.example.yml`).
 2. **Provide its keys** in your own `.env` (each plugin declares which it needs).
-   Run `bun doctor.ts` or `bun plugins.ts list` to see what's missing.
+   Run `bun packages/cli/src/commands/platform/doctor.ts` or `bun packages/cli/src/commands/platform/plugins.ts list` to see what's missing.
 
 ## Anatomy of a plugin
 
@@ -56,7 +56,7 @@ the tracker, the pipeline and scan history.
 
 | Hook | Signature | Does |
 |------|-----------|------|
-| `provider` | `{ id, detect?, fetch(entry, ctx) → Job[] }` | A keyed/auth-gated job source. Same shape as `providers/_types.ts`. Runs via `scan` on a `provider: <id>` entry in `portals.yml`. |
+| `provider` | `{ id, detect?, fetch(entry, ctx) → Job[] }` | A keyed/auth-gated job source. Same shape as `packages/core/src/scanning/providers/_types.ts`. Runs via `scan` on a `provider: <id>` entry in `portals.yml`. |
 | `ingest` | `(ctx) → Job[]` | Pull postings from a service (email, a board). |
 | `search` | `(query, ctx) → Job[]` | Postings for a query string. |
 | `export` | `(snapshot, ctx) → {pushed}` | Push a **read-only** tracker snapshot to your own external store. |
@@ -68,16 +68,16 @@ to `data/pipeline.md` through the canonical writer, so a plugin can't break the
 data formats the web reads. Non-provider hooks run explicitly:
 
 ```bash
-bun plugins.ts list
-bun plugins.ts run gmail                       # ingest
-bun plugins.ts run notion search "platform"    # search
-bun plugins.ts run notion export [--dry-run]   # export
+bun packages/cli/src/commands/platform/plugins.ts list
+bun packages/cli/src/commands/platform/plugins.ts run gmail                       # ingest
+bun packages/cli/src/commands/platform/plugins.ts run notion search "platform"    # search
+bun packages/cli/src/commands/platform/plugins.ts run notion export [--dry-run]   # export
 ```
 
 The `export` snapshot is `{ applications, pipeline }`, frozen. `applications`
-holds one row per tracker row, read from the same tracker `set-status.ts`
+holds one row per tracker row, read from the same tracker `packages/cli/src/commands/tracker/set-status.ts`
 writes (`CAREER_OPS_TRACKER`, else `data/applications.md`, else the legacy root
-copy). Columns are mapped through `tracker-aliases.json`, so the keys are the
+copy). Columns are mapped through `packages/core/src/tracker/tracker-aliases.json`, so the keys are the
 same whatever language the header is in: `num`, `date`, `company`, `role`,
 `score`, `status`, `pdf`, `report`, `notes`, `url`, and `location` / `via` when
 the tracker has those columns. Every value is a string, and `url` is the
@@ -113,7 +113,7 @@ shadowed by it. Bundled plugins always win an id collision.
 career-ops is plain ESM with no build step, so the engine **cannot truly
 sandbox** a plugin's imports. `allowedHosts`, the scoped `ctx.env`, and the
 no-auto-submit hook taxonomy constrain an **honest** plugin and make every loaded
-plugin visible (`doctor` / `plugins.ts list`) — but they are not a hard
+plugin visible (`doctor` / `packages/cli/src/commands/platform/plugins.ts list`) — but they are not a hard
 boundary against malicious code, which can reach `process.env` or the network
 directly. Containment is the same as everywhere else in open source:
 

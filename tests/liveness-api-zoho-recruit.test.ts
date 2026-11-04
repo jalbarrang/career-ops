@@ -13,7 +13,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { resolveAtsApi, checkLivenessViaApi, classifyZohoPostingPage, isAtsPosting } from '../liveness-api.ts';
+import { resolveAtsApi, checkLivenessViaApi, classifyZohoPostingPage, isAtsPosting } from '../packages/core/src/liveness/liveness-api.ts';
 import { ROOT } from './helpers.ts';
 
 const fixture = (name) => readFileSync(join(ROOT, 'tests', 'fixtures', name), 'utf8');

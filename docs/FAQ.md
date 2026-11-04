@@ -6,7 +6,7 @@ Common questions from the community, answered in one place. For setup details se
 
 ## 1. Skills aren't loading on Windows — symlink error on install
 
-Windows does not create symlinks by default, so Git checks out the CLI skill entrypoints (`.claude/skills/`, `.opencode/skills/`, etc.) as plain pointer files instead of real symlinks. The installer and updater both detect this automatically: run `bun update-system.ts apply --confirm` (or `bunx @santifer/career-ops init` on a fresh install) and the `materializeSkillEntrypoints` step will replace the pointer files with the full canonical skill content. From a linked Git worktree, `apply` makes this repair in your `main` checkout; run `git merge main` in the worktree to pick it up (new worktrees get it automatically). With `CAREER_OPS_UPDATE_IN_WORKTREE=1` set, `apply` repairs only that worktree's branch instead, and `main` stays unrepaired. No manual `mklink` or Developer Mode changes are needed.
+Windows does not create symlinks by default, so Git checks out the CLI skill entrypoints (`.claude/skills/`, `.opencode/skills/`, etc.) as plain pointer files instead of real symlinks. The installer and updater both detect this automatically: run `career-ops update-system apply --confirm` (or `bunx @santifer/career-ops init` on a fresh install) and the `materializeSkillEntrypoints` step will replace the pointer files with the full canonical skill content. From a linked Git worktree, `apply` makes this repair in your `main` checkout; run `git merge main` in the worktree to pick it up (new worktrees get it automatically). With `CAREER_OPS_UPDATE_IN_WORKTREE=1` set, `apply` repairs only that worktree's branch instead, and `main` stays unrepaired. No manual `mklink` or Developer Mode changes are needed.
 
 ## 2. What is the difference between `scan` and `scan:full`?
 
@@ -60,7 +60,7 @@ career-ops therefore uses two trust tiers:
 Audit the story bank locally, without an LLM call:
 
 ```bash
-bun story-provenance-check.ts --summary
+career-ops story-provenance-check --summary
 ```
 
 The checker classifies each numeric claim as `existing`, `supportedByResume`, `derived-unverified`, or `user-cannot-confirm`. It is read-only: for a flagged claim, verify it against a primary source, provide the correct figure, remove the number and keep the story as narrative, or say "I don't know." That last answer is intentionally first-class — a `**Provenance:** user-cannot-confirm` marker keeps the number from being treated as verified on a later scan, so an honest unknown is never laundered into a confident fact through repetition.

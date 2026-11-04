@@ -1,10 +1,10 @@
-// scan.ts — strong ATS identity participates in scan dedup across URL aliases.
+// packages/core/src/scanning/scan.ts — strong ATS identity participates in scan dedup across URL aliases.
 import { mkdtempSync, writeFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { pass, fail } from './helpers.ts';
-import { computeListingFingerprint } from '../listing-fingerprint.ts';
-import { isOfferSeen, loadDedupSnapshot, markOfferSeen, formatScanHistoryRow, collectSeenUrls, retainVerifiedListingIdentities, migrateOfferToUrl, refreshListingKey } from '../scan.ts';
+import { computeListingFingerprint } from '../packages/core/src/scanning/listing-fingerprint.ts';
+import { isOfferSeen, loadDedupSnapshot, markOfferSeen, formatScanHistoryRow, collectSeenUrls, retainVerifiedListingIdentities, migrateOfferToUrl, refreshListingKey } from '../packages/core/src/scanning/scan.ts';
 
 console.log('\nscan.ts — listing fingerprint participates in scan dedup');
 

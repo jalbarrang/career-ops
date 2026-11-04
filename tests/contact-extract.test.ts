@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * tests/contact-extract.test.ts — regression tests for contact-extract.ts (#4361).
+ * tests/contact-extract.test.ts — regression tests for packages/cli/src/commands/outreach/contact-extract.ts (#4361).
  *
  * Locks in the local-only, no-Gmail path from a pasted interview-invite or
  * rejection email to a saved data/contacts.tsv row:
@@ -14,7 +14,7 @@
  *      by name/notes content.
  *   4. appendContact creates the file with its documented header comment,
  *      updates name+company matches, and sanitizes on the way in.
- *   5. CLI end to end: auto-match via reply-matcher.ts's matchCandidates,
+ *   5. CLI end to end: auto-match via packages/core/src/outreach/reply-matcher.ts's matchCandidates,
  *      manual --company/--tracker override, no-match no-op (nothing written,
  *      exit 0), --type validation, interactive y/n confirm vs --yes,
  *      missing-file / unknown-flag / --help exits.
@@ -34,7 +34,7 @@ import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\ncontact-extract.ts — pasted reply to a saved contact');
 const NODE = process.execPath;
-const CLI = join(ROOT, 'contact-extract.ts');
+const CLI = join(ROOT, 'packages/cli/src/commands/outreach/contact-extract.ts');
 
 function check(name, cond, detail = '') {
   if (cond) pass(name);
@@ -185,7 +185,7 @@ console.log('2. appendContact — direct unit import');
   await mod.appendContact({ name: '=Formula Name', company: '@Acme', type: 'recruiter', email: 'safe@example.com', tracker: '12' }, formulaPath);
   await mod.appendContact({ name: '=Formula Name', company: '@Acme', type: 'interviewer', email: 'updated@example.com', tracker: '12' }, formulaPath);
   const formulaContent = readFileSync(formulaPath, 'utf8');
-  const contactsMod = await import(pathToFileURL(join(ROOT, 'contacts.ts')).href);
+  const contactsMod = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/outreach/contacts.ts')).href);
   const parsedFormula = contactsMod.parseContacts(formulaContent);
   check('appendContact: formula-leading cells are escaped on disk', formulaContent.includes("'=Formula Name\t'@Acme\t"), formulaContent);
   check('appendContact: escaped and raw identity forms update one row', parsedFormula.contacts.length === 1, formulaContent);
@@ -199,7 +199,7 @@ console.log('2. appendContact — direct unit import');
   check('contacts reader preserves literal apostrophes before formula characters', parsedLiteral.contacts[0]?.name === "'=Literal Name" && parsedLiteral.contacts[0]?.company === "'@Literal Co", JSON.stringify(parsedLiteral.contacts[0]));
   check('formula and literal-apostrophe values remain distinct identities', parsedLiteral.contacts[0]?.name !== parsedFormula.contacts[0]?.name);
 
-  const formulaEscape = await import(pathToFileURL(join(ROOT, 'lib/tsv-formula-escape.ts')).href);
+  const formulaEscape = await import(pathToFileURL(join(ROOT, 'packages/core/src/kernel/tsv-formula-escape.ts')).href);
   for (const value of ['=Alex', "'=Alex", "''=Alex", "'''=Alex"]) {
     check(`formula-cell codec round-trips ${JSON.stringify(value)}`, formulaEscape.unescapeFormulaCell(formulaEscape.escapeFormulaCell(value)) === value);
   }
@@ -214,7 +214,7 @@ console.log('2. appendContact — direct unit import');
 }
 
 // ---------------------------------------------------------------------------
-console.log('3. CLI: auto-matches company + role via reply-matcher.ts and saves with --yes');
+console.log('3. CLI: auto-matches company + role via packages/core/src/outreach/reply-matcher.ts and saves with --yes');
 {
   const { dir, trackerFile, contactsFile } = setupWorkspace();
   const emailFile = writeEmail(dir, {

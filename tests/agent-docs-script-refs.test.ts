@@ -24,7 +24,7 @@ import { readFileSync, existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync
 import { dirname, join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { listTree } from '../lib/walk-tree.ts';
+import { listTree } from '../packages/core/src/kernel/walk-tree.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -47,9 +47,9 @@ const MJS_REF = /`([A-Za-z0-9_./-]+\.ts)`/g;
 // The updater does not ship the optional web application. Keep checking its
 // script references in full checkouts, while CLI-only installs omit that tree.
 function missingScriptRefs(src, root) {
-  const webInstalled = existsSync(join(root, 'web'));
+  const webInstalled = existsSync(join(root, 'apps/web'));
   return [...new Set([...src.matchAll(MJS_REF)].map((m) => m[1]))]
-    .filter((ref) => !(ref.startsWith('web/') && !webInstalled))
+    .filter((ref) => !(ref.startsWith('apps/web/') && !webInstalled))
     .filter((ref) => !existsSync(join(root, ref)))
     .sort();
 }
@@ -78,26 +78,26 @@ function fixture(t) {
 test('CLI-only installs allow references to the absent optional web tree', (t) => {
   const root = fixture(t);
   writeFileSync(join(root, 'core.ts'), '');
-  assert.deepEqual(missingScriptRefs('`core.ts` and `web/scripts/optional.ts`', root), []);
+  assert.deepEqual(missingScriptRefs('`core.ts` and `apps/web/scripts/optional.ts`', root), []);
 });
 
 test('CLI-only installs still report missing core scripts', (t) => {
   const root = fixture(t);
   assert.deepEqual(
-    missingScriptRefs('`missing-core.ts` and `web/scripts/optional.ts`', root),
+    missingScriptRefs('`missing-core.ts` and `apps/web/scripts/optional.ts`', root),
     ['missing-core.ts'],
   );
 });
 
 test('full checkouts still report missing web scripts', (t) => {
   const root = fixture(t);
-  mkdirSync(join(root, 'web'));
-  assert.deepEqual(missingScriptRefs('`web/scripts/missing.ts`', root), ['web/scripts/missing.ts']);
+  mkdirSync(join(root, 'apps/web'), { recursive: true });
+  assert.deepEqual(missingScriptRefs('`apps/web/scripts/missing.ts`', root), ['apps/web/scripts/missing.ts']);
 });
 
 test('full checkouts accept existing web scripts', (t) => {
   const root = fixture(t);
-  mkdirSync(join(root, 'web', 'scripts'), { recursive: true });
-  writeFileSync(join(root, 'web', 'scripts', 'present.ts'), '');
-  assert.deepEqual(missingScriptRefs('`web/scripts/present.ts`', root), []);
+  mkdirSync(join(root, 'apps/web', 'scripts'), { recursive: true });
+  writeFileSync(join(root, 'apps/web', 'scripts', 'present.ts'), '');
+  assert.deepEqual(missingScriptRefs('`apps/web/scripts/present.ts`', root), []);
 });

@@ -1,7 +1,7 @@
-// tests/dedup-tracker-status-aliases.test.ts — dedup-tracker.ts ranks every
+// tests/dedup-tracker-status-aliases.test.ts — packages/cli/src/commands/tracker/dedup-tracker.ts ranks every
 // spelling of a status the way templates/states.yml defines it.
 //
-// dedup-tracker.ts used to rank statuses from a hand-copied table of spellings.
+// packages/cli/src/commands/tracker/dedup-tracker.ts used to rank statuses from a hand-copied table of spellings.
 // A row whose Status was an alias that table did not carry ("Sent", "Aplicada",
 // "Başvuruldu", "Mülakat"...) ranked 0, the same as SKIP. Two consequences, both
 // silent:
@@ -18,7 +18,7 @@
 // states.yml cannot be read: with no vocabulary every status would rank 0, so it
 // must stop before it touches the tracker.
 //
-// Drives the REAL dedup-tracker.ts CLI against a temp tracker via the
+// Drives the REAL packages/cli/src/commands/tracker/dedup-tracker.ts CLI against a temp tracker via the
 // CAREER_OPS_TRACKER hook: the deletion is what loses data, so the rows left in
 // the file are what is asserted.
 import { pass, fail, rmSync, linkRepoPackage, ROOT } from './helpers.ts';
@@ -30,7 +30,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const DEDUP = join(HERE, '..', 'dedup-tracker.ts');
+const DEDUP = join(HERE, '..', 'packages/cli/src/commands/tracker/dedup-tracker.ts');
 const ok = (name, fn) => { try { fn(); pass(name); } catch (e) { fail(`${name} — ${e.message}`); } };
 
 const HEADER = '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |';
@@ -120,7 +120,7 @@ ok('a bold alias with a trailing date ("**Entrevista** 2026-06-01") is still rea
 const IN_MOTION = ['applied', 'responded', 'assessment', 'interview', 'offer', 'hired'];
 const NOT_IN_MOTION = ['evaluated', 'rejected', 'discarded', 'skip'];
 
-const { loadCanonicalStates } = await import(pathToFileURL(join(ROOT, 'tracker-utils.ts')).href);
+const { loadCanonicalStates } = await import(pathToFileURL(join(ROOT, 'packages/core/src/tracker/tracker-utils.ts')).href);
 const states = loadCanonicalStates(join(ROOT, 'templates', 'states.yml'));
 
 ok('every state in states.yml is classified here as in motion or not', () => {
@@ -160,10 +160,10 @@ ok(`all ${spellings.length} labels and aliases in states.yml are ranked as the s
 // dedups normally, so the refusals below are caused by states.yml and not by a
 // file this list forgot.
 const SANDBOX_FILES = [
-  'dedup-tracker.ts', 'path-resolver.ts', 'role-matcher.ts', 'url-key.ts',
-  'tracker-utils.ts', 'tracker-parse.ts', 'tracker-aliases.json', 'pipeline-lock.ts',
-  'lib/cli-flags.ts', 'lib/linkedin-url.ts', 'lib/dir-lock.ts', 'lib/yaml-document.ts',
-];
+  'packages/cli/src/commands/tracker/dedup-tracker.ts', 'packages/core/src/kernel/path-resolver.ts', 'packages/core/src/tracker/role-matcher.ts', 'packages/core/src/kernel/url-key.ts',
+  'packages/core/src/tracker/tracker-utils.ts', 'packages/core/src/tracker/tracker-parse.ts', 'packages/core/src/tracker/tracker-aliases.json', 'packages/core/src/kernel/pipeline-lock.ts',
+  'packages/core/src/kernel/cli-flags.ts', 'packages/core/src/outreach/linkedin-url.ts', 'packages/core/src/kernel/dir-lock.ts', 'packages/core/src/kernel/yaml-document.ts',
+'packages/core/src/kernel/repo-root.ts',];
 const DUPLICATE_ROWS = [
   '| 1 | 2026-09-01 | Acme | Backend Engineer | 4.5/5 | Evaluated | ❌ | — | first |',
   '| 2 | 2026-09-02 | Acme | Backend Engineer | 3.0/5 | Evaluated | ❌ | — | second |',
@@ -184,7 +184,7 @@ function inSandbox(statesYml, fn) {
     const tracker = join(dir, 'data', 'applications.md');
     mkdirSync(dirname(tracker), { recursive: true });
     writeFileSync(tracker, trackerText(DUPLICATE_ROWS));
-    const r = spawnSync(process.execPath, [join(dir, 'dedup-tracker.ts')], {
+    const r = spawnSync(process.execPath, [join(dir, 'packages/cli/src/commands/tracker/dedup-tracker.ts')], {
       encoding: 'utf-8',
       env: { ...process.env, CAREER_OPS_TRACKER: tracker },
     });

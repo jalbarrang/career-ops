@@ -1,11 +1,11 @@
 // tests/scan-workday-placeholder-title-filter.test.ts — Workday answers a
 // multi-location posting with a count ("3 Locations") and the real places need
-// one detail GET per posting (#3860). That enrichment ran before scan.ts's
+// one detail GET per posting (#3860). That enrichment ran before packages/core/src/scanning/scan.ts's
 // title_filter, so every placeholder posting on a tenant cost a request on every
-// scan, including the ones the title filter then threw away. scan.ts now
+// scan, including the ones the title filter then threw away. packages/core/src/scanning/scan.ts now
 // passes its title decision to the provider as ctx.titleWanted.
 //
-// Drives the real scan.ts (--dry-run) against a scratch data root, with
+// Drives the real packages/core/src/scanning/scan.ts (--dry-run) against a scratch data root, with
 // globalThis.fetch replaced by an --import preload that serves a fake tenant and
 // logs each request.
 //
@@ -61,7 +61,7 @@ function runScan(portalsYml) {
     const log = join(dir, 'requests.log');
     const env = { ...process.env };
     for (const name of ['CAREER_OPS_PORTALS', 'CAREER_OPS_PROFILE', 'CAREER_OPS_PIPELINE', 'CAREER_OPS_SCAN_HISTORY', 'CAREER_OPS_ROOT', 'CAREER_OPS_DATA_DIR']) delete env[name];
-    const run = spawnSync(process.execPath, ['--import', pathToFileURL(preload).href, join(ROOT, 'scan.ts'), '--dry-run'], {
+    const run = spawnSync(process.execPath, ['--import', pathToFileURL(preload).href, join(ROOT, 'packages/core/src/scanning/scan.ts'), '--dry-run'], {
       cwd: dir,
       encoding: 'utf-8',
       timeout: 60_000,

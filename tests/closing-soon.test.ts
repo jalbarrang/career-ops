@@ -1,4 +1,4 @@
-// tests/closing-soon.test.ts — closing-soon.ts reads closing dates out of
+// tests/closing-soon.test.ts — packages/cli/src/commands/insights/closing-soon.ts reads closing dates out of
 // tracker Notes (and jds/ captures) and never writes anything (#5412).
 //
 // Run:  bun test tests/closing-soon.test.ts
@@ -14,7 +14,7 @@ import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const { extractClosingDates, computeClosingSoon, htmlToText, resolveStatusFilter, loadStateLookup } =
-  await import(pathToFileURL(join(ROOT, 'closing-soon.ts')).href);
+  await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/insights/closing-soon.ts')).href);
 
 const TODAY = new Date('2026-10-17T00:00:00Z');
 const dates = (text, today = TODAY) => extractClosingDates(text, today).dates.map(d => d.date);
@@ -142,7 +142,7 @@ function cleanup(box) {
 }
 
 function run(args, { dataRoot, decoyCwd }) {
-  return spawnSync(process.execPath, [join(ROOT, 'closing-soon.ts'), ...args], {
+  return spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/insights/closing-soon.ts'), ...args], {
     cwd: decoyCwd,
     encoding: 'utf-8',
     env: { ...process.env, CAREER_OPS_ROOT: dataRoot, CAREER_OPS_TRACKER: '' },

@@ -20,7 +20,7 @@ import {
   unminedHints,
   findUnmined,
   runUnmined,
-} from '../verify-portals.ts';
+} from '../packages/core/src/scanning/verify-portals.ts';
 
 const CFG = {
   title_filter: {
@@ -225,7 +225,7 @@ test('the CLI accepts --unmined and no-ops without a portals file', () => {
   // known flag or the command exits 1 before it starts.
   const dir = mkdtempSync(join(tmpdir(), 'unmined-cli-'));
   try {
-    const script = join(dirname(fileURLToPath(import.meta.url)), '..', 'verify-portals.ts');
+    const script = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/core/src/scanning/verify-portals.ts');
     const out = execFileSync(process.execPath, [script, '--unmined', '--file', join(dir, 'absent.yml')], {
       encoding: 'utf-8', timeout: 20000,
     });

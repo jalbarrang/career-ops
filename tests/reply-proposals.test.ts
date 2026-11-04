@@ -11,9 +11,9 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readReplyProposals } from '../lib/reply-proposals.ts';
-import { resolveColumns, parseTrackerRow } from '../tracker-parse.ts';
-import { loadCanonicalStates } from '../tracker-utils.ts';
+import { readReplyProposals } from '../packages/core/src/outreach/reply-proposals.ts';
+import { resolveColumns, parseTrackerRow } from '../packages/core/src/tracker/tracker-parse.ts';
+import { loadCanonicalStates } from '../packages/core/src/tracker/tracker-utils.ts';
 import { linkNodeModules } from './helpers.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
@@ -47,7 +47,7 @@ function importClosure(entries) {
   return [...seen];
 }
 
-const ASSETS = [...importClosure(['reply-watch.ts', 'set-status.ts']), 'tracker-aliases.json', 'templates/states.yml'];
+const ASSETS = [...importClosure(['packages/cli/src/commands/outreach/reply-watch.ts', 'packages/cli/src/commands/tracker/set-status.ts']), 'packages/core/src/tracker/tracker-aliases.json', 'templates/states.yml'];
 
 function fixture(t) {
   const dir = realpathSync(mkdtempSync(join(tmpdir(), 'career-ops-proposals-')));
@@ -116,7 +116,7 @@ function envFor(f, env = {}) {
 
 function run(f, input = '', env = {}) {
   prepareCode(f);
-  const result = spawnSync(process.execPath, [join(f.code, 'reply-watch.ts')], {
+  const result = spawnSync(process.execPath, [join(f.code, 'packages/cli/src/commands/outreach/reply-watch.ts')], {
     cwd: f.cwd, input, encoding: 'utf8', timeout: 30_000, env: envFor(f, env),
   });
   assert.equal(result.error, undefined, result.error?.message);
@@ -137,7 +137,7 @@ function unchanged(f, expected = tracker()) {
 function duringReview(t, f, mutate) {
   prepareCode(f);
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [join(f.code, 'reply-watch.ts')], {
+    const child = spawn(process.execPath, [join(f.code, 'packages/cli/src/commands/outreach/reply-watch.ts')], {
       cwd: f.cwd, env: envFor(f), stdio: ['pipe', 'pipe', 'pipe'],
     });
     let stdout = '';

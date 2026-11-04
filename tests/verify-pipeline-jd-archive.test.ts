@@ -1,13 +1,13 @@
 // tests/verify-pipeline-jd-archive.test.ts — Check 17 (JD archive coverage,
-// #4525) end to end, through the real verify-pipeline.ts process.
+// #4525) end to end, through the real packages/cli/src/commands/platform/verify-pipeline.ts process.
 //
-// check-jd-archive.ts already existed as a standalone command with its own
+// packages/core/src/evaluation/check-jd-archive.ts already existed as a standalone command with its own
 // severity split (hard `missing-jd-archive` vs. soft `jd-archive-review-due`),
-// but nothing in the day-to-day health check (verify-pipeline.ts) ever
+// but nothing in the day-to-day health check (packages/cli/src/commands/platform/verify-pipeline.ts) ever
 // called it — a missing JD archive only ever surfaced if a user remembered to
-// run check-jd-archive.ts on its own. This asserts the check actually runs
-// as part of `bun verify-pipeline.ts`, with the same severity split as
-// check-jd-archive.ts's own CLI (missing = error/exit 1, review-due = warning
+// run packages/core/src/evaluation/check-jd-archive.ts on its own. This asserts the check actually runs
+// as part of `career-ops verify-pipeline`, with the same severity split as
+// packages/core/src/evaluation/check-jd-archive.ts's own CLI (missing = error/exit 1, review-due = warning
 // only), through the real process rather than calling the imported function
 // directly — the finding has to actually reach the user's terminal.
 //
@@ -20,7 +20,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { pass, fail, ROOT, NODE, rmSync } from './helpers.ts';
 
-console.log('\nverify-pipeline — Check 17 surfaces check-jd-archive.ts findings');
+console.log('\nverify-pipeline — Check 17 surfaces packages/core/src/evaluation/check-jd-archive.ts findings');
 
 function fixture() {
   const tmp = mkdtempSync(join(tmpdir(), 'co-vp-jd-'));
@@ -34,7 +34,7 @@ function fixture() {
 function runVp({ tracker, reports, jds }) {
   const env = { ...process.env, CAREER_OPS_TRACKER: tracker, CAREER_OPS_REPORTS: reports, CAREER_OPS_JDS: jds };
   try {
-    return execFileSync(NODE, [join(ROOT, 'verify-pipeline.ts')], { cwd: ROOT, env, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 60_000 });
+    return execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/platform/verify-pipeline.ts')], { cwd: ROOT, env, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 60_000 });
   } catch (err) {
     return typeof err.stdout === 'string' ? err.stdout : '';
   }

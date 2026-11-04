@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describeSpawn, exitedNonZero } from './helpers/describe-spawn.ts';
 
-const SCRIPT = fileURLToPath(new URL('../migrate-scan-runs.ts', import.meta.url));
+const SCRIPT = fileURLToPath(new URL('../packages/cli/src/commands/scanning/migrate-scan-runs.ts', import.meta.url));
 const OLD_RUNS = 'timestamp\tstatus\tcompanies\tboards\tfound\tfiltered_title\tfiltered_tier\tfiltered_location\tfiltered_salary\tfiltered_content\tfiltered_cooldown\tdupes\tnew_added\terrors\n' +
   '2026-01-01T00:00:00Z\tcompleted\t1\t1\t2\t0\t0\t0\t0\t0\t0\t0\t2\t0\n';
 
@@ -39,7 +39,7 @@ for (const flag of ['--help', '-h']) {
     assert.equal(readFileSync(file, 'utf8'), OLD_RUNS);
     assert.equal(existsSync(`${file}.bak`), false);
     assert.equal(result.status, 0, describeSpawn(result));
-    assert.match(result.stdout, /^Usage:.*migrate-scan-runs\.ts/m);
+    assert.match(result.stdout, /^Usage:.*career-ops migrate-scan-runs/m);
     assert.equal(result.stderr, '');
   });
 

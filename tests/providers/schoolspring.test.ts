@@ -10,7 +10,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — schoolspring');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/schoolspring.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/schoolspring.ts')).href);
   const schoolspring = mod.default;
   const { parseSchoolSpringPage } = mod;
 

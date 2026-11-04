@@ -24,7 +24,7 @@
 
 ## Scope
 
-Follow the Scope section in `modes/apply.md`. Run `bun apply-scope.ts root` and stay inside the directories it prints. Launch with `bun apply-scope.ts launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
+Follow the Scope section in `modes/apply.md`. Run `career-ops apply-scope root` and stay inside the directories it prints. Launch with `career-ops apply-scope launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
 
 
 ## Step 5 -- Preflight gate
@@ -43,11 +43,11 @@ Application answers を生成する前に、form が意図した active job を�
 
 この preflight が解決するまで Step 6 に進まない。
 
-**Applying to several roles in one sitting?** この preflight は目の前の単一 form を確認する。Multi-role session の前、特に scanner entries が `**Verification:** unconfirmed (batch mode)` と marked されている場合は、`pipeline` mode の **Liveness sweep** を先に実行する（`bun check-liveness.ts --file <urls>`）。これにより `data/pipeline.md` から dead postings がまとめて落ち、expired role の tab を開かずに済む。
+**Applying to several roles in one sitting?** この preflight は目の前の単一 form を確認する。Multi-role session の前、特に scanner entries が `**Verification:** unconfirmed (batch mode)` と marked されている場合は、`pipeline` mode の **Liveness sweep** を先に実行する（`career-ops check-liveness --file <urls>`）。これにより `data/pipeline.md` から dead postings がまとめて落ち、expired role の tab を開かずに済む。
 
 ## Step 1 -- Detect the job
 
-**With Playwright:** `bun apply-scope.ts launch-options` で起動したウィンドウに求人を開き、title、URL、visible content を読む。
+**With Playwright:** `career-ops apply-scope launch-options` で起動したウィンドウに求人を開き、title、URL、visible content を読む。
 
 **Without Playwright:** 候補者に以下を依頼する：
 - Form の screenshot を共有（Read tool で画像を読める）
@@ -69,8 +69,8 @@ Application answers を生成する前に、form が意図した active job を�
 - **If adapt:** Candidate が mismatch を明示的に accept した後に限り、re-evaluate せず新しい role に responses を adjust
 - **If re-evaluate:** Full A-F evaluation を実行し、report を update し、Section H を regenerate
 - **Update tracker:** `data/applications.md` は直接編集しない。
-  - **Re-evaluate した場合:** 新しい role title を入れた TSV を書き（`_shared.md` の rule 9）、`bun merge-tracker.ts` でマージする。Report は同じファイルを update するので番号は変わらず、merge はその番号で TSV を既存の行に対応づける：title は置き換わり、status は維持される。
-  - **Adapt した場合:** title は変更しない。Report が evaluate した role を示すものだから。変更があったことは note として記録する：`bun set-status.ts --report <report#> <現在の status> --note "Posting retitled at apply time, row keeps the evaluated title"`。行の現在の status を渡せば status は変わらず、note だけが追記される。Note はこのような固定の文言にし、`[Y]` は入れない。新しい title はページ由来のテキストであり、ページ由来のテキストは command line に渡さない。
+  - **Re-evaluate した場合:** 新しい role title を入れた TSV を書き（`_shared.md` の rule 9）、`career-ops merge-tracker` でマージする。Report は同じファイルを update するので番号は変わらず、merge はその番号で TSV を既存の行に対応づける：title は置き換わり、status は維持される。
+  - **Adapt した場合:** title は変更しない。Report が evaluate した role を示すものだから。変更があったことは note として記録する：`career-ops set-status --report <report#> <現在の status> --note "Posting retitled at apply time, row keeps the evaluated title"`。行の現在の status を渡せば status は変わらず、note だけが追記される。Note はこのような固定の文言にし、`[Y]` は入れない。新しい title はページ由来のテキストであり、ページ由来のテキストは command line に渡さない。
 
 ## Step 6 -- Analyze form questions
 
@@ -141,8 +141,8 @@ Notes:
 ## Step 8 -- Post-apply (optional)
 
 候補者が application を submitted したと確認した場合：
-1. 正規 CLI で status を "Applied" に update: `bun set-status.ts --report <report#> Applied`（`applications.md` のテーブルを手動編集しない）
-2. Final responses を report の `## Application Answers` section に `**State:** submitted` で記録: `bun application-answers.ts --report reports/NNN-company-role-date.md --input answers.json --state submitted`（JSON の field は `bun application-answers.ts --help` を参照）。Section G（Posting Legitimacy）と Section H（evaluation の draft）は変更しない
+1. 正規 CLI で status を "Applied" に update: `career-ops set-status --report <report#> Applied`（`applications.md` のテーブルを手動編集しない）
+2. Final responses を report の `## Application Answers` section に `**State:** submitted` で記録: `career-ops application-answers --report reports/NNN-company-role-date.md --input answers.json --state submitted`（JSON の field は `career-ops application-answers --help` を参照）。Section G（Posting Legitimacy）と Section H（evaluation の draft）は変更しない
 3. Next step として LinkedIn outreach 用の `/career-ops contacto` を提案
 
 ## Scroll handling

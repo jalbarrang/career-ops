@@ -1,8 +1,8 @@
-// tests/check-liveness.test.ts — CLI contract for check-liveness.ts (issue #2576).
+// tests/check-liveness.test.ts — CLI contract for packages/cli/src/commands/liveness/check-liveness.ts (issue #2576).
 //
 // The script under test lives at the repository root, so its path is resolved
 // from ROOT, not from this file's directory: the first version resolved
-// ./check-liveness.ts relative to tests/ and every CI job died with
+// packages/cli/src/commands/liveness/check-liveness.ts relative to tests/ and every CI job died with
 // ERR_MODULE_NOT_FOUND before a single assertion ran.
 import { pass, fail, NODE, ROOT } from './helpers.ts';
 import { spawnSync } from 'child_process';
@@ -12,7 +12,7 @@ import { join } from 'path';
 
 console.log('\ncheck-liveness — --help/-h contract');
 
-const scriptPath = join(ROOT, 'check-liveness.ts');
+const scriptPath = join(ROOT, 'packages/cli/src/commands/liveness/check-liveness.ts');
 const run = (args) => spawnSync(NODE, [scriptPath, ...args], {
   encoding: 'utf-8',
   timeout: 10000,
@@ -33,7 +33,7 @@ for (const flag of ['--no-fallback', '--throttle', '--no-record', '--file', '--h
   if ((help.stdout || '').includes(flag)) pass(`--help documents ${flag}`);
   else fail(`--help documents ${flag}`);
 }
-if ((help.stdout || '').includes('bun check-liveness.ts -h')) pass('--help documents -h');
+if ((help.stdout || '').includes('career-ops check-liveness -h')) pass('--help documents -h');
 else fail('--help documents -h');
 
 const h = run(['-h']);

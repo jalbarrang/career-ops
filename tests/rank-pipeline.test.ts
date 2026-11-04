@@ -20,7 +20,7 @@ import { pathToFileURL } from 'url';
 console.log('\nrank-pipeline — annotate-never-drop, bounded cost');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'rank-pipeline.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/pipeline/rank-pipeline.ts')).href);
   const {
     formatRankSegment,
     parsePendingEntries,

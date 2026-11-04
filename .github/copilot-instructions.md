@@ -18,7 +18,7 @@ This repository is two things at once, and which one you are working on depends 
 ## Files you must not touch
 
 - The **user layer** defined in `DATA_CONTRACT.md`: `cv.md`, `config/profile.yml`, `modes/_profile.md`, `modes/_custom.md`, `article-digest.md`, `portals.yml`, `data/`, `documents/`, `reports/`, `output/`, `interview-prep/`. These are the user's private files even when the repo ships an example.
-- The **control files**: `CLAUDE.md`, `AGENTS.md`, `modes/_shared.md`, `DATA_CONTRACT.md`, `update-system.ts`, `updater-migration-tests.ts`, anything under `.github/`, `package.json`, `package-lock.json`, everything under `plugins-registry/`, `plugins/_*.ts`.
+- The **control files**: `CLAUDE.md`, `AGENTS.md`, `modes/_shared.md`, `DATA_CONTRACT.md`, `packages/cli/src/commands/platform/update-system.ts`, `updater-migration-tests.ts`, anything under `.github/`, `package.json`, `package-lock.json`, everything under `plugins-registry/`, `plugins/_*.ts`.
 - Anything under `web/` (owned by a separate track).
 
 If the task cannot be completed without touching one of these, stop and explain why in your report instead of doing it.

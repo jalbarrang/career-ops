@@ -1,6 +1,6 @@
-// tests/doctor-tracked-bak-files.test.ts — doctor.ts's tracked-.bak warning.
+// tests/doctor-tracked-bak-files.test.ts — packages/cli/src/commands/platform/doctor.ts's tracked-.bak warning.
 //
-// update-system.ts versions before #2857 could commit cascading .bak backups
+// packages/cli/src/commands/platform/update-system.ts versions before #2857 could commit cascading .bak backups
 // when a checkout write failed. #2857 stops that for NEW installs, but an
 // install that already `git add`ed one is stuck: nothing in the update path
 // untracks a path git already has, so the update looks like it silently did
@@ -17,7 +17,7 @@ sealProcessGitEnv();
 
 console.log('\ndoctor.ts — tracked .bak files');
 
-const DOCTOR = join(ROOT, 'doctor.ts');
+const DOCTOR = join(ROOT, 'packages/cli/src/commands/platform/doctor.ts');
 
 function runDoctor(cwd) {
   try {

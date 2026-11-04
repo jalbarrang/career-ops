@@ -1,5 +1,5 @@
 /**
- * tests/contacts.test.ts — Systematic test suite for contacts.ts
+ * tests/contacts.test.ts — Systematic test suite for packages/cli/src/commands/outreach/contacts.ts
  *
  * Tests every exported function across:
  * - TSV phonebook parsing (well-formed, malformed, comments, `-` tracker ref)
@@ -21,13 +21,13 @@
  *      exits — so a direct run returns 0 even when assertions fail.
  */
 
-import { parseContacts, escapeVcard, foldLine, slug, uidPart, normalizeForHash, contactUid, contactToVcard, buildVcf } from '../contacts.ts';
+import { parseContacts, escapeVcard, foldLine, slug, uidPart, normalizeForHash, contactUid, contactToVcard, buildVcf } from '../packages/cli/src/commands/outreach/contacts.ts';
 import { execFileSync, spawnSync } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, copyFileSync, readFileSync, existsSync, realpathSync, symlinkSync } from 'fs';
 import { tmpdir } from 'os';
-import { pass, fail, ownRootEnv } from './helpers.ts';
+import { pass, fail, ownRootEnv, ROOT } from './helpers.ts';
 
 console.log('\ncontacts.ts — phonebook and vCard export');
 
@@ -305,7 +305,7 @@ ok('the LATER occurrence wins', dupVcf.includes('fresh line') && !dupVcf.include
 // ============================================================================
 console.log('\n--- 9. CLI behavior ---');
 
-const scriptPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'contacts.ts');
+const scriptPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/cli/src/commands/outreach/contacts.ts');
 
 try {
   execFileSync('node', [scriptPath, '--self-test'], { encoding: 'utf-8', timeout: 10000 });
@@ -337,7 +337,7 @@ ok('--help --bogus exits 1 (unknown flag checked before --help)', helpBogusR.sta
 ok('--help --bogus names the bad flag in stderr', helpBogusR.stderr.includes('--bogus'));
 ok('--help --bogus writes nothing to stdout', helpBogusR.stdout === '');
 
-// contacts.ts resolves its paths from import.meta.url and is zero-dep, so a
+// packages/cli/src/commands/outreach/contacts.ts resolves its paths from import.meta.url and is zero-dep, so a
 // copy of the script into a temp dir is a fully isolated career-ops root:
 // data/contacts.tsv and output/ under the temp dir, no dependence on whatever
 // the caller's real workspace contains — a contributor with a real phonebook
@@ -345,7 +345,7 @@ ok('--help --bogus writes nothing to stdout', helpBogusR.stdout === '');
 // NOT realpathed, deliberately. macOS tmpdir() is a symlink (/var/folders →
 // /private/var), and this used to be resolved to keep the copied script's
 // hand-rolled main-guard from silently defeating itself. That guard is now
-// lib/is-main-module.ts, which realpaths both sides (#3170) — and contacts.ts
+// packages/core/src/kernel/is-main-module.ts, which realpaths both sides (#3170) — and packages/cli/src/commands/outreach/contacts.ts
 // canonicalizes internally for its own containment checks (realpath-containment
 // right before the write), so nothing here needs a pre-resolved root.
 //
@@ -353,16 +353,23 @@ ok('--help --bogus writes nothing to stdout', helpBogusR.stdout === '');
 // is a symlink at all is a platform accident (macOS yes, Linux CI usually no).
 // The deliberate coverage is in tests/main-guard-convention.test.ts.
 const tmpRoot = mkdtempSync(join(tmpdir(), 'contacts-cli-'));
-const tmpScript = join(tmpRoot, 'contacts.ts');
+const tmpScript = join(tmpRoot, 'packages/cli/src/commands/outreach/contacts.ts');
 try {
+  mkdirSync(dirname(tmpScript), { recursive: true });
   copyFileSync(scriptPath, tmpScript);
-  // contacts.ts resolves user-layer paths via path-resolver.ts
+  // packages/cli/src/commands/outreach/contacts.ts resolves user-layer paths via packages/core/src/kernel/path-resolver.ts
   // (CAREER_OPS_ROOT), so the fixture carries that too.
-  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'path-resolver.ts'), join(tmpRoot, 'path-resolver.ts'));
+  mkdirSync(dirname(join(tmpRoot, 'packages/core/src/kernel/path-resolver.ts')), { recursive: true });
+  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/core/src/kernel/path-resolver.ts'), join(tmpRoot, 'packages/core/src/kernel/path-resolver.ts'));
+  mkdirSync(dirname(join(tmpRoot, 'packages/core/src/kernel/repo-root.ts')), { recursive: true });
+  copyFileSync(join(ROOT, 'packages/core/src/kernel/repo-root.ts'), join(tmpRoot, 'packages/core/src/kernel/repo-root.ts'));
   mkdirSync(join(tmpRoot, 'lib'), { recursive: true });
-  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'lib/cli-flags.ts'), join(tmpRoot, 'lib/cli-flags.ts'));
-  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'lib/is-main-module.ts'), join(tmpRoot, 'lib/is-main-module.ts'));
-  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'lib/tsv-formula-escape.ts'), join(tmpRoot, 'lib/tsv-formula-escape.ts'));
+  mkdirSync(dirname(join(tmpRoot, 'packages/core/src/kernel/cli-flags.ts')), { recursive: true });
+  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/core/src/kernel/cli-flags.ts'), join(tmpRoot, 'packages/core/src/kernel/cli-flags.ts'));
+  mkdirSync(dirname(join(tmpRoot, 'packages/core/src/kernel/is-main-module.ts')), { recursive: true });
+  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/core/src/kernel/is-main-module.ts'), join(tmpRoot, 'packages/core/src/kernel/is-main-module.ts'));
+  mkdirSync(dirname(join(tmpRoot, 'packages/core/src/kernel/tsv-formula-escape.ts')), { recursive: true });
+  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/core/src/kernel/tsv-formula-escape.ts'), join(tmpRoot, 'packages/core/src/kernel/tsv-formula-escape.ts'));
   mkdirSync(join(tmpRoot, 'data'), { recursive: true });
   writeFileSync(join(tmpRoot, 'data/contacts.tsv'), [
     '# name\tcompany\ttype\ttitle\tphone\temail\tlinkedin\ttracker\tnotes',
@@ -475,18 +482,23 @@ try {
 // Empty store: fresh temp root with NO data/contacts.tsv at all.
 const emptyRoot = mkdtempSync(join(tmpdir(), 'contacts-empty-'));
 try {
-  copyFileSync(scriptPath, join(emptyRoot, 'contacts.ts'));
-  // contacts.ts resolves user-layer paths via path-resolver.ts
+  mkdirSync(dirname(join(emptyRoot, 'packages/cli/src/commands/outreach/contacts.ts')), { recursive: true });
+  copyFileSync(scriptPath, join(emptyRoot, 'packages/cli/src/commands/outreach/contacts.ts'));
+  // packages/cli/src/commands/outreach/contacts.ts resolves user-layer paths via packages/core/src/kernel/path-resolver.ts
   // (CAREER_OPS_ROOT), so the fixture carries that too.
-  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'path-resolver.ts'), join(emptyRoot, 'path-resolver.ts'));
+  mkdirSync(dirname(join(emptyRoot, 'packages/core/src/kernel/path-resolver.ts')), { recursive: true });
+  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/core/src/kernel/path-resolver.ts'), join(emptyRoot, 'packages/core/src/kernel/path-resolver.ts'));
   mkdirSync(join(emptyRoot, 'lib'), { recursive: true });
-  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'lib/cli-flags.ts'), join(emptyRoot, 'lib/cli-flags.ts'));
-  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'lib/is-main-module.ts'), join(emptyRoot, 'lib/is-main-module.ts'));
-  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'lib/tsv-formula-escape.ts'), join(emptyRoot, 'lib/tsv-formula-escape.ts'));
-  const emptyJson = JSON.parse(execFileSync('node', [join(emptyRoot, 'contacts.ts')], { env: ownRootEnv(), encoding: 'utf-8', timeout: 10000 }));
+  mkdirSync(dirname(join(emptyRoot, 'packages/core/src/kernel/cli-flags.ts')), { recursive: true });
+  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/core/src/kernel/cli-flags.ts'), join(emptyRoot, 'packages/core/src/kernel/cli-flags.ts'));
+  mkdirSync(dirname(join(emptyRoot, 'packages/core/src/kernel/is-main-module.ts')), { recursive: true });
+  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/core/src/kernel/is-main-module.ts'), join(emptyRoot, 'packages/core/src/kernel/is-main-module.ts'));
+  mkdirSync(dirname(join(emptyRoot, 'packages/core/src/kernel/tsv-formula-escape.ts')), { recursive: true });
+  copyFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'packages/core/src/kernel/tsv-formula-escape.ts'), join(emptyRoot, 'packages/core/src/kernel/tsv-formula-escape.ts'));
+  const emptyJson = JSON.parse(execFileSync('node', [join(emptyRoot, 'packages/cli/src/commands/outreach/contacts.ts')], { env: ownRootEnv(), encoding: 'utf-8', timeout: 10000 }));
   eq('missing store: JSON total = 0', emptyJson.total, 0);
   eq('missing store: contacts = []', emptyJson.contacts, []);
-  const emptyVcfOut = execFileSync('node', [join(emptyRoot, 'contacts.ts'), '--vcf'], { env: ownRootEnv(), encoding: 'utf-8', timeout: 10000 });
+  const emptyVcfOut = execFileSync('node', [join(emptyRoot, 'packages/cli/src/commands/outreach/contacts.ts'), '--vcf'], { env: ownRootEnv(), encoding: 'utf-8', timeout: 10000 });
   ok('missing store: --vcf exits 0 with a clear message', emptyVcfOut.includes('No contacts to export'));
   ok('missing store: --vcf writes no file', !existsSync(join(emptyRoot, 'output/contacts.vcf')));
 } finally {

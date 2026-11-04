@@ -1,8 +1,8 @@
 // tests/admission-gate.test.ts — one admission decision for every
-// data/pipeline.md writer that is not scan.ts (#5478).
+// data/pipeline.md writer that is not packages/core/src/scanning/scan.ts (#5478).
 //
 // scan-hn, scan-interamt, openrouter-runner and plugin ingest each built their
-// own subset of scan.ts's gate: none read data/blacklist.md, scan-interamt kept
+// own subset of packages/core/src/scanning/scan.ts's gate: none read data/blacklist.md, scan-interamt kept
 // a substring title matcher, scan-hn's AI mode checked no keyword at all, and
 // openrouter and plugins compared raw URLs or the pipeline alone. These tests
 // pin the shared gate's verdicts, that each writer uses it, and openrouter's
@@ -17,9 +17,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createAdmissionGate, formatSkipCounts } from '../lib/admission-gate.ts';
-import { parseBlacklist, collectSeenUrls } from '../scan.ts';
-import { admitPluginJobs } from '../plugins.ts';
+import { createAdmissionGate, formatSkipCounts } from '../packages/core/src/kernel/admission-gate.ts';
+import { parseBlacklist, collectSeenUrls } from '../packages/core/src/scanning/scan.ts';
+import { admitPluginJobs } from '../packages/cli/src/commands/platform/plugins.ts';
 import { validateManifest } from '../plugins/_engine.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -149,12 +149,12 @@ test('the manifest jobPostings flag is validated and carried through', () => {
 // A structural guard: a writer that drops the gate for a private matcher again
 // would bring back the drift this file exists to prevent.
 test('every non-scan.ts pipeline writer admits through the shared gate', () => {
-  for (const file of ['scan-hn.ts', 'scan-interamt.ts', 'openrouter-runner.ts', 'plugins.ts']) {
+  for (const file of ['packages/cli/src/commands/scanning/scan-hn.ts', 'packages/cli/src/commands/scanning/scan-interamt.ts', 'packages/cli/src/commands/evaluation/openrouter-runner.ts', 'packages/cli/src/commands/platform/plugins.ts']) {
     const src = readFileSync(join(ROOT, file), 'utf8');
-    assert.match(src, /from '\.\/lib\/admission-gate\.ts'/, `${file} does not import the admission gate`);
+    assert.match(src, /from '[^']*admission-gate\.ts'/, `${file} does not import the admission gate`);
     assert.match(src, /createAdmissionGate\(/, `${file} does not build the admission gate`);
   }
-  const interamt = readFileSync(join(ROOT, 'scan-interamt.ts'), 'utf8');
+  const interamt = readFileSync(join(ROOT, 'packages/cli/src/commands/scanning/scan-interamt.ts'), 'utf8');
   assert.doesNotMatch(interamt, /function matches(Title|Location)\(/, 'scan-interamt brought back a private matcher');
 });
 
@@ -186,7 +186,7 @@ test('openrouter-runner scan skips tracked, blacklisted and out-of-region postin
       { url: 'https://boards.example/acme/3', company: 'Acme', role: 'AI Engineer', location: 'Munich' },
       { url: 'https://boards.example/acme/4', company: 'Acme', role: 'AI Lead', location: 'Berlin' },
     ];
-    const runner = pathToFileURL(join(ROOT, 'openrouter-runner.ts')).href;
+    const runner = pathToFileURL(join(ROOT, 'packages/cli/src/commands/evaluation/openrouter-runner.ts')).href;
     const r = runModule(dir, `
       const { addToPipeline } = await import(${JSON.stringify(runner)});
       const added = await addToPipeline(${JSON.stringify(entries)}, { location_filter: { allow: ['Berlin'] } });
@@ -216,7 +216,7 @@ test('openrouter-runner marks the row whose URL matches exactly, not a prefix of
       '- [ ] https://x.test/jobs/1?gh_jid=9 | C | Role',
       '',
     ].join('\n'));
-    const runner = pathToFileURL(join(ROOT, 'openrouter-runner.ts')).href;
+    const runner = pathToFileURL(join(ROOT, 'packages/cli/src/commands/evaluation/openrouter-runner.ts')).href;
     const r = runModule(dir, `
       const { markPipelineDone } = await import(${JSON.stringify(runner)});
       await markPipelineDone('https://x.test/jobs/1', { pipelinePath: ${JSON.stringify(pipelinePath)} });

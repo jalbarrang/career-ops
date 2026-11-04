@@ -4,14 +4,14 @@
 // The regex `^(\*\*|__)(.+?)\1\s*$` let the lazy group grow past the first
 // closing marker, so `**Title** · **2020**` (two bold runs with plain text
 // between them) was read as ONE bold span and came back as "Title · 2020".
-// cv-title-check.ts takes that value as the entry's job title.
+// packages/cli/src/commands/cv/cv-title-check.ts takes that value as the entry's job title.
 //
 // Run:  bun test tests/cv-markdown-bold-line.test.ts
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boldLineText, normalizePandocLine } from '../lib/cv-markdown.ts';
-import { parseCvExperience } from '../cv-title-check.ts';
+import { boldLineText, normalizePandocLine } from '../packages/core/src/cv/cv-markdown.ts';
+import { parseCvExperience } from '../packages/cli/src/commands/cv/cv-title-check.ts';
 
 test('a line bold from end to end yields its plain text', () => {
   assert.equal(boldLineText('**Senior Engineer**'), 'Senior Engineer');

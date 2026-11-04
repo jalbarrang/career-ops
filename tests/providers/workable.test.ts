@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — workable');
 
 try {
-  const workableModule = await import(pathToFileURL(join(ROOT, 'providers/workable.ts')).href);
+  const workableModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/workable.ts')).href);
   const workable = workableModule.default;
   const { parseWorkableMarkdown, parseWorkableWidget } = workableModule;
 
@@ -229,7 +229,7 @@ try {
 
   // The point of the fix: ask the real consumer, not a reimplementation of it.
   // This is the config shape that parked the posting — UK blocked, EU allowed.
-  const { buildLocationFilter } = await import(pathToFileURL(join(ROOT, 'scan.ts')).href);
+  const { buildLocationFilter } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
   const euFilter = buildLocationFilter({
     always_allow: ['Romania', 'Poland', 'Croatia'],
     allow: ['Remote', 'Europe'],

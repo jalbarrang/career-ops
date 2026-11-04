@@ -1,6 +1,6 @@
 // tests/pdf-index-path.test.ts — the PDF manifest must follow the tracker (#2471).
 //
-// sync-pdf-flags.ts and find.ts used to resolve data/pdf-index.tsv from their
+// packages/cli/src/commands/tracker/sync-pdf-flags.ts and packages/cli/src/commands/pipeline/find.ts used to resolve data/pdf-index.tsv from their
 // own install directory while resolving the tracker through CAREER_OPS_TRACKER.
 // Redirecting the tracker therefore reconciled one workspace's rows against
 // another workspace's manifest: the merge-tracker suite read the developer's
@@ -8,8 +8,8 @@
 // test-all.ts` failed locally for anyone who had ever generated a PDF while
 // staying green in CI (data/ is gitignored).
 import { pass, fail } from './helpers.ts';
-import { join } from 'path';
-import { resolveWorkspaceRoot, resolvePdfIndexPath } from '../tracker-utils.ts';
+import {dirname, join } from 'path';
+import { resolveWorkspaceRoot, resolvePdfIndexPath } from '../packages/core/src/tracker/tracker-utils.ts';
 
 console.log('\nPDF manifest follows the tracker (#2471)');
 

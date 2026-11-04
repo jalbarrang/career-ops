@@ -9,7 +9,7 @@
 // Minting is metered per address, so a 429 here is that budget working rather
 // than an outage.
 
-import { isMainModule } from '../../lib/is-main-module.ts';
+import { isMainModule } from '../../packages/core/src/kernel/is-main-module.ts';
 import { apiBase, fetchWithTimeout, readBoundedText } from './lib/api.ts';
 import { CONTROL_CHARS, displayClean } from './lib/clean.ts';
 

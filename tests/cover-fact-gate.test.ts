@@ -4,8 +4,8 @@ import { pass, fail, ROOT } from './helpers.ts';
 import { mkdtempSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { assertFacts, verifyFacts } from '../verify-cv-facts.ts';
-import { buildHtml } from '../generate-cover-letter.ts';
+import { assertFacts, verifyFacts } from '../packages/cli/src/commands/cv/verify-cv-facts.ts';
+import { buildHtml } from '../packages/cli/src/commands/cv/generate-cover-letter.ts';
 
 console.log('\nCover letter fact gate');
 

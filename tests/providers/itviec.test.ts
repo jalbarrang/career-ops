@@ -1,5 +1,5 @@
 // tests/providers/itviec.test.ts — provider-contract tests for the ITviec
-// board-wide HTML listing (providers/itviec.ts).
+// board-wide HTML listing (packages/core/src/scanning/providers/itviec.ts).
 //
 // The fixtures reproduce shapes measured on the live board on 2026-08-23, and
 // each one exists because it decides the parser's design:
@@ -86,7 +86,7 @@ const CARD_MINIMAL = `
 const PAGE = `<html><body><div class='card-jobs-list'>${CARD_FULL}${CARD_MINIMAL}</div></body></html>`;
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/itviec.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/itviec.ts')).href);
   const itviec = mod.default;
   const { parseListingPage, buildListUrl, visibleText, parsePostedAt, assertParsedSomething } = mod;
 

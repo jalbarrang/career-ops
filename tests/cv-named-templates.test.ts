@@ -2,9 +2,9 @@
 // (compact, executive, jake, leadership, modern) must each behave like the base
 // template, not merely look different.
 //
-// A template is not "just CSS" here: cv-templates.ts discovers it by filename
-// and validates its placeholders, build-cv-html.ts fills it, and
-// cv-sections-core.ts strips its optional sections by MARKER MATCHING. A
+// A template is not "just CSS" here: packages/cli/src/commands/cv/cv-templates.ts discovers it by filename
+// and validates its placeholders, packages/cli/src/commands/cv/build-cv-html.ts fills it, and
+// packages/core/src/cv/cv-sections-core.ts strips its optional sections by MARKER MATCHING. A
 // variant that renders beautifully but omits `<!-- AWARDS -->` silently drops a
 // candidate's awards, and one that omits the trailing `<!-- END -->` sentinel
 // leaves a bare "Skills" heading on every CV that has no skills list (#2515 /
@@ -22,8 +22,8 @@ import { execFileSync } from 'child_process';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { pass, fail, ROOT, NODE } from './helpers.ts';
-import { listTemplates, resolveTemplate, validateTemplate } from '../cv-templates.ts';
-import { stripEmptySections } from '../cv-sections-core.ts';
+import { listTemplates, resolveTemplate, validateTemplate } from '../packages/cli/src/commands/cv/cv-templates.ts';
+import { stripEmptySections } from '../packages/core/src/cv/cv-sections-core.ts';
 
 console.log('\nNamed CV templates (compact / executive / jake / leadership / modern)');
 
@@ -130,7 +130,7 @@ for (const { name, displayName } of NAMED) {
   // --- Renders a real payload ----------------------------------------------
   const output = join(dir, `${name}.html`);
   try {
-    execFileSync(NODE, ['build-cv-html.ts', input, output, file], { cwd: ROOT, encoding: 'utf-8' });
+    execFileSync(NODE, ['packages/cli/src/commands/cv/build-cv-html.ts', input, output, file], { cwd: ROOT, encoding: 'utf-8' });
     const rendered = readFileSync(output, 'utf-8');
     const unfilled = rendered.match(/\{\{[A-Z_]+\}\}/g) || [];
     if (unfilled.length === 0) pass(`${name}: renders a payload with no unfilled placeholders`);
@@ -139,6 +139,6 @@ for (const { name, displayName } of NAMED) {
     if (rendered.includes('Jane Smith') && rendered.includes('Example GmbH')) pass(`${name}: payload content reaches the output`);
     else fail(`${name}: rendered output is missing payload content`);
   } catch (e) {
-    fail(`${name}: build-cv-html.ts crashed — ${e.message}`);
+    fail(`${name}: packages/cli/src/commands/cv/build-cv-html.ts crashed — ${e.message}`);
   }
 }

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ROOT } from './helpers.ts';
 
-const { extractJdSkills } = await import(pathToFileURL(join(ROOT, 'jd-skill-gap.ts')).href);
+const { extractJdSkills } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/evaluation/jd-skill-gap.ts')).href);
 
 test('a requirements list on the header line is extracted', () => {
   const jd = [

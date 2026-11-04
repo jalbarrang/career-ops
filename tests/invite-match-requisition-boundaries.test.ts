@@ -1,6 +1,6 @@
 import { pass, fail } from './helpers.ts';
-import { extractReqId, matchInvite } from '../invite-match.ts';
-import { extractReqNumber } from '../tracker-parse.ts';
+import { extractReqId, matchInvite } from '../packages/core/src/interview/invite-match.ts';
+import { extractReqNumber } from '../packages/core/src/tracker/tracker-parse.ts';
 
 const reqId = extractReqId('Req ID: JR1234');
 const row = (num, status, notes) => ({ num, company: 'Acme', role: `Engineer ${num}`, status, notes });

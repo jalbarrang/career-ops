@@ -6,8 +6,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { normalizeWorkableJob, fetchJdViaKnownApi, JD_FETCHERS } from '../browser-extract.ts';
-import { JD_TEXT_API_ATS } from '../liveness-api.ts';
+import { normalizeWorkableJob, fetchJdViaKnownApi, JD_FETCHERS } from '../packages/cli/src/commands/scanning/browser-extract.ts';
+import { JD_TEXT_API_ATS } from '../packages/core/src/liveness/liveness-api.ts';
 
 const FULL = 'https://apply.workable.com/fictional-employer/j/FIXTURE123/';
 const SHORT = 'https://apply.workable.com/j/FIXTURE123';
@@ -124,16 +124,16 @@ test('real CLIs use shared API dispatch: success and silent fetch-jd miss', () =
       ['--import', pathToFileURL(preload).href, join(root, script), ...args],
       { cwd: root, encoding: 'utf8', timeout: 10000, env: { ...process.env, FIXTURE_MISS: miss ? '1' : '' } });
     for (const url of [FULL, SHORT]) {
-      const result = run('fetch-jd.ts', [url]);
+      const result = run('packages/cli/src/commands/scanning/fetch-jd.ts', [url]);
       assert.equal(result.status, 0, result.stderr);
       assert.match(result.stdout, /Fixture & Engineer/);
       assert.match(result.stdout, /REQUIREMENTS_MARKER/);
       assert.match(result.stdout, /BENEFITS_MARKER/);
-      const miss = run('fetch-jd.ts', [url], true);
+      const miss = run('packages/cli/src/commands/scanning/fetch-jd.ts', [url], true);
       assert.equal(miss.status, 1);
       assert.equal(miss.stdout, '');
       assert.equal(miss.stderr, '');
-      const interactive = run('browser-extract.ts', [url, '--mode', 'jd']);
+      const interactive = run('packages/cli/src/commands/scanning/browser-extract.ts', [url, '--mode', 'jd']);
       assert.equal(interactive.status, 0, interactive.stderr);
       assert.match(JSON.parse(interactive.stdout).text, /REQUIREMENTS_MARKER/);
     }

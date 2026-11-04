@@ -1,14 +1,14 @@
-// tests/scan-help-flag.test.ts — scan.ts must not run a live scan on
+// tests/scan-help-flag.test.ts — packages/core/src/scanning/scan.ts must not run a live scan on
 // --help or on an unrecognized flag (#2270).
 //
-// Before this fix, `bun scan.ts --help` never looked at --help at all: it
+// Before this fix, `career-ops scan --help` never looked at --help at all: it
 // fell straight through argument parsing into a full live scan, reading
 // portals.yml, hitting every configured ATS, and appending to
 // pipeline.md/scan-history.tsv — the exact "unrecognized/mistyped flag
 // silently falls through to live behavior" failure class already fixed
-// (identically) in scan-ats-full.ts (#1633/#1635), reply-watch.ts
-// (#2743/#2745) and dedup-tracker.ts (#2744/#2746), now shared via
-// lib/cli-flags.ts's validateFlags() (#2775).
+// (identically) in packages/cli/src/commands/scanning/scan-ats-full.ts (#1633/#1635), packages/cli/src/commands/outreach/reply-watch.ts
+// (#2743/#2745) and packages/cli/src/commands/tracker/dedup-tracker.ts (#2744/#2746), now shared via
+// packages/core/src/kernel/cli-flags.ts's validateFlags() (#2775).
 //
 // HERMETIC: every run pins CAREER_OPS_PORTALS at a path that does not exist.
 // If --help or an unrecognized flag were NOT handled before the portals
@@ -29,14 +29,14 @@ const NO_PORTALS = join(tmpdir(), 'career-ops-no-such-portals.yml');
 const PORTALS_NOT_FOUND = /portals\.yml not found/i;
 
 function runScan(...args) {
-  const r = spawnSync(process.execPath, [join(ROOT, 'scan.ts'), ...args], {
+  const r = spawnSync(process.execPath, [join(ROOT, 'packages/core/src/scanning/scan.ts'), ...args], {
     cwd: ROOT,
     encoding: 'utf-8',
     timeout: 30_000,
     env: { ...process.env, CAREER_OPS_PORTALS: NO_PORTALS },
   });
-  assert.equal(r.error, undefined, `scan.ts failed to spawn: ${r.error?.message}`);
-  assert.equal(r.signal, null, `scan.ts was killed by ${r.signal} (timeout?)`);
+  assert.equal(r.error, undefined, `packages/core/src/scanning/scan.ts failed to spawn: ${r.error?.message}`);
+  assert.equal(r.signal, null, `packages/core/src/scanning/scan.ts was killed by ${r.signal} (timeout?)`);
   return { ...r, all: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 }
 
@@ -44,7 +44,7 @@ test('--help prints usage and exits 0, without reaching the portals check', () =
   const r = runScan('--help');
   assert.equal(r.status, 0, describeSpawn(r, `expected exit 0, got ${r.status}`));
   assert.match(r.stdout, /Usage:/);
-  assert.match(r.stdout, /bun scan\.ts/);
+  assert.match(r.stdout, /career-ops scan/);
   assert.doesNotMatch(r.all, PORTALS_NOT_FOUND, '--help must exit before any scan logic runs');
 });
 
@@ -88,7 +88,7 @@ test('--since 7 (a recognized value-taking flag) still reaches normal scan logic
 });
 
 test('--since -5 (negative value) is not misread as an unrecognized flag', () => {
-  // The value itself is rejected by scan.ts's own --since validator further
+  // The value itself is rejected by packages/core/src/scanning/scan.ts's own --since validator further
   // down the pipeline, not by the flag allowlist — so this must NOT print
   // "unrecognized flag(s): -5".
   const r = runScan('--since', '-5');

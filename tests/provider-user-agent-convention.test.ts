@@ -1,7 +1,7 @@
 // tests/provider-user-agent-convention.test.ts — one place owns the crawler's
 // identity.
 //
-// providers/ADDING_A_PROVIDER.md: "If the source blocks the default UA through a
+// packages/core/src/scanning/providers/ADDING_A_PROVIDER.md: "If the source blocks the default UA through a
 // WAF/CDN, use BROWSER_LIKE_USER_AGENT from the same module — do not add your own
 // constant." That rule is what keeps the User-Agent career-ops sends nameable:
 // site owners write robots.txt rules against a product token (RFC 9309 §2.2.1),
@@ -22,9 +22,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const PROVIDERS_DIR = join(ROOT, 'providers');
+const PROVIDERS_DIR = join(ROOT, 'packages/core/src/scanning/providers');
 
-// user-agent.ts is the one file that may hold the literals; _http.ts re-exports
+// packages/core/src/kernel/user-agent.ts is the one file that may hold the literals; _http.ts re-exports
 // them. Nothing under providers/ needs its own.
 const EXEMPT = new Set([]);
 
@@ -49,7 +49,7 @@ test('no provider hardcodes a User-Agent literal', () => {
 });
 
 test('the shared User-Agent identifies career-ops and carries a contact URL', async () => {
-  const { DEFAULT_USER_AGENT } = await import(pathToFileURL(join(ROOT, 'user-agent.ts')).href);
+  const { DEFAULT_USER_AGENT } = await import(pathToFileURL(join(ROOT, 'packages/core/src/kernel/user-agent.ts')).href);
   assert.match(DEFAULT_USER_AGENT, /career-ops/, 'the default UA names the product');
   assert.match(DEFAULT_USER_AGENT, /\+https?:\/\//, 'the default UA carries a URL a site owner can follow');
 });

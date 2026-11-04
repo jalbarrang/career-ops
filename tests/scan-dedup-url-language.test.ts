@@ -23,8 +23,8 @@ import {
   normalizeUrlForDedup,
   recordUrlVariant,
   variantTitleKey,
-} from '../scan.ts';
-import { SCAN_HISTORY_COLUMNS } from '../lib/scan-history-columns.ts';
+} from '../packages/core/src/scanning/scan.ts';
+import { SCAN_HISTORY_COLUMNS } from '../packages/core/src/scanning/scan-history-columns.ts';
 
 console.log('\nScan dedup — language versions sharing a URL key');
 

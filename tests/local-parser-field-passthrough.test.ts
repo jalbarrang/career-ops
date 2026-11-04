@@ -1,6 +1,6 @@
 // tests/local-parser-field-passthrough.test.ts — #3438 provider contract.
 // normalizeParserJob() returns a closed object, so a jobs-json-v1 parser that
-// publishes an occupation code would have it dropped before scan.ts sees it —
+// publishes an occupation code would have it dropped before packages/core/src/scanning/scan.ts sees it —
 // and a declared-field whitelist (#3438) could never read it on a local-parser
 // board, the transport Job Bank targets actually use.
 import { join } from 'path';
@@ -9,7 +9,7 @@ import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\nlocal-parser — extra fields reach the scanner');
 
-const mod = await import(pathToFileURL(join(ROOT, 'providers/local-parser.ts')).href);
+const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/local-parser.ts')).href);
 const { normalizeParserJob } = mod;
 const entry = { name: 'Job Bank — help desk', careers_url: 'https://www.jobbank.gc.ca/jobsearch/jobsearch' };
 

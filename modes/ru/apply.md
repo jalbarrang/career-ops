@@ -22,12 +22,12 @@
 
 ## Scope
 
-Follow the Scope section in `modes/apply.md`. Run `bun apply-scope.ts root` and stay inside the directories it prints. Launch with `bun apply-scope.ts launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
+Follow the Scope section in `modes/apply.md`. Run `career-ops apply-scope root` and stay inside the directories it prints. Launch with `career-ops apply-scope launch-options`. Do not read `DevToolsActivePort` or attach to an existing browser. Do not submit the form.
 
 
 ## Шаг 1 — Определить вакансию
 
-**С Playwright:** Запустить через `bun apply-scope.ts launch-options`, открыть вакансию в этом окне и прочитать заголовок, URL и видимое содержимое.
+**С Playwright:** Запустить через `career-ops apply-scope launch-options`, открыть вакансию в этом окне и прочитать заголовок, URL и видимое содержимое.
 
 **Без Playwright:** Попросить кандидата:
 - Поделиться скриншотом формы
@@ -47,8 +47,8 @@ Follow the Scope section in `modes/apply.md`. Run `bun apply-scope.ts root` and 
 Если роль на экране отличается от оценённой:
 - **Предупредить кандидата**: "Роль изменилась с [X] на [Y]. Переоценить или адаптировать ответы?"
 - Трекер обновлять только через скрипты, никогда не редактируя `data/applications.md` вручную:
-  - **После переоценки**: написать TSV с новым названием роли (правило 9 в `_shared.md`) и объединить его командой `bun merge-tracker.ts`. Отчёт обновляется на месте и сохраняет свой номер, поэтому слияние сопоставляет TSV с существующей строкой по этому номеру: название заменяется, статус сохраняется.
-  - **После адаптации**: название не менять, оно обозначает роль, которую оценивал отчёт. Изменение записать заметкой: `bun set-status.ts --report <report#> <текущий статус> --note "Вакансия переименована на момент отклика, строка сохраняет оценённое название"`. Текущий статус строки при этом не меняется, заметка добавляется. Использовать фиксированный текст вроде этого и не вставлять в него `[Y]`: новое название — текст со страницы, а текст со страницы никогда не попадает в командную строку.
+  - **После переоценки**: написать TSV с новым названием роли (правило 9 в `_shared.md`) и объединить его командой `career-ops merge-tracker`. Отчёт обновляется на месте и сохраняет свой номер, поэтому слияние сопоставляет TSV с существующей строкой по этому номеру: название заменяется, статус сохраняется.
+  - **После адаптации**: название не менять, оно обозначает роль, которую оценивал отчёт. Изменение записать заметкой: `career-ops set-status --report <report#> <текущий статус> --note "Вакансия переименована на момент отклика, строка сохраняет оценённое название"`. Текущий статус строки при этом не меняется, заметка добавляется. Использовать фиксированный текст вроде этого и не вставлять в него `[Y]`: новое название — текст со страницы, а текст со страницы никогда не попадает в командную строку.
 
 ## Шаг 4 — Анализировать вопросы формы
 
@@ -96,6 +96,6 @@ Follow the Scope section in `modes/apply.md`. Run `bun apply-scope.ts root` and 
 ## Шаг 6 — После отклика (опционально)
 
 Если кандидат подтвердил отправку:
-1. Обновить статус на "Applied" через канонический CLI: `bun set-status.ts --report <report#> Applied` (не редактировать таблицу `data/applications.md` вручную)
-2. Записать финальные ответы в секцию `## Application Answers` отчёта со `**State:** submitted`: `bun application-answers.ts --report reports/NNN-company-role-date.md --input answers.json --state submitted` (поля JSON перечисляет `bun application-answers.ts --help`). Блок G (легитимность вакансии) и блок H (черновики оценки) не менять.
+1. Обновить статус на "Applied" через канонический CLI: `career-ops set-status --report <report#> Applied` (не редактировать таблицу `data/applications.md` вручную)
+2. Записать финальные ответы в секцию `## Application Answers` отчёта со `**State:** submitted`: `career-ops application-answers --report reports/NNN-company-role-date.md --input answers.json --state submitted` (поля JSON перечисляет `career-ops application-answers --help`). Блок G (легитимность вакансии) и блок H (черновики оценки) не менять.
 3. Предложить: `/career-ops contacto` для LinkedIn outreach

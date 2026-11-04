@@ -7,7 +7,7 @@ console.log('\nProvider — avature (career-site SearchJobs parser)');
 
 
 try {
-  const avatureModule = await import(pathToFileURL(join(ROOT, 'providers/avature.ts')).href);
+  const avatureModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/avature.ts')).href);
   const avature = avatureModule.default;
   const { parseArticles, assertParsedSomething } = avatureModule;
 
@@ -335,7 +335,7 @@ try {
   // RangeError out of the whole parse. The local decodeEntities copy guarded
   // only with Number.isFinite (no `<= 0x10FFFF` / surrogate check), so ONE
   // adversarial/malformed entity (&#99999999;, &#xFFFFFFFF;) crashed the entire
-  // provider parse and scan.ts's per-company catch dropped EVERY posting for
+  // provider parse and packages/core/src/scanning/scan.ts's per-company catch dropped EVERY posting for
   // that run. parseArticles now routes through the shared guarded decoder, which
   // degrades an out-of-range or lone-surrogate entity to literal text while
   // still decoding valid ones (&amp;).

@@ -6,10 +6,10 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT, describeSpawn } from './helpers.ts';
 
-test('every tracker.ts query filter the tracker mode tells agents to use works', (t) => {
+test('every packages/cli/src/commands/tracker/tracker.ts query filter the tracker mode tells agents to use works', (t) => {
   const mode = readFileSync(join(ROOT, 'modes', 'tracker.md'), 'utf8');
-  const paragraph = mode.split('\n').find((l) => l.includes('bun tracker.ts query'));
-  assert.ok(paragraph, 'modes/tracker.md points agents at bun tracker.ts query');
+  const paragraph = mode.split('\n').find((l) => l.includes('career-ops tracker query'));
+  assert.ok(paragraph, 'modes/tracker.md points agents at career-ops tracker query');
   const filters = [...paragraph.matchAll(/`(--[a-z-]+)(?: ([^`]+))?`/g)].map((m) => (m[2] ? [m[1], m[2]] : [m[1]]));
   assert.ok(filters.length >= 5, `found filters ${JSON.stringify(filters)}`);
 
@@ -23,10 +23,10 @@ test('every tracker.ts query filter the tracker mode tells agents to use works',
     '| 43 | 2026-08-01 | Globex | Designer | 3.1/5 | SKIP | ❌ | — | fictional |',
   ].join('\n') + '\n');
   for (const args of filters) {
-    const result = spawnSync(process.execPath, [join(ROOT, 'tracker.ts'), 'query', ...args], {
+    const result = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/tracker/tracker.ts'), 'query', ...args], {
       env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_DATA_DIR: root }, encoding: 'utf8', timeout: 20_000,
     });
-    assert.equal(result.status, 0, describeSpawn(result, `tracker.ts query ${args.join(' ')}`));
+    assert.equal(result.status, 0, describeSpawn(result, `packages/cli/src/commands/tracker/tracker.ts query ${args.join(' ')}`));
     if (args[0] !== '--json') assert.match(result.stdout, /\| 42 \| 2026-09-10 \| Acme/, args.join(' '));
     if (!['--json', '--limit'].includes(args[0])) assert.doesNotMatch(result.stdout, /\| 43 \|/, args.join(' '));
   }

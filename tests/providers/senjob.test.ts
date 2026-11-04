@@ -1,5 +1,5 @@
 // tests/providers/senjob.test.ts — provider-contract tests for the Senjob
-// board-wide HTML listing (providers/senjob.ts).
+// board-wide HTML listing (packages/core/src/scanning/providers/senjob.ts).
 //
 // The fixtures reproduce shapes measured on the live board on 2026-08-16, and
 // each one exists because it decides the parser's design:
@@ -57,7 +57,7 @@ const ROW_INLINE = `
 const PAGE = `<html><body><table>${ROW_WITH_SIBLING_DATE}${ROW_INLINE}</table></body></html>`;
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/senjob.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/senjob.ts')).href);
   const senjob = mod.default;
   const { parseListingPage, buildListUrl, visibleText, assertParsedSomething } = mod;
 

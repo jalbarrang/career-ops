@@ -5,9 +5,9 @@
 import { mkdtempSync, writeFileSync, rmSync, mkdirSync, copyFileSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { tmpdir } from 'os';
-import { join, delimiter } from 'path';
+import {dirname, join, delimiter } from 'path';
 import { pass, fail, sealProcessGitEnv } from './helpers.ts';
-import { gitIn, formatLocalVersion } from '../update-system.ts';
+import { gitIn, formatLocalVersion } from '../packages/cli/src/commands/platform/update-system.ts';
 
 const NODE = process.execPath;
 const ROOT = join(process.cwd());
@@ -31,8 +31,9 @@ console.log('\n🧪 Testing updater version short SHA formatting (#3883)...');
 
     const expectedSha = gitIn(dir, 'rev-parse', '--short', 'HEAD');
     
-    const scriptPath = join(dir, 'update-system.ts');
-    copyFileSync(join(ROOT, 'update-system.ts'), scriptPath);
+    const scriptPath = join(dir, 'packages/cli/src/commands/platform/update-system.ts');
+    mkdirSync(dirname(scriptPath), { recursive: true });
+    copyFileSync(join(ROOT, 'packages/cli/src/commands/platform/update-system.ts'), scriptPath);
 
     const formatted = formatLocalVersion(dir);
     if (formatted === `1.32.0 (${expectedSha})`) {
@@ -43,7 +44,7 @@ console.log('\n🧪 Testing updater version short SHA formatting (#3883)...');
 
     const statusRes = spawnSync(NODE, [scriptPath, 'status'], { cwd: dir, encoding: 'utf-8' });
     if (statusRes.stdout.trim() === `career-ops v1.32.0 (${expectedSha})`) {
-      pass('update-system.ts status includes short SHA on git checkout');
+      pass('packages/cli/src/commands/platform/update-system.ts status includes short SHA on git checkout');
     } else {
       fail(`status output wrong: ${statusRes.stdout.trim()}`);
     }
@@ -57,7 +58,7 @@ console.log('\n🧪 Testing updater version short SHA formatting (#3883)...');
     const checkRes = spawnSync(NODE, [scriptPath, 'check'], { cwd: dir, encoding: 'utf-8', env });
     const checkJson = JSON.parse(checkRes.stdout.trim());
     if (checkJson.local === '1.32.0' && checkJson.local_sha === expectedSha) {
-      pass('update-system.ts check splits local and local_sha on git checkout');
+      pass('packages/cli/src/commands/platform/update-system.ts check splits local and local_sha on git checkout');
     } else {
       fail(`check output wrong: ${checkRes.stdout.trim()}`);
     }
@@ -72,8 +73,9 @@ console.log('\n🧪 Testing updater version short SHA formatting (#3883)...');
   try {
     writeFileSync(join(dir, 'VERSION'), '1.32.0\n');
     
-    const scriptPath = join(dir, 'update-system.ts');
-    copyFileSync(join(ROOT, 'update-system.ts'), scriptPath);
+    const scriptPath = join(dir, 'packages/cli/src/commands/platform/update-system.ts');
+    mkdirSync(dirname(scriptPath), { recursive: true });
+    copyFileSync(join(ROOT, 'packages/cli/src/commands/platform/update-system.ts'), scriptPath);
 
     const formatted = formatLocalVersion(dir);
     if (formatted === '1.32.0') {
@@ -84,7 +86,7 @@ console.log('\n🧪 Testing updater version short SHA formatting (#3883)...');
 
     const statusRes = spawnSync(NODE, [scriptPath, 'status'], { cwd: dir, encoding: 'utf-8' });
     if (statusRes.stdout.trim() === 'career-ops v1.32.0' && statusRes.stderr.trim() === '') {
-      pass('update-system.ts status returns version alone with empty stderr on non-git directory');
+      pass('packages/cli/src/commands/platform/update-system.ts status returns version alone with empty stderr on non-git directory');
     } else {
       fail(`status output wrong: stdout=${statusRes.stdout.trim()} stderr=${statusRes.stderr.trim()}`);
     }
@@ -98,7 +100,7 @@ console.log('\n🧪 Testing updater version short SHA formatting (#3883)...');
     const checkRes = spawnSync(NODE, [scriptPath, 'check'], { cwd: dir, encoding: 'utf-8', env });
     const checkJson = JSON.parse(checkRes.stdout.trim());
     if (checkJson.local === '1.32.0' && !checkJson.local_sha) {
-      pass('update-system.ts check includes local without local_sha on non-git directory');
+      pass('packages/cli/src/commands/platform/update-system.ts check includes local without local_sha on non-git directory');
     } else {
       fail(`check output wrong: ${checkRes.stdout.trim()}`);
     }

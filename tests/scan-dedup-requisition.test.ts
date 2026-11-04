@@ -30,7 +30,7 @@ import {
   matchesSeenCompanyRole,
   requisitionIdForDedup,
   requisitionIdsForDedup,
-} from '../scan.ts';
+} from '../packages/core/src/scanning/scan.ts';
 
 console.log('\nscan.ts — requisition-aware company+role dedupe');
 
@@ -174,7 +174,7 @@ tracked_companies:
       script: ${board.script}
 `);
 
-    const scan = () => execFileSync(NODE, [join(ROOT, 'scan.ts')], {
+    const scan = () => execFileSync(NODE, [join(ROOT, 'packages/core/src/scanning/scan.ts')], {
       cwd: dir,
       env: { ...process.env, CAREER_OPS_ROOT: dir, CAREER_OPS_PORTALS: portals },
       encoding: 'utf-8',

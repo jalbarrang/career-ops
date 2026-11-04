@@ -1,5 +1,5 @@
 // tests/scan-ats-full-title-filter-full.test.ts — optional `title_filter_full`
-// override: the reverse sweep may run a stricter title profile than scan.ts
+// override: the reverse sweep may run a stricter title profile than packages/core/src/scanning/scan.ts
 // without either scanner's config being a compromise between the two.
 import { join } from 'path';
 import { pathToFileURL } from 'url';
@@ -7,7 +7,7 @@ import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\nscan-ats-full — title_filter_full override');
 
-const mod = await import(pathToFileURL(join(ROOT, 'scan-ats-full.ts')).href);
+const mod = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/scanning/scan-ats-full.ts')).href);
 const { resolveTitleFilterConfig } = mod;
 
 const broad = { positive: ['Backend', 'Solana'] };
@@ -29,12 +29,12 @@ const strict = { positive: ['Solana', 'Smart Contract'] };
   else fail(`expected the title_filter_full object, got ${JSON.stringify(got)}`);
 }
 
-// scan.ts must be unaffected — it reads config.title_filter directly and has
+// packages/core/src/scanning/scan.ts must be unaffected — it reads config.title_filter directly and has
 // no knowledge of the override, so the broad profile survives for the scanner
 // whose curated corpus makes a keyword like "Backend" safe.
 {
   const config = { title_filter: broad, title_filter_full: strict };
-  if (config.title_filter === broad) pass('title_filter left untouched for scan.ts');
+  if (config.title_filter === broad) pass('title_filter left untouched for packages/core/src/scanning/scan.ts');
   else fail('resolution mutated title_filter');
 }
 

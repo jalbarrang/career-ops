@@ -8,11 +8,11 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — feishu-jobs (Feishu Jobs / ATSX search/job/posts JSON API)');
 try {
-  const modUrl = pathToFileURL(join(ROOT, 'providers/feishu-jobs.ts')).href;
+  const modUrl = pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/feishu-jobs.ts')).href;
   const feishu = (await import(modUrl)).default;
   const { parseFeishuJobsResponse } = await import(modUrl);
   const { MACOS_BROWSER_LIKE_USER_AGENT } = await import(
-    pathToFileURL(join(ROOT, 'providers/_http.ts')).href
+    pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_http.ts')).href
   );
 
   if (feishu.id === 'feishu-jobs') pass('feishu-jobs.id is "feishu-jobs"');

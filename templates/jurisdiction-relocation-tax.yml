@@ -1,12 +1,12 @@
 # Career-Ops — Interprovincial/Interstate Relocation Tax Bands (jurisdiction table) (#4694)
 #
 # Part of the jurisdiction-compliance-lens umbrella (#2026), member "Interprovincial/
-# interstate relocation — real purchasing power". Consumed by salary-gap.ts's
+# interstate relocation — real purchasing power". Consumed by packages/cli/src/commands/insights/salary-gap.ts's
 # relocation-adjustment functions (loadRelocationTable / matchJurisdiction /
 # computeRelocationAdjustment) and surfaced in modes/oferta.md Block G, Signal 17.
 #
 # This file is a DATA REFERENCE, not instruction logic: adding a new jurisdiction
-# (another province, a US state) never requires touching salary-gap.ts's math —
+# (another province, a US state) never requires touching packages/cli/src/commands/insights/salary-gap.ts's math —
 # only a new entry here, following the schema below. The engine is generic
 # (federal brackets + sub-national brackets -> progressive bracket tax), the
 # table is jurisdiction-keyed. Canada is the first seed, not a hardcoded ceiling —
@@ -54,7 +54,7 @@
 #       level: "federal" | "provincial" | "state"
 #       currency: string           — ISO 4217 code the brackets below are denominated
 #                                     in (e.g. "CAD"). REQUIRED on every sub-national
-#                                     row: salary-gap.ts's computeRelocationAdjustment
+#                                     row: packages/cli/src/commands/insights/salary-gap.ts's computeRelocationAdjustment
 #                                     refuses to run gross figures through these
 #                                     brackets unless the advertised/--currency value
 #                                     matches this field exactly (case-insensitive) —

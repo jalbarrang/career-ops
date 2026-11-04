@@ -1,4 +1,4 @@
-// modes/retro.md tells the agent which learn.ts commands to run and what
+// modes/retro.md tells the agent which packages/cli/src/commands/profile/learn.ts commands to run and what
 // candidates file to write. These cases run exactly those commands, copied
 // out of the mode file, against a fictional data root.
 
@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { fail, NODE, pass, rmSync, ROOT } from './helpers.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
-console.log('\nretro mode drives learn.ts');
+console.log('\nretro mode drives packages/cli/src/commands/profile/learn.ts');
 
 function test(name, fn) {
   try {
@@ -28,9 +28,9 @@ function assert(ok, message) {
 const MODE = join(ROOT, 'modes', 'retro.md');
 const mode = existsSync(MODE) ? readFileSync(MODE, 'utf8').replace(/\r\n/g, '\n') : '';
 const blocks = (lang) => [...mode.matchAll(new RegExp('```' + lang + '\\n([\\s\\S]*?)```', 'g'))].map((m) => m[1]);
-const commands = blocks('bash').flatMap((b) => b.split('\n')).filter((line) => line.startsWith('bun learn.ts'));
-const checkCommand = commands.find((c) => c.startsWith('bun learn.ts check'));
-const applyCommand = commands.find((c) => c.startsWith('bun learn.ts apply'));
+const commands = blocks('bash').flatMap((b) => b.split('\n')).filter((line) => line.startsWith('career-ops learn'));
+const checkCommand = commands.find((c) => c.startsWith('career-ops learn check'));
+const applyCommand = commands.find((c) => c.startsWith('career-ops learn apply'));
 
 const FILES = {
   'modes/_custom.md': '# Custom Instructions\n\n## House Rules\n\n- Write dates as YYYY-MM-DD.\n\n## Output Preferences\n\n(none yet)\n\n## Off-Limits\n\n(none yet)\n',
@@ -56,7 +56,7 @@ function argv(line, root, fill) {
   for (const [slot, value] of Object.entries(fill)) text = text.replaceAll(slot, value);
   assert(!/["'`]/.test(text), `split on whitespace only works with no quoted words: ${line}`);
   const words = text.trim().split(/\s+/);
-  assert(words[0] === 'bun' && words[1] === 'learn.ts', `not a learn.ts command: ${line}`);
+  assert(words[0] === 'career-ops' && words[1] === 'learn', `not a career-ops learn command: ${line}`);
   return words.slice(2);
 }
 
@@ -65,7 +65,7 @@ function run(root, args, extraEnv = {}) {
   for (const key of ['CAREER_OPS_HEADLESS', 'CAREER_OPS_BATCH_STATE']) {
     if (!(key in extraEnv)) delete env[key];
   }
-  return spawnSync(NODE, [join(ROOT, 'learn.ts'), ...args], { cwd: ROOT, env, encoding: 'utf8', timeout: 60_000 });
+  return spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/profile/learn.ts'), ...args], { cwd: ROOT, env, encoding: 'utf8', timeout: 60_000 });
 }
 
 function writeExample(root) {
@@ -78,10 +78,10 @@ function writeExample(root) {
   return JSON.parse(example).candidates;
 }
 
-test('modes/retro.md names a learn.ts check and a learn.ts apply command', () => {
+test('modes/retro.md names a packages/cli/src/commands/profile/learn.ts check and a packages/cli/src/commands/profile/learn.ts apply command', () => {
   assert(mode, 'modes/retro.md does not exist');
-  assert(checkCommand, 'no `bun learn.ts check` line in a bash block');
-  assert(applyCommand, 'no `bun learn.ts apply` line in a bash block');
+  assert(checkCommand, 'no `career-ops learn check` line in a bash block');
+  assert(applyCommand, 'no `career-ops learn apply` line in a bash block');
 });
 
 if (checkCommand && applyCommand) {

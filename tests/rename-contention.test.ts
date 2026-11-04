@@ -33,7 +33,7 @@ import {
   renameSyncWithRetry,
   writeFileAtomic,
   RENAME_RETRY_DELAYS_MS,
-} from '../tracker-utils.ts';
+} from '../packages/core/src/tracker/tracker-utils.ts';
 
 console.log('\n📝 atomic tracker writes: rename contention is contention, not death (#2777)');
 
@@ -151,7 +151,7 @@ const mkErr = (code) => Object.assign(new Error(code), { code });
 // A bare call anywhere else reintroduces the lost write one refactor from now,
 // which is exactly how the mkdir/rm half of #2777 survived two earlier fixes.
 {
-  const src = readFileSync(join(ROOT, 'tracker-utils.ts'), 'utf-8');
+  const src = readFileSync(join(ROOT, 'packages/core/src/tracker/tracker-utils.ts'), 'utf-8');
 
   // renameSync must never be INVOKED directly. It may only appear as the
   // imported name and as renameSyncWithRetry's default parameter, neither of
@@ -159,7 +159,7 @@ const mkErr = (code) => Object.assign(new Error(code), { code });
   const directCalls = [...src.matchAll(/(?<![\w.])renameSync\s*\(/g)].length;
   ok(
     directCalls === 0,
-    `tracker-utils.ts: no direct renameSync() call remains (found ${directCalls})`,
+    `packages/core/src/tracker/tracker-utils.ts: no direct renameSync() call remains (found ${directCalls})`,
   );
 
   // And the atomic path routes through the injectable seam exactly once.

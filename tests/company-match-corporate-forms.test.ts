@@ -4,7 +4,7 @@
 // key builders to keep non-Latin text: the character before メルカリ in 株式会社メルカリ is 社,
 // a letter, so no anchor rule can treat that position as a word boundary, and CJK/Korean do not
 // delimit words with spaces the way the containment fallback (or LEGAL_SUFFIXES in
-// invite-match.ts) assumes. The fix strips one known corporate-form marker as an unspaced prefix
+// packages/core/src/interview/invite-match.ts) assumes. The fix strips one known corporate-form marker as an unspaced prefix
 // or suffix before the equality and containment checks run — deliberately narrower than loosening
 // the anchors, which would let アカネ match アカネスタジオ.
 //
@@ -16,7 +16,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\ncompanyMatch — CJK/Korean corporate-form markers (#2570)');
 try {
-  const { companyMatch } = await import(pathToFileURL(join(ROOT, 'scan.ts')).href);
+  const { companyMatch } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/scan.ts')).href);
 
   // The exact regression pair confirmed on the issue.
   if (companyMatch('株式会社メルカリ', 'メルカリ') === true) {

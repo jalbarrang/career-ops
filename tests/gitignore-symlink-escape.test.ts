@@ -7,8 +7,8 @@
 // own, so the standard move is to symlink it from the main checkout, and that
 // symlink then looks like an ordinary untracked path to git. It reached a PR
 // here as a mode 120000 blob and reddened the `test` job on every platform:
-// validate-system-paths-coverage.ts walks `git ls-files` and requires each
-// tracked path to be claimed in update-system.ts, and node_modules is claimed
+// packages/cli/src/commands/platform/validate-system-paths-coverage.ts walks `git ls-files` and requires each
+// tracked path to be claimed in packages/cli/src/commands/platform/update-system.ts, and node_modules is claimed
 // by neither SYSTEM_PATHS nor USER_PATHS. The report names an unclaimed system
 // path, which sends the contributor to the wrong file entirely.
 //

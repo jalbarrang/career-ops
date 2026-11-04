@@ -8,7 +8,7 @@ import { tmpdir } from 'os';
 console.log('\nProvider — mycareersfuture');
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/mycareersfuture.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/mycareersfuture.ts')).href);
   const mycareersfuture = mod.default;
   const { parseConfig, cleanUrl, normalizeJob } = mod;
 

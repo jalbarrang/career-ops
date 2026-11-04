@@ -10,7 +10,7 @@ import {
   collectCommits, searchAuthoredCommits, countAuthoredCommits, COMMIT_PAGE_PAUSE_MS,
   normalizeGithubUser, readPrivateAllowlist, cleanTitle, cvMention, buildEvidence,
   checkGh, collect, renderMarkdown, runCli, SEARCH_LIMIT, EXIT_GH_UNAVAILABLE, EXIT_GH_QUERY_FAILED,
-} from '../github-evidence.ts';
+} from '../packages/cli/src/commands/profile/github-evidence.ts';
 
 console.log('\ngithub-evidence.ts — authored-PR and commit evidence + cv.md claim check');
 
@@ -446,7 +446,7 @@ const outputFiles = (root) => (existsSync(join(root, 'output')) ? readdirSync(jo
 }
 
 {
-  const script = join(ROOT, 'github-evidence.ts');
+  const script = join(ROOT, 'packages/cli/src/commands/profile/github-evidence.ts');
   const help = spawnSync(NODE, [script, '--help'], { encoding: 'utf8', timeout: 30000 });
   check(help.status === 0 && help.stdout.includes('Usage:'), '--help prints usage and exits 0');
   const bogus = spawnSync(NODE, [script, '--bogus'], { encoding: 'utf8', timeout: 30000 });

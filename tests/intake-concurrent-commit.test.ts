@@ -50,30 +50,30 @@ env.CAREER_OPS_DOCUMENTS_DIR = join(root, 'documents');
 const previous = { hash: 'old-confirmed-source', ingestedAt: '2026-01-01T00:00:00Z' };
 writeFileSync(statePath, JSON.stringify({ ingested: { 'cv/old.md': previous } }));
 try {
-  const writers = await Promise.all(sources.map(s => child('intake.ts', ['--commit', s])));
+  const writers = await Promise.all(sources.map(s => child('packages/cli/src/commands/profile/intake.ts', ['--commit', s])));
   check('all concurrent per-source confirmations and old entries persist', () => {
     for (const r of writers) assert.equal(r.status, 0, r.stderr);
     const state = JSON.parse(readFileSync(statePath, 'utf8')).ingested;
     for (const s of sources) assert.ok(state[s]?.hash, `lost confirmation ${s}`);
     assert.deepEqual(state['cv/old.md'], previous);
   });
-  const scan = spawnSync(process.execPath, [join(ROOT, 'intake.ts')], { env, encoding: 'utf8' });
+  const scan = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/profile/intake.ts')], { env, encoding: 'utf8' });
   check('the next scan never proposes confirmed documents again', () => {
     assert.equal(scan.status, 0, scan.stderr);
     for (const s of JSON.parse(scan.stdout).sources) assert.equal(s.status, 'ingested', s.path);
   });
-  const again = await Promise.all([child('intake.ts', ['--commit', sources[0]]), child('intake.ts', ['--commit', sources[0]])]);
+  const again = await Promise.all([child('packages/cli/src/commands/profile/intake.ts', ['--commit', sources[0]]), child('packages/cli/src/commands/profile/intake.ts', ['--commit', sources[0]])]);
   check('a repeated confirmation is recomputed against the guarded ledger', () => {
     for (const r of again) { assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /Recorded 0 source/); }
   });
   const before = readFileSync(statePath, 'utf8');
-  const empty = await child('intake.ts', ['--commit', '--summary']);
+  const empty = await child('packages/cli/src/commands/profile/intake.ts', ['--commit', '--summary']);
   check('an empty confirmation remains rejected without a ledger write', () => {
     assert.equal(empty.status, 1);
     assert.equal(readFileSync(statePath, 'utf8'), before);
   });
   const ready = join(root, 'scan-ready'), resume = join(root, 'scan-resume');
-  const stale = child('intake.ts', ['--commit', sources[0]], { SCAN_READY: ready, SCAN_RESUME: resume });
+  const stale = child('packages/cli/src/commands/profile/intake.ts', ['--commit', sources[0]], { SCAN_READY: ready, SCAN_RESUME: resume });
   let newer;
   try {
     const deadline = Date.now() + 30000;
@@ -82,7 +82,7 @@ try {
       await new Promise(resolve => setTimeout(resolve, 10));
     }
     writeFileSync(join(root, 'documents', sources[0]), '# Newly confirmed fictional source\n');
-    const updated = await child('intake.ts', ['--commit', sources[0]]);
+    const updated = await child('packages/cli/src/commands/profile/intake.ts', ['--commit', sources[0]]);
     assert.equal(updated.status, 0, updated.stderr);
     assert.match(updated.stdout, /Recorded 1 source/);
     newer = JSON.parse(readFileSync(statePath, 'utf8')).ingested;

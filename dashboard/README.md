@@ -26,7 +26,7 @@ bun run serve:dashboard    # go run . --path .. (The script automatically resolv
 bun run build:dashboard    # build the standalone binary
 ```
 
-`build-dashboard.ts` exists because `go build -o career-dashboard .` writes
+`packages/cli/src/commands/platform/build-dashboard.ts` exists because `go build -o career-dashboard .` writes
 an extension-less binary on Windows; the wrapper picks the platform-correct
 output name (`career-dashboard.exe` on Windows, `career-dashboard` elsewhere).
 

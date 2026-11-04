@@ -1,5 +1,5 @@
 // tests/assessment-log-take-home.test.ts — take-home assignment tracking in
-// assessment-log.ts (#5733). Synthetic fixtures only.
+// packages/cli/src/commands/insights/assessment-log.ts (#5733). Synthetic fixtures only.
 import { pass, fail, ROOT, NODE } from './helpers.ts';
 import assert from 'node:assert';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 const ok = (name, fn) => { try { fn(); pass(name); } catch (e) { fail(`${name} — ${e.message}`); } };
-const mod = await import(pathToFileURL(join(ROOT, 'assessment-log.ts')).href);
+const mod = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/insights/assessment-log.ts')).href);
 const { parseAssessments, summarize, buildRow, openTakeHomes, formatInZone, resolveTimeZone } = mod;
 
 const OLD = [
@@ -115,7 +115,7 @@ ok('timezone resolution: --tz wins, invalid --tz throws, abbreviation in profile
 ok('CLI: add take-home, submit appends a row (append-only), open lists then drops it', () => {
   const root = mkdtempSync(join(tmpdir(), 'al-cli-'));
   mkdirSync(join(root, 'data'), { recursive: true });
-  const cli = (...a) => spawnSync(NODE, [join(ROOT, 'assessment-log.ts'), ...a], {
+  const cli = (...a) => spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/insights/assessment-log.ts'), ...a], {
     cwd: root, encoding: 'utf-8', env: { ...process.env, CAREER_OPS_ROOT: root },
   });
   try {
@@ -168,7 +168,7 @@ ok('open --tz with no value fails instead of falling back silently', () => {
   const root = mkdtempSync(join(tmpdir(), 'al-tz-missing-'));
   mkdirSync(join(root, 'data'), { recursive: true });
   try {
-    const r = spawnSync(NODE, [join(ROOT, 'assessment-log.ts'), 'open', '--tz'], {
+    const r = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/insights/assessment-log.ts'), 'open', '--tz'], {
       cwd: root, encoding: 'utf-8', env: { ...process.env, CAREER_OPS_ROOT: root },
     });
     assert.notEqual(r.status, 0);

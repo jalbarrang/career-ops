@@ -9,7 +9,7 @@
 //    \href{mailto:mailto:...} link in every generated PDF. The contract is that
 //    sanitizeUrl's output already carries its scheme.
 import { pass, fail, run, ROOT, NODE, formatRunFailure } from './helpers.ts';
-import { escapeLatex, sanitizeUrl } from '../lib/latex-escape.ts';
+import { escapeLatex, sanitizeUrl } from '../packages/core/src/cv/latex-escape.ts';
 
 console.log('\nlatex-escape — OT1-unsafe glyphs and mailto scheme handling');
 
@@ -49,7 +49,7 @@ const tex = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'te
 // still come out wrong:
 //
 //   1. Scheme doubling reintroduced anywhere else on the path — a second
-//      sanitizeUrl() pass, a normalizer in build-cv-latex.ts, or a template
+//      sanitizeUrl() pass, a normalizer in packages/cli/src/commands/cv/build-cv-latex.ts, or a template
 //      variant — would produce \href{mailto:mailto:...}, a dead link in every
 //      generated PDF, while the template source stayed clean.
 //   2. Brace arithmetic. The template line is `\href{{{EMAIL_URL}}}{...}`:
@@ -75,7 +75,7 @@ const CV_JSON = {
 };
 
 /**
- * Render the CV template through build-cv-latex.ts with the given email URL
+ * Render the CV template through packages/cli/src/commands/cv/build-cv-latex.ts with the given email URL
  * (and any other payload fields to override) and return the produced .tex
  * source (or null when the CLI failed).
  */
@@ -85,7 +85,7 @@ function renderWithEmail(emailUrl, overrides = {}) {
     const inPath = join(dir, 'cv.json');
     const outPath = join(dir, 'cv.tex');
     writeFileSync(inPath, JSON.stringify({ ...CV_JSON, email: { url: emailUrl, display: 'test@example.com' }, ...overrides }), 'utf-8');
-    if (run(NODE, [join(ROOT, 'build-cv-latex.ts'), inPath, outPath]) === null) return null;
+    if (run(NODE, [join(ROOT, 'packages/cli/src/commands/cv/build-cv-latex.ts'), inPath, outPath]) === null) return null;
     return readFileSync(outPath, 'utf-8');
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -97,7 +97,7 @@ const EXPECTED_HREF = '\\href{mailto:test@example.com}{';
 for (const [label, input] of [['a bare address', 'test@example.com'], ['an explicit mailto: URL', 'mailto:test@example.com']]) {
   const rendered = renderWithEmail(input);
   if (rendered === null) {
-    fail(`build-cv-latex.ts failed to render ${label}${formatRunFailure()}`);
+    fail(`packages/cli/src/commands/cv/build-cv-latex.ts failed to render ${label}${formatRunFailure()}`);
     continue;
   }
 
@@ -161,7 +161,7 @@ const withLinks = renderWithEmail('test@example.com', {
   ],
 });
 if (withLinks === null) {
-  fail(`build-cv-latex.ts failed to render links with %, #, ~ or &${formatRunFailure()}`);
+  fail(`packages/cli/src/commands/cv/build-cv-latex.ts failed to render links with %, #, ~ or &${formatRunFailure()}`);
 } else {
   const lineWith = (needle) => (withLinks.split('\n').find((l) => l.includes(needle)) || `<no line with ${needle}>`).trim();
   withLinks.includes(`\\href{${URL_CASES[0][2]}}{`)

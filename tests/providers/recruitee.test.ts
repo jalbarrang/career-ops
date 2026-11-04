@@ -8,7 +8,7 @@ console.log('\nProvider — recruitee');
 
 
 try {
-  const recruiteeModule = await import(pathToFileURL(join(ROOT, 'providers/recruitee.ts')).href);
+  const recruiteeModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/recruitee.ts')).href);
   const recruitee = recruiteeModule.default;
   const { parseRecruiteeResponse } = recruiteeModule;
 
@@ -582,7 +582,7 @@ try {
   }
 
   // A tenant whose ONLY posting is the seeded sample must resolve as empty —
-  // this is what makes discover-ats.ts's existing "empty board" handling
+  // this is what makes packages/cli/src/commands/scanning/discover-ats.ts's existing "empty board" handling
   // apply automatically, with no changes needed there.
   const onlySample = parseRecruiteeResponse(
     { offers: [{ title: 'Senior Marketer (Sample)', careers_url: 'https://deadtenant.recruitee.com/o/sample' }] },

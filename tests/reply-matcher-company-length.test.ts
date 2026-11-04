@@ -13,7 +13,7 @@
 // it, and -- separately -- every short-name behaviour the fix must NOT weaken.
 
 import { readFileSync } from 'fs';
-import { checkCompanyMatch } from '../reply-matcher.ts';
+import { checkCompanyMatch } from '../packages/core/src/outreach/reply-matcher.ts';
 import { pass, fail } from './helpers.ts';
 
 console.log('\nreply-matcher — company length counts word material, not just letters');
@@ -106,7 +106,7 @@ for (const [company, text, why] of MUST_MATCH) {
 
 // ── the four predicates move as a unit, or this fails ───────────────────────
 //
-// reply-matcher.ts defines "word material" in four places, and its own comment
+// packages/core/src/outreach/reply-matcher.ts defines "word material" in four places, and its own comment
 // says they have to move together -- updating some of them is what produced
 // #3535. Three already counted \p{M}; the length gate did not, and nothing was
 // watching. The behavioural assertions above cannot catch the next drift,
@@ -117,7 +117,7 @@ for (const [company, text, why] of MUST_MATCH) {
 // \p{N} to include \p{M} between them. Source-reading is the same instrument
 // tests/main-guard-convention.test.ts uses for its own repo-wide rule.
 {
-  const src = readFileSync(new URL('../reply-matcher.ts', import.meta.url), 'utf8');
+  const src = readFileSync(new URL('../packages/core/src/outreach/reply-matcher.ts', import.meta.url), 'utf8');
 
   // Any bracketed class mentioning both \p{L} and \p{N}, negated or not.
   const classes = src.match(/\[[^\]\n]*\\p\{L\}[^\]\n]*\\p\{N\}[^\]\n]*\]/g) || [];
@@ -126,7 +126,7 @@ for (const [company, text, why] of MUST_MATCH) {
 
   const missing = classes.filter((c) => !c.includes('\\p{M}'));
   if (missing.length === 0) {
-    pass('every word-material class in reply-matcher.ts counts \\p{M}');
+    pass('every word-material class in packages/core/src/outreach/reply-matcher.ts counts \\p{M}');
   } else {
     fail('these character classes span \\p{L} and \\p{N} but drop combining marks, '
       + `so they disagree with the rest of the file: ${missing.join('  ')}`);

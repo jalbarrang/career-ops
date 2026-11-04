@@ -1,5 +1,5 @@
 // tests/providers/larajobs.test.ts — provider-contract tests for the LaraJobs
-// board-wide RSS provider (providers/larajobs.ts).
+// board-wide RSS provider (packages/core/src/scanning/providers/larajobs.ts).
 import { pass, fail, ROOT } from '../helpers.ts';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
@@ -7,7 +7,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — larajobs');
 
 try {
-  const larajobsModule = await import(pathToFileURL(join(ROOT, 'providers/larajobs.ts')).href);
+  const larajobsModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/larajobs.ts')).href);
   const larajobs = larajobsModule.default;
   const { parseLarajobsFeed } = larajobsModule;
 

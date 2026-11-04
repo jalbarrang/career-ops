@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — smartrecruiters');
 
 try {
-  const smartrecruitersModule = await import(pathToFileURL(join(ROOT, 'providers/smartrecruiters.ts')).href);
+  const smartrecruitersModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/smartrecruiters.ts')).href);
   const sr = smartrecruitersModule.default;
   const { parseSmartRecruitersResponse, extractDescription } = smartrecruitersModule;
 

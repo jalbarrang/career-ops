@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — bamboohr');
 
 try {
-  const bamboohrModule = await import(pathToFileURL(join(ROOT, 'providers/bamboohr.ts')).href);
+  const bamboohrModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/bamboohr.ts')).href);
   const bamboohr = bamboohrModule.default;
   const { parseBambooHRResponse } = bamboohrModule;
 
@@ -205,7 +205,7 @@ try {
   }
 
   // fetch() — a non-redirect failure (timeout, DNS, 5xx) must pass through
-  // unchanged: it is not a confirmed-dead signal, only "unknown" (dead-boards.ts).
+  // unchanged: it is not a confirmed-dead signal, only "unknown" (packages/core/src/scanning/dead-boards.ts).
   {
     const transientErr = new Error('This operation was aborted');
     transientErr.code = 20;

@@ -12,10 +12,10 @@ const initial = '| # | Date | Company | Role | Score | Status | PDF | Report | N
 writeFileSync(tracker, initial);
 writeFileSync(join(root, 'cv.md'), '# Fictional master CV\n');
 const env = { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_TRACKER: tracker, CAREER_OPS_TRACKER_LOCK_TIMEOUT_MS: '100', CAREER_OPS_TRACKER_LOCK_RETRY_MS: '10' };
-const run = args => spawnSync(process.execPath, [join(ROOT, 'outcome.ts'), '1', 'hired', '--json', ...args], { env, encoding: 'utf8' });
+const run = args => spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/tracker/outcome.ts'), '1', 'hired', '--json', ...args], { env, encoding: 'utf8' });
 function check(label, fn) { try { fn(); pass(label); } catch (e) { fail(`${label}: ${e.message}`); process.exitCode = 1; } }
 
-const { acquireTrackerLock, canonicalizeTrackerPath, trackerLockDirFor } = await import('../tracker-utils.ts');
+const { acquireTrackerLock, canonicalizeTrackerPath, trackerLockDirFor } = await import('../packages/core/src/tracker/tracker-utils.ts');
 const dir = join(root, 'data', 'outcomes', '1_fictional_engineer');
 mkdirSync(dir, { recursive: true });
 const journal = join(dir, 'outcome.md');

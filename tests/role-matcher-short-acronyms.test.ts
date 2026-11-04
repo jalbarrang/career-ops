@@ -20,7 +20,7 @@ console.log('\nrole-matcher.ts — a short acronym on each side keeps titles apa
 
 try {
   const { roleFuzzyMatch, extractShortAcronyms } = await import(
-    pathToFileURL(join(ROOT, 'role-matcher.ts')).href
+    pathToFileURL(join(ROOT, 'packages/core/src/tracker/role-matcher.ts')).href
   );
 
   const same = (label, a, b) => {

@@ -1,7 +1,7 @@
 // tests/syntax-check.test.ts — the single-process syntax pass gives the same
 // verdict as `node --check` (#5078).
 //
-// lib/syntax-check.ts parses every .ts file in one process and only hands a
+// packages/core/src/kernel/syntax-check.ts parses every .ts file in one process and only hands a
 // file to `node --check` when that pass does not vouch for it. A file it
 // rejects wrongly costs one spawn. A file it ACCEPTS wrongly is a syntax error
 // the gate no longer sees, and the log would look exactly as green as before.
@@ -26,12 +26,12 @@ import { pass, fail, ROOT } from './helpers.ts';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { collectSourceFiles } from '../lib/source-files.ts';
-import { checkSyntax, nodeCheck, parseInOneProcess } from '../lib/syntax-check.ts';
+import { collectSourceFiles } from '../packages/core/src/kernel/source-files.ts';
+import { checkSyntax, nodeCheck, parseInOneProcess } from '../packages/core/src/kernel/syntax-check.ts';
 
 console.log('\nsyntax-check — one process, the same verdict as the runtime it runs on');
 
-// Bun parses in-process with Bun.Transpiler (lib/syntax-check.ts), so the
+// Bun parses in-process with Bun.Transpiler (packages/core/src/kernel/syntax-check.ts), so the
 // corpus below — which records which constructs NODE's parser accepts — only
 // applies to the Node path. Under Bun the properties that matter are asserted
 // directly: real syntax errors are rejected, and a file importing something
@@ -297,13 +297,13 @@ try {
   // ── 4. Both gates use it ──
   for (const rel of ['test-all.ts', 'scripts/check-syntax.ts']) {
     const src = readFileSync(join(ROOT, rel), 'utf-8');
-    if (/\bcheckSyntax\(/.test(src) && /from '\.{1,2}\/lib\/syntax-check\.ts'/.test(src)) {
-      pass(`${rel} checks syntax through lib/syntax-check.ts`);
+    if (/\bcheckSyntax\(/.test(src) && /from '[^']*syntax-check\.ts'/.test(src)) {
+      pass(`${rel} checks syntax through packages/core/src/kernel/syntax-check.ts`);
     } else {
-      fail(`${rel} should check syntax through checkSyntax() from lib/syntax-check.ts`);
+      fail(`${rel} should check syntax through checkSyntax() from packages/core/src/kernel/syntax-check.ts`);
     }
     // `--check` as the FIRST argument is a hand-rolled `node --check` spawn.
-    // (`['dedup-tracker.ts', '--check']` is a script's own flag and is fine.)
+    // (`['packages/cli/src/commands/tracker/dedup-tracker.ts', '--check']` is a script's own flag and is fine.)
     if (/\[\s*['"]--check['"]\s*,/.test(src)) {
       fail(`${rel} spawns node --check itself; a second syntax gate is free to drift from the shared one`);
     } else {

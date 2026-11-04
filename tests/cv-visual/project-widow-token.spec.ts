@@ -23,7 +23,7 @@
 // renderer (the lesson #4716 exists to encode).
 //
 // So this renders the same payload twice: once as shipped, once with the token
-// injected the way theme-style.ts delivers a profile override — a later :root
+// injected the way packages/cli/src/commands/cv/theme-style.ts delivers a profile override — a later :root
 // block — and asserts the widow is present in the first and absent in the second.
 //
 // It cannot pass vacuously. The fixture is searched until the UNSET render
@@ -43,7 +43,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { resolveTemplate } from '../../cv-templates.ts';
+import { resolveTemplate } from '../../packages/cli/src/commands/cv/cv-templates.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const TEMPLATE = resolveTemplate('cv', 'standard');
@@ -102,7 +102,7 @@ test('style.project_break_inside: avoid removes the one-word project widow', asy
       const input = join(dir, 'payload.json');
       const html = join(dir, 'cv.html');
       writeFileSync(input, JSON.stringify(payload(shape)));
-      execFileSync(process.execPath, ['build-cv-html.ts', input, html, TEMPLATE],
+      execFileSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', input, html, TEMPLATE],
         { cwd: ROOT, stdio: 'pipe' });
       return readFileSync(html, 'utf-8');
     };
@@ -140,7 +140,7 @@ test('style.project_break_inside: avoid removes the one-word project widow', asy
       'no fixture shape reproduced the one-word widow with the token unset, so this test '
       + `can no longer verify anything. Shapes tried: ${tried.join(' ')}`).not.toBeNull();
 
-    // The override arrives exactly as theme-style.ts delivers a profile token:
+    // The override arrives exactly as packages/cli/src/commands/cv/theme-style.ts delivers a profile token:
     // a later :root block, which is why the token may only be declared on :root.
     const override = '<style id="career-ops-dynamic-theme">\n'
       + ':root { --project-break-inside: avoid; }\n</style>';

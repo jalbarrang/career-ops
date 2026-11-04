@@ -5,7 +5,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listTemplates } from '../cv-templates.ts';
+import { listTemplates } from '../packages/cli/src/commands/cv/cv-templates.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const dir = mkdtempSync(join(tmpdir(), 'cv-shipped-templates-'));
@@ -53,7 +53,7 @@ test('the shipped template list includes a pack', () => {
 for (const template of templates) {
   test(`${template.name}: renders the full contact row`, () => {
     const output = join(dir, `${template.name}.html`);
-    execFileSync(process.execPath, ['build-cv-html.ts', input, output, template.path], {
+    execFileSync(process.execPath, ['packages/cli/src/commands/cv/build-cv-html.ts', input, output, template.path], {
       cwd: ROOT,
       encoding: 'utf-8',
       maxBuffer: 10 * 1024 * 1024,

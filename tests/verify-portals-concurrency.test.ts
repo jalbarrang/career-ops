@@ -5,7 +5,7 @@
 // One entry at a time, a large portals.yml (or a few boards that answer only at
 // the 10 s probe timeout) outlasted the web Portals page's 110 s budget, so the
 // health check timed out instead of naming the broken boards. The pool is the
-// same width audit-portals.ts uses against these boards.
+// same width packages/cli/src/commands/scanning/audit-portals.ts uses against these boards.
 //
 // Run:  bun test tests/verify-portals-concurrency.test.ts
 
@@ -15,7 +15,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const { verifyCompanies } = await import(pathToFileURL(join(ROOT, 'verify-portals.ts')).href);
+const { verifyCompanies } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/verify-portals.ts')).href);
 
 const entries = (n) => Array.from({ length: n }, (_, i) => ({
   name: `Company ${i}`,

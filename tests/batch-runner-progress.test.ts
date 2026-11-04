@@ -17,7 +17,8 @@ function runFixtureBatch({ offers, parallel, workerSeconds = 0 }) {
   writeFileSync(join(batchDir, 'batch-prompt.md'), 'Fixture prompt for {{URL}} {{ID}}\n');
   writeFileSync(join(batchDir, 'batch-input.tsv'), ['id\turl\tsource\tnotes',
     ...Array.from({ length: offers }, (_, i) => `${i + 1}\thttps://jobs.example.com/acme/${i + 1}\tfixture\t-`)].join('\n') + '\n');
-  writeFileSync(join(dir, 'reserve-report-num.ts'), [
+ mkdirSync(dirname(join(dir, 'packages/cli/src/commands/tracker/reserve-report-num.ts')), { recursive: true });
+  writeFileSync(join(dir, 'packages/cli/src/commands/tracker/reserve-report-num.ts'), [
     "import { readFileSync, writeFileSync, existsSync } from 'node:fs';",
     "if (!process.argv.includes('--release')) {",
     "  const n = (existsSync('counter.txt') ? parseInt(readFileSync('counter.txt', 'utf8'), 10) : 0) + 1;",

@@ -1,19 +1,19 @@
-// tests/batch-tailor-flags.test.ts — batch-tailor.ts's CLI contract and the
+// tests/batch-tailor-flags.test.ts — packages/cli/src/commands/cv/batch-tailor.ts's CLI contract and the
 // paths it hands to the worker.
 //
-// batch-tailor.ts spawns one agent run per matching job, so a mis-parsed
+// packages/cli/src/commands/cv/batch-tailor.ts spawns one agent run per matching job, so a mis-parsed
 // threshold is not a cosmetic problem: it decides how many paid runs happen and
-// on which roles. It predates lib/cli-flags.ts and hand-rolled its own
+// on which roles. It predates packages/core/src/kernel/cli-flags.ts and hand-rolled its own
 // parsing, which left three silent failures:
 //
 //   --min-score 4.5   (space form)  → ignored, ran at the 4.0 default
 //   --min-score=abc   (bad value)   → NaN, matched nothing, exited 0
 //   --min-scor=4.5    (typo)        → ignored, ran at the 4.0 default
 //
-// All three are the #2459 class that lib/cli-flags.ts exists to end.
+// All three are the #2459 class that packages/core/src/kernel/cli-flags.ts exists to end.
 //
 // The state-file path is env-overridable (CAREER_OPS_BATCH_STATE, the same
-// override merge-tracker.ts already honours) so these cases run against a
+// override packages/cli/src/commands/tracker/merge-tracker.ts already honours) so these cases run against a
 // sandbox instead of the developer's real batch run. Every case below picks a
 // threshold that matches NO job, so the script always exits before spawning a
 // worker.
@@ -26,7 +26,7 @@ import { tmpdir } from 'os';
 console.log('\nbatch-tailor.ts — flag parsing and worker paths');
 
 const NODE = process.execPath;
-const SCRIPT = join(ROOT, 'batch-tailor.ts');
+const SCRIPT = join(ROOT, 'packages/cli/src/commands/cv/batch-tailor.ts');
 
 function makeStateFile() {
   const dir = mkdtempSync(join(tmpdir(), 'co-batch-tailor-'));
@@ -165,7 +165,7 @@ try {
   // The state file resolved through __dirname while `modes/pdf.md` was passed
   // bare, so running the script from anywhere else handed the worker a path
   // that does not exist — and modes/pdf.md is where the CV fact gate
-  // (verify-cv-facts.ts, step 19) is instructed. Asserted at source level, the
+  // (packages/cli/src/commands/cv/verify-cv-facts.ts, step 19) is instructed. Asserted at source level, the
   // same shape as test-all's provider-pacing guard, because observing the
   // spawn argument would mean actually launching a worker.
   {
@@ -174,7 +174,7 @@ try {
     if (!bareRelative) {
       pass('the pdf mode file is not passed as a bare cwd-relative path');
     } else {
-      fail('batch-tailor.ts still passes a bare "modes/pdf.md" — breaks from any other cwd');
+      fail('packages/cli/src/commands/cv/batch-tailor.ts still passes a bare "modes/pdf.md" — breaks from any other cwd');
     }
   }
 } finally {

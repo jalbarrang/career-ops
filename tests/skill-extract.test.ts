@@ -1,5 +1,5 @@
 // tests/skill-extract.test.ts — the shared skill vocabulary + canonical
-// extractor (#1896). These fixtures moved here verbatim from upskill.ts's
+// extractor (#1896). These fixtures moved here verbatim from packages/cli/src/commands/insights/upskill.ts's
 // self-test when the tokenizer was relocated (PR 1, pure relocation) — behavior
 // must stay byte-identical, so the same assertions now guard the shared module.
 import { pass, fail, ROOT } from './helpers.ts';
@@ -9,7 +9,7 @@ import { pathToFileURL } from 'url';
 console.log('\nskill-extract.ts (shared skill tokenizer, #1896)');
 
 try {
-  const { extractSkills, canonicalize } = await import(pathToFileURL(join(ROOT, 'skill-extract.ts')).href);
+  const { extractSkills, canonicalize } = await import(pathToFileURL(join(ROOT, 'packages/core/src/evaluation/skill-extract.ts')).href);
 
   // canonicalization: aliases + display casing, unknown tokens pass through
   const s1 = extractSkills('Needs k8s, golang and Postgres experience; NodeJS a plus');
@@ -416,7 +416,7 @@ try {
   // End to end, on the Skills line of the shipped example CV
   // (examples/dual-track-engineer-instructor/cv.md), which jd-skill-gap used to
   // answer with Hugging Face as a gap.
-  const { classifySkillGaps } = await import(pathToFileURL(join(ROOT, 'jd-skill-gap.ts')).href);
+  const { classifySkillGaps } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/evaluation/jd-skill-gap.ts')).href);
   const exampleCv = '## Skills\n\nEngineering: TypeScript, Python (daily), SQL. LangChain, LangGraph, Anthropic SDK, HuggingFace Transformers.\n';
   const classified = classifySkillGaps(['Hugging Face', 'LangChain'], exampleCv);
   if (classified.existing.includes('Hugging Face') && classified.gap.length === 0) {

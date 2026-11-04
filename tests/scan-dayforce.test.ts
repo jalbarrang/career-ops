@@ -1,4 +1,4 @@
-// Fixture-based unit tests for the pure logic in scan-dayforce.ts — input
+// Fixture-based unit tests for the pure logic in packages/cli/src/commands/scanning/scan-dayforce.ts — input
 // validation, URL building/host-pinning, pagination math, location joining,
 // and JD header/body/footer concatenation — plus challenge detection and the
 // retry decision, against stubbed pages and a stubbed browser launch.
@@ -34,10 +34,10 @@ import {
   detectChallenge,
   DayforceChallengeError,
   ALLOWED_HOST,
-} from '../scan-dayforce.ts';
+} from '../packages/cli/src/commands/scanning/scan-dayforce.ts';
 
 test('importing the scanner ignores the caller argv', () => {
-  const moduleUrl = new URL('../scan-dayforce.ts', import.meta.url).href;
+  const moduleUrl = new URL('../packages/cli/src/commands/scanning/scan-dayforce.ts', import.meta.url).href;
   const result = spawnSync(
     process.execPath,
     ['--input-type=module', '--eval', `await import(${JSON.stringify(moduleUrl)})`, '--', '--tenant'],

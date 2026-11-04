@@ -39,9 +39,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as ts from 'typescript';
-import { walkTree, listTree, isNestedCheckout } from '../lib/walk-tree.ts';
-import { SCRATCH_PREFIX } from '../lib/scratch-dirs.ts';
-import { collectSourceFiles } from '../lib/source-files.ts';
+import { walkTree, listTree, isNestedCheckout } from '../packages/core/src/kernel/walk-tree.ts';
+import { SCRATCH_PREFIX } from '../packages/core/src/kernel/scratch-dirs.ts';
+import { collectSourceFiles } from '../packages/core/src/kernel/source-files.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -239,7 +239,7 @@ test('links: follow survives a link onto an ancestor, and still follows sibling 
   // as an ordinary directory, so without a cycle guard the walk re-enters it
   // until the path length or the stack gives out. Both callers that follow
   // links walk trees a user can shape: test-all.ts's repo copy and
-  // seed-fixture.ts's fixture manifest.
+  // packages/cli/src/commands/platform/seed-fixture.ts's fixture manifest.
   const dir = tree({ 'docs/a.txt': 'x', 'docs/deep/b.txt': 'y' });
   try {
     try {
@@ -561,7 +561,7 @@ const EXEMPT = new Map([
     // walkTree to express "fail on a fifo" would be bending a shared walker
     // around one caller's threat model.
   ]],
-  ['intake.ts', [
+  ['packages/cli/src/commands/profile/intake.ts', [
     'claimRealDirs', 'walk',
     // Deliberately follows symlinks (a symlinked master CV is a natural setup)
     // AND dedupes by realpath in two passes, so that the key written into
@@ -571,15 +571,16 @@ const EXEMPT = new Map([
   ]],
 ]);
 
-test('lib/walk-tree.ts holds the only recursive directory walker in the repo', () => {
+test('packages/core/src/kernel/walk-tree.ts holds the only recursive directory walker in the repo', () => {
   const offenders = [];
   for (const abs of collectSourceFiles(ROOT)) {
     const relPath = relative(ROOT, abs).split(sep).join('/');
-    // web/ is a separate SvelteKit application with its own containment rules
-    // and is excluded from the core's packaging/coverage contracts; fork/ is
-    // this checkout's vendored engine copy. Neither ships as a core script.
-    if (relPath.startsWith('web/') || relPath.startsWith('fork/')) continue;
-    if (relPath === 'lib/walk-tree.ts') continue;          // the one that is allowed to be one
+    // apps/web/ is a separate SvelteKit application with its own containment
+    // rules and is excluded from the core's packaging/coverage contracts;
+    // fork/ is this checkout's vendored engine copy. Neither ships as a core
+    // script.
+    if (relPath.startsWith('apps/web/') || relPath.startsWith('fork/')) continue;
+    if (relPath === 'packages/core/src/kernel/walk-tree.ts') continue;          // the one that is allowed to be one
     if (relPath === 'tests/walk-tree.test.ts') continue;   // this file describes them; it is not one
     const allowed = new Set(EXEMPT.get(relPath) ?? []);
     for (const name of recursiveDirWalkers(readFileSync(abs, 'utf-8'))) {
@@ -589,7 +590,7 @@ test('lib/walk-tree.ts holds the only recursive directory walker in the repo', (
   assert.deepEqual(
     offenders, [],
     'hand-rolled recursive directory walkers found. Use walkTree()/listTree() from '
-    + 'lib/walk-tree.ts — it applies the nested-checkout guard on every descent, so a '
+    + 'packages/core/src/kernel/walk-tree.ts — it applies the nested-checkout guard on every descent, so a '
     + 'linked worktree or nested clone can never feed a second repository into this one\'s '
     + 'gates (#3499, #3762). If the walk genuinely cannot use it, add it to EXEMPT above '
     + 'WITH the reason (#3818).',
@@ -607,21 +608,21 @@ test('every EXEMPT entry still names a real walker — an exemption cannot outli
   }
 });
 
-test('nothing outside lib/walk-tree.ts recurses via globSync or readdirSync({recursive:true})', () => {
+test('nothing outside packages/core/src/kernel/walk-tree.ts recurses via globSync or readdirSync({recursive:true})', () => {
   // The other way to walk a tree, and neither form has any idea what a nested
   // checkout is. This half of the ban is pure presence matching, which is what
   // text matching is actually good at.
   const offenders = [];
   for (const abs of collectSourceFiles(ROOT)) {
     const relPath = relative(ROOT, abs).split(sep).join('/');
-    if (relPath === 'lib/walk-tree.ts' || relPath === 'tests/walk-tree.test.ts') continue;
+    if (relPath === 'packages/core/src/kernel/walk-tree.ts' || relPath === 'tests/walk-tree.test.ts') continue;
     const code = stripNonCode(readFileSync(abs, 'utf-8'));
     if (/\bglobSync\s*\(/.test(code)) offenders.push(`${relPath}: globSync`);
     if (callArgs(code, 'readdirSync').some((args) => /\brecursive\s*:\s*true\b/.test(args))) {
       offenders.push(`${relPath}: readdirSync({recursive:true})`);
     }
   }
-  assert.deepEqual(offenders, [], 'use listTree() from lib/walk-tree.ts, which applies the nested-checkout guard (#3818)');
+  assert.deepEqual(offenders, [], 'use listTree() from packages/core/src/kernel/walk-tree.ts, which applies the nested-checkout guard (#3818)');
 });
 
 // ── The detector's own tests ────────────────────────────────────────────────
@@ -661,7 +662,7 @@ test('the detector does not flag what is not a recursive directory walk', () => 
   const clean = {
     'a flat read': 'function list(d) { return readdirSync(d).filter(f => f.endsWith(".md")); }',
     'recursion that reads no directory': 'function fact(n) { return n <= 1 ? 1 : n * fact(n - 1); }',
-    'a caller of the shared walker': 'import { walkTree } from "./lib/walk-tree.ts";\nfunction walk(d) { return walkTree(d); }',
+    'a caller of the shared walker': 'import { walkTree } from "../packages/core/src/kernel/walk-tree.ts";\nfunction walk(d) { return walkTree(d); }',
     'the word in a comment': '// walk() used to readdirSync(dir) and call walk() again\nfunction walk(d) { return walkTree(d); }',
     'the word in a string': 'const help = "walk(dir) calls readdirSync(dir) then walk(child)";\nfunction walk(d) { return walkTree(d); }',
     'a regex literal holding braces and quotes':

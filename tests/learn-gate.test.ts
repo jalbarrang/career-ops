@@ -1,4 +1,4 @@
-// learn.ts check/apply is the only path from a session's lessons into the
+// packages/cli/src/commands/profile/learn.ts check/apply is the only path from a session's lessons into the
 // user's standing rule files. Each case below is a way a lesson could reach
 // modes/_custom.md or modes/_profile.md without the user's own say-so.
 
@@ -80,7 +80,7 @@ function run(root, args, extraEnv = {}, cwd = root) {
   for (const key of ['CAREER_OPS_HEADLESS', 'CAREER_OPS_BATCH_STATE']) {
     if (!(key in extraEnv)) delete env[key];
   }
-  return spawnSync(NODE, [join(ROOT, 'learn.ts'), ...args], { cwd, env, encoding: 'utf8', timeout: 60_000 });
+  return spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/profile/learn.ts'), ...args], { cwd, env, encoding: 'utf8', timeout: 60_000 });
 }
 
 const read = (root, rel) => readFileSync(join(root, rel), 'utf8');
@@ -414,15 +414,15 @@ test('--reply-file records the reply byte for byte, with no shell in between', (
   }
 });
 
-test('learn.ts imports no network module', () => {
-  const src = readFileSync(join(ROOT, 'learn.ts'), 'utf8');
+test('packages/cli/src/commands/profile/learn.ts imports no network module', () => {
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/profile/learn.ts'), 'utf8');
   const imports = [...src.matchAll(/from\s+['"]([^'"]+)['"]/g)].map((m) => m[1]);
   const network = imports.filter((m) => /^(node:)?(https?|http2|net|tls|dgram|dns)$|undici/.test(m));
   assert(network.length === 0, `network imports: ${network.join(', ')}`);
-  assert(!/\bfetch\s*\(/.test(src), 'learn.ts calls fetch');
+  assert(!/\bfetch\s*\(/.test(src), 'packages/cli/src/commands/profile/learn.ts calls fetch');
 });
 
-test('learn.ts --self-test passes', () => {
-  const r = spawnSync(NODE, [join(ROOT, 'learn.ts'), '--self-test'], { encoding: 'utf8', timeout: 60_000 });
+test('packages/cli/src/commands/profile/learn.ts --self-test passes', () => {
+  const r = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/profile/learn.ts'), '--self-test'], { encoding: 'utf8', timeout: 60_000 });
   assert(r.status === 0, describeSpawn(r, 'self-test failed'));
 });

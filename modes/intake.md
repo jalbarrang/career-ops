@@ -14,7 +14,7 @@ Pattern credit: [MadsLorentzen/ai-job-search](https://github.com/MadsLorentzen/a
 `documents/` intake + idempotent `/setup` merge, adapted to career-ops'
 user-layer contract.
 
-Division of labor: `intake.ts` does everything deterministic (enumerate
+Division of labor: `packages/cli/src/commands/profile/intake.ts` does everything deterministic (enumerate
 `documents/`, extract text locally, fingerprint sources so re-runs surface
 only new material). This mode does the semantic mapping and the
 human-in-the-loop gate. **Nothing is written without an explicit user
@@ -26,7 +26,7 @@ confirm.**
   `diplomas/`, `references/`
 - `config/profile.yml`, `cv.md`, `modes/_profile.md` — merge targets
 - `data/intake-state.json` — fingerprints of already-ingested sources
-  (written by `intake.ts --commit`, user layer)
+  (written by `packages/cli/src/commands/profile/intake.ts --commit`, user layer)
 
 > **Symlinks inside `documents/` are followed.** Linking a master CV that lives
 > elsewhere is the point, so the scan reads through the link rather than
@@ -39,7 +39,7 @@ confirm.**
 ## Step 1 — Scan and extract
 
 ```bash
-bun intake.ts            # JSON: per-source status + preview
+career-ops intake            # JSON: per-source status + preview
 ```
 
 - If `pdfExtractor` is `null` and there are PDF sources, relay the `pdfHint`
@@ -53,7 +53,7 @@ bun intake.ts            # JSON: per-source status + preview
 ## Step 2 — Read the full text of each new or changed source
 
 ```bash
-bun intake.ts --text <path-relative-to-documents/>
+career-ops intake --text <path-relative-to-documents/>
 ```
 
 ## Step 3 — Map to proposals (read-before-write)
@@ -101,8 +101,8 @@ Show one consolidated proposal table: target file → field → proposed value
    proposes only new material:
 
 ```bash
-bun intake.ts --commit <path> [<path> …]   # the confirmed sources
-bun intake.ts --commit --all               # only if ALL were merged
+career-ops intake --commit <path> [<path> …]   # the confirmed sources
+career-ops intake --commit --all               # only if ALL were merged
 ```
 
    Never blanket-commit after a partial confirmation — a declined source
@@ -110,7 +110,7 @@ bun intake.ts --commit --all               # only if ALL were merged
    paths records nothing and exits nonzero: recording everything has to be
    asked for explicitly.
 
-3. Verify: `bun doctor.ts` should report the profile prerequisites
+3. Verify: `career-ops doctor` should report the profile prerequisites
    satisfied.
 
 ## Out of scope (v1)

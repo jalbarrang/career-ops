@@ -14,7 +14,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nextractContacts — plus-addressed relays (#3283)');
 try {
-  const { extractContacts } = await import(pathToFileURL(join(ROOT, 'followup-cadence.ts')).href);
+  const { extractContacts } = await import(pathToFileURL(join(ROOT, 'packages/core/src/outreach/followup-cadence.ts')).href);
   const first = (notes) => extractContacts(notes)[0]?.email;
 
   const cases = [

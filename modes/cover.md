@@ -205,7 +205,7 @@ Select 4-5 achievement bullets from `cv.md` only (`article-digest.md` may be rea
 4. Use the exact wording and metrics from cv.md — never paraphrase or invent
 5. Apply keyword mirroring from Step 4 to the vocabulary around each bullet (not the metrics)
 
-Format: `**Bold lead phrase,** one sentence of impact with metric.` This describes the *rendered* bullet only — the `lead` value in the JSON payload (Step 9) must be a bare phrase with no trailing punctuation; `generate-cover-letter.ts` appends the comma automatically when building the bullet.
+Format: `**Bold lead phrase,** one sentence of impact with metric.` This describes the *rendered* bullet only — the `lead` value in the JSON payload (Step 9) must be a bare phrase with no trailing punctuation; `packages/cli/src/commands/cv/generate-cover-letter.ts` appends the comma automatically when building the bullet.
 
 ---
 
@@ -279,8 +279,8 @@ contracts, plus the bans that are stricter than the shared list.
 
 Resolve the cover-letter template with the shared resolver (do not hardcode `cover-letter-template.html`):
 
-- If the user named a template, run: `bun cv-templates.ts resolve cover "<name>"`
-- Otherwise run: `bun cv-templates.ts resolve cover` (returns the `cover_letter.template` default, or the base template when unset).
+- If the user named a template, run: `career-ops cv-templates resolve cover "<name>"`
+- Otherwise run: `career-ops cv-templates resolve cover` (returns the `cover_letter.template` default, or the base template when unset).
 
 Fill the resolved template's `{{...}}` placeholders. A non-zero exit means the named template is missing/invalid — surface it, do not silently fall back.
 
@@ -347,13 +347,13 @@ Assemble the JSON payload:
 }
 ```
 
-Each `achievements[].lead` must be a bare phrase with no trailing comma or other punctuation — `generate-cover-letter.ts` appends the comma when rendering (see Step 7).
+Each `achievements[].lead` must be a bare phrase with no trailing comma or other punctuation — `packages/cli/src/commands/cv/generate-cover-letter.ts` appends the comma when rendering (see Step 7).
 
 Write payload to `/tmp/cover-payload-{company-slug}.json`.
 
 Run:
 ```bash
-bun generate-cover-letter.ts --payload /tmp/cover-payload-{company-slug}.json
+career-ops generate-cover-letter --payload /tmp/cover-payload-{company-slug}.json
 ```
 
 Report the output path and file size.

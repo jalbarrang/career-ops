@@ -4,7 +4,7 @@
 // the runner's real result-handling and summary code, as in
 // delegated-agency-confirmation.test.ts.
 import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, readdirSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync, spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
@@ -169,8 +169,13 @@ handle_result
       + '3\thttps://jobs.example.test/3\tskipped\ts\te\t044\t2.0\tbelow-min-score\t0\n');
     const project = join(work, 'project');
     mkdirSync(project, { recursive: true });
-    for (const name of ['merge-tracker', 'reconcile-pipeline', 'verify-pipeline']) {
-      writeFileSync(join(project, `${name}.ts`), `console.log('RAN ${name}');\n`);
+    for (const [name, rel] of [
+      ['merge-tracker', 'packages/cli/src/commands/tracker/merge-tracker.ts'],
+      ['reconcile-pipeline', 'packages/cli/src/commands/pipeline/reconcile-pipeline.ts'],
+      ['verify-pipeline', 'packages/cli/src/commands/platform/verify-pipeline.ts'],
+    ]) {
+      mkdirSync(dirname(join(project, rel)), { recursive: true });
+      writeFileSync(join(project, rel), `console.log('RAN ${name}');\n`);
     }
     const script = join(work, 'merge.sh');
     writeFileSync(script, `set -euo pipefail
@@ -240,7 +245,7 @@ print_summary
       writeFileSync(join(dir, 'batch', 'tracker-additions', '1.tsv'), row);
       const env = { ...process.env, CAREER_OPS_ROOT: dir };
       for (const k of ['CAREER_OPS_DATA_DIR', 'CAREER_OPS_PROFILE', 'CAREER_OPS_TRACKER']) delete env[k];
-      const res = spawnSync(process.execPath, [join(ROOT, 'merge-tracker.ts')], { cwd: dir, encoding: 'utf8', env });
+      const res = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts')], { cwd: dir, encoding: 'utf8', env });
       assert.equal(res.status, 0, res.stderr);
       const merged = readFileSync(join(dir, 'data', 'applications.md'), 'utf8').trim().split('\n').at(-1);
       assert.match(merged, /\| Fabrikam \| Product Designer \| N\/A \| SKIP \|/);
@@ -262,7 +267,7 @@ print_summary
         + `1\t${URL}\tskipped\ts\te\t042\t-\tdealbreaker: "${RULE}"\t0\n`
         + `3\t${other}\tskipped\ts\te\t044\t2.0\tbelow-min-score\t0\n`);
       const env = { ...process.env, CAREER_OPS_ROOT: dir };
-      const res = spawnSync(process.execPath, [join(ROOT, 'reconcile-pipeline.ts'), '--state', join(dir, 'batch-state.tsv')], { cwd: dir, encoding: 'utf8', env });
+      const res = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/pipeline/reconcile-pipeline.ts'), '--state', join(dir, 'batch-state.tsv')], { cwd: dir, encoding: 'utf8', env });
       assert.equal(res.status, 0, res.stderr);
       const text = readFileSync(join(dir, 'data', 'pipeline.md'), 'utf8');
       const [pending, processed] = text.split('## Processed');

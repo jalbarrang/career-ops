@@ -98,7 +98,7 @@ Placeholder rules:
 
 When to skip the bullet: `friendlinessTier == "unknown"`, or the CLI exited non-zero. In that case, do not add the bullet at all.
 
-This check adds one bullet to a report in progress. It changes nothing else about the evaluation workflow: the host mode's tracker rules still apply as written, including running `bun merge-tracker.ts` after each batch of evaluations.
+This check adds one bullet to a report in progress. It changes nothing else about the evaluation workflow: the host mode's tracker rules still apply as written, including running `bun packages/cli/src/commands/tracker/merge-tracker.ts` after each batch of evaluations.
 
 ## Non-scoring note
 

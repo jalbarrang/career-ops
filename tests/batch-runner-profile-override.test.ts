@@ -1,5 +1,5 @@
 // tests/batch-runner-profile-override.test.ts — batch-runner.sh resolves the
-// profile through path-resolver.ts, so CAREER_OPS_PROFILE reaches both the
+// profile through packages/core/src/kernel/path-resolver.ts, so CAREER_OPS_PROFILE reaches both the
 // spend_tier model choice and the personalization injected into the worker
 // prompt (#5144).
 //
@@ -18,24 +18,25 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, chmodSync, symlinkSync } from 'node:fs';
-import { join, delimiter } from 'node:path';
+import {dirname, join, delimiter } from 'node:path';
 import { tmpdir } from 'node:os';
 import { getBash, rmSync } from './helpers.ts';
 
 const SRC = readFileSync(new URL('../batch/batch-runner.sh', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
-const RESOLVER = readFileSync(new URL('../path-resolver.ts', import.meta.url), 'utf8');
+const RESOLVER = readFileSync(new URL('../packages/core/src/kernel/path-resolver.ts', import.meta.url), 'utf8');
 
 const DEFAULT_PROFILE = 'spend_tier: economy\ncandidate_note: data-root-profile\n';
 const OVERRIDE_PROFILE = 'spend_tier: premium\ncandidate_note: override-profile\n';
 
 // A resolver from before getProfilePath existed. The runner must keep working
-// on an install whose preserved path-resolver.ts lacks the export: the old
+// on an install whose preserved packages/core/src/kernel/path-resolver.ts lacks the export: the old
 // data-root behavior plus a warning, not a dead batch runner.
 const LEGACY_RESOLVER = [
-  'import { dirname } from "node:path";',
+  'import { dirname, resolve } from "node:path";',
   'import { fileURLToPath } from "node:url";',
   'const here = dirname(fileURLToPath(import.meta.url));',
-  'export function getCareerOpsRoot() { return here; }',
+  '// A resolver from before the monorepo split: no getProfilePath, and it still lives in the current checkout layout so the data root is the checkout.',
+  'export function getCareerOpsRoot() { return resolve(here, "../../../.."); }',
 ].join('\n') + '\n';
 
 /** The model a spend tier maps to, read from the script's own table. */
@@ -52,7 +53,7 @@ const escapeRe = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const runnerPath = (value) => (process.platform === 'win32' ? value.replace(/\\/g, '/') : value);
 
 /**
- * A throwaway install: batch/ beside path-resolver.ts, the data root's own
+ * A throwaway install: batch/ beside packages/core/src/kernel/path-resolver.ts, the data root's own
  * config/profile.yml, and a second profile elsewhere that only
  * CAREER_OPS_PROFILE names. `externalDataRoot` puts the data root in a
  * subdirectory, which is what makes the runner append its runtime-path block.
@@ -71,7 +72,8 @@ function fixture({ resolver = 'current', externalDataRoot = false } = {}) {
   writeFileSync(join(batchDir, 'batch-runner.sh'), SRC);
   chmodSync(join(batchDir, 'batch-runner.sh'), 0o755);
   if (resolver !== 'none') {
-    writeFileSync(join(dir, 'path-resolver.ts'), resolver === 'legacy' ? LEGACY_RESOLVER : RESOLVER);
+    mkdirSync(dirname(join(dir, 'packages/core/src/kernel/path-resolver.ts')), { recursive: true });
+    writeFileSync(join(dir, 'packages/core/src/kernel/path-resolver.ts'), resolver === 'legacy' ? LEGACY_RESOLVER : RESOLVER);
   }
   writeFileSync(join(dataRoot, 'config', 'profile.yml'), DEFAULT_PROFILE);
   writeFileSync(join(altDir, 'me.yml'), OVERRIDE_PROFILE);
@@ -84,11 +86,17 @@ function fixture({ resolver = 'current', externalDataRoot = false } = {}) {
 
   // The worker path, not the dry run: these keep the runner from reaching
   // anything outside the fixture before the stub claude captures the prompt.
-  writeFileSync(join(dir, 'reserve-report-num.ts'), [
+ mkdirSync(dirname(join(dir, 'packages/cli/src/commands/tracker/reserve-report-num.ts')), { recursive: true });
+  writeFileSync(join(dir, 'packages/cli/src/commands/tracker/reserve-report-num.ts'), [
     "if (!process.argv.includes('--release')) console.log('001');",
   ].join('\n') + '\n');
-  for (const script of ['merge-tracker', 'reconcile-pipeline', 'verify-pipeline']) {
-    writeFileSync(join(dir, `${script}.ts`), '// No external integrations in this fixture.\n');
+  for (const script of [
+    'packages/cli/src/commands/tracker/merge-tracker.ts',
+    'packages/cli/src/commands/pipeline/reconcile-pipeline.ts',
+    'packages/cli/src/commands/platform/verify-pipeline.ts',
+  ]) {
+    mkdirSync(dirname(join(dir, script)), { recursive: true });
+    writeFileSync(join(dir, script), '// No external integrations in this fixture.\n');
   }
   writeFileSync(join(binDir, 'curl'), '#!/usr/bin/env bash\nexit 1\n');
   chmodSync(join(binDir, 'curl'), 0o755);
@@ -234,7 +242,7 @@ test('the worker prompt carries the override profile, not the data root profile'
 
 // Run through a junction (Windows) or a directory symlink, the runner keeps
 // that spelling in DATA_ROOT while getProfilePath() returns the real path of
-// path-resolver.ts's directory. Without an override both name the same file,
+// packages/core/src/kernel/path-resolver.ts's directory. Without an override both name the same file,
 // so the default layout must not be told about an override nobody set.
 // A junction needs no privilege on Windows, but it can still be refused, for
 // example when the temp directory sits on a volume that has no junctions; a

@@ -22,7 +22,7 @@ import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { atsLint, loadAtsRules, ATS_DETECTORS } from '../cv-templates.ts';
+import { atsLint, loadAtsRules, ATS_DETECTORS } from '../packages/cli/src/commands/cv/cv-templates.ts';
 import { describeSpawn, exitedNonZero } from './helpers/describe-spawn.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -469,7 +469,7 @@ test('a rules file that defines no rules is an error, not a clean pass', () => {
  */
 const cli = (args) => {
   const { CAREER_OPS_PROFILE, ...env } = process.env;
-  return spawnSync(process.execPath, ['cv-templates.ts', ...args], { cwd: ROOT, encoding: 'utf-8', env });
+  return spawnSync(process.execPath, ['packages/cli/src/commands/cv/cv-templates.ts', ...args], { cwd: ROOT, encoding: 'utf-8', env });
 };
 
 test('the CLI refuses a non-HTML template rather than reporting it clean', () => {

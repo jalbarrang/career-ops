@@ -10,9 +10,9 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { firstLinkTarget, soleMarkdownLink, linkedReportNumbers } from '../tracker-parse.ts';
-import { findDeadReportLink } from '../tracker-utils.ts';
-import { resolveReportPath } from '../followup-cadence.ts';
+import { firstLinkTarget, soleMarkdownLink, linkedReportNumbers } from '../packages/core/src/tracker/tracker-parse.ts';
+import { findDeadReportLink } from '../packages/core/src/tracker/tracker-utils.ts';
+import { resolveReportPath } from '../packages/core/src/outreach/followup-cadence.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const CODE_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -77,7 +77,7 @@ test('a malformed Report link does not fall back to a Notes link', () => {
 
 test('set-status --report-link updates a row whose report name holds parentheses', (t) => {
   const f = fixture(t);
-  const r = run(f, 'set-status.ts', ['--report-link', '1', 'Applied', '--json']);
+  const r = run(f, 'packages/cli/src/commands/tracker/set-status.ts', ['--report-link', '1', 'Applied', '--json']);
   assert.equal(r.status, 0, describeSpawn(r));
   assert.equal(JSON.parse(r.stdout).newStatus, 'Applied');
   assert.ok(readFileSync(f.tracker, 'utf-8').includes(`| Applied | ❌ | ${LINK} |`), 'the Report cell must be written back unchanged');
@@ -92,7 +92,7 @@ test('findDeadReportLink sees the whole parenthesised target', (t) => {
 
 test('verify-pipeline does not report a present parenthesised report as missing', (t) => {
   const f = fixture(t);
-  const r = run(f, 'verify-pipeline.ts');
+  const r = run(f, 'packages/cli/src/commands/platform/verify-pipeline.ts');
   assert.doesNotMatch(r.out, /Report not found/, r.out);
   assert.match(r.out, /All report links valid/, r.out);
 });
@@ -100,13 +100,13 @@ test('verify-pipeline does not report a present parenthesised report as missing'
 test('fix-report-links treats a parenthesised link as one link: live is kept, dead is fixed', (t) => {
   const live = fixture(t);
   const before = readFileSync(live.tracker, 'utf-8');
-  const kept = run(live, 'fix-report-links.ts');
+  const kept = run(live, 'packages/cli/src/commands/tracker/fix-report-links.ts');
   assert.equal(kept.status, 0, describeSpawn(kept));
   assert.doesNotMatch(kept.out, /skipped/, kept.out);
   assert.equal(readFileSync(live.tracker, 'utf-8'), before);
 
   const dead = fixture(t, { withFile: false });
-  const fixed = run(dead, 'fix-report-links.ts');
+  const fixed = run(dead, 'packages/cli/src/commands/tracker/fix-report-links.ts');
   assert.equal(fixed.status, 0, describeSpawn(fixed));
   assert.match(fixed.out, /1 dead report link\(s\) fixed/, fixed.out);
   assert.match(readFileSync(dead.tracker, 'utf-8'), /\| ❌ \| — \| note \|/);
@@ -115,7 +115,7 @@ test('fix-report-links treats a parenthesised link as one link: live is kept, de
 test('followup-cadence and find resolve the full report path', (t) => {
   const f = fixture(t);
   assert.equal(resolveReportPath(LINK, f.tracker, f.root), `reports/${REPORT}`);
-  const r = run(f, 'find.ts', ['acme']);
+  const r = run(f, 'packages/cli/src/commands/pipeline/find.ts', ['acme']);
   assert.equal(r.status, 0, describeSpawn(r));
   assert.match(r.out, /reports\/001-acme-\(berlin\)-2026-10-01\.md/, r.out);
 });

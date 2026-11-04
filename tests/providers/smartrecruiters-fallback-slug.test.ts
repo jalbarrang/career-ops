@@ -2,8 +2,8 @@
 // are fictional fixtures; fetchJson never makes a network request.
 import assert from 'node:assert/strict';
 import { pass, fail } from '../helpers.ts';
-import provider, { parseSmartRecruitersResponse } from '../../providers/smartrecruiters.ts';
-import { normalizeUrl } from '../../url-key.ts';
+import provider, { parseSmartRecruitersResponse } from '../../packages/core/src/scanning/providers/smartrecruiters.ts';
+import { normalizeUrl } from '../../packages/core/src/kernel/url-key.ts';
 
 const entry = {
   name: 'Example Research & Design',

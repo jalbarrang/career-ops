@@ -15,8 +15,8 @@ const BOARD_URL = 'https://exampleco.zohorecruit.com/jobs/Careers';
 const BOARD = { origin: 'https://exampleco.zohorecruit.com' };
 
 try {
-  const mod = await import(pathToFileURL(join(ROOT, 'providers/zoho-recruit.ts')).href);
-  const { resolveProvider } = await import(pathToFileURL(join(ROOT, 'providers/_registry.ts')).href);
+  const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/zoho-recruit.ts')).href);
+  const { resolveProvider } = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_registry.ts')).href);
   const zoho = mod.default;
 
   if (zoho.id === 'zoho-recruit') pass('zoho-recruit.id is "zoho-recruit"');

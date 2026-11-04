@@ -1,5 +1,5 @@
 /**
- * tests/ics-interview.test.ts — ics-interview.ts (#5743)
+ * tests/ics-interview.test.ts — packages/cli/src/commands/interview/ics-interview.ts (#5743)
  *
  * Synthetic .ics fixtures only. Run: bun test-all.ts --only ics-interview
  */
@@ -9,11 +9,11 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
-import { parseIcsDate, parseIcs, unfoldLines, parseDurationMinutes, buildRow, dateTimeCell, wallToInstant } from '../ics-interview.ts';
+import { parseIcsDate, parseIcs, unfoldLines, parseDurationMinutes, buildRow, dateTimeCell, wallToInstant } from '../packages/cli/src/commands/interview/ics-interview.ts';
 import { pass, fail } from './helpers.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SCRIPT = join(__dirname, '..', 'ics-interview.ts');
+const SCRIPT = join(__dirname, '..', 'packages/cli/src/commands/interview/ics-interview.ts');
 
 console.log('\nics-interview.ts — .ics to active-interviews row');
 

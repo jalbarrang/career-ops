@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseDraftAnswersBlockH } from '../application-answers.ts';
+import { parseDraftAnswersBlockH } from '../packages/cli/src/commands/evaluation/application-answers.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 

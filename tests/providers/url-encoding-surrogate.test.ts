@@ -2,7 +2,7 @@
 // host-controlled id/slug must survive a lone UTF-16 surrogate in that field.
 // encodeURIComponent throws URIError on a lone surrogate and a JSON string can
 // carry one, so without a guard one malformed posting aborts the whole page's
-// parse loop. Each provider routes the value through providers/_safe-url.ts and
+// parse loop. Each provider routes the value through packages/core/src/scanning/providers/_safe-url.ts and
 // drops just that posting on a null return.
 //
 // The helper itself is covered in _safe-url.test.ts.
@@ -13,7 +13,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProviders — job-URL encoding tolerates a lone surrogate (drops the one posting, not the page)');
 
-const load = (f) => import(pathToFileURL(join(ROOT, 'providers/' + f)).href);
+const load = (f) => import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/' + f)).href);
 
 // A lone high surrogate: what encodeURIComponent rejects, and what a JSON
 // string can hold (JSON.parse('"\\uD800x"') keeps it).
@@ -254,7 +254,7 @@ try {
 // batch-aborting shape. `safeEncodeURIComponent` does not match — the token is
 // the bare builtin, lower-case `e`, with a word boundary before it.
 {
-  const dir = join(ROOT, 'providers');
+  const dir = join(ROOT, 'packages/core/src/scanning/providers');
   const SHARED_IMPORT = /\bfrom\s*['"]\.\/_safe-url\.ts['"]/;
   const HELPER_USE = /\bsafeEncodeURIComponent\b/;
   const BARE_ON_URL_LINE = /\burl\s*[:=][^\n]*\bencodeURIComponent\s*\(/;

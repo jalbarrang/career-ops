@@ -11,7 +11,7 @@ When the user asks to prep for an interview at a specific company+role, or when 
 5. **Profile** at `config/profile.yml` + `modes/_profile.md` — read for candidate context
 6. **Recruiter-side risk map** from the evaluation/PDF/application flow if present — use `modes/heuristics/recruiter-side.md` for the risk categories the interview process must resolve
 7. **Coffee chat notes** for this company, if the user has any (optional — see "Coffee Chat Cross-Reference" below)
-8. **Prior stated compensation** — if the tracker# is known, run `bun salary-gap.ts --stated-for <tracker#>` (zero tokens). Any prior `stated` observation is a number already committed to a specific interviewer in an earlier round — surface it in the Process Overview (Step 2) or Recruiter/HR pack (Step 4) as a "already discussed" reminder so the candidate stays consistent.
+8. **Prior stated compensation** — if the tracker# is known, run `career-ops salary-gap --stated-for <tracker#>` (zero tokens). Any prior `stated` observation is a number already committed to a specific interviewer in an earlier round — surface it in the Process Overview (Step 2) or Recruiter/HR pack (Step 4) as a "already discussed" reminder so the candidate stays consistent.
 9. **HM audit** — the evaluation report's `## HM Audit` section, if present (written by `modes/pdf/hm-audit.md`). It carries the reviewer persona, the sources behind it, and which CV bullets that reviewer would have cut. Reuse it rather than re-researching the hiring manager from scratch.
 
 ## Coffee Chat Cross-Reference (optional, North America-specific)
@@ -48,7 +48,7 @@ The inputs above are report-first, but a common path skips evaluation entirely: 
 
 **Fetch ladder** — same as `modes/oferta.md` and the AGENTS.md Offer Verification rule; JD fetching follows the same ladder:
 
-1. For ATS-shaped URLs (Greenhouse / Lever / Ashby / Workday — the four `liveness-core.ts` already recognizes), the structured API endpoint may serve the JD directly.
+1. For ATS-shaped URLs (Greenhouse / Lever / Ashby / Workday — the four `packages/core/src/liveness/liveness-core.ts` already recognizes), the structured API endpoint may serve the JD directly.
 2. Otherwise Playwright: `browser_navigate` → `browser_snapshot`, read title, URL, and visible content.
 3. WebFetch **only** as the headless/batch fallback. If the JD came from WebFetch, mark the prep output header `**JD source:** unconfirmed (fetched without browser)`.
 4. Closed/expired posting (footer/navbar only, "no longer accepting applications", 404) → tell the user and ask them to paste the JD text instead. **Never fabricate JD content.**
@@ -111,7 +111,7 @@ If the company is small or obscure and yields few results, broaden: search for t
 ## Process Overview
 - **Rounds:** {N} rounds, ~{X} days end-to-end
 - **Format:** {e.g., recruiter screen → technical phone → take-home → onsite (4 rounds) → hiring manager}
-- **Platform:** {e.g., Zoom / Microsoft Teams / Google Meet / Phone — the call medium, distinct from Format above. Extract from invite/scheduling text using the same platform-detection approach `invite-match.ts`'s `extractPlatform` uses (meeting-platform URL first, phone-number pattern as fallback). If not detectable, write "not stated in the invite, confirm before the call" rather than guessing; this field-specific fallback overrides the generic unknown rule below}
+- **Platform:** {e.g., Zoom / Microsoft Teams / Google Meet / Phone — the call medium, distinct from Format above. Extract from invite/scheduling text using the same platform-detection approach `career-ops invite-match`'s `extractPlatform` uses (meeting-platform URL first, phone-number pattern as fallback). If not detectable, write "not stated in the invite, confirm before the call" rather than guessing; this field-specific fallback overrides the generic unknown rule below}
 - **Difficulty:** {X}/5 (Glassdoor avg, N reviews)
 - **Positive experience rate:** {X}%
 - **Known quirks:** {e.g., "pair programming instead of whiteboard", "no LeetCode, all practical", "take-home is 4 hours"}
@@ -120,7 +120,7 @@ If the company is small or obscure and yields few results, broaden: search for t
 
 If data is insufficient for any field, write "unknown — not enough data" rather than guessing.
 
-**AI-interviewer platforms (#2673):** when `invite-match.ts`'s `isAIInterviewerPlatform` returns true for the invite/scheduling text — currently only Alex/Apriora, whose host is single-purpose and confirmed AI-led by product design — the candidate talks live to an AI system rather than a human. Append an **AI-Interviewer Notes** block right after Process Overview:
+**AI-interviewer platforms (#2673):** when `packages/core/src/interview/invite-match.ts`'s `isAIInterviewerPlatform` returns true for the invite/scheduling text — currently only Alex/Apriora, whose host is single-purpose and confirmed AI-led by product design — the candidate talks live to an AI system rather than a human. Append an **AI-Interviewer Notes** block right after Process Overview:
 
 ```markdown
 ## AI-Interviewer Notes
@@ -279,7 +279,7 @@ Run this mapping **per audience pack** from Step 4 — same story can map differ
 - **partial**: story is adjacent, needs reframing
 - **none**: no existing story — flag for the user
 
-Before filling the table, run `bun story-provenance-check.ts --summary`. A story fits on its narrative; its figures are a separate question. For each mapped story whose figures are `supportedByResume` or `derived-unverified`, say so in the Gap? column ("figure unconfirmed: {figure}") so the candidate either confirms it with AGENTS.md's four outcomes or tells it without the number. A `user-cannot-confirm` story maps on narrative only, never with its figures. Never restate an unconfirmed figure in this prep doc as if it were settled: a figure written here is how a guess ends up back in the story bank as fact.
+Before filling the table, run `career-ops story-provenance-check --summary`. A story fits on its narrative; its figures are a separate question. For each mapped story whose figures are `supportedByResume` or `derived-unverified`, say so in the Gap? column ("figure unconfirmed: {figure}") so the candidate either confirms it with AGENTS.md's four outcomes or tells it without the number. A `user-cannot-confirm` story maps on narrative only, never with its figures. Never restate an unconfirmed figure in this prep doc as if it were settled: a figure written here is how a guess ends up back in the story bank as fact.
 
 For each gap, suggest: "You need a story about {topic}. Consider: {specific experience from cv.md that could become a STAR+R story}."
 

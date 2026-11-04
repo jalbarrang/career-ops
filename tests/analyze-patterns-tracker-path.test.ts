@@ -4,7 +4,7 @@
 //
 // analyze-patterns used to pick data/applications.md or applications.md under
 // the data root itself, ignoring CAREER_OPS_TRACKER, so `patterns` and
-// `calibrate` analysed a different file than set-status.ts writes whenever
+// `calibrate` analysed a different file than packages/cli/src/commands/tracker/set-status.ts writes whenever
 // that override was set. It now goes through resolveTrackerPath(), which
 // realpaths the result; report links must still resolve when the data root is
 // reached through a symlink (macOS's /var -> /private/var tmpdir is one), and
@@ -44,7 +44,7 @@ function trackerRow(num, link) {
 }
 
 function analyze(env) {
-  const out = execFileSync(NODE, [join(ROOT, 'analyze-patterns.ts'), '--min-threshold', '1'], {
+  const out = execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/insights/analyze-patterns.ts'), '--min-threshold', '1'], {
     encoding: 'utf-8',
     timeout: 60000,
     env: { ...process.env, CAREER_OPS_TRACKER: '', ...env },
@@ -83,7 +83,7 @@ try {
       fail(`CAREER_OPS_TRACKER ignored or reports unresolved: total=${result.metadata?.total}, archetypes=${JSON.stringify(got)}`);
     }
   } catch (e) {
-    fail(`analyze-patterns.ts failed with CAREER_OPS_TRACKER set: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
+    fail(`packages/cli/src/commands/insights/analyze-patterns.ts failed with CAREER_OPS_TRACKER set: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
   }
 
   // A tracker in another workspace (its own data/ and reports/): the reports
@@ -104,7 +104,7 @@ try {
       fail(`workspace tracker: total=${result.metadata?.total}, archetypes=${JSON.stringify(got)}`);
     }
   } catch (e) {
-    fail(`analyze-patterns.ts failed on a workspace tracker: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
+    fail(`packages/cli/src/commands/insights/analyze-patterns.ts failed on a workspace tracker: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
   }
 
   try {
@@ -116,7 +116,7 @@ try {
       fail(`data root tracker: total=${result.metadata?.total}, archetypes=${JSON.stringify(got)}`);
     }
   } catch (e) {
-    fail(`analyze-patterns.ts failed on the data root tracker: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
+    fail(`packages/cli/src/commands/insights/analyze-patterns.ts failed on the data root tracker: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
   }
 
   // The data root reached through a symlink: the tracker realpaths to the
@@ -140,7 +140,7 @@ try {
         fail(`symlinked data root lost its report data: archetypes=${JSON.stringify(got)}`);
       }
     } catch (e) {
-      fail(`analyze-patterns.ts failed through a symlinked data root: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
+      fail(`packages/cli/src/commands/insights/analyze-patterns.ts failed through a symlinked data root: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
     }
   }
 
@@ -172,7 +172,7 @@ try {
         fail(`symlinked tracker file lost its report data: archetypes=${JSON.stringify(got)}`);
       }
     } catch (e) {
-      fail(`analyze-patterns.ts failed through a symlinked tracker file: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
+      fail(`packages/cli/src/commands/insights/analyze-patterns.ts failed through a symlinked tracker file: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
     }
   }
 
@@ -205,7 +205,7 @@ try {
         fail(`tracker symlinked into another workspace lost its report data: archetypes=${JSON.stringify(got)}`);
       }
     } catch (e) {
-      fail(`analyze-patterns.ts failed on a tracker symlinked into another workspace: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
+      fail(`packages/cli/src/commands/insights/analyze-patterns.ts failed on a tracker symlinked into another workspace: ${(e.stderr || e.message || '').toString().slice(0, 300)}`);
     }
   }
 } finally {

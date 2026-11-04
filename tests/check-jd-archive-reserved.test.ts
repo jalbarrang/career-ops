@@ -2,7 +2,7 @@ import { strict as assert } from 'assert';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { checkJdArchive } from '../check-jd-archive.ts';
+import { checkJdArchive } from '../packages/core/src/evaluation/check-jd-archive.ts';
 import { pass, fail } from './helpers.ts';
 
 const root = mkdtempSync(join(tmpdir(), 'check-jd-archive-reserved-'));

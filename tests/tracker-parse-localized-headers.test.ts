@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { detectColumns, isHeaderRow, parseTrackerRow, resolveColumns, resolveTsvColumns } from '../tracker-parse.ts';
+import { detectColumns, isHeaderRow, parseTrackerRow, resolveColumns, resolveTsvColumns } from '../packages/core/src/tracker/tracker-parse.ts';
 import { pass, fail, NODE, ROOT, rmSync, isolatedBatchStatePath } from './helpers.ts';
 
 function check(label, run) {
@@ -82,13 +82,13 @@ for (const [mode, date, company, role] of markets) {
         CAREER_OPS_PDF_INDEX: join(work, 'data', 'pdf-index.tsv'),
         CAREER_OPS_TRACKER_LOCK: join(work, 'tracker.lock'),
       };
-      execFileSync(NODE, [join(ROOT, 'merge-tracker.ts')], { env, encoding: 'utf8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'] });
+      execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/merge-tracker.ts')], { env, encoding: 'utf8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'] });
       const merged = readFileSync(tracker, 'utf8').split('\n');
       const columns = resolveColumns(merged);
       const rows = merged.map(line => parseTrackerRow(line, columns)).filter(Boolean);
       assert.equal(rows.length, 1);
       assertRow(rows[0], fields, { report: '[41](../reports/041-acme.md)' });
-      execFileSync(NODE, [join(ROOT, 'set-status.ts'), '41', 'Interview', '--note', 'scheduled'], { env, encoding: 'utf8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'] });
+      execFileSync(NODE, [join(ROOT, 'packages/cli/src/commands/tracker/set-status.ts'), '41', 'Interview', '--note', 'scheduled'], { env, encoding: 'utf8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'] });
       const updated = readFileSync(tracker, 'utf8').split('\n');
       assert.equal(updated[0], lines[0], 'localized header stays intact');
       const changed = updated.map(line => parseTrackerRow(line, columns)).filter(Boolean);

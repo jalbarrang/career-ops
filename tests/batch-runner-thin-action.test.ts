@@ -2,7 +2,7 @@
 // batch/batch-runner.sh: what happens when no usable JD text could be fetched.
 //
 // The detection block and the skip handler are extracted from the script and run
-// against a stub browser-extract.ts, so the test and the implementation cannot
+// against a stub packages/cli/src/commands/scanning/browser-extract.ts, so the test and the implementation cannot
 // drift apart and no browser, network or model is involved.
 import { pass, fail, rmSync, getBash } from './helpers.ts';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -49,8 +49,9 @@ if (!bash || !detect || !act) {
     const projectDir = join(work, 'project');
     execFileSync(bash, ['-c', 'mkdir -p "$1"', 'mk', projectDir]);
     const words = (n) => Array.from({ length: n }, (_, i) => `word${i}`).join(' ');
-    // Stub browser-extract.ts: records its argv, answers according to STUB_MODE.
-    writeFileSync(join(projectDir, 'browser-extract.ts'), [
+    // Stub packages/cli/src/commands/scanning/browser-extract.ts: records its argv, answers according to STUB_MODE.
+   mkdirSync(dirname(join(projectDir, 'packages/cli/src/commands/scanning/browser-extract.ts')), { recursive: true });
+    writeFileSync(join(projectDir, 'packages/cli/src/commands/scanning/browser-extract.ts'), [
       "import { appendFileSync } from 'node:fs';",
       "appendFileSync(process.env.STUB_TRACE, JSON.stringify(process.argv.slice(2)) + '\\n');",
       "const m = process.env.STUB_MODE;",
@@ -133,7 +134,7 @@ if (!bash || !detect || !act) {
     if (/^skip=0 /.test(filled.out) && filled.trace === '' && filled.jd.split(/\s+/).filter(Boolean).length === 120) pass('only when the JD is still empty: a filled JD file is left alone and no browser runs');
     else fail(`filled JD: ${filled.out}`);
     const missing = run({ action: 'browser-extract', withStub: false });
-    if (/^skip=1 /.test(missing.out)) pass('browser-extract.ts absent at this point: treated as no JD, falls to the skip rules');
+    if (/^skip=1 /.test(missing.out)) pass('packages/cli/src/commands/scanning/browser-extract.ts absent at this point: treated as no JD, falls to the skip rules');
     else fail(`stub absent: ${missing.out}`);
 
     // ── skip handler, with the state helpers stubbed ───────────────────────
@@ -203,10 +204,10 @@ if (!bash || !detect || !act) {
     if (noArg.code === 1 && /--thin-action requires an argument/.test(noArg.out)) pass('CLI: --thin-action without a value exits 1');
     else fail(`CLI no arg: code=${noArg.code} ${noArg.out.slice(0, 200)}`);
     const noExtract = cli('--thin-action', 'browser-extract', '--dry-run');
-    if (noExtract.code === 1 && /needs browser-extract\.ts/.test(noExtract.out)) pass('CLI: browser-extract without browser-extract.ts exits 1');
-    else fail(`CLI missing browser-extract.ts: code=${noExtract.code} ${noExtract.out.slice(0, 200)}`);
+    if (noExtract.code === 1 && /needs browser-extract\.ts/.test(noExtract.out)) pass('CLI: browser-extract without packages/cli/src/commands/scanning/browser-extract.ts exits 1');
+    else fail(`CLI missing packages/cli/src/commands/scanning/browser-extract.ts: code=${noExtract.code} ${noExtract.out.slice(0, 200)}`);
     const okSkip = cli('--thin-action', 'skip', '--dry-run');
-    if (!/needs browser-extract|must be/.test(okSkip.out)) pass('CLI: --thin-action skip is accepted without browser-extract.ts');
+    if (!/needs browser-extract|must be/.test(okSkip.out)) pass('CLI: --thin-action skip is accepted without packages/cli/src/commands/scanning/browser-extract.ts');
     else fail(`CLI skip rejected: ${okSkip.out.slice(0, 200)}`);
   } finally {
     try { rmSync(work, { recursive: true, force: true }); } catch { /* best effort */ }

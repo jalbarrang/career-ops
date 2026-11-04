@@ -5,7 +5,7 @@ import { pathToFileURL } from 'url';
 
 console.log('\nProvider — rheinmetall (SSR vacancy-list parser)');
 try {
-  const rheinmetallModule = await import(pathToFileURL(join(ROOT, 'providers/rheinmetall.ts')).href);
+  const rheinmetallModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/rheinmetall.ts')).href);
   const rheinmetall = rheinmetallModule.default;
   const { resolveListUrl, parseVacancies } = rheinmetallModule;
 
@@ -69,7 +69,7 @@ try {
   // RangeError out of the whole parse. The local decodeEntities copy guarded
   // only with Number.isFinite (no `<= 0x10FFFF` / surrogate check), so ONE
   // adversarial/malformed entity (&#99999999;, &#xFFFFFFFF;) crashed the entire
-  // provider parse and scan.ts's per-company catch dropped EVERY posting for
+  // provider parse and packages/core/src/scanning/scan.ts's per-company catch dropped EVERY posting for
   // that run. parseVacancies now routes through the shared guarded decoder, which
   // degrades an out-of-range or lone-surrogate entity to literal text while
   // still decoding valid ones (&amp;).

@@ -6,7 +6,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { join, delimiter } from 'node:path';
 import { tmpdir } from 'node:os';
 import { requestedLabels, companyOfNotes, companyOfUrl, matchesCompany, idsForCompanies } from '../batch/company-scope.ts';
-import { normalizeCompany } from '../tracker-utils.ts';
+import { normalizeCompany } from '../packages/core/src/tracker/tracker-utils.ts';
 
 console.log('\nbatch/company-scope.ts — --company scope');
 const eq = (label, got, want) => (JSON.stringify(got) === JSON.stringify(want) ? pass(label) : fail(`${label}: expected ${JSON.stringify(want)}, got ${JSON.stringify(got)}`));
@@ -58,10 +58,11 @@ if (!bash) {
     mkdirSync(batch, { recursive: true });
     for (const f of ['batch-runner.sh', 'company-scope.ts', 'batch-prompt.md']) cpSync(join(ROOT, 'batch', f), join(batch, f));
     chmodSync(join(batch, 'batch-runner.sh'), 0o755);
-    for (const d of ['lib']) cpSync(join(ROOT, d), join(work, d), { recursive: true });
-    // company-scope.ts imports normalizeCompany from tracker-utils.ts (and its siblings)
-    // and the shared ATS host table from ats-vendor.ts.
-    for (const f of ['tracker-utils.ts', 'tracker-parse.ts', 'tracker-aliases.json', 'path-resolver.ts', 'ats-vendor.ts', 'package.json']) cpSync(join(ROOT, f), join(work, f));
+    // company-scope.ts imports from the engine tree, so carry the whole source tree
+    // rather than a hand-maintained dependency list that drifts.
+    cpSync(join(ROOT, 'packages'), join(work, 'packages'), { recursive: true });
+    cpSync(join(ROOT, 'templates'), join(work, 'templates'), { recursive: true });
+    writeFileSync(join(work, 'package.json'), readFileSync(join(ROOT, 'package.json')));
     const linkProblem = linkNodeModules(work);
     if (linkProblem) throw new Error(linkProblem);
     writeFileSync(join(batch, 'batch-input.tsv'), TSV);

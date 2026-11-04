@@ -268,7 +268,7 @@ export function emptyProfile(): CareerProfile {
 /**
  * Flatten companies into their roles, each carrying the company it belongs to.
  *
- * Selection (`lib/profile-cv-selection.ts`) binds a CV slot to ONE role, so it
+ * Selection (`packages/core/src/profile/profile-cv-selection.ts`) binds a CV slot to ONE role, so it
  * needs the roles addressable on their own. Keeping the flattening here means
  * the nested shape has exactly one reader that understands nesting.
  *

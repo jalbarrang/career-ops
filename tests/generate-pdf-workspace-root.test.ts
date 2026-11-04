@@ -1,5 +1,5 @@
 // #3162: the workspace root must survive a sibling test that legitimately sets
-// CAREER_OPS_TRACKER for its own fixture. Before the fix, generate-pdf.ts
+// CAREER_OPS_TRACKER for its own fixture. Before the fix, packages/cli/src/commands/cv/generate-pdf.ts
 // froze the root at import time, so an import landing inside that window
 // anchored the containment guard to another test's temp directory for the rest
 // of the process — the guard then refused valid repo paths, intermittently and
@@ -8,7 +8,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { pass, fail } from './helpers.ts';
-import { getCareerOpsRoot } from '../path-resolver.ts';
+import { getCareerOpsRoot } from '../packages/core/src/kernel/path-resolver.ts';
 
 console.log('\ngenerate-pdf-workspace-root.test.ts — the containment root is read at use time (#3162)');
 
@@ -21,7 +21,7 @@ let failures = 0;
 try {
   // Poison the environment the way a sibling fixture does, THEN import.
   process.env.CAREER_OPS_TRACKER = join(foreign, 'applications.md');
-  const mod = await import('../generate-pdf.ts');
+  const mod = await import('../packages/cli/src/commands/cv/generate-pdf.ts');
   // Restore exactly as that sibling does in its finally.
   if (original === undefined) delete process.env.CAREER_OPS_TRACKER;
   else process.env.CAREER_OPS_TRACKER = original;

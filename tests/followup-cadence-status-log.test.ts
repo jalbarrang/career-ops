@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * followup-cadence.ts measures an application's age from the apply date that
- * set-status.ts records in status-log.tsv, not from the evaluation date.
+ * packages/core/src/outreach/followup-cadence.ts measures an application's age from the apply date that
+ * packages/cli/src/commands/tracker/set-status.ts records in status-log.tsv, not from the evaluation date.
  *
  * Run: bun test-all.ts --only followup-cadence-status-log
  */
@@ -12,7 +12,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { pass, fail, ROOT } from './helpers.ts';
-import { localToday } from '../lib/local-today.ts';
+import { localToday } from '../packages/core/src/kernel/local-today.ts';
 
 console.log('\nfollowup-cadence.ts — apply date from status-log.tsv');
 
@@ -59,8 +59,8 @@ function run(script, args, dir) {
 function entryAfterApplying(notes, appliedOn) {
   const dir = makeRoot(notes);
   try {
-    run('set-status.ts', ['1', 'Applied', '--on', appliedOn], dir);
-    return JSON.parse(run('followup-cadence.ts', [], dir)).entries.find(e => e.num === 1);
+    run('packages/cli/src/commands/tracker/set-status.ts', ['1', 'Applied', '--on', appliedOn], dir);
+    return JSON.parse(run('packages/core/src/outreach/followup-cadence.ts', [], dir)).entries.find(e => e.num === 1);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -85,9 +85,9 @@ function entryAfterApplying(notes, appliedOn) {
 {
   const dir = makeRoot('careers page');
   try {
-    run('set-status.ts', ['1', 'Applied'], dir);
+    run('packages/cli/src/commands/tracker/set-status.ts', ['1', 'Applied'], dir);
     writeFileSync(join(dir, 'data', 'status-log.tsv'), '1\t2026-02-30\tEvaluated\tApplied\tset-status\t\n');
-    const entry = JSON.parse(run('followup-cadence.ts', [], dir)).entries.find(e => e.num === 1);
+    const entry = JSON.parse(run('packages/core/src/outreach/followup-cadence.ts', [], dir)).entries.find(e => e.num === 1);
     eq('an impossible ledger date falls back to the evaluation date', entry?.appDateSource, 'evaluation-date-fallback');
   } finally {
     rmSync(dir, { recursive: true, force: true });

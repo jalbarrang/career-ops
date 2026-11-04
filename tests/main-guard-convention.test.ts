@@ -1,5 +1,5 @@
 // tests/main-guard-convention.test.ts — every entrypoint answers "was I run?"
-// through lib/is-main-module.ts, and answers it correctly through a symlink
+// through packages/core/src/kernel/is-main-module.ts, and answers it correctly through a symlink
 // (#3170).
 //
 // The defect: `import.meta.url === pathToFileURL(process.argv[1]).href` compares
@@ -28,8 +28,8 @@ import { mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { isMainModule } from '../lib/is-main-module.ts';
-import { trackedFiles } from '../lib/source-files.ts';
+import { isMainModule } from '../packages/core/src/kernel/is-main-module.ts';
+import { trackedFiles } from '../packages/core/src/kernel/source-files.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -66,7 +66,7 @@ function linkedRoot(prefix) {
 // ── 1. Behaviour ────────────────────────────────────────────────────────────
 
 test('a CLI reached through a symlinked directory still runs', (t) => {
-  // generate-pdf.ts is the probe on purpose: it is the file #3170 was filed
+  // packages/cli/src/commands/cv/generate-pdf.ts is the probe on purpose: it is the file #3170 was filed
   // about, the one that reported success while writing no PDF. It is also a
   // good probe mechanically — --help is zero-network, exits in ~0.4s, and
   // prints deterministic usage. Any silent-no-op regression shows up as empty
@@ -75,13 +75,13 @@ test('a CLI reached through a symlinked directory still runs', (t) => {
   if (!linked) return t.skip('directory symlinks unavailable on this machine');
   const { link, cleanup } = linked;
   try {
-    const direct = spawnSync(process.execPath, [join(ROOT, 'generate-pdf.ts'), '--help'], {
+    const direct = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts'), '--help'], {
       encoding: 'utf-8', timeout: 30_000,
     });
-    const viaLink = spawnSync(process.execPath, [join(link, 'generate-pdf.ts'), '--help'], {
+    const viaLink = spawnSync(process.execPath, [join(link, 'packages/cli/src/commands/cv/generate-pdf.ts'), '--help'], {
       encoding: 'utf-8', timeout: 30_000,
     });
-    // BOTH streams: generate-pdf.ts writes its usage to stderr, and a probe that
+    // BOTH streams: packages/cli/src/commands/cv/generate-pdf.ts writes its usage to stderr, and a probe that
     // watched only stdout would see "" from a working CLI and "" from a silently
     // suppressed one — the two outcomes this test exists to tell apart.
     const output = (r) => `${r.stdout}${r.stderr}`;
@@ -102,7 +102,7 @@ test('isMainModule is false for a module that is not the entry', () => {
   // The whole point of the guard: importing a module must not fire its CLI.
   // Under `node --test` THIS file is the entry, so the negative case has to be
   // asked about a different file — any real entrypoint will do.
-  const other = pathToFileURL(join(ROOT, 'check-table-freshness.ts')).href;
+  const other = pathToFileURL(join(ROOT, 'packages/cli/src/commands/platform/check-table-freshness.ts')).href;
   assert.equal(isMainModule(other), false);
   // A non-file scheme is a legitimate "not the entry", not a bad call.
   assert.equal(isMainModule('data:text/javascript,export default 1'), false);
@@ -112,7 +112,7 @@ test('isMainModule refuses a filesystem path instead of quietly returning false'
   // The footgun that would reintroduce #3170 one call site at a time:
   // isMainModule(import.meta.filename) resolves, compares false, and suppresses
   // the CLI in silence. It must crash and name the mistake instead.
-  assert.throws(() => isMainModule(join(ROOT, 'check-table-freshness.ts')), /filesystem path/,
+  assert.throws(() => isMainModule(join(ROOT, 'packages/cli/src/commands/platform/check-table-freshness.ts')), /filesystem path/,
     'a path must throw, not return false');
   assert.throws(() => isMainModule('C:\\repo\\pdf.ts'), /filesystem path/, 'a Windows path must throw too');
   // Drive-RELATIVE, no separator: still a path, and it parses as a one-letter
@@ -128,7 +128,7 @@ test('isMainModule is true for the file node was pointed at, symlinked or not', 
   if (!linked) return t.skip('directory symlinks unavailable on this machine');
   const { link, cleanup } = linked;
   try {
-    const probe = "import { isMainModule } from './lib/is-main-module.ts';" +
+    const probe = "import { isMainModule } from './packages/core/src/kernel/is-main-module.ts';" +
       'process.stdout.write(String(isMainModule(import.meta.url)));';
     for (const base of [ROOT, link]) {
       const r = spawnSync(process.execPath, ['--input-type=module', '-e', probe], {
@@ -162,7 +162,7 @@ test('isMainModule is true for the file node was pointed at, symlinked or not', 
 
 const ENTRY_REF = /process\.argv\[1\]|process\.argv\.at\(\s*1\s*\)/;
 
-// A STATIC relative import/export in update-system.ts, in any spelling.
+// A STATIC relative import/export in packages/cli/src/commands/platform/update-system.ts, in any spelling.
 //
 // #1706 requires that file to be self-loading: a pre-#1245 client checks out
 // that single file and re-execs it, so a static relative import crashes the
@@ -200,7 +200,7 @@ const STATIC_RELATIVE_IMPORT = new RegExp(
 const COMMENT_LINE = /^\s*(\/\/|\*|\/\*)/;
 
 // The enforced set is what the repository TRACKS, enumerated once in
-// lib/source-files.ts (#3890). This used to be a private walk with a
+// packages/core/src/kernel/source-files.ts (#3890). This used to be a private walk with a
 // hand-maintained skip-list — `node_modules`, `.git`, `output`, `data`,
 // `reports`, `jds`, `documents`, `interview-prep`, every name starting with a
 // dot, plus an isNestedCheckout() call for the linked worktree the `.git` name
@@ -218,7 +218,7 @@ const COMMENT_LINE = /^\s*(\/\/|\*|\/\*)/;
 // `sparse-checkout: .github/scripts`, so `lib/` is not on disk when the script
 // runs. A static `import { isMainModule } from '../../lib/is-main-module.ts'`
 // throws ERR_MODULE_NOT_FOUND there and takes the `direction-gate` required
-// check down with it. That is the update-system.ts self-loading constraint
+// check down with it. That is the packages/cli/src/commands/platform/update-system.ts self-loading constraint
 // above, arriving from a workflow instead of from #1706. One of the six
 // cannot be edited here at all: `triage.bundle.ts` is generated by
 // `github-src/scripts/build.ts`, which this repository does not hold. #3170
@@ -252,12 +252,12 @@ const repoSources = () =>
 // Every exemption carries its reason; an unexplained entry is a review smell.
 const EXEMPT = new Map([
   // The helper is the one place allowed to read the entry path.
-  ['lib/is-main-module.ts', 'is the comparison'],
-  // #1706 requires update-system.ts to be self-loading (a pre-#1245 client
+  ['packages/core/src/kernel/is-main-module.ts', 'is the comparison', 'packages/core/src/kernel/repo-root.ts',],
+  // #1706 requires packages/cli/src/commands/platform/update-system.ts to be self-loading (a pre-#1245 client
   // checks out this single file and re-execs it), so it inlines the guard
   // instead of importing it. The exemption covers the source scan ONLY; the
   // behaviour test at the bottom of this file pins its semantics.
-  ['update-system.ts', 'self-loading per #1706; behaviour-pinned below'],
+  ['packages/cli/src/commands/platform/update-system.ts', 'self-loading per #1706; behaviour-pinned below'],
   // Cookbook parsers are copied outside the repository into gitignored local/.
   // They must remain standalone, so they cannot import the core helper.
   ['docs/recipes/gojobs/parse-gojobs-html.ts', 'standalone cookbook file copied into local/'],
@@ -314,7 +314,7 @@ test('no file outside the helper reads the process entry path', () => {
     [],
     'these files reference process.argv[1] directly. Sixty entrypoints hand-rolled the ' +
       '"am I main?" comparison from it, in six spellings, and all but one silently no-opped ' +
-      "through a symlinked checkout (#3170). Use lib/is-main-module.ts's " +
+      "through a symlinked checkout (#3170). Use packages/core/src/kernel/is-main-module.ts's " +
       'isMainModule(import.meta.url) instead — and if you genuinely need the entry path for ' +
       'something else, add an exemption WITH A REASON to EXEMPT in this test:\n  ' +
       offenders.join('\n  '),
@@ -373,14 +373,14 @@ test('the #1706 static-import detector sees every spelling', () => {
   }
 });
 
-test("update-system.ts's inlined guard realpaths both sides", (t) => {
+test("packages/cli/src/commands/platform/update-system.ts's inlined guard realpaths both sides", (t) => {
   // The #1706 self-loading rule buys it an exemption from the import, not from
   // being correct. Asserted on BEHAVIOUR, not on source text: a source-shape
   // check passes on a rewrite that keeps the words and loses the realpath.
-  const src = readFileSync(join(ROOT, 'update-system.ts'), 'utf-8');
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/platform/update-system.ts'), 'utf-8');
   assert.ok(
     !STATIC_RELATIVE_IMPORT.test(src),
-    'update-system.ts grew a static relative import — that breaks the old→new re-exec (#1706)',
+    'packages/cli/src/commands/platform/update-system.ts grew a static relative import — that breaks the old→new re-exec (#1706)',
   );
 
   const linked = linkedRoot('main-guard-updater-');
@@ -390,12 +390,12 @@ test("update-system.ts's inlined guard realpaths both sides", (t) => {
     // An unrecognized subcommand is the only branch that proves the tail ran
     // and writes NOTHING: `check` hits the network, and every other command
     // (`dismiss` included) touches the real repo through the symlink.
-    const viaLink = spawnSync(process.execPath, [join(link, 'update-system.ts'), '--probe-not-a-command'], {
+    const viaLink = spawnSync(process.execPath, [join(link, 'packages/cli/src/commands/platform/update-system.ts'), '--probe-not-a-command'], {
       cwd: ROOT, encoding: 'utf-8', timeout: 60_000,
     });
     assert.match(
       viaLink.stdout,
-      /Usage: bun update-system\.ts/,
+      /Usage: career-ops update-system/,
       `the updater printed no usage through a symlink (exit ${viaLink.status}) — its inlined ` +
         'guard stopped realpathing both sides, and every update silently no-ops (#3170)',
     );

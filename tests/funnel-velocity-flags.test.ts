@@ -1,4 +1,4 @@
-// funnel-velocity.ts must handle help and reject unknown flags before it
+// packages/core/src/insights/funnel-velocity.ts must handle help and reject unknown flags before it
 // reads report inputs. A typo must never fall through to a plausible JSON
 // report at exit 0.
 import { after, test } from 'node:test';
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const SCRIPT = join(ROOT, 'funnel-velocity.ts');
+const SCRIPT = join(ROOT, 'packages/core/src/insights/funnel-velocity.ts');
 const SANDBOX = mkdtempSync(join(tmpdir(), 'career-ops-funnel-flags-'));
 const NO_TRACKER = join(SANDBOX, 'applications.md');
 const NO_BENCHMARKS = join(SANDBOX, 'benchmarks.yml');
@@ -25,8 +25,8 @@ function runFunnel(...args) {
     timeout: 30_000,
     env: { ...process.env, CAREER_OPS_TRACKER: NO_TRACKER },
   });
-  assert.equal(result.error, undefined, `funnel-velocity.ts failed to spawn: ${result.error?.message}`);
-  assert.equal(result.signal, null, `funnel-velocity.ts was killed by ${result.signal} (timeout?)`);
+  assert.equal(result.error, undefined, `packages/core/src/insights/funnel-velocity.ts failed to spawn: ${result.error?.message}`);
+  assert.equal(result.signal, null, `packages/core/src/insights/funnel-velocity.ts was killed by ${result.signal} (timeout?)`);
   return { ...result, all: `${result.stdout ?? ''}${result.stderr ?? ''}` };
 }
 
@@ -34,7 +34,7 @@ test('--help prints usage and exits 0', () => {
   const result = runFunnel('--help');
   assert.equal(result.status, 0, describeSpawn(result, `expected exit 0, got ${result.status}`));
   assert.match(result.stdout, /Usage:/);
-  assert.match(result.stdout, /bun funnel-velocity\.ts/);
+  assert.match(result.stdout, /career-ops funnel-velocity/);
   assert.match(result.stdout, /--summary/);
   assert.match(result.stdout, /--benchmarks <path>/);
 });

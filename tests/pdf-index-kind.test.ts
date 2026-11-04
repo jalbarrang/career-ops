@@ -16,12 +16,12 @@ import {
   resolveArtifactKind,
   renderHtmlToPdf,
   ARTIFACT_KINDS,
-} from '../generate-pdf.ts';
-import { parsePdfIndex } from '../find.ts';
+} from '../packages/cli/src/commands/cv/generate-pdf.ts';
+import { parsePdfIndex } from '../packages/cli/src/commands/pipeline/find.ts';
 
 console.log('\nPDF manifest keys on report number and artifact kind (#3887)');
 
-const HEADER = '# report\tpdf\thtml\tformat\tdate\tkind — written by generate-pdf.ts, do not edit';
+const HEADER = '# report\tpdf\thtml\tformat\tdate\tkind — written by packages/cli/src/commands/cv/generate-pdf.ts, do not edit';
 const cvRow = '7\toutput/cv-acme-2026-09-05.pdf\t\tletter\t2026-09-05\tcv';
 const coverRow = '7\toutput/cover-acme-2026-09-05.pdf\t\tletter\t2026-09-05\tcover';
 
@@ -100,7 +100,7 @@ const kinds = (lines) => lines.map((l) => l.split('\t')[5]);
 }
 
 // The column is appended last so the five existing columns keep their index:
-// find.ts, outcome.ts and the web reader all parse this file positionally.
+// packages/cli/src/commands/pipeline/find.ts, packages/cli/src/commands/tracker/outcome.ts and the web reader all parse this file positionally.
 {
   const out = applyManifestRow([HEADER], row({ pdf: 'output/cover-acme-2026-09-06.pdf', kind: 'cover' }));
   const f = out[0].split('\t');
@@ -217,8 +217,8 @@ for (const [explicit, path, wantKind, wantSource, label] of kindCases) {
 // parsePdfIndex returns one path per report, assigned inside the loop, so it is
 // last-row-wins. Once a report legitimately carries two rows, a cover letter
 // generated after its CV takes the slot. The map is not local to one caller:
-// find.ts prints it as the row's PDF, merge-tracker.ts sets the tracker's PDF
-// flag from it, and outcome.ts archives from it — so the cover-letter-as-CV
+// packages/cli/src/commands/pipeline/find.ts prints it as the row's PDF, packages/cli/src/commands/tracker/merge-tracker.ts sets the tracker's PDF
+// flag from it, and packages/cli/src/commands/tracker/outcome.ts archives from it — so the cover-letter-as-CV
 // upload this file exists to prevent comes back through the reader.
 {
   const kindIndex = parsePdfIndex(

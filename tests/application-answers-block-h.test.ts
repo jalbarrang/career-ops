@@ -38,7 +38,7 @@ try {
   const {
     formatApplicationAnswersSection,
     parseDraftAnswersBlockH,
-  } = await import(pathToFileURL(join(ROOT, 'application-answers.ts')).href);
+  } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/evaluation/application-answers.ts')).href);
 
   // Every over-read trap in one fixture: the parenthetical, an answer carrying
   // bold mid-sentence, a multi-line answer, the closing rule, and a following
@@ -199,7 +199,7 @@ try {
     // stderr is piped, not inherited: the refusals below fail BY DESIGN and
     // their messages belong in the assertion, not in the suite's output.
     const cli = (...extra) =>
-      run('node', ['application-answers.ts', ...extra], { stdio: ['ignore', 'pipe', 'pipe'] });
+      run('node', ['packages/cli/src/commands/evaluation/application-answers.ts', ...extra], { stdio: ['ignore', 'pipe', 'pipe'] });
     const cliChecks = [];
 
     const draftOut = cli('--report', reportPath, '--read-draft');

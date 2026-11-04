@@ -1,5 +1,5 @@
 // tests/providers/manfred.test.ts — provider-contract tests for the getManfred
-// board-wide JSON feed (providers/manfred.ts).
+// board-wide JSON feed (packages/core/src/scanning/providers/manfred.ts).
 //
 // The fixtures mirror shapes measured on the live feed on 2026-08-03, including
 // the ones that decide the provider's design: a catalogue dominated by CLOSED
@@ -13,7 +13,7 @@ import { pathToFileURL } from 'url';
 console.log('\nProvider — manfred');
 
 try {
-  const manfredModule = await import(pathToFileURL(join(ROOT, 'providers/manfred.ts')).href);
+  const manfredModule = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/manfred.ts')).href);
   const manfred = manfredModule.default;
   const { normalizeManfredOffer, normalizeCurrency, parseCompensation, resolveLocation, resolveLang } = manfredModule;
 
@@ -103,7 +103,7 @@ try {
   }
 
   // Currency arrives as a SYMBOL, and the live feed carries a narrow-no-break
-  // space glued to it. scan.ts's salary_filter compares currency strings, so a
+  // space glued to it. packages/core/src/scanning/scan.ts's salary_filter compares currency strings, so a
   // symbol would never match a user's `currency: EUR`.
   if (normalizeCurrency('€') === 'EUR' && normalizeCurrency(' €') === 'EUR'
       && normalizeCurrency('£') === 'GBP' && normalizeCurrency('US$') === 'USD'

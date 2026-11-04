@@ -33,12 +33,24 @@ func CheckoutScriptPath(name string) (string, error) {
 		roots = append(roots, filepath.Dir(executable), filepath.Dir(filepath.Dir(executable)))
 	}
 	for _, root := range roots {
-		if info, err := os.Stat(filepath.Join(root, "path-resolver.ts")); err != nil || info.IsDir() {
-			continue
+		// The engine's scripts live under packages/{cli,core}/src/<context>/ since
+		// the monorepo split. Glob the two bounded trees rather than walking the
+		// checkout, so a data-only root still resolves nothing.
+		patterns := []string{
+			filepath.Join(root, "packages", "cli", "src", "commands", "*", name),
+			filepath.Join(root, "packages", "core", "src", "*", name),
+			filepath.Join(root, "packages", "core", "src", "*", "*", name),
+			// Legacy flat checkout.
+			filepath.Join(root, name),
 		}
-		script := filepath.Join(root, name)
-		if info, err := os.Stat(script); err == nil && !info.IsDir() {
-			return filepath.Abs(script)
+		for _, pattern := range patterns {
+			matches, _ := filepath.Glob(pattern)
+			if len(matches) == 0 {
+				continue
+			}
+			if info, err := os.Stat(matches[0]); err == nil && !info.IsDir() {
+				return filepath.Abs(matches[0])
+			}
 		}
 	}
 	return "", fmt.Errorf("dashboard actions need %s in the career-ops checkout", name)

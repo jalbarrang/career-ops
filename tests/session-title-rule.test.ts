@@ -14,7 +14,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { fail, pass, ROOT } from './helpers.ts';
-import { knownKeysFromExample, EXAMPLE_PATH } from '../validate-profile.ts';
+import { knownKeysFromExample, EXAMPLE_PATH } from '../packages/cli/src/commands/profile/validate-profile.ts';
 
 console.log('\nRouter session-title rule (#5303)');
 
@@ -65,7 +65,7 @@ for (const mode of ['modes/auto-pipeline.md', 'modes/oferta.md']) {
     pointer.includes('`{Role}, via {Agency}`') && pointer.includes('**Agency confirmation handoff**'));
 }
 
-// validate-profile.ts takes its known keys from the example; an opt-out key
+// packages/cli/src/commands/profile/validate-profile.ts takes its known keys from the example; an opt-out key
 // missing there would be reported as unknown on every profile that sets it.
 const known = knownKeysFromExample(readFileSync(EXAMPLE_PATH, 'utf-8'));
 check('`session_title` is a documented config/profile.yml key', known.includes('session_title'));

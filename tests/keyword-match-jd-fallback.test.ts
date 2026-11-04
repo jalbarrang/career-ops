@@ -1,7 +1,7 @@
 // tests/keyword-match-jd-fallback.test.ts — a report with no keyword section
 // still gets a coverage check, read from its archived JD, and says so loudly.
 //
-// Before this, keyword-match.ts exited 1 with one stderr line. An agent running
+// Before this, packages/cli/src/commands/evaluation/keyword-match.ts exited 1 with one stderr line. An agent running
 // modes/pdf.md Step 22 in a batch could drop that line and report no coverage
 // at all, so the tailored CV shipped without a keyword check.
 import assert from 'node:assert/strict';
@@ -24,7 +24,7 @@ writeFileSync(cvPath, '# Candidate\n\nBuilt Python services and Docker images.\n
 function run(reportText, extraArgs = []) {
   const reportPath = join(dir, 'report.md');
   writeFileSync(reportPath, reportText);
-  return spawnSync(NODE, [join(ROOT, 'keyword-match.ts'), reportPath, '--cv', cvPath, ...extraArgs], {
+  return spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/evaluation/keyword-match.ts'), reportPath, '--cv', cvPath, ...extraArgs], {
     encoding: 'utf-8',
     env: { ...process.env, CAREER_OPS_ROOT: dir },
   });
@@ -69,14 +69,14 @@ try {
   check('the archive pointer form is followed to the jds/ file', () => {
     mkdirSync(join(dir, 'jds'), { recursive: true });
     writeFileSync(join(dir, 'jds', '007-example.md'), 'Requirements\nKubernetes and Docker\n');
-    const r = run('## Job Description (archived verbatim)\nSee jds/007-example.md for the full archive (archive-posting.ts --report=007).\n', ['--json']);
+    const r = run('## Job Description (archived verbatim)\nSee jds/007-example.md for the full archive (packages/cli/src/commands/evaluation/archive-posting.ts --report=007).\n', ['--json']);
     assert.equal(r.status, 0, r.stderr);
     assert.deepEqual(JSON.parse(r.stdout).missing, ['Kubernetes']);
   });
 
   check('an archive pointer that leaves jds/ is not read', () => {
     writeFileSync(join(dir, 'outside.md'), 'Kubernetes and Docker\n');
-    const r = run('## Job Description (archived verbatim)\nSee jds/../Kubernetes.md for the full archive (archive-posting.ts --report=007).\n');
+    const r = run('## Job Description (archived verbatim)\nSee jds/../Kubernetes.md for the full archive (packages/cli/src/commands/evaluation/archive-posting.ts --report=007).\n');
     assert.equal(r.status, 1);
     assert.equal(r.stdout, '');
   });

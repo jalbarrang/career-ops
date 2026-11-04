@@ -23,11 +23,11 @@ function check(name, fn) {
   }
 }
 
-const { hasEmbeddedJdArchive, extractStrippedJdSection } = await load('check-jd-archive.ts');
-const { extractKeywords } = await load('keyword-match.ts');
-const { readMachineSummary, cardReason } = await load('web/src/lib/machine-summary.ts');
-const { splitSections, verdictReason, isVerdictHeading } = await load('web/src/lib/report-sections.ts');
-const { parseReportEnvelope } = await load('web/src/lib/report-envelope.ts');
+const { hasEmbeddedJdArchive, extractStrippedJdSection } = await load('packages/core/src/evaluation/check-jd-archive.ts');
+const { extractKeywords } = await load('packages/cli/src/commands/evaluation/keyword-match.ts');
+const { readMachineSummary, cardReason } = await load('apps/web/src/lib/machine-summary.ts');
+const { splitSections, verdictReason, isVerdictHeading } = await load('apps/web/src/lib/report-sections.ts');
+const { parseReportEnvelope } = await load('apps/web/src/lib/report-envelope.ts');
 
 function templateHeader(text, opener) {
   const start = text.indexOf(opener);

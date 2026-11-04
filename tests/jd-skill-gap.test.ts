@@ -50,7 +50,7 @@ const cleanup = (f) => {
 };
 
 function run(f, args = ['--summary']) {
-  const r = spawnSync(process.execPath, [join(ROOT, 'jd-skill-gap.ts'), join(f.dataRoot, 'jd.md'), ...args], {
+  const r = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/evaluation/jd-skill-gap.ts'), join(f.dataRoot, 'jd.md'), ...args], {
     cwd: f.decoyCwd, encoding: 'utf-8', timeout: 60_000,
     env: { ...process.env, CAREER_OPS_ROOT: f.dataRoot, CAREER_OPS_DATA_DIR: '' },
   });

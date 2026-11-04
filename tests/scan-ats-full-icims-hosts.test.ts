@@ -8,7 +8,7 @@ import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\nscan-ats-full — iCIMS host candidates');
 
-const { SOURCES, icimsHostCandidates } = await import(pathToFileURL(join(ROOT, 'scan-ats-full.ts')).href);
+const { SOURCES, icimsHostCandidates } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/scanning/scan-ats-full.ts')).href);
 const url = (host) => `https://${host}/jobs/search?ss=1&in_iframe=1`;
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 

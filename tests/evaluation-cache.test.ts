@@ -7,16 +7,16 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dump as yamlDump, load as yamlLoad } from 'js-yaml';
 import { rmSync } from './helpers.ts';
-import { extractJobFacts, invalidateJobFacts, lookupJobFacts } from '../evaluation-cache.ts';
+import { extractJobFacts, invalidateJobFacts, lookupJobFacts } from '../packages/cli/src/commands/evaluation/evaluation-cache.ts';
 import { describeSpawn } from './helpers/describe-spawn.ts';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const identityUrl = new URL('../listing-fingerprint.ts', import.meta.url);
+const identityUrl = new URL('../packages/core/src/scanning/listing-fingerprint.ts', import.meta.url);
 // The dependency PR owns the identity contract. Never substitute a copied
 // implementation here: extraction tests run now; integration runs once that
 // module is available, including when testing both changes together locally.
 const identity = existsSync(identityUrl) ? await import(identityUrl.href) : null;
-const integration = { skip: identity ? false : 'Requires the #1030 listing-fingerprint.ts dependency' };
+const integration = { skip: identity ? false : 'Requires the #1030 packages/core/src/scanning/listing-fingerprint.ts dependency' };
 const NOW = Date.parse('2026-09-30T10:00:00.000Z');
 const HOUR = 60 * 60 * 1000;
 const POSTING_URL = 'https://boards.greenhouse.io/example/jobs/12345';
@@ -345,7 +345,7 @@ test('report symlinks cannot read or mutate files outside the reports directory'
 });
 
 function runCli(...args) {
-  const result = spawnSync(process.execPath, [join(ROOT, 'evaluation-cache.ts'), ...args], {
+  const result = spawnSync(process.execPath, [join(ROOT, 'packages/cli/src/commands/evaluation/evaluation-cache.ts'), ...args], {
     cwd: ROOT, encoding: 'utf8', timeout: 10_000,
   });
   assert.equal(result.error, undefined);

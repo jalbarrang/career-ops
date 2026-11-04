@@ -7,7 +7,7 @@
 //   1. Company matching must fold names WITHOUT collapsing distinct companies.
 //      A naive NFKD fold silently drops non-decomposing Latin, so "Ørsted"
 //      never matches "Orsted" and the user simply never learns they had a
-//      contact. Delegating to lib/ascii-fold.ts fixes the whole class.
+//      contact. Delegating to packages/core/src/kernel/ascii-fold.ts fixes the whole class.
 //   2. `strong` requires distinctive token sets to be EQUAL, not nested.
 //      Containment reads like a match while naming a different company
 //      ("Epic" is in "Epic Games", but Epic Systems is an EHR vendor).
@@ -23,7 +23,7 @@ import {
   companyTokens, matchCompany, parseCsv, findHeaderRow, parseConnectedOn,
   parseConnections, parseTrackerTargets, joinConnections, parseKnownContacts,
   secondDegreeSearchUrl,
-} from '../linkedin-join.ts';
+} from '../packages/cli/src/commands/outreach/linkedin-join.ts';
 
 const tier = (a, b) => matchCompany(companyTokens(a), companyTokens(b));
 

@@ -77,14 +77,14 @@ tracked_companies:${[
     'tracked_companies[13].amazon',
     'job_boards[0].amazon',
   ];
-  const empty = summarize(run(NODE, ['validate-portals.ts', '--file', emptyPath]));
+  const empty = summarize(run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', emptyPath]));
   if (empty && empty.errors === 0 && JSON.stringify(empty.warnings) === JSON.stringify(expected)) {
     pass('validate-portals warns on every provider config block that sets no filter');
   } else {
     fail(`validate-portals should warn exactly on ${expected.join(', ')}; got ${JSON.stringify(empty)}`);
   }
 
-  const filled = summarize(run(NODE, ['validate-portals.ts', '--file', filledPath]));
+  const filled = summarize(run(NODE, ['packages/cli/src/commands/scanning/validate-portals.ts', '--file', filledPath]));
   if (filled && filled.errors === 0 && filled.warnings.length === 0) {
     pass('validate-portals stays silent on a filtering block, no block, and a disabled entry');
   } else {

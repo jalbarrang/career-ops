@@ -12,7 +12,7 @@ console.log('\ntheme-style.ts (dynamic PDF theming, #1837)');
 try {
   const {
     styleTokensFrom, readStyleTokens, readLockedSections, buildThemeStyleBlock, injectThemeStyle,
-  } = await import(pathToFileURL(join(ROOT, 'theme-style.ts')).href);
+  } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/cv/theme-style.ts')).href);
 
   // styleTokensFrom: recognized keys → css vars; ignore unknown/non-string/missing
   const t = styleTokensFrom({ accent_color: '#2563eb', secondary_color: '#111827', tag_color: '#0e7490', tag_bg: '#ecfeff', tag_border: '#a5f3fc', font_family: 'Outfit, sans-serif', font_size: '10pt', margin: '0.5in', job_break_inside: 'avoid', project_break_inside: 'avoid', nope: 'x', font_weight: 700 });
@@ -200,7 +200,7 @@ try {
   // declaration) must not drift between two tokens making the same promise about
   // different entries.
   {
-    const { listTemplates } = await import(pathToFileURL(join(ROOT, 'cv-templates.ts')).href);
+    const { listTemplates } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/cv/cv-templates.ts')).href);
 
     // Innermost `selector { body }` rules of every <style> block, with
     // comments stripped (they hold braces and token names) and {{PLACEHOLDER}}s
@@ -371,7 +371,7 @@ try {
   // rule now reads the SAME variable (with 0.6in only as the final fallback), so
   // a --page-margin override earlier in <head> is what actually wins.
   {
-    const { injectPrintPageCss } = await import(pathToFileURL(join(ROOT, 'generate-pdf.ts')).href);
+    const { injectPrintPageCss } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/cv/generate-pdf.ts')).href);
     const tplSrc = readFileSync(join(ROOT, 'templates/cv-template.html'), 'utf-8');
     const withOverride = injectPrintPageCss(injectThemeStyle(tplSrc, { '--page-margin': '0.5in' }), 'a4');
     const rootDefaultIdx = withOverride.indexOf('--page-margin: 0.6in');   // template's own :root default
@@ -386,7 +386,7 @@ try {
   }
   // The competency-tag palette was three hardcoded literals, so a profile could
   // recolor the accents and then had nowhere to go for the tags — and a template
-  // edit is reverted by every `update-system.ts apply`. Two things must hold: the
+  // edit is reverted by every `packages/cli/src/commands/platform/update-system.ts apply`. Two things must hold: the
   // template still READS each token (an unreferenced var makes an override inert),
   // and each :root default is byte-identical to the literal it replaced (or every
   // existing CV silently changes color).

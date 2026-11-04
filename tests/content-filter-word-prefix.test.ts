@@ -16,7 +16,7 @@
 // Section 3 pins that difference directly.
 
 import { pass, fail, ROOT } from './helpers.ts';
-import { buildContentFilter, compileContentKeyword } from '../scan.ts';
+import { buildContentFilter, compileContentKeyword } from '../packages/core/src/scanning/scan.ts';
 
 console.log('\ncontent filter — `word:` / `stem:` prefixes (#3274)');
 

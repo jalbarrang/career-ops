@@ -1,5 +1,5 @@
 // tests/connection-scope.test.ts — per-board connection pools for the full
-// sweep (providers/_connection-scope.ts). Without them a sweep keeps one idle
+// sweep (packages/core/src/scanning/providers/_connection-scope.ts). Without them a sweep keeps one idle
 // socket per per-tenant hostname for the rest of the run; these tests pin the
 // behaviour that prevents that: each unit gets its own pool, and every socket
 // in it is closed when the unit ends, whether it resolved or threw.
@@ -10,7 +10,7 @@ import { pass, fail, ROOT } from './helpers.ts';
 
 console.log('\nconnection scope — per-board connection pools');
 
-const mod = await import(pathToFileURL(join(ROOT, 'providers/_connection-scope.ts')).href);
+const mod = await import(pathToFileURL(join(ROOT, 'packages/core/src/scanning/providers/_connection-scope.ts')).href);
 const { withConnectionScope, currentConnectionScope, _resetConnectionScopeForTests } = mod;
 
 // An inherited CAREER_OPS_CONNECTION_SCOPE=0 would turn scoping off for every
@@ -124,7 +124,7 @@ if (!poolAvailable) {
 
 // Only per-tenant-host sources are scoped; single-host directories share one pool.
 {
-  const { SOURCES } = await import(pathToFileURL(join(ROOT, 'scan-ats-full.ts')).href);
+  const { SOURCES } = await import(pathToFileURL(join(ROOT, 'packages/cli/src/commands/scanning/scan-ats-full.ts')).href);
   const single = ['greenhouse', 'lever', 'ashby'].every((s) => SOURCES[s].singleHost === true);
   const multi = ['workday', 'icims', 'bamboohr'].every((s) => !SOURCES[s].singleHost);
   if (single && multi) pass('single-host sources unscoped; workday, icims and bamboohr scoped');

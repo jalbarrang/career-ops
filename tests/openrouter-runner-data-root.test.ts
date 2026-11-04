@@ -11,7 +11,7 @@
 //       reportsDir: path.join(__dirname, 'reports'),
 //     });
 //
-// reserve-report-num.ts defaults to getCareerOpsRoot(), so those options
+// packages/cli/src/commands/tracker/reserve-report-num.ts defaults to getCareerOpsRoot(), so those options
 // actively redirect it to the CODE root — while the report is written to
 // {DATA_ROOT}/reports/ by writeFile(). The allocator is asked whether a number is
 // free somewhere the report will never be written, so it says yes for numbers
@@ -79,7 +79,7 @@ function inDataRoot(dir, expr, extraEnv = {}) {
 // live model call; the defect is entirely in which directory it names, so this
 // asserts that directory against the allocator that consumes it.
 {
-  const src = readFileSync(join(ROOT, 'openrouter-runner.ts'), 'utf8');
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/evaluation/openrouter-runner.ts'), 'utf8');
 
   // The reservation and the write must name the same root. Asserted on the source
   // because that pairing is the whole bug: each line is defensible alone.
@@ -106,8 +106,8 @@ function inDataRoot(dir, expr, extraEnv = {}) {
   const dir = makeDataRoot();
   const allocate = (rootExpr) => inDataRoot(dir, `
     import path from 'node:path';
-    import { getCareerOpsRoot } from ${JSON.stringify(new URL('../path-resolver.ts', import.meta.url).href)};
-    import { reserveReportNumbers, releaseReportNumbers } from ${JSON.stringify(new URL('../reserve-report-num.ts', import.meta.url).href)};
+    import { getCareerOpsRoot } from ${JSON.stringify(new URL('../packages/core/src/kernel/path-resolver.ts', import.meta.url).href)};
+    import { reserveReportNumbers, releaseReportNumbers } from ${JSON.stringify(new URL('../packages/cli/src/commands/tracker/reserve-report-num.ts', import.meta.url).href)};
     const DATA_ROOT = getCareerOpsRoot();
     const base = ${rootExpr};
     const got = await reserveReportNumbers(1, { rootDir: base, reportsDir: path.join(base, 'reports') });
@@ -160,7 +160,7 @@ function inDataRoot(dir, expr, extraEnv = {}) {
 // the fixed line through the real CLI without an API key. Against main the runner
 // cannot see a report sitting in the user's data root and says so:
 //
-//     $ CAREER_OPS_DATA_DIR=$SB bun openrouter-runner.ts apply 1
+//     $ CAREER_OPS_DATA_DIR=$SB career-ops openrouter-runner apply 1
 //     Report not found: 1
 //
 // With the fix it gets past the lookup and fails later, on the missing key.
@@ -174,14 +174,14 @@ function inDataRoot(dir, expr, extraEnv = {}) {
   // and cmdApply then RETURNS, so the process exits 0. execFileSync hands back only
   // stdout on a zero exit, which silently discards the very marker this assertion
   // looks for -- the leg then skipped instead of failing against the bug.
-  const r = spawnSync(NODE, [join(ROOT, 'openrouter-runner.ts'), 'apply', '1'], {
+  const r = spawnSync(NODE, [join(ROOT, 'packages/cli/src/commands/evaluation/openrouter-runner.ts'), 'apply', '1'], {
     cwd: ROOT, env: env(dir, { OPENROUTER_API_KEY: '' }), encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000,
   });
   const out = `${String(r.stdout || '')}${String(r.stderr || '')}`;
 
   // Two markers, one on each side of the lookup: "Report not found" is printed by
-  // the failure branch (openrouter-runner.ts:802), which returns immediately, and
+  // the failure branch (packages/cli/src/commands/evaluation/openrouter-runner.ts:802), which returns immediately, and
   // "Generating application form answers..." comes after it (:827). So the first
   // means the lookup read the wrong directory and the second means it read the
   // right one.
@@ -208,7 +208,7 @@ function inDataRoot(dir, expr, extraEnv = {}) {
   const dir = makeDataRoot();
   const resolved = inDataRoot(dir, `
     import path from 'node:path';
-    import { getCareerOpsRoot } from ${JSON.stringify(new URL('../path-resolver.ts', import.meta.url).href)};
+    import { getCareerOpsRoot } from ${JSON.stringify(new URL('../packages/core/src/kernel/path-resolver.ts', import.meta.url).href)};
     process.stdout.write(path.join(getCareerOpsRoot(), 'data', 'model-blacklist.json'));
   `);
   if (resolved === join(dir, 'data', 'model-blacklist.json')) {
@@ -223,7 +223,7 @@ function inDataRoot(dir, expr, extraEnv = {}) {
   // across a BLACKLIST_DIR constant — a test that fails on a correct fix is
   // worse than no test. What matters is that no blacklist path is built from
   // the script's own directory; how the join is spelled is the author's call.
-  const src = readFileSync(join(ROOT, 'openrouter-runner.ts'), 'utf8');
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/evaluation/openrouter-runner.ts'), 'utf8');
   const blacklistLines = src
     .split('\n')
     .filter((line) => /BLACKLIST/.test(line) && !line.trim().startsWith('//'));
@@ -240,10 +240,10 @@ function inDataRoot(dir, expr, extraEnv = {}) {
   // DATA_ROOT is declared further down the file, and getting that wrong is a
   // top-level ReferenceError rather than a wrong path.
   try {
-    inDataRoot(dir, `await import(${JSON.stringify(new URL('../openrouter-runner.ts', import.meta.url).href)});`);
+    inDataRoot(dir, `await import(${JSON.stringify(new URL('../packages/cli/src/commands/evaluation/openrouter-runner.ts', import.meta.url).href)});`);
     pass('the module still imports cleanly (no use-before-declaration)');
   } catch (err) {
-    fail(`importing openrouter-runner.ts failed: ${String(err.stderr || err.message).split('\n')[0]}`);
+    fail(`importing packages/cli/src/commands/evaluation/openrouter-runner.ts failed: ${String(err.stderr || err.message).split('\n')[0]}`);
   }
 }
 
@@ -254,7 +254,7 @@ function inDataRoot(dir, expr, extraEnv = {}) {
 // with the variables cleared rather than by reasoning about it.
 {
   const resolved = execFileSync(NODE, ['--input-type=module', '-e',
-    `import { getCareerOpsRoot } from ${JSON.stringify(new URL('../path-resolver.ts', import.meta.url).href)};`
+    `import { getCareerOpsRoot } from ${JSON.stringify(new URL('../packages/core/src/kernel/path-resolver.ts', import.meta.url).href)};`
     + 'process.stdout.write(getCareerOpsRoot());',
   ], {
     cwd: ROOT, encoding: 'utf8', timeout: 30_000,
@@ -288,7 +288,7 @@ for (const dir of cleanup) rmSync(dir, { recursive: true, force: true, maxRetrie
 // own directory for good reasons, and judging those needs the context each
 // carries.
 {
-  const src = readFileSync(join(ROOT, 'openrouter-runner.ts'), 'utf8');
+  const src = readFileSync(join(ROOT, 'packages/cli/src/commands/evaluation/openrouter-runner.ts'), 'utf8');
 
   // The one legitimate use, with its reason. .env ships beside the script and is
   // read by loadDotenv before any data path is resolved; it is configuration for
@@ -307,7 +307,7 @@ for (const dir of cleanup) rmSync(dir, { recursive: true, force: true, maxRetrie
     .filter(({ line }) => !ALLOWED.some(({ pattern }) => pattern.test(line)));
 
   if (offenders.length === 0) {
-    pass('every __dirname use in openrouter-runner.ts is the declaration, .env or CODE_ROOT');
+    pass('every __dirname use in packages/cli/src/commands/evaluation/openrouter-runner.ts is the declaration, .env or CODE_ROOT');
   } else {
     fail('these lines resolve a path against the script\'s own directory rather than '
       + 'the data root — if one of them is deliberate, add it to ALLOWED in this test '
