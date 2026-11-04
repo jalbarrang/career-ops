@@ -91,7 +91,10 @@ test("with no opt-in, the dev server is told to bind loopback", () => {
   // Then nothing outside the machine can open a connection, and the notice names
   // the address — asserting only the phrase let a notice that announced the
   // resolved bind while the server opened every interface pass unnoticed.
-  assert.deepEqual(run.out, ["dev", "--port", "3000", "--strictPort", "--host", "127.0.0.1"]);
+  // And no strictPort: 3000 is a preference, so a taken port steps to the next
+  // free one instead of failing a start vite could have made.
+  assert.deepEqual(run.out, ["dev", "--port", "3000", "--host", "127.0.0.1"]);
+  assert.ok(!run.out.includes("--strictPort"), "a requested port must not be a hard requirement");
   assert.ok(run.stderr.includes("binding 127.0.0.1"), `stderr was: ${run.stderr}`);
   assert.ok(run.stderr.includes("loopback only"), "a loopback bind should be stated plainly");
 });
@@ -100,14 +103,14 @@ test("a blank opt-in is not an opt-in", () => {
   // Given a variable that is set but names nothing
   const run = launch({ args: ["dev"], env: { CAREER_OPS_WEB_ALLOWED_HOSTS: " , " } });
   // Then the bind is unchanged
-  assert.deepEqual(run.out, ["dev", "--port", "3000", "--strictPort", "--host", "127.0.0.1"]);
+  assert.deepEqual(run.out, ["dev", "--port", "3000", "--host", "127.0.0.1"]);
 });
 
 test("an opt-in naming only loopback does not widen the bind", () => {
   // Given the value that used to open every interface while granting nothing
   const run = launch({ args: ["dev"], env: { CAREER_OPS_WEB_ALLOWED_HOSTS: "localhost" } });
   // Then the socket stays on loopback
-  assert.deepEqual(run.out, ["dev", "--port", "3000", "--strictPort", "--host", "127.0.0.1"], "a loopback-only opt-in must not widen");
+  assert.deepEqual(run.out, ["dev", "--port", "3000", "--host", "127.0.0.1"], "a loopback-only opt-in must not widen");
   assert.ok(!run.stderr.includes("reachable from your network"), "and must not claim exposure");
 });
 
@@ -130,17 +133,19 @@ test("an opt-in naming one address binds that address alone", () => {
   const run = launch({ args: ["dev"], env: { CAREER_OPS_WEB_ALLOWED_HOSTS: "192.168.1.50" } });
   // Then only that interface is published, and the cost is stated: one socket
   // carries one address, so localhost stops answering
-  assert.deepEqual(run.out, ["dev", "--port", "3000", "--strictPort", "--host", "192.168.1.50"]);
+  assert.deepEqual(run.out, ["dev", "--port", "3000", "--host", "192.168.1.50"]);
   assert.ok(run.stderr.includes("binding 192.168.1.50"), `stderr was: ${run.stderr}`);
   assert.ok(!run.stderr.includes("binding 0.0.0.0"), "every interface must not be published");
-  assert.ok(run.stderr.includes("http://localhost:3000 will not answer"), "the cost must be stated, with the real port");
+  // Named without a port: the requested one is only a preference now, so quoting it
+  // would state a URL vite may not have bound.
+  assert.ok(run.stderr.includes("a localhost URL will not answer"), "the cost must be stated");
 });
 
 test("naming a loopback host alongside an address opts back into every interface", () => {
   // Given the documented escape hatch for keeping localhost working
   const run = launch({ args: ["dev"], env: { CAREER_OPS_WEB_ALLOWED_HOSTS: "192.168.1.50, localhost" } });
   // Then the wider bind is taken deliberately, and not reported as costing loopback
-  assert.deepEqual(run.out, ["dev", "--port", "3000", "--strictPort", "--host", "0.0.0.0"]);
+  assert.deepEqual(run.out, ["dev", "--port", "3000", "--host", "0.0.0.0"]);
   assert.ok(!run.stderr.includes("will not answer"), "0.0.0.0 still answers on loopback");
 });
 
@@ -161,7 +166,7 @@ test("a caller's -H is honoured alone, with no competing bind flag", () => {
   // on commander keeping the last value — a bet against a dependency.
   const run = launch({ args: ["dev", "-H", "0.0.0.0"] });
   // Then exactly one bind flag exists, carrying the caller's value
-  assert.deepEqual(run.out, ["dev", "--port", "3000", "--strictPort", "--host", "0.0.0.0"]);
+  assert.deepEqual(run.out, ["dev", "--port", "3000", "--host", "0.0.0.0"]);
   // And the run is reported as possibly exposed rather than claimed as loopback
   assert.ok(run.stderr.includes("may be reachable from your network"), "a host flag must warn");
   assert.ok(!run.stderr.includes("loopback only"), "it must not claim loopback");
@@ -197,7 +202,7 @@ test("an override alongside an opt-in still wins", () => {
   // Given an opt-in that would have widened, plus a caller pulling it back down
   const run = launch({ args: ["dev", "-H", "127.0.0.1"], env: { CAREER_OPS_WEB_ALLOWED_HOSTS: "nas.local" } });
   // Then the resolved 0.0.0.0 is neither injected nor announced
-  assert.deepEqual(run.out, ["dev", "--port", "3000", "--strictPort", "--host", "127.0.0.1"]);
+  assert.deepEqual(run.out, ["dev", "--port", "3000", "--host", "127.0.0.1"]);
   assert.ok(!run.stderr.includes("binding 0.0.0.0"), "the unused resolved bind must not be announced");
 });
 
@@ -207,7 +212,7 @@ test("unrelated flags are forwarded untouched", () => {
   // Given a caller passing the runner's own options through npm's `--`
   const run = launch({ args: ["dev", "-p", "4000", "--open"] });
   // Then they arrive in order, after the launcher's own bind and port
-  assert.deepEqual(run.out, ["dev", "--port", "4000", "--strictPort", "--host", "127.0.0.1", "--open"]);
+  assert.deepEqual(run.out, ["dev", "--port", "4000", "--host", "127.0.0.1", "--open"]);
 });
 
 test("a missing dev-server install is reported as a missing install", () => {

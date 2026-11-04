@@ -1,6 +1,6 @@
 # Career-ops Web UI Launcher Documentation
 
-Career-ops includes a local-first web interface located in the `web/` directory. The `bun run ui` launcher script (`scripts/ui-server.ts`) provides a zero-setup daemon to start the local Next.js server, verify environment readiness, canonically resolve the career-ops data root, and open the dashboard in your default browser.
+Career-ops includes a local-first web interface located in the `web/` directory. The `bun run ui` launcher script (`scripts/ui-server.ts`) provides a zero-setup daemon to start the local SvelteKit dev server, verify environment readiness, canonically resolve the career-ops data root, and open the dashboard in your default browser.
 
 ---
 
@@ -19,6 +19,13 @@ bun run ui
 ```
 
 The server starts locally on `http://127.0.0.1:3000` by default and automatically opens your browser once the server is ready.
+
+If that port is already taken, the launcher stops and points at `--port` instead
+of starting on a port other than the URL it just printed.
+
+The same app also starts without the wrapper — `cd web && bun run dev`. That skips
+the banner, the install check, the port pre-check and the browser open, and lets
+vite fall back to the next free port, printing the URL it actually bound.
 
 ---
 

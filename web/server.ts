@@ -27,7 +27,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const [command, ...extra] = process.argv.slice(2);
 
 // The packaged UI has always been served on 3000; keeping it means a bookmark, a
-// docs URL and scripts/ui-server.ts all keep working.
+// docs URL and scripts/ui-server.ts all keep working. It is a preference, not a
+// contract: vite steps to the next free port when it is taken.
 const DEFAULT_PORT = 3000;
 
 const plan = planDevRun({
@@ -115,8 +116,8 @@ if (userHostFlag) {
   );
   if (plan.loopbackUnreachable) {
     console.error(
-      `career-ops web: one socket carries one address, so http://localhost:${port} will not answer — ` +
-        `open it at ${plan.bindHost}. Name a loopback host alongside it to bind every interface instead.`,
+      `career-ops web: one socket carries one address, so a localhost URL will not answer — ` +
+        `open the address vite prints (${plan.bindHost}). Name a loopback host alongside it to bind every interface instead.`,
     );
   }
 } else {
@@ -171,11 +172,13 @@ if (command === "dev") {
     process.exit(1);
   }
   // One bind flag, always: the caller's when they supplied one, otherwise the
-  // resolved one. strictPort because a silently shifted port would make the
-  // printed URL wrong while looking like a healthy start.
+  // resolved one. No strictPort: the port above is a preference, so a taken one
+  // makes vite try the next free port and print the URL it bound. That printed
+  // URL is the only place a URL is stated — asserting one here would be the lie
+  // strictPort used to trade a failed start for.
   const hostArgs = bindHost ? ["--host", bindHost] : [];
   child = {
-    argv: [viteEntry, "dev", "--port", String(port), "--strictPort", ...hostArgs, ...rest],
+    argv: [viteEntry, "dev", "--port", String(port), ...hostArgs, ...rest],
     env: process.env,
     label: "the dev server",
   };
