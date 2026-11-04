@@ -151,7 +151,6 @@ scan ──► data/pipeline.md ──► evaluate (oferta + cv) ──► repor
 ## Quality gates
 
 - `bun test-all.ts` — the full suite (17k+ assertions across scoring, scan, tracker, PDF, security, updater, architecture boundaries).
-- `bun run typecheck` — `tsc` over the workspace (advisory; the suite is the gate).
 - `updater-migration-tests.ts` — enforces the system/user boundary and safe cross-version upgrades.
 - CI: `test` + CodeQL are required; CodeRabbit reviews every PR; Renovate keeps deps current.
 

@@ -14,7 +14,6 @@
   "scripts": {
     "career-ops": "bun packages/cli/src/bin/career-ops.ts",
     "test": "bun test-all.ts --quick",
-    "typecheck": "tsc -p tsconfig.json",
     "doctor": "bun packages/cli/src/commands/platform/doctor.ts",
     "ui": "bun scripts/ui-server.ts",
     "or": "bun packages/cli/src/commands/evaluation/openrouter-runner.ts",
