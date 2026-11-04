@@ -13,7 +13,8 @@
 // `packages/cli/src/commands/evaluation/gemini-eval.ts`'s concatenating version alive next to a sibling that had
 // been immune to the same input the whole time.
 import { readdirSync, readFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { listTree } from '../packages/core/src/kernel/walk-tree.ts';
+import { dirname, join, relative, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { pass, fail } from './helpers.ts';
 import { looksLikeScoreCell } from '../packages/core/src/tracker/tracker-parse.ts';
@@ -97,10 +98,10 @@ const defRe = (name) => new RegExp(
   'm',
 );
 
-const scanned = [
-  ...readdirSync(ROOT).filter(n => n.endsWith('.ts')),
-  ...readdirSync(join(ROOT, 'lib')).filter(n => n.endsWith('.ts')).map(n => `lib/${n}`),
-].filter(rel => rel !== HOME);
+// The engine tree: every script and module a score cell can be built in.
+const scanned = listTree(join(ROOT, 'packages'), { match: /\.ts$/ })
+  .map((abs) => relative(ROOT, abs).split(sep).join('/'))
+  .filter(rel => rel !== HOME);
 
 const rogue = [];
 for (const rel of scanned) {

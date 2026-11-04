@@ -54,6 +54,8 @@ const skipped: string[] = [];
 
 for (const abs of listTree(join(ROOT, 'packages'), { match: /\.ts$/ })) {
   const rel = relative(ROOT, abs).split(sep).join('/');
+  // The dispatcher itself is not a command.
+  if (rel.startsWith('packages/cli/src/bin/')) continue;
   const src = readFileSync(abs, 'utf8');
   const runnable = src.startsWith('#!') || src.includes('isMainModule(import.meta.url)') || fromScripts.has(rel);
   if (!runnable) continue;
@@ -65,6 +67,21 @@ for (const abs of listTree(join(ROOT, 'packages'), { match: /\.ts$/ })) {
     continue;
   }
   commands.set(name, { script: relative(join(ROOT, 'packages/cli/src/bin'), abs).split(sep).join('/'), group });
+}
+
+// Aliases from package.json: `bun run merge` and `career-ops merge` should
+// name the same script, so a caller never has to know which spelling the CLI
+// uses. An alias never overrides a real command name.
+{
+  const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { scripts?: Record<string, string> };
+  for (const [alias, command] of Object.entries(pkg.scripts ?? {})) {
+    const m = /^bun\s+([a-zA-Z0-9_./-]+\.ts)\s*$/.exec(command.trim());
+    if (!m) continue;
+    const target = m[1].split('/').at(-1)!;
+    const entry = [...commands.values()].find((c) => c.script.split('/').at(-1) === target);
+    if (!entry || commands.has(alias)) continue;
+    commands.set(alias, entry);
+  }
 }
 
 const sorted = [...commands.entries()].sort(([a], [b]) => a.localeCompare(b));
