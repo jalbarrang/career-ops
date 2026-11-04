@@ -12,7 +12,7 @@ import (
 // Node and web load this JSON directly; Go's compiled mirror must cover the
 // entire table, including older aliases, rather than just this PR's additions.
 func TestTrackerHeaderAliasesMatchSharedJSON(t *testing.T) {
-	content, err := os.ReadFile(filepath.Join("..", "..", "..", "tracker-aliases.json"))
+	content, err := os.ReadFile(filepath.Join("..", "..", "..", "packages", "core", "src", "tracker", "tracker-aliases.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

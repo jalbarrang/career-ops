@@ -320,7 +320,7 @@ func runGeneratePDF(msg screens.PipelineGeneratePDFMsg) tea.Cmd {
 			args = append(args, "--report="+msg.ReportNumber)
 		}
 		cmd := exec.Command("node", args...)
-		cmd.Dir = filepath.Dir(script)
+		cmd.Dir = data.CheckoutRootForScript(script)
 		cmd.Env = append(cmd.Environ(), "CAREER_OPS_ROOT="+root)
 		// Preserve relative overrides before changing the child's working directory.
 		if tracker := resolveEnvPath(os.Getenv("CAREER_OPS_TRACKER")); tracker != "" {

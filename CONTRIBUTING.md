@@ -174,11 +174,26 @@ To propose a source (yours or anyone's): [open a source proposal](https://github
 
 ## Development
 
+### Where the code lives
+
+The repo is a Bun workspace with one dependency direction:
+
+```
+apps/web  ──►  packages/cli  ──►  packages/core
+```
+
+- `packages/core/src/<context>/` — the engine, grouped by bounded context (`kernel`, `tracker`, `pipeline`, `scanning`, `liveness`, `evaluation`, `cv`, `profile`, `interview`, `outreach`, `insights`, `platform`). Parsing rules, adapters and shared primitives belong here. A core module must not import a command or the web app.
+- `packages/cli/src/commands/<context>/` — one script per command. When other code needs its exported helpers, the script lives in core instead and keeps its `isMainModule` tail so it still runs directly.
+- `apps/web/` — the SvelteKit app. It may import the engine; nothing under `packages/` may import it.
+- `tests/` + `test-all.ts` — the integration suite. `tests/architecture-boundaries.test.ts` enforces the arrows above.
+
+Run a command as `career-ops <command>` (or `bun run <script>`; `career-ops --list` shows them all). A new runnable script needs one line in the generated catalog: run `bun scripts/regenerate-command-catalog.ts` after adding it, and the suite fails if the catalog is stale. Code that needs the checkout root calls `repoRoot()`; the user's data root is `getCareerOpsRoot()` — never rebuild either from `import.meta.url`. `ARCHITECTURE.md` has the full map.
+
 ```bash
 # Scripts
-bun run doctor                # Setup validation
+bun run doctor                 # Setup validation
 career-ops verify-pipeline     # Health check
-career-ops cv-sync-check        # Config check
+career-ops cv-sync-check       # Config check
 
 # Dashboard
 bun run build:dashboard       # go build with platform-correct binary name

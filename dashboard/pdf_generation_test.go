@@ -81,7 +81,7 @@ func TestRunGeneratePDFUsesCheckoutWithSelectedDataRoot(t *testing.T) {
 	if err := json.Unmarshal(raw, &got); err != nil {
 		t.Fatal(err)
 	}
-	wantArgs := []string{filepath.Join(checkout, "generate-pdf.ts"), filepath.Join(root, request.HTMLPath), filepath.Join(root, request.PDFPath), "--format=a4", "--report=007"}
+	wantArgs := []string{filepath.Join(checkout, "packages", "cli", "src", "commands", "cv", "generate-pdf.ts"), filepath.Join(root, request.HTMLPath), filepath.Join(root, request.PDFPath), "--format=a4", "--report=007"}
 	if len(got.Args) != len(wantArgs) {
 		t.Fatalf("unexpected args: %v", got.Args)
 	}

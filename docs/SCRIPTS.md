@@ -1,8 +1,14 @@
 # Scripts Reference
 
-All scripts live in the project root as `.ts` modules. Most are exposed via
-`bun run <name>`; agent-invoked utilities (bottom section) run as
-`bun <script>` directly.
+Every script is a module under `packages/cli/src/commands/<context>/` (or, when
+other code imports its helpers, `packages/core/src/<context>/`). Three spellings
+run the same file, and all three are equivalent:
+
+- `career-ops <command>` — the entrypoint (see `packages/cli/src/bin/career-ops.ts`)
+- `bun run <name>` — the package.json script of that name
+- `bun packages/<pkg>/src/<context>/<file>.ts` — the script itself, when you need its own `--help`
+
+`career-ops --list` prints every command, grouped by bounded context.
 
 ## Quick Reference
 

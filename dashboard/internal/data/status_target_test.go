@@ -11,6 +11,12 @@ import (
 const statusTargetHeader = "| # | Date | Company | Role | Score | Status | PDF | Report | Notes |\n|---|---|---|---|---|---|---|---|---|\n"
 const statusTargetRow = "| 42 | 2026-09-01 | Example Co | Engineer | 4.2/5 | Applied | ❌ | [7](reports/007.md) | original |\n"
 
+// checkoutScript is where CheckoutScriptPath finds an engine script in a
+// checkout laid out by the monorepo split: under packages/cli/src/commands/<context>/.
+func checkoutScript(root, context, name string) string {
+	return filepath.Join(root, "packages", "cli", "src", "commands", context, name)
+}
+
 func writeStatusTarget(t *testing.T, path, content string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

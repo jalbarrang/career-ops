@@ -33,9 +33,15 @@ func CheckoutScriptPath(name string) (string, error) {
 		roots = append(roots, filepath.Dir(executable), filepath.Dir(filepath.Dir(executable)))
 	}
 	for _, root := range roots {
+		// Only a checkout may supply scripts. A data root can contain anything the
+		// user put there, including a file named like the writer, and running it
+		// would execute user data (#524).
+		if !isCheckoutRoot(root) {
+			continue
+		}
 		// The engine's scripts live under packages/{cli,core}/src/<context>/ since
-		// the monorepo split. Glob the two bounded trees rather than walking the
-		// checkout, so a data-only root still resolves nothing.
+		// the monorepo split. Glob the bounded trees rather than walking the
+		// checkout.
 		patterns := []string{
 			filepath.Join(root, "packages", "cli", "src", "commands", "*", name),
 			filepath.Join(root, "packages", "core", "src", "*", name),
@@ -54,6 +60,37 @@ func CheckoutScriptPath(name string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("dashboard actions need %s in the career-ops checkout", name)
+}
+
+// CheckoutRootForScript returns the checkout that owns an engine script: the
+// nearest ancestor that is a career-ops checkout. Scripts live several levels
+// below their checkout since the monorepo split, so a child process must not be
+// given filepath.Dir(script) as its working directory.
+func CheckoutRootForScript(script string) string {
+	dir := filepath.Dir(script)
+	for {
+		if isCheckoutRoot(dir) {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return filepath.Dir(script)
+		}
+		dir = parent
+	}
+}
+
+// isCheckoutRoot reports whether dir is a career-ops checkout rather than a
+// user data directory. The marker is the same one FindRepoRoot uses.
+func isCheckoutRoot(dir string) bool {
+	if info, err := os.Stat(filepath.Join(dir, repoRootMarker)); err == nil && !info.IsDir() {
+		return true
+	}
+	// Legacy flat checkout.
+	if info, err := os.Stat(filepath.Join(dir, "path-resolver.ts")); err == nil && !info.IsDir() {
+		return true
+	}
+	return false
 }
 
 func runStatusWriter(dataRoot, report, status, note string) error {
